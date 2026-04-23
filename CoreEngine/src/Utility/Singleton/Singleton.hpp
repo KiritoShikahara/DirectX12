@@ -10,7 +10,7 @@
 #define SINGLETON_POLICY_NO_REVIVE 1
 #endif
 
-namespace Ecse::Utility
+namespace utility
 {
     template <typename T>
     class Singleton {

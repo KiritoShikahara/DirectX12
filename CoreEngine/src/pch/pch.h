@@ -1,5 +1,17 @@
 #pragma once
 
+#ifndef PCH_H
+#define PCH_H
+
+//	Windows.hの無駄削除
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN 
+#endif
+
+
+#define NOMINMAX
+#include <windows.h>
+
 #include<utility>
 #include<type_traits>
 #include<typeindex>
@@ -44,3 +56,6 @@
 #include <dxgidebug.h>
 #include<cassert>
 #include<cstdint>
+
+
+#endif //PCH_H

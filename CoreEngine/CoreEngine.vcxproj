@@ -139,6 +139,7 @@
   <ItemGroup>
     <ClInclude Include="src\graphics\Dx12\Dx12Device.h" />
     <ClInclude Include="src\pch\pch.h" />
+    <ClInclude Include="src\system\Window\WindowContext.h" />
     <ClInclude Include="src\Utility\Export\Export.h" />
     <ClInclude Include="src\Utility\Singleton\Singleton.hpp" />
     <ClInclude Include="src\system\Window\Window.h" />
