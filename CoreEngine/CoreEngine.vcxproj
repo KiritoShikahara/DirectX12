@@ -167,7 +167,9 @@
     <ClInclude Include="src\system\Window\Window.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\system\Logger\Logger.cpp" />
+    <ClCompile Include="src\system\Logger\Logger.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\graphics\Color\Color.cpp" />
     <ClCompile Include="external\DirectX12MA\D3D12MemAlloc.cpp" />
     <ClCompile Include="src\graphics\Dx12\Dx12Renderer.cpp">

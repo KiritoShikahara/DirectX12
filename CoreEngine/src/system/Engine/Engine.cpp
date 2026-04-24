@@ -5,6 +5,7 @@
 #include<system/Engine/EngineContext.h>
 
 #include<graphics/Dx12/Dx12Device.h>
+#include<system/Logger/Logger.h>
 
 namespace sys
 {
@@ -47,6 +48,12 @@ namespace sys
 			mWindow->GetWidth(), 
 			mWindow->GetHeight()
 		) == false)
+		{
+			return false;
+		}
+
+		// Logger‚Ì‰Šú‰»
+		if (sys::Logger::Get().Initialize() == false)
 		{
 			return false;
 		}
@@ -115,6 +122,9 @@ namespace sys
 		mDevice = nullptr;
 
 		// TODO:ƒƒOo—Í
+
+		sys::Logger::Get().Finalize();
+
 		return true;
 	}
 
