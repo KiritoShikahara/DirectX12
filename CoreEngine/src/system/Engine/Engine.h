@@ -2,6 +2,14 @@
 #include<Utility/Singleton/Singleton.hpp>
 #include<Utility/Export/Export.h>
 
+#include<graphics/Dx12/Dx12Renderer.h>
+#include<memory>
+
+namespace graphics
+{
+	class DX12Device;
+}
+
 namespace sys
 {
 	class Window;
@@ -50,5 +58,14 @@ namespace sys
 		/// </summary>
 		Window* mWindow;
 
+		/// <summary>
+		/// DX12デバイス管理
+		/// </summary>
+		graphics::DX12Device* mDevice;
+
+		/// <summary>
+		/// Dx12描画管理クラス
+		/// </summary>
+		std::unique_ptr<graphics::DX12Renderer> mRenderer;
 	};
 }

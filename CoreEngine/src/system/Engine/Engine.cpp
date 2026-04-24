@@ -4,6 +4,8 @@
 #include<system/Window/Window.h>
 #include<system/Engine/EngineContext.h>
 
+#include<graphics/Dx12/Dx12Device.h>
+
 namespace sys
 {
 
@@ -11,6 +13,8 @@ namespace sys
 		: mIsRunning(false)
 		, mIsInitialized(false)
 		, mWindow(nullptr)
+		, mDevice(nullptr)
+		, mRenderer(nullptr)
 	{
 	}
 
@@ -27,8 +31,6 @@ namespace sys
 		{
 			return false;
 		}
-
-
 
 		// TODO:ÉçÉOèoóÕ
 
