@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.619.2\build\native\Microsoft.Direct3D.D3D12.props" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.619.2\build\native\Microsoft.Direct3D.D3D12.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -42,7 +43,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -137,6 +138,10 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="external\DirectX12MA\D3D12MemAlloc.h" />
+    <ClInclude Include="src\graphics\Dx12\Dx12Renderer.h" />
+    <ClInclude Include="src\graphics\Dx12\Dx12Type.h" />
+    <ClInclude Include="src\system\Engine\Engine.h" />
     <ClInclude Include="external\ImGui\imconfig.h" />
     <ClInclude Include="external\ImGui\imgui.h" />
     <ClInclude Include="external\ImGui\ImGuizmo.h" />
@@ -149,12 +154,19 @@
     <ClInclude Include="external\ImGui\imstb_truetype.h" />
     <ClInclude Include="src\graphics\Dx12\Dx12Device.h" />
     <ClInclude Include="src\pch\pch.h" />
+    <ClInclude Include="src\system\Engine\EngineContext.h" />
     <ClInclude Include="src\system\Window\WindowContext.h" />
     <ClInclude Include="src\Utility\Export\Export.h" />
     <ClInclude Include="src\Utility\Singleton\Singleton.hpp" />
     <ClInclude Include="src\system\Window\Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="external\DirectX12MA\D3D12MemAlloc.cpp" />
+    <ClCompile Include="src\graphics\Dx12\Dx12Renderer.cpp" />
+    <ClCompile Include="src\system\Engine\Engine.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="external\ImGui\imgui.cpp" />
     <ClCompile Include="external\ImGui\ImGuizmo.cpp" />
     <ClCompile Include="external\ImGui\imgui_draw.cpp" />
@@ -175,7 +187,18 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.619.2\build\native\Microsoft.Direct3D.D3D12.targets" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.619.2\build\native\Microsoft.Direct3D.D3D12.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>このプロジェクトは、このコンピューター上にない NuGet パッケージを参照しています。それらのパッケージをダウンロードするには、[NuGet パッケージの復元] を使用します。詳細については、http://go.microsoft.com/fwlink/?LinkID=322105 を参照してください。見つからないファイルは {0} です。</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.619.2\build\native\Microsoft.Direct3D.D3D12.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.619.2\build\native\Microsoft.Direct3D.D3D12.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.619.2\build\native\Microsoft.Direct3D.D3D12.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.619.2\build\native\Microsoft.Direct3D.D3D12.targets'))" />
+  </Target>
 </Project>
