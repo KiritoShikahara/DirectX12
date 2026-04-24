@@ -58,4 +58,6 @@
 #include<cstdint>
 
 #include<ImGui/imgui.h>
+#include<system/Logger/Logger.h>
+
 #endif //PCH_H
