@@ -15,6 +15,7 @@ namespace graphics
 		 , mFence(nullptr)
 		, mWaitForGPUEventHandle(nullptr)
 	{
+		mClearColor = graphics::Color::Gray;
 	}
 
 	DX12Renderer::~DX12Renderer()

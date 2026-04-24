@@ -32,9 +32,30 @@ namespace sys
 			return false;
 		}
 
+		// DX12デバイス初期化
+		mDevice = &graphics::DX12Device::Get();
+		if (mDevice->Initialize() == false)
+		{
+			return false;
+		}
+
+		// DX12描画管理クラス初期化
+		mRenderer = std::make_unique<graphics::DX12Renderer>();
+		if (mRenderer->Initialize(
+			mDevice, 
+			mWindow->GetHWND(), 
+			mWindow->GetWidth(), 
+			mWindow->GetHeight()
+		) == false)
+		{
+			return false;
+		}
+
+		mIsRunning = true;
+		mIsInitialized = true;
+
 		// TODO:ログ出力
 
-		mIsInitialized = true;
 		return true;
 	}
 
@@ -57,6 +78,14 @@ namespace sys
 		// TODO:更新処理
 
 		// TODO:描画処理
+		mRenderer->BeginRendering();
+		mRenderer->SetViewPort(
+			static_cast<float>(mWindow->GetWidth()),
+			static_cast<float>(mWindow->GetHeight()));
+
+		Render();
+
+		mRenderer->Flip();
 
 		// TODO:フレームの終了処理
 
@@ -71,9 +100,30 @@ namespace sys
 	{
 		if (mIsInitialized == false)  return false;
 
+		// GPU完了待ち
+		if (mRenderer != nullptr)
+		{
+			mRenderer->WaitForGPU();
+		}
 
+		// Dx12Rendererの破棄
+		mRenderer->Finalize();
+		mRenderer.reset();
+
+		// Dx12Deviceの破棄
+		mDevice->Finalize();
+		mDevice = nullptr;
 
 		// TODO:ログ出力
 		return true;
+	}
+
+	/// <summary>
+	/// 描画
+	/// </summary>
+	void Engine::Render()
+	{
+
+
 	}
 }

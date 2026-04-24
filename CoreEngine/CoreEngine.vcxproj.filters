@@ -81,6 +81,9 @@
     <ClInclude Include="src\graphics\Color\Color.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\system\Logger\Logger.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics\Dx12\Dx12Device.cpp">
@@ -123,6 +126,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\Color\Color.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Logger\Logger.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

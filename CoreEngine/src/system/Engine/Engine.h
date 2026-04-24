@@ -40,6 +40,11 @@ namespace sys
 		/// </summary>
 		/// <returns>true:¬Œ÷ false:¸”s</returns>
 		bool Finalize();
+	private:
+		/// <summary>
+		/// •`‰æ
+		/// </summary>
+		void Render();
 
 	private:
 		/// <summary>
