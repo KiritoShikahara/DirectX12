@@ -7,6 +7,7 @@
 #include<graphics/Dx12/Dx12Device.h>
 #include<system/Logger/Logger.h>
 #include<graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeapManager.h>
+#include<ecs/entity/EntityManager.h>
 
 namespace sys
 {
@@ -70,6 +71,13 @@ namespace sys
 		// ImGuiManager‚Ì‰Šú‰»
 		mImGuiManager = &sys::ImGuiManager::Get();
 		if (mImGuiManager->Initialize(*mWindow, *mDevice, *mRenderer, descriptorHeapManager) == false)
+		{
+			return false;
+		}
+
+		// EntityManager‚Ì‰Šú‰»
+		mEntityManager = &ecs::EntityManager::Get();
+		if (mEntityManager->Initialize() == false)
 		{
 			return false;
 		}

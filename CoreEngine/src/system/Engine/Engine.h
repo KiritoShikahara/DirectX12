@@ -10,6 +10,11 @@ namespace graphics
 	class DX12Device;
 }
 
+namespace ecs
+{
+	class EntityManager;
+}
+
 namespace sys
 {
 	class Window;
@@ -78,5 +83,10 @@ namespace sys
 		/// ImGui管理クラス
 		/// </summary>
 		ImGuiManager* mImGuiManager;
+
+		/// <summary>
+		/// エンティティ管理クラス
+		/// </summary>
+		ecs::EntityManager* mEntityManager;
 	};
 }

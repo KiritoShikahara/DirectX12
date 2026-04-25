@@ -140,6 +140,8 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\ecs\entity\EntityManager.h" />
+    <ClInclude Include="src\ecs\entity\EntityTag.h" />
     <ClInclude Include="src\system\ImGui\ImGuiManager.h" />
     <ClInclude Include="src\graphics\GraphicsDescriptorHeap\GraphicsDescriptorHeap.h" />
     <ClInclude Include="src\graphics\GraphicsDescriptorHeap\GraphicsDescriptorHeapInfo.h" />
@@ -171,6 +173,9 @@
     <ClInclude Include="src\system\Window\Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\ecs\entity\EntityManager.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\system\ImGui\ImGuiManager.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
     </ClCompile>
