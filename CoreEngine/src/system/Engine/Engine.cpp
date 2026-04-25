@@ -77,7 +77,7 @@ namespace sys
 		mIsRunning = true;
 		mIsInitialized = true;
 
-		// TODO:ÉçÉOèoóÕ
+		DEBUG_LOG(sys::eLogLevel::Log, "Engine initialized successfully.");
 
 		return true;
 	}

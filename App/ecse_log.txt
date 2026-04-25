@@ -11,3 +11,8 @@
 [2026-04-25 07:08:44.3970366] [Log]    ImGuiManager: Initialized successfully.
 [2026-04-25 07:25:36.0115019] [Log]    Logger initialized.
 [2026-04-25 07:25:36.2904996] [Log]    ImGuiManager: Initialized successfully.
+[2026-04-25 07:28:26.1859248] [Log]    Logger initialized.
+[2026-04-25 07:28:26.4272083] [Log]    ImGuiManager: Initialized successfully.
+[2026-04-25 07:28:50.4383312] [Log]    Logger initialized.
+[2026-04-25 07:28:50.6959000] [Log]    ImGuiManager: Initialized successfully.
+[2026-04-25 07:28:50.6963943] [Log]    Engine initialized successfully.
