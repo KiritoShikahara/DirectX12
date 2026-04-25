@@ -14,6 +14,7 @@ namespace sys
 {
 	class Window;
 	struct EngineContext;
+	class ImGuiManager;
 
 	class ENGINE_API Engine : public utility::Singleton<Engine>
 	{
@@ -72,5 +73,10 @@ namespace sys
 		/// Dx12描画管理クラス
 		/// </summary>
 		std::unique_ptr<graphics::DX12Renderer> mRenderer;
+
+		/// <summary>
+		/// ImGui管理クラス
+		/// </summary>
+		ImGuiManager* mImGuiManager;
 	};
 }

@@ -6,6 +6,7 @@
 
 #include<graphics/Dx12/Dx12Device.h>
 #include<system/Logger/Logger.h>
+#include<graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeapManager.h>
 
 namespace sys
 {
@@ -16,6 +17,7 @@ namespace sys
 		, mWindow(nullptr)
 		, mDevice(nullptr)
 		, mRenderer(nullptr)
+		, mImGuiManager(nullptr)
 	{
 	}
 
@@ -26,6 +28,12 @@ namespace sys
 	/// <returns>true:成功 false:失敗</returns>
 	bool Engine::Initialize(EngineContext context)
 	{
+		// Loggerの初期化
+		if (sys::Logger::Get().Initialize() == false)
+		{
+			return false;
+		}
+
 		// ウィンドウの初期化
 		mWindow = &Window::Get();
 		if(mWindow->Initialize(context.WindowContext) == false)
@@ -52,8 +60,16 @@ namespace sys
 			return false;
 		}
 
-		// Loggerの初期化
-		if (sys::Logger::Get().Initialize() == false)
+		// GraphicsDescriptorHeapManagerの初期化
+		auto& descriptorHeapManager = graphics::GDescriptorHeapManager::Get();
+		if(descriptorHeapManager.Initialize(mDevice->GetDevice()) == false)
+		{
+			return false;
+		}
+
+		// ImGuiManagerの初期化
+		mImGuiManager = &sys::ImGuiManager::Get();
+		if (mImGuiManager->Initialize(*mWindow, *mDevice, *mRenderer, descriptorHeapManager) == false)
 		{
 			return false;
 		}
@@ -90,8 +106,11 @@ namespace sys
 			static_cast<float>(mWindow->GetWidth()),
 			static_cast<float>(mWindow->GetHeight()));
 
+		mImGuiManager->NewFrame();
+		mImGuiManager->Update();
 		Render();
 
+		mImGuiManager->EndFrame();
 		mRenderer->Flip();
 
 		// TODO:フレームの終了処理

@@ -140,6 +140,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\system\ImGui\ImGuiManager.h" />
     <ClInclude Include="src\graphics\GraphicsDescriptorHeap\GraphicsDescriptorHeap.h" />
     <ClInclude Include="src\graphics\GraphicsDescriptorHeap\GraphicsDescriptorHeapInfo.h" />
     <ClInclude Include="src\graphics\GraphicsDescriptorHeap\GraphicsDescriptorHeapManager.h" />
@@ -170,7 +171,12 @@
     <ClInclude Include="src\system\Window\Window.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\graphics\GraphicsDescriptorHeap\GraphicsDescriptorHeap.cpp" />
+    <ClCompile Include="src\system\ImGui\ImGuiManager.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\graphics\GraphicsDescriptorHeap\GraphicsDescriptorHeap.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\graphics\GraphicsDescriptorHeap\GraphicsDescriptorHeapManager.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
     </ClCompile>

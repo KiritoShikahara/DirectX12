@@ -1,5 +1,4 @@
 #pragma once
-
 #include<system/Window/WindowContext.h>
 
 namespace sys
