@@ -140,6 +140,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\ecs\component\transform\TransformComponent.h" />
     <ClInclude Include="src\ecs\entity\EntityManager.h" />
     <ClInclude Include="src\ecs\entity\EntityTag.h" />
     <ClInclude Include="src\system\ImGui\ImGuiManager.h" />
@@ -173,6 +174,7 @@
     <ClInclude Include="src\system\Window\Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\ecs\component\transform\TransformComponent.cpp" />
     <ClCompile Include="src\ecs\entity\EntityManager.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
     </ClCompile>
