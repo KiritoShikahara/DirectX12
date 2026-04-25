@@ -1,7 +1,7 @@
 #pragma once
 #include<Utility/Singleton/Singleton.hpp>
 #include<Utility/Export/Export.h>
-
+#include<system/Time/Time.h>
 #include<graphics/Dx12/Dx12Renderer.h>
 #include<memory>
 
@@ -64,6 +64,11 @@ namespace sys
 		bool mIsInitialized;
 
 	private:
+		/// <summary>
+		/// 時間管理
+		/// </summary>
+		sys::Time mTime;
+
 		/// <summary>
 		/// ウィンドウ管理クラス
 		/// </summary>

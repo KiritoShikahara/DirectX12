@@ -27,3 +27,7 @@
 [2026-04-25 08:16:18.0984321] [Log]    ImGuiManager: Initialized successfully.
 [2026-04-25 08:16:18.0991412] [Log]    EntityManager initialized successfully.
 [2026-04-25 08:16:18.0994958] [Log]    Engine initialized successfully.
+[2026-04-25 08:27:02.9780919] [Log]    Logger initialized.
+[2026-04-25 08:27:03.2306405] [Log]    ImGuiManager: Initialized successfully.
+[2026-04-25 08:27:03.2312172] [Log]    EntityManager initialized successfully.
+[2026-04-25 08:27:03.2315224] [Log]    Engine initialized successfully.

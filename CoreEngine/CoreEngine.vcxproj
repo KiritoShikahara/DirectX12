@@ -172,6 +172,7 @@
     <ClInclude Include="src\Utility\Export\Export.h" />
     <ClInclude Include="src\Utility\Singleton\Singleton.hpp" />
     <ClInclude Include="src\system\Window\Window.h" />
+    <ClInclude Include="src\system\Time\Time.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\ecs\component\transform\TransformComponent.cpp" />
@@ -218,6 +219,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\system\Time\Time.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

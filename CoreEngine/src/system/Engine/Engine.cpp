@@ -35,6 +35,9 @@ namespace sys
 			return false;
 		}
 
+		// Timeの初期化
+		mTime.Initialize();
+
 		// ウィンドウの初期化
 		mWindow = &Window::Get();
 		if(mWindow->Initialize(context.WindowContext) == false)
@@ -105,6 +108,9 @@ namespace sys
 			mIsRunning = false;
 			return false;
 		}
+
+		// Timeの更新
+		mTime.Update();
 
 		// TODO:更新処理
 
