@@ -47,6 +47,9 @@ namespace graphics
 		/// <summary>有効なスロットを保持しているか</summary>
 		bool IsValid() const;
 
+		/// <summary>割り当てられたスロットのインデックス</summary>
+		int GetIndex()const;
+
 	private:
 		/// <summary>
 		/// スロット情報。Index == -1 のとき未確保。

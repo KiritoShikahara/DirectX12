@@ -65,6 +65,11 @@ namespace graphics
 	{
 		return mHeapInfo.IsValid() && mManager != nullptr;
 	}
+
+	int GDescriptorHeap::GetIndex() const
+	{
+		return mHeapInfo.Index;
+	}
 }
 
 

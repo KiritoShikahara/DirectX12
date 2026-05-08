@@ -57,9 +57,14 @@
 #include<cassert>
 #include<cstdint>
 
+#include<DirectXMath.h>
+#include<DirectXTex/DirectXTex.h>
 #include<ImGui/imgui.h>
+
 #include<system/Logger/Logger.h>
 #include<system/ImGui/ImGuiManager.h>
+
+
 
 //// デバック用機能
 #if defined(_DEBUG)
