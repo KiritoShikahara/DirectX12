@@ -8,6 +8,7 @@
 #include<system/Logger/Logger.h>
 #include<graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeapManager.h>
 #include<ecs/entity/EntityManager.h>
+#include<graphics/Dx12/RenderContext.h>
 
 namespace sys
 {
@@ -123,6 +124,8 @@ namespace sys
 		mRenderer->SetViewPort(
 			static_cast<float>(mWindow->GetWidth()),
 			static_cast<float>(mWindow->GetHeight()));
+
+		graphics::RenderContext::Get().SetFrameIndex(mRenderer->GetCurrentFrameIndex());
 
 		mImGuiManager->NewFrame();
 		mImGuiManager->Update();

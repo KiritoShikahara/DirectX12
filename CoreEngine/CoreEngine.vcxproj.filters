@@ -123,6 +123,18 @@
     <ClInclude Include="src\system\AssetPath\AssetPathManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\Sprite\Renderer\SpriteRenderer.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\VertexBuffer\VertexBuffer.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\StructuredBuffer\StructuredBuffer.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\Dx12\RenderContext.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics\Dx12\Dx12Device.cpp">
@@ -201,6 +213,15 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\system\AssetPath\AssetPathManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Sprite\Renderer\SpriteRenderer.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\VertexBuffer\VertexBuffer.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\StructuredBuffer\StructuredBuffer.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

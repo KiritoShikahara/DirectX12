@@ -140,6 +140,8 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\graphics\Dx12\RenderContext.h" />
+    <ClInclude Include="src\graphics\Sprite\Renderer\SpriteRenderer.h" />
     <ClInclude Include="src\system\AssetPath\AssetPathManager.h" />
     <ClInclude Include="src\graphics\Shader\ShaderManager.h" />
     <ClInclude Include="src\graphics\Sprite\Pipeline\SpritePipeline.h" />
@@ -178,8 +180,11 @@
     <ClInclude Include="src\Utility\Singleton\Singleton.hpp" />
     <ClInclude Include="src\system\Window\Window.h" />
     <ClInclude Include="src\system\Time\Time.h" />
+    <ClInclude Include="src\graphics\VertexBuffer\VertexBuffer.h" />
+    <ClInclude Include="src\graphics\StructuredBuffer\StructuredBuffer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\graphics\Sprite\Renderer\SpriteRenderer.cpp" />
     <ClCompile Include="src\system\AssetPath\AssetPathManager.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
@@ -241,6 +246,16 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\system\Time\Time.cpp" />
+    <ClCompile Include="src\graphics\VertexBuffer\VertexBuffer.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\graphics\StructuredBuffer\StructuredBuffer.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
