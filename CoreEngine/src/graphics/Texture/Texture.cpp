@@ -74,7 +74,7 @@ namespace graphics
 		}
 		if (FAILED(hr))
 		{
-			DEBUG_LOG(sys::eLogLevel::Error, "Texture: Failed to load texture file: {}", FilePath.string());
+			//DEBUG_LOG(sys::eLogLevel::Error, "Texture: Failed to load texture file: {}", FilePath.string());
 			return false;
 		}
 
@@ -99,7 +99,7 @@ namespace graphics
 		allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
 
 		/// リソース作成
-		HRESULT hr = allocator->CreateResource(
+		hr = allocator->CreateResource(
 			&allocDesc,
 			&resDesc,
 			D3D12_RESOURCE_STATE_COPY_DEST,   // アップロード前は転送先状態

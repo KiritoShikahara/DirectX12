@@ -140,6 +140,9 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\system\AssetPath\AssetPathManager.h" />
+    <ClInclude Include="src\graphics\Shader\ShaderManager.h" />
+    <ClInclude Include="src\graphics\Sprite\Pipeline\SpritePipeline.h" />
     <ClInclude Include="src\ecs\component\sprite\SpriteComponent.h" />
     <ClInclude Include="src\ecs\component\transform\TransformComponent.h" />
     <ClInclude Include="src\ecs\entity\EntityManager.h" />
@@ -177,6 +180,15 @@
     <ClInclude Include="src\system\Time\Time.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\system\AssetPath\AssetPathManager.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Shader\ShaderManager.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Sprite\Pipeline\SpritePipeline.cpp" />
     <ClCompile Include="src\ecs\component\sprite\SpriteComponent.cpp" />
     <ClCompile Include="src\ecs\component\transform\TransformComponent.cpp" />
     <ClCompile Include="src\ecs\entity\EntityManager.cpp">

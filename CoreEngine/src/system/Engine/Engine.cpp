@@ -85,6 +85,10 @@ namespace sys
 			return false;
 		}
 
+		// AssetsPath
+		SINGLETON_REF(sys::AssetPathManager, AssetManager);
+		AssetManager.Initialize();
+
 		mIsRunning = true;
 		mIsInitialized = true;
 
