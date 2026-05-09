@@ -21,7 +21,10 @@
 
 void SpriteRenderTest()
 {
-	auto textured = graphics::TextureManager::Get().GetOrLoad("Assets/Test/test.png");
+	auto texture = graphics::TextureManager::Get().GetOrLoad("Assets/Test/test.png");
+	auto entity = ecs::EntityManager::Get().CreateEntity();
+	auto& tr = ecs::EntityManager::Get().AddComponent<ecs::Transform>(entity);
+	auto& sprite = ecs::EntityManager::Get().AddComponent<ecs::Sprite>(entity,texture);
 }
 
 namespace sys
@@ -201,7 +204,10 @@ namespace sys
 	/// </summary>
 	void Engine::Render()
 	{
-
+		SINGLETON_REF(graphics::SpriteRenderer, spriteRenderer);
+		spriteRenderer.Begin();
+		spriteRenderer.UpdateAndDraw(mEntityManager->GetRegistry());
+		spriteRenderer.End(mRenderer->GetCommandList());
 
 	}
 }

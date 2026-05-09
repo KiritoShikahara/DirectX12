@@ -67,6 +67,7 @@
 #include<d3dx12.h>
 #include<DirectXTex.h>
 #include<ImGui/imgui.h>
+#include<entt/entt.hpp>
 
 #include<system/Logger/Logger.h>
 #include<system/ImGui/ImGuiManager.h>

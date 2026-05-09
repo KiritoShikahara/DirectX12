@@ -89,6 +89,11 @@ namespace ecs
 		mDestroyQueue.clear();
 	}
 
+	entt::registry& EntityManager::GetRegistry()
+	{
+		return mRegistry;
+	}
+
 
 
 

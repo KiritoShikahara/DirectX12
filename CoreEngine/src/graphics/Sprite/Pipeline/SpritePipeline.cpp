@@ -131,7 +131,6 @@ namespace graphics
 		auto VS = shaderManager.GetShader(ASSET_PATH("/Engine/Assets/Shader/Sprite/VS_Sprite.hlsl").string(), "main", "vs_5_0");
 		auto PS = shaderManager.GetShader(ASSET_PATH("/Engine/Assets/Shader/Sprite/PS_Sprite.hlsl").string(), "main", "ps_5_0");
 
-
 		if (!VS || !PS)
 		{
 			DEBUG_LOG(sys::eLogLevel::Fatal, "Failed to load shaders for sprite pipeline");
