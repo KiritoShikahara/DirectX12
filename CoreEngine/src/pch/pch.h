@@ -72,7 +72,6 @@
 #include<system/ImGui/ImGuiManager.h>
 #include<system/AssetPath/AssetPathManager.h>
 
-
 //// デバック用機能
 #if defined(_DEBUG)
     // デバッグビルドならデフォルトで有効

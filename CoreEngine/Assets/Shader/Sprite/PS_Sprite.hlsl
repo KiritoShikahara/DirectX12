@@ -1,20 +1,18 @@
 #include"SpriteHeader.hlsli"
 
-// t1 : スプライトテクスチャ（バッチごとに差し替えられる）
+// t1: sprite texture (swapped per batch in SpriteRenderer::End)
 Texture2D gTexture : register(t1);
-// s0 : 静的サンプラー（RootSignature 側で定義済み）
+// s0: static sampler defined in RootSignature (linear filter, clamp)
 SamplerState gSampler : register(s0);
 
 float4 main(VSOutput input) : SV_TARGET
 {
-    // テクスチャサンプリング
     float4 texColor = gTexture.Sample(gSampler, input.TexCoord);
 
-    // アルファが極めて小さいピクセルを早期破棄
-    // （半透明境界のアーティファクト・デプスバッファへの誤書き込みを防ぐ）
+    // Discard fully transparent pixels to avoid depth artifacts
     clip(texColor.a - 0.001f);
 
-    // 乗算カラー × テクスチャカラー × 輝度
+    // Texture color * multiply color * brightness
     float4 result = texColor * input.Color;
     result.rgb *= input.Intensity;
 

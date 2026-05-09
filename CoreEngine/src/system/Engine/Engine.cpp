@@ -11,7 +11,18 @@
 #include<graphics/Dx12/RenderContext.h>
 
 #include<graphics/Shader/ShaderManager.h>
+#include<graphics/Texture/TextureManager.h>
+#include<graphics/Sprite/Renderer/SpriteRenderer.h>
 
+#include<ecs/component/transform/TransformComponent.h>
+#include<ecs/component/sprite/SpriteComponent.h>
+#include<graphics/Texture/Texture.h>
+
+
+void SpriteRenderTest()
+{
+	auto textured = graphics::TextureManager::Get().GetOrLoad("Assets/Test/test.png");
+}
 
 namespace sys
 {
@@ -92,6 +103,20 @@ namespace sys
 		// AssetsPath
 		SINGLETON_REF(sys::AssetPathManager, AssetManager);
 		AssetManager.Initialize();
+
+		// TextureManager
+		SINGLETON_REF(graphics::TextureManager, TextureManager);
+
+		// Renderer
+		SINGLETON_REF(graphics::SpriteRenderer, SpriteRenderer);
+		if(SpriteRenderer.Initialize(*mDevice, descriptorHeapManager, graphics::ShaderManager::Get(), *mWindow) == false)
+		{
+			return false;
+		}
+
+		// テスト用の読み込み
+		SpriteRenderTest();
+
 
 		mIsRunning = true;
 		mIsInitialized = true;

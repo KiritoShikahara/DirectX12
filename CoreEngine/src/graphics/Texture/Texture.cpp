@@ -1,6 +1,8 @@
 #include "pch.h"
 #include"Texture.h"
 
+#pragma comment(lib, "DirectXTex.lib")
+
 #include<graphics/Dx12/Dx12Device.h>
 #include<graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeapManager.h>
 
