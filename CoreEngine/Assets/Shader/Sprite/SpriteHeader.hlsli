@@ -1,4 +1,4 @@
-﻿struct SpriteShaderData
+struct SpriteShaderData
 {
     float4x4 WVP;
     float4 Color;

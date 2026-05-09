@@ -65,7 +65,7 @@
 #include <comdef.h>
 
 #include<d3dx12.h>
-#include<DirectXTex/DirectXTex.h>
+#include<DirectXTex.h>
 #include<ImGui/imgui.h>
 
 #include<system/Logger/Logger.h>

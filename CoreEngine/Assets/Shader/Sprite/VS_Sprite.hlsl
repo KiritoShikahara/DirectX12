@@ -2,8 +2,8 @@
 
 VSOutput main(VSInput input, uint instanceID : SV_InstanceID)
 {
-    // SV_InstanceID �� DrawInstanced �� StartInstanceLocation �����Z�ς݂̂���
-    // ���̂܂܃o�b�t�@�̃C���f�b�N�X�Ƃ��Ďg����
+    // SV_InstanceID は DrawInstanced の StartInstanceLocation が加算済みのため
+    // そのままバッファのインデックスとして使える
     SpriteShaderData data = gInstanceData[instanceID];
 
     VSOutput output;

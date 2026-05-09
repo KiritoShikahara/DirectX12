@@ -16,13 +16,15 @@ namespace graphics
 		GDescriptorHeap() = default;
 		~GDescriptorHeap();
 
+
 		// 二重解放を防ぐためコピー禁止
 		GDescriptorHeap(const GDescriptorHeap&) = delete;
 		GDescriptorHeap& operator=(const GDescriptorHeap&) = delete;
 
 		// ムーブは許可（所有権の移譲）
-		GDescriptorHeap(GDescriptorHeap&&) noexcept;
-		GDescriptorHeap& operator=(GDescriptorHeap&&) noexcept;
+		GDescriptorHeap(GDescriptorHeap&&) noexcept = default;
+		GDescriptorHeap& operator=(GDescriptorHeap&&) noexcept = default;
+
 		/// <summary>
 		/// スロットの確保。
 		/// Manager の参照を内部に保持するため、以降のメソッド呼び出しに引数は不要。

@@ -3,6 +3,7 @@
 
 #include<graphics/Dx12/Dx12Device.h>
 #include<graphics/Shader/ShaderManager.h>
+#include<system/AssetPath/AssetPathManager.h>
 
 namespace graphics
 {
@@ -127,8 +128,9 @@ namespace graphics
 	/// </summary>
 	bool SpritePipeline::CreatePipeline(ID3D12Device* device, ShaderManager& shaderManager)
 	{
-		auto VS = shaderManager.GetShader("/Engine/Shader/SpriteVS.hlsl", "main", "vs_5_0");
-		auto PS = shaderManager.GetShader("/Engine/Shader/SpritePS.hlsl", "main", "ps_5_0");
+		auto VS = shaderManager.GetShader(ASSET_PATH("/Engine/Assets/Shader/Sprite/VS_Sprite.hlsl").string(), "main", "vs_5_0");
+		auto PS = shaderManager.GetShader(ASSET_PATH("/Engine/Assets/Shader/Sprite/PS_Sprite.hlsl").string(), "main", "ps_5_0");
+
 
 		if (!VS || !PS)
 		{
