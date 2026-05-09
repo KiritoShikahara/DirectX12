@@ -140,6 +140,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\graphics\Data\GraphicsData.h" />
     <ClInclude Include="src\graphics\Dx12\RenderContext.h" />
     <ClInclude Include="src\graphics\Sprite\Renderer\SpriteRenderer.h" />
     <ClInclude Include="src\system\AssetPath\AssetPathManager.h" />
@@ -184,7 +185,10 @@
     <ClInclude Include="src\graphics\StructuredBuffer\StructuredBuffer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\graphics\Sprite\Renderer\SpriteRenderer.cpp" />
+    <ClCompile Include="src\graphics\Sprite\Renderer\SpriteRenderer.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\system\AssetPath\AssetPathManager.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
