@@ -103,9 +103,6 @@ namespace graphics
 		UINT64          mUploadFenceValue = 0;
 		/// <summary>アップロード完了待ちイベントハンドル</summary>
 		HANDLE          mUploadEvent = nullptr;
-	public:
-		static constexpr int FRAME_COUNT = 3;
-
 
 	};
 }

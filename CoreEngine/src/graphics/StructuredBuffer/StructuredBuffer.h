@@ -49,7 +49,6 @@ namespace graphics
         /// <returns></returns>
         D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandle() const;
 
-
 	private:
         /// <summary>
         /// フレームごとのリソース
