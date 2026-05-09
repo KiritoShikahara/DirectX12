@@ -28,7 +28,6 @@ namespace graphics
 #pragma pack(pop)
     static_assert(sizeof(SpriteShaderData) == 96, "SpriteShaderData size mismatch");
 
-
     /// <summary>
     /// FBXの頂点構造体
     /// </summary>

@@ -10,6 +10,9 @@
 #include<ecs/entity/EntityManager.h>
 #include<graphics/Dx12/RenderContext.h>
 
+#include<graphics/Shader/ShaderManager.h>
+
+
 namespace sys
 {
 
