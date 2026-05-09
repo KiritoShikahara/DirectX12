@@ -7,16 +7,27 @@ namespace graphics
 {
     struct SpriteVertex
     {
-        DirectX::XMFLOAT3 Pos;   // 座標
-        DirectX::XMFLOAT2 UV;    // テクスチャ座標
+        DirectX::XMFLOAT3 Position;   // 単位クワッド座標 {0,0,0}〜{1,1,0}
+        DirectX::XMFLOAT2 TexCoord;   // UV 座標         {0,0}〜{1,1}
     };
+    static_assert(sizeof(SpriteVertex) == 20, "SpriteVertex size mismatch");
 
-    struct SpriteShaderData {
-        DirectX::XMFLOAT4X4 WVP;    // ワールド・ビュー・プロジェクション 64
-        Color Color;  // 色 16
-        float Intensity; // 光度 4
-        float Padding[3];           // 12byte
+
+    /// <summary>
+    /// スプライト1件分のシェーダー定数データ。
+    /// SpriteRenderer から StructuredBuffer 経由でシェーダーへ渡す。
+    /// </summary>
+#pragma pack(push, 1)
+    struct SpriteShaderData
+    {
+        DirectX::XMFLOAT4X4 WVP = {};                    // ワールド × 正射影（転置済み）
+        Color               Color = graphics::Color::White; // 乗算カラー (R,G,B,A)
+        float               Intensity = 1.0f;                   // 輝度倍率
+        float               _pad[3] = {};                     // 16byte アライメント用パディング
     };
+#pragma pack(pop)
+    static_assert(sizeof(SpriteShaderData) == 96, "SpriteShaderData size mismatch");
+
 
     /// <summary>
     /// FBXの頂点構造体
