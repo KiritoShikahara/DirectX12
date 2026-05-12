@@ -112,7 +112,7 @@ namespace sys
 			{
 				std::string message = std::vformat(
 					msg.fmt,
-					std::make_format_args(std::forward<Args>(args)...));
+					std::make_format_args(args...));
 
 				Dispatch(level, message, msg.location);
 			}

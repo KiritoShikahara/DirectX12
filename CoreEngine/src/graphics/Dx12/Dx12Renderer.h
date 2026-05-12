@@ -84,10 +84,6 @@ namespace graphics
 		UINT GetCurrentFrameIndex() const;
 
 	public:
-		/// <summary>
-		/// トリプルバッファ数。待ちを減らすために2ではなく3を採用。
-		/// </summary>
-		static constexpr int FRAME_COUNT = 3;
 
 	private:
 		bool InitializeCommandObjects();
@@ -122,7 +118,7 @@ namespace graphics
 		CmdList      mCmdList;
 
 		/// <summary>フレームごとのリソース配列</summary>
-		std::array<FrameResource, FRAME_COUNT> mFrames;
+		std::array<FrameResource, graphics::FRAME_COUNT> mFrames;
 
 		/// <summary>深度バッファリソース（前後関係の判定に使う）</summary>
 		Resource     mDepthBuffer;

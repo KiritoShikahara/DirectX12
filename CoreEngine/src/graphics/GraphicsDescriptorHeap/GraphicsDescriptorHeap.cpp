@@ -9,15 +9,6 @@ namespace graphics
 		Release();
 	}
 
-	GDescriptorHeap::GDescriptorHeap(GDescriptorHeap&& other) noexcept
-		: mHeapInfo(other.mHeapInfo)
-		, mManager(other.mManager)
-	{
-		// 移譲元を無効化して二重解放を防ぐ
-		other.mHeapInfo = {};
-		other.mManager = nullptr;
-	}
-
 	bool GDescriptorHeap::Create(GDescriptorHeapManager& manager, uint32_t size)
 	{
 		// 既に確保済みなら一度解放してから再確保する
@@ -64,6 +55,11 @@ namespace graphics
 	bool GDescriptorHeap::IsValid() const
 	{
 		return mHeapInfo.IsValid() && mManager != nullptr;
+	}
+
+	int GDescriptorHeap::GetIndex() const
+	{
+		return mHeapInfo.Index;
 	}
 }
 

@@ -40,4 +40,7 @@ namespace graphics
 	//	デバック
 	using DebugDevice = ComPtr<ID3D12DebugDevice2>;
 	using InfoQueue = ComPtr<ID3D12InfoQueue1>;
+
+	// フレームバッファの数
+	inline constexpr uint32_t FRAME_COUNT = 3;
 }

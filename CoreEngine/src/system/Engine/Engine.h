@@ -1,13 +1,18 @@
 #pragma once
 #include<Utility/Singleton/Singleton.hpp>
 #include<Utility/Export/Export.h>
-
+#include<system/Time/Time.h>
 #include<graphics/Dx12/Dx12Renderer.h>
 #include<memory>
 
 namespace graphics
 {
 	class DX12Device;
+}
+
+namespace ecs
+{
+	class EntityManager;
 }
 
 namespace sys
@@ -60,6 +65,11 @@ namespace sys
 
 	private:
 		/// <summary>
+		/// 時間管理
+		/// </summary>
+		sys::Time mTime;
+
+		/// <summary>
 		/// ウィンドウ管理クラス
 		/// </summary>
 		Window* mWindow;
@@ -78,5 +88,10 @@ namespace sys
 		/// ImGui管理クラス
 		/// </summary>
 		ImGuiManager* mImGuiManager;
+
+		/// <summary>
+		/// エンティティ管理クラス
+		/// </summary>
+		ecs::EntityManager* mEntityManager;
 	};
 }

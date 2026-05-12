@@ -7,6 +7,25 @@
 #include<graphics/Dx12/Dx12Device.h>
 #include<system/Logger/Logger.h>
 #include<graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeapManager.h>
+#include<ecs/entity/EntityManager.h>
+#include<graphics/Dx12/RenderContext.h>
+
+#include<graphics/Shader/ShaderManager.h>
+#include<graphics/Texture/TextureManager.h>
+#include<graphics/Sprite/Renderer/SpriteRenderer.h>
+
+#include<ecs/component/transform/TransformComponent.h>
+#include<ecs/component/sprite/SpriteComponent.h>
+#include<graphics/Texture/Texture.h>
+
+
+void SpriteRenderTest()
+{
+	auto texture = graphics::TextureManager::Get().GetOrLoad("Assets/Test/test.png");
+	auto entity = ecs::EntityManager::Get().CreateEntity();
+	auto& tr = ecs::EntityManager::Get().AddComponent<ecs::Transform>(entity);
+	auto& sprite = ecs::EntityManager::Get().AddComponent<ecs::Sprite>(entity,texture);
+}
 
 namespace sys
 {
@@ -33,6 +52,9 @@ namespace sys
 		{
 			return false;
 		}
+
+		// Timeの初期化
+		mTime.Initialize();
 
 		// ウィンドウの初期化
 		mWindow = &Window::Get();
@@ -74,6 +96,31 @@ namespace sys
 			return false;
 		}
 
+		// EntityManagerの初期化
+		mEntityManager = &ecs::EntityManager::Get();
+		if (mEntityManager->Initialize() == false)
+		{
+			return false;
+		}
+
+		// AssetsPath
+		SINGLETON_REF(sys::AssetPathManager, AssetManager);
+		AssetManager.Initialize();
+
+		// TextureManager
+		SINGLETON_REF(graphics::TextureManager, TextureManager);
+
+		// Renderer
+		SINGLETON_REF(graphics::SpriteRenderer, SpriteRenderer);
+		if(SpriteRenderer.Initialize(*mDevice, descriptorHeapManager, graphics::ShaderManager::Get(), *mWindow) == false)
+		{
+			return false;
+		}
+
+		// テスト用の読み込み
+		SpriteRenderTest();
+
+
 		mIsRunning = true;
 		mIsInitialized = true;
 
@@ -98,6 +145,9 @@ namespace sys
 			return false;
 		}
 
+		// Timeの更新
+		mTime.Update();
+
 		// TODO:更新処理
 
 		// TODO:描画処理
@@ -105,6 +155,8 @@ namespace sys
 		mRenderer->SetViewPort(
 			static_cast<float>(mWindow->GetWidth()),
 			static_cast<float>(mWindow->GetHeight()));
+
+		graphics::RenderContext::Get().SetFrameIndex(mRenderer->GetCurrentFrameIndex());
 
 		mImGuiManager->NewFrame();
 		mImGuiManager->Update();
@@ -152,7 +204,10 @@ namespace sys
 	/// </summary>
 	void Engine::Render()
 	{
-
+		SINGLETON_REF(graphics::SpriteRenderer, spriteRenderer);
+		spriteRenderer.Begin();
+		spriteRenderer.UpdateAndDraw(mEntityManager->GetRegistry());
+		spriteRenderer.End(mRenderer->GetCommandList());
 
 	}
 }

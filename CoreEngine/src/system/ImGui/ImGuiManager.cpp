@@ -55,7 +55,7 @@ namespace sys
 		ImGui_ImplDX12_InitInfo initInfo = {};
 		initInfo.Device = device.GetDevice();
 		initInfo.CommandQueue = renderer.GetCommandQueue();
-		initInfo.NumFramesInFlight = graphics::DX12Renderer::FRAME_COUNT;
+		initInfo.NumFramesInFlight = graphics::FRAME_COUNT;
 		initInfo.RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 		initInfo.DSVFormat = DXGI_FORMAT_UNKNOWN; // ImGui は深度バッファを使わない
 
