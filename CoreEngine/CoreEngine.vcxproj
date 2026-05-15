@@ -145,6 +145,8 @@
     <ClInclude Include="src\ecs\component\fbx\MeshComponent.h" />
     <ClInclude Include="src\graphics\Data\GraphicsData.h" />
     <ClInclude Include="src\graphics\Dx12\RenderContext.h" />
+    <ClInclude Include="src\graphics\Fbx\BinaryModel.h" />
+    <ClInclude Include="src\graphics\Fbx\Skeleton.h" />
     <ClInclude Include="src\graphics\Sprite\Renderer\SpriteRenderer.h" />
     <ClInclude Include="src\system\AssetPath\AssetPathManager.h" />
     <ClInclude Include="src\graphics\Shader\ShaderManager.h" />
