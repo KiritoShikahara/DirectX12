@@ -25,7 +25,7 @@ namespace graphics
 	/// <param name="size">バッファのサイズ</param>
 	/// <param name="stride">1頂点のデータサイズ</param>
 	/// <returns>true:成功</returns>
-	bool VertexBuffer::Create(const size_t Size, const size_t Stride)
+	bool VertexBuffer::CreateDynamic(const size_t Size, const size_t Stride)
 	{
 
 		mBufferSize = Size;
@@ -61,6 +61,64 @@ namespace graphics
 		return true;
 	}
 
+	bool VertexBuffer::CreateStatic(ID3D12GraphicsCommandList* CmdList, const void* InitData, const size_t Size, const size_t Stride)
+	{
+		mBufferSize = Size;
+		mStride = Stride;
+		mIsDynamic = false;
+		auto device = graphics::DX12Device::Get().GetDevice();
+
+		// Default ヒープにリソースを作成
+		auto defaultHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+		auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(mBufferSize);
+
+		HRESULT hr = device->CreateCommittedResource(
+			&defaultHeap,
+			D3D12_HEAP_FLAG_NONE,
+			&resDesc,
+			D3D12_RESOURCE_STATE_COPY_DEST, // ★最初はコピー先として作成
+			nullptr,
+			IID_PPV_ARGS(&mBufferResource)
+		);
+		if (FAILED(hr)) return false;
+
+		// CPUから書き込める Upload ヒープに一時リソースを作成
+		auto uploadHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+		hr = device->CreateCommittedResource(
+			&uploadHeap,
+			D3D12_HEAP_FLAG_NONE,
+			&resDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&mUploadResource)
+		);
+		if (FAILED(hr)) return false;
+
+		// 一時リソースにデータを書き込む
+		void* mapped = nullptr;
+		mUploadResource->Map(0, nullptr, &mapped);
+		memcpy(mapped, InitData, Size);
+		mUploadResource->Unmap(0, nullptr);
+
+		// GPU上で Upload -> Default へデータをコピーするコマンドを積む
+		CmdList->CopyBufferRegion(mBufferResource.Get(), 0, mUploadResource.Get(), 0, Size);
+
+		// バッファの状態を「コピー先」から「頂点バッファとして読み取り可能」に変更
+		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			mBufferResource.Get(),
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
+		);
+		CmdList->ResourceBarrier(1, &barrier);
+
+		// ビューのキャッシュ
+		mBufferView.BufferLocation = mBufferResource->GetGPUVirtualAddress();
+		mBufferView.SizeInBytes = static_cast<UINT>(mBufferSize);
+		mBufferView.StrideInBytes = static_cast<UINT>(mStride);
+
+		return true;
+	}
+
 	/// <summary>
 	/// バッファの解放
 	/// </summary>
@@ -72,6 +130,11 @@ namespace graphics
 			mMapped = nullptr;
 			mBufferResource.Reset();
 		}
+	}
+
+	void VertexBuffer::ReleaseUploadBuffer()
+	{
+		mUploadResource.Reset();
 	}
 
 	/// <summary>

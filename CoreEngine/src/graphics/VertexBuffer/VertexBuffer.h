@@ -20,13 +20,23 @@ namespace graphics
 		/// <param name="size">バッファのサイズ</param>
 		/// <param name="stride">1頂点のデータサイズ</param>
 		/// <returns>true:成功</returns>
-		bool Create(const size_t Size, const size_t Stride);
+		bool CreateDynamic(const size_t Size, const size_t Stride);
+
+		/// <summary>
+		/// 静的な頂点バッファの作成
+		/// </summary>
+		/// <returns></returns>
+		bool CreateStatic(ID3D12GraphicsCommandList* CmdList, const void* InitData, const size_t Size, const size_t Stride);
 
 		/// <summary>
 		/// バッファの解放
 		/// </summary>
 		void Release();
 
+		/// <summary>
+		/// アップロード用の一時バッファを解放する
+		/// </summary>
+		void ReleaseUploadBuffer();
 
 		/// <summary>
 		/// CPU上のデータをバッファへ転送する
@@ -78,6 +88,9 @@ namespace graphics
 		/// </summary>
 		Resource mBufferResource;
 
+		// 静的バッファ転送用の一時リソース
+		Resource mUploadResource;
+
 		/// <summary>
 		/// バッファの全容量
 		/// </summary>
@@ -92,6 +105,9 @@ namespace graphics
 		/// Mapされた書き込み用CPUアドレス
 		/// </summary>
 		void* mMapped;
+
+		// 動的か静的かを判別するフラグ
+		bool mIsDynamic = true;
 	};
 }
 
