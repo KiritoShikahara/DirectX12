@@ -142,6 +142,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\graphics\IndexBuffer\IndexBuffer.h" />
     <ClInclude Include="src\ecs\component\fbx\MeshComponent.h" />
     <ClInclude Include="src\graphics\Data\GraphicsData.h" />
     <ClInclude Include="src\graphics\Dx12\RenderContext.h" />
@@ -192,6 +193,10 @@
     <ClInclude Include="src\graphics\Texture\TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\graphics\IndexBuffer\IndexBuffer.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\graphics\Fbx\Skeleton.cpp" />
     <ClCompile Include="src\graphics\Sprite\Renderer\SpriteRenderer.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
