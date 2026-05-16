@@ -8,6 +8,7 @@ namespace graphics
 	VertexBuffer::VertexBuffer()
 		:mBufferView({})
 		, mBufferResource(nullptr)
+		, mUploadResource(nullptr)
 		, mBufferSize(0)
 		, mStride(0)
 		, mMapped(nullptr)
@@ -58,20 +59,27 @@ namespace graphics
 		mBufferView.SizeInBytes = static_cast<UINT>(mBufferSize);
 		mBufferView.StrideInBytes = static_cast<UINT>(mStride);
 
+		// フラグを立て
+		mIsDynamic = true;
+
+
 		return true;
 	}
 
+	/// <summary>
+	/// 静的な頂点バッファの作成
+	/// </summary>
+	/// <returns></returns>
 	bool VertexBuffer::CreateStatic(ID3D12GraphicsCommandList* CmdList, const void* InitData, const size_t Size, const size_t Stride)
 	{
 		mBufferSize = Size;
 		mStride = Stride;
 		mIsDynamic = false;
 		auto device = graphics::DX12Device::Get().GetDevice();
+		auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(mBufferSize);
 
 		// Default ヒープにリソースを作成
 		auto defaultHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-		auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(mBufferSize);
-
 		HRESULT hr = device->CreateCommittedResource(
 			&defaultHeap,
 			D3D12_HEAP_FLAG_NONE,
@@ -126,8 +134,11 @@ namespace graphics
 	{
 		if (mBufferResource != nullptr)
 		{
-			mBufferResource->Unmap(0, nullptr);
-			mMapped = nullptr;
+			if (mIsDynamic && mMapped != nullptr)
+			{
+				mBufferResource->Unmap(0, nullptr);
+				mMapped = nullptr;
+			}
 			mBufferResource.Reset();
 		}
 	}
@@ -145,6 +156,12 @@ namespace graphics
 	/// <param name="Offset">バッファ先頭からの書き込みオフセット</param>
 	void VertexBuffer::Update(const void* SrcData, size_t Size, size_t Offset)
 	{
+		if (!mIsDynamic)
+		{
+			DEBUG_LOG(sys::eLogLevel::Warning, "Attempting to update a static VertexBuffer. This operation is not allowed.");
+			return;
+		}
+
 		if (mMapped == nullptr || (Offset + Size) > mBufferSize)
 		{
 			DEBUG_LOG(sys::eLogLevel::Warning, "VertexBuffer update out of range or not initialized.");
