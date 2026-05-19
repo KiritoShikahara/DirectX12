@@ -142,6 +142,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\system\Input\Keyboard\KeyBoard.h" />
     <ClInclude Include="src\graphics\ConstantBuffer\ConstantBuffer.h" />
     <ClInclude Include="src\graphics\IndexBuffer\IndexBuffer.h" />
     <ClInclude Include="src\ecs\component\fbx\MeshComponent.h" />
@@ -164,6 +165,7 @@
     <ClInclude Include="src\graphics\GraphicsDescriptorHeap\GraphicsDescriptorHeapInfo.h" />
     <ClInclude Include="src\graphics\GraphicsDescriptorHeap\GraphicsDescriptorHeapManager.h" />
     <ClInclude Include="src\system\Input\InputManager.h" />
+    <ClInclude Include="src\system\Input\Keyboard\KeyCode.h" />
     <ClInclude Include="src\system\Logger\Logger.h" />
     <ClInclude Include="src\graphics\Color\Color.h" />
     <ClInclude Include="external\DirectX12MA\D3D12MemAlloc.h">
@@ -195,6 +197,10 @@
     <ClInclude Include="src\graphics\Texture\TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\system\Input\Keyboard\KeyBoard.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\graphics\ConstantBuffer\ConstantBuffer.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
