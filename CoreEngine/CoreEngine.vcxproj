@@ -143,6 +143,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\system\Input\PAD\PadManager.h" />
     <ClInclude Include="src\system\Input\PAD\Pad.h" />
     <ClInclude Include="src\system\Input\Mouse\Mouse.h" />
     <ClInclude Include="src\system\Input\Keyboard\KeyBoard.h" />
@@ -202,6 +203,7 @@
     <ClInclude Include="src\graphics\Texture\TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\system\Input\PAD\PadManager.cpp" />
     <ClCompile Include="src\system\Input\PAD\Pad.cpp" />
     <ClCompile Include="src\system\Input\Mouse\Mouse.cpp" />
     <ClCompile Include="src\system\Input\Keyboard\KeyBoard.cpp">
