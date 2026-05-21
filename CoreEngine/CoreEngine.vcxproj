@@ -170,6 +170,7 @@
     <ClInclude Include="src\system\Input\InputManager.h" />
     <ClInclude Include="src\system\Input\Keyboard\KeyCode.h" />
     <ClInclude Include="src\system\Input\Mouse\MouseButton.h" />
+    <ClInclude Include="src\system\Input\PAD\PadButton.h" />
     <ClInclude Include="src\system\Logger\Logger.h" />
     <ClInclude Include="src\graphics\Color\Color.h" />
     <ClInclude Include="external\DirectX12MA\D3D12MemAlloc.h">
