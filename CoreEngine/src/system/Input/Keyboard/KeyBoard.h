@@ -15,37 +15,37 @@ namespace sys
 	{
 	public:
 		Keyboard();
-		virtual ~Keyboard();
+		virtual ~Keyboard() = default;
 
-		// ƒRƒs[Eƒ€[ƒu‹Ö~ (ƒ†ƒj[ƒN‚ÈƒfƒoƒCƒXó‘Ô‚ğ‚Â‚½‚ß)
+		// ã‚³ãƒ”ãƒ¼ãƒ»ãƒ ãƒ¼ãƒ–ç¦æ­¢ (ãƒ¦ãƒ‹ãƒ¼ã‚¯ãªãƒ‡ãƒã‚¤ã‚¹çŠ¶æ…‹ã‚’æŒã¤ãŸã‚)
 		Keyboard(const Keyboard&) = delete;
 		Keyboard& operator=(const Keyboard&) = delete;
 
 		/// <summary>
-		/// ƒEƒBƒ“ƒhƒEƒƒbƒZ[ƒW‚©‚ç“ü—Íó‘Ô‚ğXV‚·‚é
+		/// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‹ã‚‰å…¥åŠ›çŠ¶æ…‹ã‚’æ›´æ–°ã™ã‚‹
 		/// </summary>
-		/// <returns>ƒL[ƒ{[ƒhŠÖ˜A‚ÌƒƒbƒZ[ƒW‚È‚ç true</returns>
+		/// <returns>ã‚­ãƒ¼ãƒœãƒ¼ãƒ‰é–¢é€£ã®ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ãªã‚‰ true</returns>
 		bool ProcessEvent(UINT message, WPARAM vkCode);
 
-		/// <summary>ƒtƒŒ[ƒ€‚ÌI‚í‚è‚ÉŒÄ‚ÔB‘OƒtƒŒ[ƒ€ó‘Ô‚ğ•Û‘¶‚·‚é</summary>
+		/// <summary>ãƒ•ãƒ¬ãƒ¼ãƒ ã®çµ‚ã‚ã‚Šã«å‘¼ã¶ã€‚å‰ãƒ•ãƒ¬ãƒ¼ãƒ çŠ¶æ…‹ã‚’ä¿å­˜ã™ã‚‹</summary>
 		void Update();
 
-		/// <summary>‚±‚ÌƒtƒŒ[ƒ€‚Å‰Ÿ‚³‚ê‚½ (‘OƒtƒŒ[ƒ€‚Í—£‚ê‚Ä‚¢‚½)</summary>
+		/// <summary>ã“ã®ãƒ•ãƒ¬ãƒ¼ãƒ ã§æŠ¼ã•ã‚ŒãŸ (å‰ãƒ•ãƒ¬ãƒ¼ãƒ ã¯é›¢ã‚Œã¦ã„ãŸ)</summary>
 		[[nodiscard]] bool IsPressed(eKeyCode keyCode) const;
 
-		/// <summary>Œ»İ‰Ÿ‚³‚ê‚Ä‚¢‚é</summary>
+		/// <summary>ç¾åœ¨æŠ¼ã•ã‚Œã¦ã„ã‚‹</summary>
 		[[nodiscard]] bool IsHeld(eKeyCode keyCode) const;
 
-		/// <summary>‚±‚ÌƒtƒŒ[ƒ€‚Å—£‚³‚ê‚½ (‘OƒtƒŒ[ƒ€‚Í‰Ÿ‚³‚ê‚Ä‚¢‚½)</summary>
+		/// <summary>ã“ã®ãƒ•ãƒ¬ãƒ¼ãƒ ã§é›¢ã•ã‚ŒãŸ (å‰ãƒ•ãƒ¬ãƒ¼ãƒ ã¯æŠ¼ã•ã‚Œã¦ã„ãŸ)</summary>
 		[[nodiscard]] bool IsReleased(eKeyCode keyCode) const;
 	private:
-		/// <summary>WPARAM‚Ì‰¼‘zƒL[ƒR[ƒh‚ğ eKeyCode ‚É•ÏŠ·‚·‚é</summary>
+		/// <summary>WPARAMã®ä»®æƒ³ã‚­ãƒ¼ã‚³ãƒ¼ãƒ‰ã‚’ eKeyCode ã«å¤‰æ›ã™ã‚‹</summary>
 		static eKeyCode ToKeyCode(WPARAM vkCode);
 
-		/// <summary>ƒL[ƒR[ƒh‚ª—LŒø”ÍˆÍ“à‚©Šm”F‚·‚é</summary>
+		/// <summary>ã‚­ãƒ¼ã‚³ãƒ¼ãƒ‰ãŒæœ‰åŠ¹ç¯„å›²å†…ã‹ç¢ºèªã™ã‚‹</summary>
 		[[nodiscard]] static bool IsValid(eKeyCode keyCode);
 
-		/// <summary>ƒL[ó‘Ô‚ğXV‚·‚éƒwƒ‹ƒp[</summary>
+		/// <summary>ã‚­ãƒ¼çŠ¶æ…‹ã‚’æ›´æ–°ã™ã‚‹ãƒ˜ãƒ«ãƒ‘ãƒ¼</summary>
 		void SetKeyState(WPARAM vkCode, bool isDown);
 
 		static constexpr int kKeyCount = static_cast<int>(sys::eKeyCode::Count);

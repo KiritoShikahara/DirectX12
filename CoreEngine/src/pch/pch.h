@@ -88,3 +88,6 @@
 #endif
 
 #endif //PCH_H
+
+
+#pragma comment(lib, "windowsapp.lib")

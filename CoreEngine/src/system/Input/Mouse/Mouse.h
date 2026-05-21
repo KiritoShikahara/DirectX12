@@ -14,6 +14,7 @@ namespace sys
 {
 	class Mouse
 	{
+    public:
         Mouse();
         ~Mouse() = default;
 

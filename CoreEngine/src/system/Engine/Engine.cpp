@@ -4,6 +4,8 @@
 #include<system/Window/Window.h>
 #include<system/Engine/EngineContext.h>
 
+#include<system/Input/InputManager.h>
+
 #include<graphics/Dx12/Dx12Device.h>
 #include<system/Logger/Logger.h>
 #include<graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeapManager.h>
@@ -37,40 +39,41 @@ namespace sys
 		, mDevice(nullptr)
 		, mRenderer(nullptr)
 		, mImGuiManager(nullptr)
+		, mInputManager(nullptr)
 	{
 	}
 
 	/// <summary>
-	/// App‰Šú‰»
+	/// AppåˆæœŸåŒ–
 	/// </summary>
-	/// <param name="context">‰Šú‰»î•ñ</param>
-	/// <returns>true:¬Œ÷ false:¸”s</returns>
+	/// <param name="context">åˆæœŸåŒ–æƒ…å ±</param>
+	/// <returns>true:æˆåŠŸ false:å¤±æ•—</returns>
 	bool Engine::Initialize(EngineContext context)
 	{
-		// Logger‚Ì‰Šú‰»
+		// Loggerã®åˆæœŸåŒ–
 		if (sys::Logger::Get().Initialize() == false)
 		{
 			return false;
 		}
 
-		// Time‚Ì‰Šú‰»
+		// Timeã®åˆæœŸåŒ–
 		mTime.Initialize();
 
-		// ƒEƒBƒ“ƒhƒE‚Ì‰Šú‰»
+		// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®åˆæœŸåŒ–
 		mWindow = &Window::Get();
 		if(mWindow->Initialize(context.WindowContext) == false)
 		{
 			return false;
 		}
 
-		// DX12ƒfƒoƒCƒX‰Šú‰»
+		// DX12ãƒ‡ãƒã‚¤ã‚¹åˆæœŸåŒ–
 		mDevice = &graphics::DX12Device::Get();
 		if (mDevice->Initialize() == false)
 		{
 			return false;
 		}
 
-		// DX12•`‰æŠÇ—ƒNƒ‰ƒX‰Šú‰»
+		// DX12æç”»ç®¡ç†ã‚¯ãƒ©ã‚¹åˆæœŸåŒ–
 		mRenderer = std::make_unique<graphics::DX12Renderer>();
 		if (mRenderer->Initialize(
 			mDevice, 
@@ -82,23 +85,29 @@ namespace sys
 			return false;
 		}
 
-		// GraphicsDescriptorHeapManager‚Ì‰Šú‰»
+		// GraphicsDescriptorHeapManagerã®åˆæœŸåŒ–
 		auto& descriptorHeapManager = graphics::GDescriptorHeapManager::Get();
 		if(descriptorHeapManager.Initialize(mDevice->GetDevice()) == false)
 		{
 			return false;
 		}
 
-		// ImGuiManager‚Ì‰Šú‰»
+		// ImGuiManagerã®åˆæœŸåŒ–
 		mImGuiManager = &sys::ImGuiManager::Get();
 		if (mImGuiManager->Initialize(*mWindow, *mDevice, *mRenderer, descriptorHeapManager) == false)
 		{
 			return false;
 		}
 
-		// EntityManager‚Ì‰Šú‰»
+		// EntityManagerã®åˆæœŸåŒ–
 		mEntityManager = &ecs::EntityManager::Get();
 		if (mEntityManager->Initialize() == false)
+		{
+			return false;
+		}
+
+		mInputManager = &sys::InputManager::Get();
+		if (mInputManager->Initialize() == false)
 		{
 			return false;
 		}
@@ -117,7 +126,7 @@ namespace sys
 			return false;
 		}
 
-		// ƒeƒXƒg—p‚Ì“Ç‚İ‚İ
+		// ãƒ†ã‚¹ãƒˆç”¨ã®èª­ã¿è¾¼ã¿
 		SpriteRenderTest();
 
 
@@ -130,13 +139,13 @@ namespace sys
 	}
 
 	/// <summary>
-	/// App‚ÌÀs
+	/// Appã®å®Ÿè¡Œ
 	/// </summary>
 	bool Engine::Run()
 	{
 		if (mIsInitialized == false)  return false;
 
-		// OSƒƒbƒZˆ—
+		// OSãƒ¡ãƒƒã‚»å‡¦ç†
 		mWindow->ProcessMessages();
 
 		if (mWindow->IsQuitRequested())
@@ -145,12 +154,13 @@ namespace sys
 			return false;
 		}
 
-		// Time‚ÌXV
+		// Timeã®æ›´æ–°
 		mTime.Update();
 
-		// TODO:XVˆ—
+		// TODO:æ›´æ–°å‡¦ç†
+		this->Update();
 
-		// TODO:•`‰æˆ—
+		// TODO:æç”»å‡¦ç†
 		mRenderer->BeginRendering();
 		mRenderer->SetViewPort(
 			static_cast<float>(mWindow->GetWidth()),
@@ -165,34 +175,35 @@ namespace sys
 		mImGuiManager->EndFrame();
 		mRenderer->Flip();
 
-		// TODO:ƒtƒŒ[ƒ€‚ÌI—¹ˆ—
+		// TODO:ãƒ•ãƒ¬ãƒ¼ãƒ ã®çµ‚äº†å‡¦ç†
+		mInputManager->Update();
 
 		return true;
 	}
 
 	/// <summary>
-	/// AppI—¹ˆ—
+	/// Appçµ‚äº†å‡¦ç†
 	/// </summary>
-	/// <returns>true:¬Œ÷ false:¸”s</returns>
+	/// <returns>true:æˆåŠŸ false:å¤±æ•—</returns>
 	bool Engine::Finalize()
 	{
 		if (mIsInitialized == false)  return false;
 
-		// GPUŠ®—¹‘Ò‚¿
+		// GPUå®Œäº†å¾…ã¡
 		if (mRenderer != nullptr)
 		{
 			mRenderer->WaitForGPU();
 		}
 
-		// Dx12Renderer‚Ì”jŠü
+		// Dx12Rendererã®ç ´æ£„
 		mRenderer->Finalize();
 		mRenderer.reset();
 
-		// Dx12Device‚Ì”jŠü
+		// Dx12Deviceã®ç ´æ£„
 		mDevice->Finalize();
 		mDevice = nullptr;
 
-		// TODO:ƒƒOo—Í
+		// TODO:ãƒ­ã‚°å‡ºåŠ›
 
 		sys::Logger::Get().Finalize();
 
@@ -200,7 +211,18 @@ namespace sys
 	}
 
 	/// <summary>
-	/// •`‰æ
+	/// çŠ¶æ…‹æ›´æ–°
+	/// </summary>
+	void Engine::Update()
+	{
+		if (INPUT_PAD->IsPressed(sys::ePadButton::R2))
+		{
+			std::cout << "Push" << std::endl;
+		}
+	}
+
+	/// <summary>
+	/// æç”»
 	/// </summary>
 	void Engine::Render()
 	{
