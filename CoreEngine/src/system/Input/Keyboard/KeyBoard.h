@@ -38,12 +38,17 @@ namespace sys
 
 		/// <summary>このフレームで離された (前フレームは押されていた)</summary>
 		[[nodiscard]] bool IsReleased(eKeyCode keyCode) const;
+
+		/// <summary>ImGui デバッグ表示 (InputManager::ImGuiUpdate から呼ぶ)</summary>
+		void ImGuiUpdate() const;
 	private:
 		/// <summary>WPARAMの仮想キーコードを eKeyCode に変換する</summary>
 		static eKeyCode ToKeyCode(WPARAM vkCode);
 
 		/// <summary>キーコードが有効範囲内か確認する</summary>
 		[[nodiscard]] static bool IsValid(eKeyCode keyCode);
+
+		[[nodiscard]] static const char* KeyCodeToString(eKeyCode keyCode);
 
 		/// <summary>キー状態を更新するヘルパー</summary>
 		void SetKeyState(WPARAM vkCode, bool isDown);

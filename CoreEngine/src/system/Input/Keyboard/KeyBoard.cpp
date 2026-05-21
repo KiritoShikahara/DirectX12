@@ -1,10 +1,12 @@
 #include"pch.h"
 #include "KeyBoard.h"
 
+#include<Utility/config/DebugConfig.h>
+
 namespace sys
 {
     // -----------------------------------------------------------------------
- //  ÉRÉìÉXÉgÉâÉNÉ^
+ //  „Ç≥„É≥„Çπ„Éà„É©„ÇØ„Çø
  // -----------------------------------------------------------------------
     Keyboard::Keyboard()
     {
@@ -13,7 +15,7 @@ namespace sys
     }
 
     // -----------------------------------------------------------------------
-    //  ÉEÉBÉìÉhÉEÉÅÉbÉZÅ[ÉWèàóù
+    //  „Ç¶„Ç£„É≥„Éâ„Ç¶„É°„ÉÉ„Çª„Éº„Ç∏Âá¶ÁêÜ
     // -----------------------------------------------------------------------
     bool Keyboard::ProcessEvent(UINT message, WPARAM vkCode)
     {
@@ -31,7 +33,7 @@ namespace sys
     }
 
     // -----------------------------------------------------------------------
-    //  ÉtÉåÅ[ÉÄçXêV
+    //  „Éï„É¨„Éº„É†Êõ¥Êñ∞
     // -----------------------------------------------------------------------
     void Keyboard::Update()
     {
@@ -39,7 +41,7 @@ namespace sys
     }
 
     // -----------------------------------------------------------------------
-    //  èÛë‘ÉNÉGÉä
+    //  Áä∂ÊÖã„ÇØ„Ç®„É™
     // -----------------------------------------------------------------------
     bool Keyboard::IsPressed(eKeyCode keyCode) const
     {
@@ -62,7 +64,7 @@ namespace sys
     }
 
     // -----------------------------------------------------------------------
-    //  private ÉwÉãÉpÅ[
+    //  private „Éò„É´„Éë„Éº
     // -----------------------------------------------------------------------
     void Keyboard::SetKeyState(WPARAM vkCode, bool isDown)
     {
@@ -77,6 +79,130 @@ namespace sys
     {
         return keyCode > eKeyCode::Unknown && keyCode < eKeyCode::Count;
     }
+
+    void Keyboard::ImGuiUpdate() const
+    {
+#ifdef ENABLE_INPUT_DEBUG_KEYBOARD
+
+        if (ImGui::Begin("KeyBoard"))
+        {
+
+            // Êäº‰∏ã‰∏≠„ÅÆ„Ç≠„Éº„Çí„É™„Çπ„Éà„Ç¢„ÉÉ„Éó
+            bool anyHeld = false;
+            for (int i = 0; i < kKeyCount; ++i)
+            {
+                if (!mCurrKeys[i]) continue;
+
+                anyHeld = true;
+                const auto code = static_cast<eKeyCode>(i);
+                const bool pressed = !mPrevKeys[i];   // „Åì„ÅÆ„Éï„É¨„Éº„É†„ÅßÊäº„Åó„Åü
+                const bool released = false;            // held ‰∏≠„Å™„ÅÆ„Åß released „Å´„ÅØ„Å™„Çâ„Å™„ÅÑ
+
+                if (pressed)
+                    ImGui::TextColored({ 0.3f, 1.0f, 0.3f, 1.0f }, "[PRESS]  %s", KeyCodeToString(code));
+                else
+                    ImGui::TextColored({ 0.9f, 0.9f, 0.9f, 1.0f }, "[HELD]   %s", KeyCodeToString(code));
+            }
+
+            // „Åì„ÅÆ„Éï„É¨„Éº„É†„ÅßÈõ¢„Åó„Åü„Ç≠„Éº
+            for (int i = 0; i < kKeyCount; ++i)
+            {
+                if (mCurrKeys[i] || !mPrevKeys[i]) continue;
+                anyHeld = true;
+                const auto code = static_cast<eKeyCode>(i);
+                ImGui::TextColored({ 1.0f, 0.5f, 0.3f, 1.0f }, "[RELEASE]%s", KeyCodeToString(code));
+            }
+
+            if (!anyHeld)
+            {
+                ImGui::TextDisabled("(no key input)");
+            }
+        }
+
+        ImGui::End();
+#endif // ENABLE_INPUT_DEBUG_KEYBOARD
+    }
+
+    const char* Keyboard::KeyCodeToString(eKeyCode keyCode)
+    {
+        switch (keyCode)
+        {
+        case eKeyCode::A: return "A"; case eKeyCode::B: return "B";
+        case eKeyCode::C: return "C"; case eKeyCode::D: return "D";
+        case eKeyCode::E: return "E"; case eKeyCode::F: return "F";
+        case eKeyCode::G: return "G"; case eKeyCode::H: return "H";
+        case eKeyCode::I: return "I"; case eKeyCode::J: return "J";
+        case eKeyCode::K: return "K"; case eKeyCode::L: return "L";
+        case eKeyCode::M: return "M"; case eKeyCode::N: return "N";
+        case eKeyCode::O: return "O"; case eKeyCode::P: return "P";
+        case eKeyCode::Q: return "Q"; case eKeyCode::R: return "R";
+        case eKeyCode::S: return "S"; case eKeyCode::T: return "T";
+        case eKeyCode::U: return "U"; case eKeyCode::V: return "V";
+        case eKeyCode::W: return "W"; case eKeyCode::X: return "X";
+        case eKeyCode::Y: return "Y"; case eKeyCode::Z: return "Z";
+        case eKeyCode::Num0: return "0"; case eKeyCode::Num1: return "1";
+        case eKeyCode::Num2: return "2"; case eKeyCode::Num3: return "3";
+        case eKeyCode::Num4: return "4"; case eKeyCode::Num5: return "5";
+        case eKeyCode::Num6: return "6"; case eKeyCode::Num7: return "7";
+        case eKeyCode::Num8: return "8"; case eKeyCode::Num9: return "9";
+        case eKeyCode::Escape:    return "Escape";
+        case eKeyCode::LControl:  return "LCtrl";
+        case eKeyCode::LShift:    return "LShift";
+        case eKeyCode::LAlt:      return "LAlt";
+        case eKeyCode::LSystem:   return "LWin";
+        case eKeyCode::RControl:  return "RCtrl";
+        case eKeyCode::RShift:    return "RShift";
+        case eKeyCode::RAlt:      return "RAlt";
+        case eKeyCode::RSystem:   return "RWin";
+        case eKeyCode::Menu:      return "Menu";
+        case eKeyCode::Space:     return "Space";
+        case eKeyCode::Enter:     return "Enter";
+        case eKeyCode::Backspace: return "Backspace";
+        case eKeyCode::Tab:       return "Tab";
+        case eKeyCode::Pause:     return "Pause";
+        case eKeyCode::Insert:    return "Insert";
+        case eKeyCode::Delete:    return "Delete";
+        case eKeyCode::Home:      return "Home";
+        case eKeyCode::End:       return "End";
+        case eKeyCode::PageUp:    return "PageUp";
+        case eKeyCode::PageDown:  return "PageDown";
+        case eKeyCode::Left:      return "Left";
+        case eKeyCode::Right:     return "Right";
+        case eKeyCode::Up:        return "Up";
+        case eKeyCode::Down:      return "Down";
+        case eKeyCode::F1:  return "F1";  case eKeyCode::F2:  return "F2";
+        case eKeyCode::F3:  return "F3";  case eKeyCode::F4:  return "F4";
+        case eKeyCode::F5:  return "F5";  case eKeyCode::F6:  return "F6";
+        case eKeyCode::F7:  return "F7";  case eKeyCode::F8:  return "F8";
+        case eKeyCode::F9:  return "F9";  case eKeyCode::F10: return "F10";
+        case eKeyCode::F11: return "F11"; case eKeyCode::F12: return "F12";
+        case eKeyCode::F13: return "F13"; case eKeyCode::F14: return "F14";
+        case eKeyCode::F15: return "F15";
+        case eKeyCode::Numpad0: return "Num0"; case eKeyCode::Numpad1: return "Num1";
+        case eKeyCode::Numpad2: return "Num2"; case eKeyCode::Numpad3: return "Num3";
+        case eKeyCode::Numpad4: return "Num4"; case eKeyCode::Numpad5: return "Num5";
+        case eKeyCode::Numpad6: return "Num6"; case eKeyCode::Numpad7: return "Num7";
+        case eKeyCode::Numpad8: return "Num8"; case eKeyCode::Numpad9: return "Num9";
+        case eKeyCode::Add:          return "Num+";
+        case eKeyCode::Subtract:     return "Num-";
+        case eKeyCode::Multiply:     return "Num*";
+        case eKeyCode::Divide:       return "Num/";
+        case eKeyCode::NumpadPeriod: return "Num.";
+        case eKeyCode::LBracket:     return "[";
+        case eKeyCode::RBracket:     return "]";
+        case eKeyCode::Semicolon:    return ";";
+        case eKeyCode::Comma:        return ",";
+        case eKeyCode::Period:       return ".";
+        case eKeyCode::Apostrophe:   return "'";
+        case eKeyCode::Slash:        return "/";
+        case eKeyCode::Backslash:    return "\\";
+        case eKeyCode::Grave:        return "`";
+        case eKeyCode::Equal:        return "=";
+        case eKeyCode::Hyphen:       return "-";
+        default: return "Unknown";
+        }
+    }
+
 
     eKeyCode Keyboard::ToKeyCode(WPARAM vk)
     {
@@ -110,7 +236,7 @@ namespace sys
         case 'Y': return eKeyCode::Y;
         case 'Z': return eKeyCode::Z;
 
-            // êîéöÉLÅ[
+            // Êï∞Â≠ó„Ç≠„Éº
         case '0': return eKeyCode::Num0;
         case '1': return eKeyCode::Num1;
         case '2': return eKeyCode::Num2;
@@ -122,10 +248,10 @@ namespace sys
         case '8': return eKeyCode::Num8;
         case '9': return eKeyCode::Num9;
 
-            // êßå‰ÉLÅ[
+            // Âà∂Âæ°„Ç≠„Éº
         case VK_ESCAPE:    return eKeyCode::Escape;
         case VK_LCONTROL:  return eKeyCode::LControl;
-        case VK_LSHIFT:    return eKeyCode::LShift;   // èCê≥: VK_SHIFT Å® VK_LSHIFT
+        case VK_LSHIFT:    return eKeyCode::LShift;   // ‰øÆÊ≠£: VK_SHIFT ‚Üí VK_LSHIFT
         case VK_LMENU:     return eKeyCode::LAlt;
         case VK_LWIN:      return eKeyCode::LSystem;
         case VK_RCONTROL:  return eKeyCode::RControl;
@@ -139,7 +265,7 @@ namespace sys
         case VK_TAB:       return eKeyCode::Tab;
         case VK_PAUSE:     return eKeyCode::Pause;
 
-            // ãLçÜÉLÅ[
+            // Ë®òÂè∑„Ç≠„Éº
         case VK_OEM_4:     return eKeyCode::LBracket;   // [
         case VK_OEM_6:     return eKeyCode::RBracket;   // ]
         case VK_OEM_1:     return eKeyCode::Semicolon;  // ;
@@ -152,7 +278,7 @@ namespace sys
         case VK_OEM_PLUS:  return eKeyCode::Equal;      // =
         case VK_OEM_MINUS: return eKeyCode::Hyphen;     // -
 
-            // ÉiÉrÉQÅ[ÉVÉáÉì
+            // „Éä„Éì„Ç≤„Éº„Ç∑„Éß„É≥
         case VK_PRIOR:  return eKeyCode::PageUp;
         case VK_NEXT:   return eKeyCode::PageDown;
         case VK_END:    return eKeyCode::End;
@@ -164,7 +290,7 @@ namespace sys
         case VK_UP:     return eKeyCode::Up;
         case VK_DOWN:   return eKeyCode::Down;
 
-            // ÉeÉìÉLÅ[
+            // „ÉÜ„É≥„Ç≠„Éº
         case VK_NUMPAD0:  return eKeyCode::Numpad0;
         case VK_NUMPAD1:  return eKeyCode::Numpad1;
         case VK_NUMPAD2:  return eKeyCode::Numpad2;
@@ -179,9 +305,9 @@ namespace sys
         case VK_SUBTRACT: return eKeyCode::Subtract;
         case VK_MULTIPLY: return eKeyCode::Multiply;
         case VK_DIVIDE:   return eKeyCode::Divide;
-        case VK_DECIMAL:  return eKeyCode::NumpadPeriod; // èCê≥: Period Ç∆ÇÃè’ìÀÇâè¡
+        case VK_DECIMAL:  return eKeyCode::NumpadPeriod; // ‰øÆÊ≠£: Period „Å®„ÅÆË°ùÁ™Å„ÇíËß£Ê∂à
 
-            // ÉtÉ@ÉìÉNÉVÉáÉìÉLÅ[
+            // „Éï„Ç°„É≥„ÇØ„Ç∑„Éß„É≥„Ç≠„Éº
         case VK_F1:  return eKeyCode::F1;
         case VK_F2:  return eKeyCode::F2;
         case VK_F3:  return eKeyCode::F3;

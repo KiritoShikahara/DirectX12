@@ -154,21 +154,26 @@ namespace sys
          // InputManager が CollapsingHeader を開いた内側でこの関数を呼ぶ
         std::lock_guard lock(mMutex);
 
-        if (mPads.empty())
+        if (ImGui::Begin("Controller"))
         {
-            ImGui::TextDisabled("(no gamepad connected)");
-            return;
-        }
-
-        for (int i = 0; i < static_cast<int>(mPads.size()); ++i)
-        {
-            const std::string label = "Gamepad " + std::to_string(i);
-            if (ImGui::TreeNode(label.c_str()))
+            if (mPads.empty())
             {
-                mPads[i].ImGuiUpdate();
-                ImGui::TreePop();
+                ImGui::TextDisabled("(no gamepad connected)");
+                return;
+            }
+
+            for (int i = 0; i < static_cast<int>(mPads.size()); ++i)
+            {
+                const std::string label = "Gamepad " + std::to_string(i);
+                if (ImGui::TreeNode(label.c_str()))
+                {
+                    mPads[i].ImGuiUpdate();
+                    ImGui::TreePop();
+                }
             }
         }
+
+        ImGui::End();
 #endif // ENABLE_INPUT_DEBUG_PAD
     }
 }

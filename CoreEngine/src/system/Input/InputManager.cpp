@@ -1,6 +1,8 @@
 #include"pch.h"
 #include"InputManager.h"
 
+#include<Utility/config/DebugConfig.h>
+
 namespace sys
 {
     bool InputManager::Initialize()
@@ -23,6 +25,25 @@ namespace sys
         AddAction("Skill1", { eKeyCode::Q,       ePadButton::L1 });
         AddAction("Skill2", { eKeyCode::E,       ePadButton::R1 });
         AddAction("Option", { eKeyCode::Escape,  ePadButton::Menu });
+
+        /*
+        * ImGuiに登録
+        */
+#ifdef ENABLE_INPUT_DEBUG_SHOW
+        sys::ImGuiManager::Get().AddDebugUI([this]() 
+            {
+                mPadManager->ImGuiUpdate();
+            });
+
+        sys::ImGuiManager::Get().AddDebugUI([this]()
+            {
+                mKeyboard->ImGuiUpdate();
+            });
+
+
+#endif // ENABLE_INPUT_DEBUG_SHOW
+
+
 
 		mIsInitialized = true;
 
