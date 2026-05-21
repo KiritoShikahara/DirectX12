@@ -7,3 +7,6 @@
 /App/x64/Debug
 /x64/Debug
 /App/ecse_log.txt
+/App/x64/Release
+/CoreEngine/x64/Release
+/x64/Release
