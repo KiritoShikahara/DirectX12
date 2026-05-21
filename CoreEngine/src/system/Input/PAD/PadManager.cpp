@@ -3,6 +3,8 @@
 
 #include <winrt/Windows.Foundation.Collections.h>
 
+#include<Utility/config/DebugConfig.h>
+
 namespace sys
 {
     PadManager::PadManager()
@@ -148,22 +150,25 @@ namespace sys
     // -----------------------------------------------------------------------
     void PadManager::ImGuiUpdate()
     {
-#ifdef _DEBUG
-        ImGui::Begin("Gamepad Monitor");
-
+#ifdef ENABLE_INPUT_DEBUG_PAD
+         // InputManager が CollapsingHeader を開いた内側でこの関数を呼ぶ
         std::lock_guard lock(mMutex);
-        ImGui::Text("Connected Pads: %zu", mPads.size());
-        ImGui::Separator();
+
+        if (mPads.empty())
+        {
+            ImGui::TextDisabled("(no gamepad connected)");
+            return;
+        }
 
         for (int i = 0; i < static_cast<int>(mPads.size()); ++i)
         {
-            if (ImGui::CollapsingHeader(("Gamepad " + std::to_string(i)).c_str()))
+            const std::string label = "Gamepad " + std::to_string(i);
+            if (ImGui::TreeNode(label.c_str()))
             {
                 mPads[i].ImGuiUpdate();
+                ImGui::TreePop();
             }
         }
-
-        ImGui::End();
-#endif // _DEBUG
+#endif // ENABLE_INPUT_DEBUG_PAD
     }
 }

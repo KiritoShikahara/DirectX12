@@ -183,6 +183,9 @@
     <ClInclude Include="src\system\Input\PAD\PadManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\Utility\config\DebugConfig.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics\Dx12\Dx12Device.cpp">

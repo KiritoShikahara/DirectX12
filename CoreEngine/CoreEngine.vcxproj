@@ -194,6 +194,7 @@
     <ClInclude Include="src\pch\pch.h" />
     <ClInclude Include="src\system\Engine\EngineContext.h" />
     <ClInclude Include="src\system\Window\WindowContext.h" />
+    <ClInclude Include="src\Utility\config\DebugConfig.h" />
     <ClInclude Include="src\Utility\Export\Export.h" />
     <ClInclude Include="src\Utility\Singleton\Singleton.hpp" />
     <ClInclude Include="src\system\Window\Window.h" />
