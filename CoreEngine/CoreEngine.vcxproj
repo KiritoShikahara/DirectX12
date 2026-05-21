@@ -205,7 +205,10 @@
   <ItemGroup>
     <ClCompile Include="src\system\Input\PAD\PadManager.cpp" />
     <ClCompile Include="src\system\Input\PAD\Pad.cpp" />
-    <ClCompile Include="src\system\Input\Mouse\Mouse.cpp" />
+    <ClCompile Include="src\system\Input\Mouse\Mouse.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\system\Input\Keyboard\KeyBoard.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>

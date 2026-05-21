@@ -11,6 +11,7 @@
 
 #define NOMINMAX
 #include <windows.h>
+#include <windowsx.h>
 
 #include<utility>
 #include<type_traits>
