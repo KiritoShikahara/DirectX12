@@ -146,6 +146,8 @@ namespace graphics
             const std::vector<FbxVertex>& verts,
             const std::vector<uint32_t>& indices);
 
+        void ResolveTextures(const std::filesystem::path& textureDir);
+
         static std::string ReadString(FILE* fp);
 
         bool mIsLoaded = false;

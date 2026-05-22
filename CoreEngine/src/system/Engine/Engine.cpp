@@ -16,6 +16,11 @@
 #include<graphics/Texture/TextureManager.h>
 #include<graphics/Sprite/Renderer/SpriteRenderer.h>
 
+#include<graphics/Fbx/Renderer/FbxRenderer.h>
+#include<graphics/Fbx/Resouce/FbxResourceManager.h>
+#include<ecs/component/fbx/FbxComponent.h>
+#include<ecs/component/fbx/AnimationComponent.h>
+
 #include<ecs/component/transform/TransformComponent.h>
 #include<ecs/component/sprite/SpriteComponent.h>
 #include<graphics/Texture/Texture.h>
@@ -27,6 +32,12 @@ void SpriteRenderTest()
 	auto entity = ecs::EntityManager::Get().CreateEntity();
 	auto& tr = ecs::EntityManager::Get().AddComponent<ecs::Transform>(entity);
 	auto& sprite = ecs::EntityManager::Get().AddComponent<ecs::Sprite>(entity,texture);
+}
+
+void FbxRenderTest()
+{
+	auto entity = ecs::EntityManager::Get().CreateEntity();
+	auto& tr = ecs::EntityManager::Get().AddComponent<ecs::Transform>(entity);
 }
 
 namespace sys
@@ -126,9 +137,16 @@ namespace sys
 			return false;
 		}
 
+		// Fbx Renderer
+		SINGLETON_REF(graphics::FbxRenderer, FbxRenderer);
+		if (FbxRenderer.Initialize(*mDevice, descriptorHeapManager, graphics::ShaderManager::Get()) == false)
+		{
+			return false;
+		}
+
 		// テスト用の読み込み
 		SpriteRenderTest();
-
+		FbxRenderTest();
 
 		mIsRunning = true;
 		mIsInitialized = true;
@@ -230,6 +248,11 @@ namespace sys
 		spriteRenderer.Begin();
 		spriteRenderer.UpdateAndDraw(mEntityManager->GetRegistry());
 		spriteRenderer.End(mRenderer->GetCommandList());
+
+		SINGLETON_REF(graphics::FbxRenderer, fbxRenderer);
+		fbxRenderer.Begin();
+		fbxRenderer.UpdateAndDraw(mEntityManager->GetRegistry());
+		fbxRenderer.End(mRenderer->GetCommandList());
 
 	}
 }

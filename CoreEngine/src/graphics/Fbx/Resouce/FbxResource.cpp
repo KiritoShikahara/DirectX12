@@ -1,6 +1,9 @@
 #include"pch.h"
 #include "FbxResource.h"
 
+#include<graphics/Texture/TextureManager.h>
+#include<graphics/Texture/Texture.h>
+
 namespace graphics
 {
     /// <summary>
@@ -49,6 +52,8 @@ namespace graphics
         {
             return false;
         }
+
+        ResolveTextures(std::filesystem::path(binPath).parent_path());
 
         mIsLoaded = true;
         DEBUG_LOG(sys::eLogLevel::Log,
@@ -219,5 +224,32 @@ namespace graphics
         }
 
         return true;
+    }
+
+
+    void FbxResource::ResolveTextures(const std::filesystem::path& textureDir)
+    {
+        auto& texManager = graphics::TextureManager::Get();
+
+        for (auto& sec : mSections)
+        {
+            // ディフューズ
+            if (!sec.DiffuseTexturePath.empty())
+            {
+                sec.DiffuseTexture = texManager.GetOrLoad(textureDir / sec.DiffuseTexturePath);
+                if (!sec.DiffuseTexture)
+                {
+                    DEBUG_LOG(sys::eLogLevel::Warning,
+                        std::format("FbxResource: Diffuse texture not found: {}",
+                            sec.DiffuseTexturePath));
+                }
+            }
+
+            // 法線マップ（存在しない場合はnullptrのまま、シェーダ側でフォールバック）
+            if (!sec.NormalTexturePath.empty())
+            {
+                sec.NormalTexture = texManager.GetOrLoad(textureDir / sec.NormalTexturePath);
+            }
+        }
     }
 }
