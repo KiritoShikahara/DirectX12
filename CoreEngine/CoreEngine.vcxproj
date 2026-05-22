@@ -143,18 +143,16 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\graphics\Fbx\Renderer\FbxRenderer.h" />
+    <ClInclude Include="src\graphics\Fbx\Pipeline\FbxPipeline.h" />
     <ClInclude Include="src\system\Input\PAD\PadManager.h" />
     <ClInclude Include="src\system\Input\PAD\Pad.h" />
     <ClInclude Include="src\system\Input\Mouse\Mouse.h" />
     <ClInclude Include="src\system\Input\Keyboard\KeyBoard.h" />
     <ClInclude Include="src\graphics\ConstantBuffer\ConstantBuffer.h" />
     <ClInclude Include="src\graphics\IndexBuffer\IndexBuffer.h" />
-    <ClInclude Include="src\ecs\component\fbx\MeshComponent.h" />
     <ClInclude Include="src\graphics\Data\GraphicsData.h" />
     <ClInclude Include="src\graphics\Dx12\RenderContext.h" />
-    <ClInclude Include="src\graphics\Fbx\BinaryModel.h" />
-    <ClInclude Include="src\graphics\Fbx\Mesh.h" />
-    <ClInclude Include="src\graphics\Fbx\Skeleton.h" />
     <ClInclude Include="src\graphics\Sprite\Renderer\SpriteRenderer.h" />
     <ClInclude Include="src\system\AssetPath\AssetPathManager.h" />
     <ClInclude Include="src\graphics\Shader\ShaderManager.h" />
@@ -204,6 +202,11 @@
     <ClInclude Include="src\graphics\Texture\TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\graphics\Fbx\Renderer\FbxRenderer.cpp" />
+    <ClCompile Include="src\graphics\Fbx\Pipeline\FbxPipeline.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\system\Input\InputManager.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
@@ -232,7 +235,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\graphics\Fbx\Skeleton.cpp" />
     <ClCompile Include="src\graphics\Sprite\Renderer\SpriteRenderer.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
