@@ -89,6 +89,7 @@ namespace graphics
 
         /// <summary>‰Šú‰»Ï‚İƒtƒ‰ƒO</summary>
         bool mIsInitialized = false;
+
     };
 
 } // namespace graphics
