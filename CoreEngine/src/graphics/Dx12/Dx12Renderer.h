@@ -2,6 +2,8 @@
 
 #include<Utility/Export/Export.h>
 #include<graphics/Color/Color.h>
+#include<Utility/Singleton/Singleton.hpp>
+#include<Utility/Export/Export.h>
 
 #include<array>
 #include"Dx12Type.h"
@@ -15,11 +17,11 @@ namespace graphics
 	/// スワップチェインを使ったフレーム描画ループを担う。
 	/// デバイス層（DX12Device）に依存する。
 	/// </summary>
-	class ENGINE_API DX12Renderer
+	class ENGINE_API DX12Context
 	{
 	public:
-		DX12Renderer();
-		virtual ~DX12Renderer();
+		DX12Context();
+		virtual ~DX12Context();
 
 		/// <summary>
 		/// 初期化
@@ -142,5 +144,16 @@ namespace graphics
 		/// <summary>バックバッファのフォーマット</summary>
 		DXGI_FORMAT  mFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	};
+
+	class ENGINE_API DX12Renderer : public utility::Singleton<DX12Renderer>
+	{
+		SINGLETON_CLASS(DX12Renderer);
+	public:
+		SINGLETON_ACCESSOR(DX12Renderer);
+
+	private:
+
+	};
+
 }
 

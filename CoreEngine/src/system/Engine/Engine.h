@@ -88,7 +88,7 @@ namespace sys
 		/// <summary>
 		/// Dx12描画管理クラス
 		/// </summary>
-		std::unique_ptr<graphics::DX12Renderer> mRenderer;
+		std::unique_ptr<graphics::DX12Context> mRenderer;
 
 		/// <summary>
 		/// ImGui管理クラス

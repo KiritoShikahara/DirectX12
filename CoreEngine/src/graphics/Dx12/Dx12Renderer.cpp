@@ -4,7 +4,7 @@
 
 namespace graphics
 {
-	DX12Renderer::DX12Renderer()
+	DX12Context::DX12Context()
 		: mDeviceService(nullptr)
 		, mSwapChain(nullptr)
 		 , mCmdQueue(nullptr)
@@ -18,7 +18,7 @@ namespace graphics
 		mClearColor = graphics::Color::Gray;
 	}
 
-	DX12Renderer::~DX12Renderer()
+	DX12Context::~DX12Context()
 	{
 	}
 
@@ -30,7 +30,7 @@ namespace graphics
 	/// <param name="Width">スクリーン横幅</param>
 	/// <param name="Height">スクリーン縦幅</param>
 	/// <returns>true:成功</returns>
-	bool DX12Renderer::Initialize(DX12Device* pDevice, HWND WindowHandle, UINT Width, UINT Height)
+	bool DX12Context::Initialize(DX12Device* pDevice, HWND WindowHandle, UINT Width, UINT Height)
 	{
 		if (pDevice == nullptr) return false;
 		mDeviceService = pDevice;
@@ -63,7 +63,7 @@ namespace graphics
 		return true;
 	}
 
-	bool DX12Renderer::Finalize()
+	bool DX12Context::Finalize()
 	{
 		WaitForGPU();
 
@@ -97,7 +97,7 @@ namespace graphics
 	/// フレーム描画の開始
 	/// （バックバッファのクリア・レンダーターゲット設定）
 	/// </summary>
-	void DX12Renderer::BeginRendering()
+	void DX12Context::BeginRendering()
 	{
 		// 次に描画するバックバッファのインデックスを取得
 		mFrameIndex = mSwapChain->GetCurrentBackBufferIndex();
@@ -141,7 +141,7 @@ namespace graphics
 	/// <summary>
 	/// 画面のフリップ（コマンド送信・Present）
 	/// </summary>
-	void DX12Renderer::Flip()
+	void DX12Context::Flip()
 	{
 		// バックバッファをRENDER_TARGETからPRESENTへ遷移
 		D3D12_RESOURCE_BARRIER barrier = {};
@@ -169,7 +169,7 @@ namespace graphics
 	/// <summary>
 	/// 全GPUコマンドの完了を待機する
 	/// </summary>
-	void DX12Renderer::WaitForGPU()
+	void DX12Context::WaitForGPU()
 	{
 		// 現在の値でSignalして完了まで待機
 		mNextFenceValue++;
@@ -187,7 +187,7 @@ namespace graphics
 	/// <summary>
 	/// ビューポートとシザー矩形の設定
 	/// </summary>
-	void DX12Renderer::SetViewPort(float Width, float Height, float x, float y)
+	void DX12Context::SetViewPort(float Width, float Height, float x, float y)
 	{
 		D3D12_VIEWPORT viewport = { x, y, Width, Height, 0.0f, 1.0f };
 		D3D12_RECT scissor = { (LONG)x, (LONG)y, (LONG)(x + Width), (LONG)(y + Height) };
@@ -199,7 +199,7 @@ namespace graphics
 	/// <summary>
 	/// 描画用コマンドリストの取得
 	/// </summary>
-	ID3D12GraphicsCommandList* DX12Renderer::GetCommandList()
+	ID3D12GraphicsCommandList* DX12Context::GetCommandList()
 	{
 		return mCmdList.Get();
 	}
@@ -207,7 +207,7 @@ namespace graphics
 	/// <summary>
 	/// 現在フレームのコマンドアロケーターの取得
 	/// </summary>
-	ID3D12CommandAllocator* DX12Renderer::GetCommandAllocator()
+	ID3D12CommandAllocator* DX12Context::GetCommandAllocator()
 	{
 		return mFrames[mFrameIndex].Allocator.Get();
 	}
@@ -215,7 +215,7 @@ namespace graphics
 	/// <summary>
 	/// コマンドキューの取得
 	/// </summary>
-	ID3D12CommandQueue* DX12Renderer::GetCommandQueue()
+	ID3D12CommandQueue* DX12Context::GetCommandQueue()
 	{
 		return mCmdQueue.Get();
 	}
@@ -223,7 +223,7 @@ namespace graphics
 	/// <summary>
 	/// 現在フレームのD3D12MAアップロードプールの取得
 	/// </summary>
-	D3D12MA::Pool* DX12Renderer::GetMAUploadPool()
+	D3D12MA::Pool* DX12Context::GetMAUploadPool()
 	{
 		return mFrames[mFrameIndex].UploadPool.Get();
 	}
@@ -231,12 +231,12 @@ namespace graphics
 	/// <summary>
 	/// 現在フレームのインデックスの取得
 	/// </summary>
-	UINT DX12Renderer::GetCurrentFrameIndex()const
+	UINT DX12Context::GetCurrentFrameIndex()const
 	{
 		return mFrameIndex;
 	}
 
-	bool DX12Renderer::InitializeCommandObjects()
+	bool DX12Context::InitializeCommandObjects()
 	{
 		ID3D12Device* device = mDeviceService->GetDevice();
 		HRESULT hr = S_OK;
@@ -293,7 +293,7 @@ namespace graphics
 		return true;
 	}
 
-	bool DX12Renderer::InitializeSwapChain(HWND WindowHandle, UINT Width, UINT Height)
+	bool DX12Context::InitializeSwapChain(HWND WindowHandle, UINT Width, UINT Height)
 	{
 		DXGI_SWAP_CHAIN_DESC1 scDesc = {};
 		scDesc.Width = Width;
@@ -330,7 +330,7 @@ namespace graphics
 		return true;
 	}
 
-	bool DX12Renderer::InitializeBackBufferHeap()
+	bool DX12Context::InitializeBackBufferHeap()
 	{
 		ID3D12Device* device = mDeviceService->GetDevice();
 
@@ -367,7 +367,7 @@ namespace graphics
 		return true;
 	}
 
-	bool DX12Renderer::InitializeDepthHeap(UINT Width, UINT Height)
+	bool DX12Context::InitializeDepthHeap(UINT Width, UINT Height)
 	{
 		ID3D12Device* device = mDeviceService->GetDevice();
 
@@ -423,7 +423,7 @@ namespace graphics
 		return true;
 	}
 
-	bool DX12Renderer::InitializeFence()
+	bool DX12Context::InitializeFence()
 	{
 		HRESULT hr = mDeviceService->GetDevice()->CreateFence(
 			0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence));
