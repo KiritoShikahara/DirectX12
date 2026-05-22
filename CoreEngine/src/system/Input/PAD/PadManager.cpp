@@ -159,7 +159,6 @@ namespace sys
             if (mPads.empty())
             {
                 ImGui::TextDisabled("(no gamepad connected)");
-                return;
             }
 
             for (int i = 0; i < static_cast<int>(mPads.size()); ++i)
