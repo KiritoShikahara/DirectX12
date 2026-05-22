@@ -180,6 +180,18 @@
     <ClInclude Include="src\graphics\Fbx\Renderer\FbxRenderer.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\Fbx\Resouce\FbxSource.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ecs\component\fbx\FbxComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ecs\component\fbx\AnimationComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\Fbx\Resouce\FbxResourceManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics\Dx12\Dx12Device.cpp">
@@ -299,13 +311,25 @@
     <ClCompile Include="src\graphics\Fbx\Renderer\FbxRenderer.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\Fbx\Resouce\FbxSource.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ecs\component\fbx\AnimationComponent.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Fbx\Resouce\FbxResourceManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="Assets\Shader\Sprite\SpriteHeader.hlsli" />
+    <None Include="Assets\Shader\Fbx\FbxHeader.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Assets\Shader\Sprite\PS_Sprite.hlsl" />
     <FxCompile Include="Assets\Shader\Sprite\VS_Sprite.hlsl" />
+    <FxCompile Include="Assets\Shader\Fbx\VS_Fbx.hlsl" />
+    <FxCompile Include="Assets\Shader\Fbx\PS_Fbx.hlsl" />
   </ItemGroup>
 </Project>
