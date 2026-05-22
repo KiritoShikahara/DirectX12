@@ -3,7 +3,7 @@
 
 #include<system/Window/Window.h>
 #include<graphics/Dx12/Dx12Device.h>
-#include<graphics/Dx12/Dx12Renderer.h>
+#include<graphics/Dx12/Dx12Context.h>
 #include<graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeapManager.h>
 
 #include<ImGui/imgui.h>
@@ -17,7 +17,7 @@ namespace sys
 	/// ImGui初期化
 	/// </summary>
 	/// <returns>true:成功 false:失敗</returns>
-	bool ImGuiManager::Initialize(sys::Window& window, graphics::DX12Device& device, graphics::DX12Renderer& renderer, graphics::GDescriptorHeapManager& descriptorHeapManager)
+	bool ImGuiManager::Initialize(sys::Window& window, graphics::DX12Device& device, graphics::DX12Context& context, graphics::GDescriptorHeapManager& descriptorHeapManager)
 	{
 		IMGUI_CHECKVERSION();
 		mContext = ImGui::CreateContext();
@@ -54,7 +54,7 @@ namespace sys
 		// ---- DX12 バックエンドの初期化 ----
 		ImGui_ImplDX12_InitInfo initInfo = {};
 		initInfo.Device = device.GetDevice();
-		initInfo.CommandQueue = renderer.GetCommandQueue();
+		initInfo.CommandQueue = context.GetCommandQueue();
 		initInfo.NumFramesInFlight = graphics::FRAME_COUNT;
 		initInfo.RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 		initInfo.DSVFormat = DXGI_FORMAT_UNKNOWN; // ImGui は深度バッファを使わない
@@ -70,7 +70,7 @@ namespace sys
 		}
 
 		// EndFrame() で毎フレーム使うものだけ保持する
-		mRenderer = &renderer;
+		mRendererContext = &context;
 		mHeapManager = &descriptorHeapManager;
 
 		mIsInitialized = true;
@@ -94,7 +94,7 @@ namespace sys
 			ImGui::DestroyContext(mContext);
 			mContext = nullptr;
 		}
-		mRenderer = nullptr;
+		mRendererContext = nullptr;
 		mHeapManager = nullptr;
 		mIsInitialized = false;
 
@@ -138,7 +138,7 @@ namespace sys
 		// コマンドリストへの描画コマンド発行
 		// SetDescriptorHeaps は描画直前に呼ぶ必要がある
 		// （DX12 の仕様上、後から呼んだものが有効になるため）
-		auto* cmdList = mRenderer->GetCommandList();
+		auto* cmdList = mRendererContext->GetCommandList();
 
 		ID3D12DescriptorHeap* heaps[] = { mHeapManager->GetNativeHeap() };
 		cmdList->SetDescriptorHeaps(_countof(heaps), heaps);

@@ -2,11 +2,12 @@
 
 #include <Utility/Export/Export.h>
 #include <memory>
+#include<graphics/Dx12/Dx12Context.h>
+#include<Utility/Singleton/Singleton.hpp>
 
 namespace graphics
 {
     class DX12Device;
-    class DX12Context;
 
     /// <summary>
     /// 描画系の上位管理クラス
@@ -22,17 +23,13 @@ namespace graphics
     ///   // 終了
     ///   renderer.Finalize();
     /// </summary>
-    class ENGINE_API DX12Renderer
+    class ENGINE_API DX12Renderer : public utility::Singleton<DX12Renderer>
     {
-    public:
-        DX12Renderer();
-        virtual ~DX12Renderer();
+        SINGLETON_CLASS_CUSTOM_CTOR(DX12Renderer);
 
-        // コピー・ムーブ禁止(GPU リソースを所有するため)
-        DX12Renderer(const DX12Renderer&) = delete;
-        DX12Renderer& operator=(const DX12Renderer&) = delete;
-        DX12Renderer(DX12Renderer&&) = delete;
-        DX12Renderer& operator=(DX12Renderer&&) = delete;
+        DX12Renderer();
+    public:
+        SINGLETON_ACCESSOR(DX12Renderer);
 
         /// <summary>
         /// 初期化

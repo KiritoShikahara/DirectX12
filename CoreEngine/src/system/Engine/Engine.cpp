@@ -7,6 +7,7 @@
 #include<system/Input/InputManager.h>
 
 #include<graphics/Dx12/Dx12Device.h>
+#include<graphics/Dx12/Dx12Context.h>
 #include<system/Logger/Logger.h>
 #include<graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeapManager.h>
 #include<ecs/entity/EntityManager.h>
@@ -48,9 +49,9 @@ namespace sys
 		, mIsInitialized(false)
 		, mWindow(nullptr)
 		, mDevice(nullptr)
-		, mRenderer(nullptr)
 		, mImGuiManager(nullptr)
 		, mInputManager(nullptr)
+		, mDX12Renderer(nullptr)
 	{
 	}
 
@@ -72,7 +73,7 @@ namespace sys
 
 		// ウィンドウの初期化
 		mWindow = &Window::Get();
-		if(mWindow->Initialize(context.WindowContext) == false)
+		if (mWindow->Initialize(context.WindowContext) == false)
 		{
 			return false;
 		}
@@ -85,11 +86,11 @@ namespace sys
 		}
 
 		// DX12描画管理クラス初期化
-		mRenderer = std::make_unique<graphics::DX12Renderer>();
-		if (mRenderer->Initialize(
-			mDevice, 
-			mWindow->GetHWND(), 
-			mWindow->GetWidth(), 
+		mDX12Renderer = &graphics::DX12Renderer::Get();
+		if (mDX12Renderer->Initialize(
+			mDevice,
+			mWindow->GetHWND(),
+			mWindow->GetWidth(),
 			mWindow->GetHeight()
 		) == false)
 		{
@@ -98,14 +99,14 @@ namespace sys
 
 		// GraphicsDescriptorHeapManagerの初期化
 		auto& descriptorHeapManager = graphics::GDescriptorHeapManager::Get();
-		if(descriptorHeapManager.Initialize(mDevice->GetDevice()) == false)
+		if (descriptorHeapManager.Initialize(mDevice->GetDevice()) == false)
 		{
 			return false;
 		}
 
 		// ImGuiManagerの初期化
 		mImGuiManager = &sys::ImGuiManager::Get();
-		if (mImGuiManager->Initialize(*mWindow, *mDevice, *mRenderer, descriptorHeapManager) == false)
+		if (mImGuiManager->Initialize(*mWindow, *mDevice, *mDX12Renderer->GetContext(), descriptorHeapManager) == false)
 		{
 			return false;
 		}
@@ -178,20 +179,18 @@ namespace sys
 		// TODO:更新処理
 		this->Update();
 
-		// TODO:描画処理
-		mRenderer->BeginRendering();
-		mRenderer->SetViewPort(
-			static_cast<float>(mWindow->GetWidth()),
-			static_cast<float>(mWindow->GetHeight()));
+		auto context = mDX12Renderer->GetContext();
 
-		graphics::RenderContext::Get().SetFrameIndex(mRenderer->GetCurrentFrameIndex());
+		// TODO:描画処理
+		mDX12Renderer->BeginFrame();
+		graphics::RenderContext::Get().SetFrameIndex(context->GetCurrentFrameIndex());
 
 		mImGuiManager->NewFrame();
 		mImGuiManager->Update();
 		Render();
 
 		mImGuiManager->EndFrame();
-		mRenderer->Flip();
+		mDX12Renderer->EndFrame();
 
 		// TODO:フレームの終了処理
 		mInputManager->Update();
@@ -208,14 +207,14 @@ namespace sys
 		if (mIsInitialized == false)  return false;
 
 		// GPU完了待ち
-		if (mRenderer != nullptr)
+		if (mDX12Renderer != nullptr)
 		{
-			mRenderer->WaitForGPU();
+			mDX12Renderer->WaitForGPU();
 		}
 
 		// Dx12Rendererの破棄
-		mRenderer->Finalize();
-		mRenderer.reset();
+		mDX12Renderer->Finalize();
+		mDX12Renderer = nullptr;
 
 		// Dx12Deviceの破棄
 		mDevice->Finalize();
@@ -244,15 +243,17 @@ namespace sys
 	/// </summary>
 	void Engine::Render()
 	{
+		auto context = mDX12Renderer->GetContext();
+
 		SINGLETON_REF(graphics::SpriteRenderer, spriteRenderer);
 		spriteRenderer.Begin();
 		spriteRenderer.UpdateAndDraw(mEntityManager->GetRegistry());
-		spriteRenderer.End(mRenderer->GetCommandList());
+		spriteRenderer.End(context->GetCommandList());
 
 		SINGLETON_REF(graphics::FbxRenderer, fbxRenderer);
 		fbxRenderer.Begin();
 		fbxRenderer.UpdateAndDraw(mEntityManager->GetRegistry());
-		fbxRenderer.End(mRenderer->GetCommandList());
+		fbxRenderer.End(context->GetCommandList());
 
 	}
 }

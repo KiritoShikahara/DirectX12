@@ -8,6 +8,7 @@
 namespace graphics
 {
 	class DX12Device;
+	class DX12Renderer;
 }
 
 namespace ecs
@@ -86,9 +87,9 @@ namespace sys
 		graphics::DX12Device* mDevice;
 
 		/// <summary>
-		/// Dx12描画管理クラス
+		/// DX12レンダー用コンテキスト管理
 		/// </summary>
-		std::unique_ptr<graphics::DX12Context> mRenderer;
+		graphics::DX12Renderer* mDX12Renderer;
 
 		/// <summary>
 		/// ImGui管理クラス

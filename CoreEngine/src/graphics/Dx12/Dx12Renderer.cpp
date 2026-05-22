@@ -13,15 +13,6 @@ namespace graphics
     {
     }
 
-    DX12Renderer::~DX12Renderer()
-    {
-        // Finalize ‚ªŒÄ‚Î‚ê‚Ä‚¢‚È‚¢ê‡‚ÌˆÀ‘S•Ù
-        if (mIsInitialized)
-        {
-            Finalize();
-        }
-    }
-
     bool DX12Renderer::Initialize(DX12Device* pDevice, HWND WindowHandle, UINT Width, UINT Height)
     {
         if (pDevice == nullptr)     return false;
