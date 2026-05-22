@@ -13,15 +13,6 @@ namespace graphics
     /// 描画系の上位管理クラス
     /// DX12Context(低レベルDX12操作)を所有・管理し、
     /// ゲームループから呼ばれる描画フローの窓口を提供する。
-    /// 
-    /// 使用例:
-    ///   renderer.Initialize(device, hwnd, width, height);
-    ///   // メインループ
-    ///   renderer.BeginFrame();
-    ///   renderer.GetContext()->GetCommandList()->...  // 描画コマンド発行
-    ///   renderer.EndFrame();
-    ///   // 終了
-    ///   renderer.Finalize();
     /// </summary>
     class ENGINE_API DX12Renderer : public utility::Singleton<DX12Renderer>
     {
