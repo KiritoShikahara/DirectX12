@@ -1,6 +1,6 @@
 #include"pch.h"
 #include "AnimationComponent.h"
-#include<graphics/Fbx/Resouce/FbxSource.h>
+#include<graphics/Fbx/Resouce/FbxResource.h>
 
 namespace ecs
 {

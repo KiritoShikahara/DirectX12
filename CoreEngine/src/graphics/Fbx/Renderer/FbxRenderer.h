@@ -8,7 +8,7 @@
 
 #include <graphics/Fbx/Pipeline/FbxPipeline.h>
 #include <graphics/StructuredBuffer/StructuredBuffer.h>
-#include<graphics/Fbx/Resouce/FbxSource.h>
+#include<graphics/Fbx/Resouce/FbxResource.h>
 #include<graphics/Color/Color.h>
 
 namespace sys { class Window; }

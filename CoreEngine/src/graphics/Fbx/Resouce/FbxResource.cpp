@@ -1,5 +1,5 @@
 #include"pch.h"
-#include "FbxSource.h"
+#include "FbxResource.h"
 
 namespace graphics
 {
