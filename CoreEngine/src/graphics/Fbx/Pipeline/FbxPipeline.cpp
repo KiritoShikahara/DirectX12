@@ -76,22 +76,27 @@ namespace graphics
     /// </summary>
     bool FbxPipeline::CreateRootSignature(ID3D12Device* device)
     {
-        // t0: StructuredBuffer<FbxInstanceData>
         CD3DX12_DESCRIPTOR_RANGE1 rangeInstance;
-        rangeInstance.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+        rangeInstance.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0
 
-        // t1: StructuredBuffer<float4x4>
         CD3DX12_DESCRIPTOR_RANGE1 rangeBone;
-        rangeBone.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);
+        rangeBone.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);     // t1
 
-        // t2: Texture2D
         CD3DX12_DESCRIPTOR_RANGE1 rangeTex;
-        rangeTex.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);
+        rangeTex.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 2);      // t2
 
-        CD3DX12_ROOT_PARAMETER1 params[3];
-        params[SLOT_INSTANCE_BUFFER].InitAsDescriptorTable(1, &rangeInstance, D3D12_SHADER_VISIBILITY_ALL);
-        params[SLOT_BONE_BUFFER].InitAsDescriptorTable(1, &rangeBone, D3D12_SHADER_VISIBILITY_VERTEX);
-        params[SLOT_DIFFUSE_TEX].InitAsDescriptorTable(1, &rangeTex, D3D12_SHADER_VISIBILITY_PIXEL);
+        CD3DX12_DESCRIPTOR_RANGE1 rangeCamera;
+        rangeCamera.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3);   // t3
+
+        CD3DX12_ROOT_PARAMETER1 params[4];
+        params[SLOT_INSTANCE_BUFFER].InitAsDescriptorTable(
+            1, &rangeInstance, D3D12_SHADER_VISIBILITY_ALL);
+        params[SLOT_BONE_BUFFER].InitAsDescriptorTable(
+            1, &rangeBone, D3D12_SHADER_VISIBILITY_VERTEX);
+        params[SLOT_DIFFUSE_TEX].InitAsDescriptorTable(
+            1, &rangeTex, D3D12_SHADER_VISIBILITY_PIXEL);
+        params[SLOT_CAMERA_BUFFER].InitAsDescriptorTable(
+            1, &rangeCamera, D3D12_SHADER_VISIBILITY_VERTEX);
 
         CD3DX12_STATIC_SAMPLER_DESC sampler(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR);
 

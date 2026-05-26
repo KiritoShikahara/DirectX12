@@ -9,6 +9,7 @@
 #include<ecs/component/fbx/FbxComponent.h>
 #include<ecs/component/fbx/AnimationComponent.h>
 #include<ecs/component/transform/TransformComponent.h>
+#include<system/Camera/CameraSystem.h>
 
 namespace graphics
 {
@@ -41,6 +42,14 @@ namespace graphics
             return false;
         }
 
+        mCameraBuffer = std::make_unique<StructuredBuffer>();
+        if (!mCameraBuffer->Create(sizeof(CameraShaderData), 1))
+        {
+            DEBUG_LOG(sys::eLogLevel::Error,
+                "FbxRenderer: Failed to create camera buffer.");
+            return false;
+        }
+
         mHeapManager = &heapManager;
 
         mInstanceData.reserve(MAX_FBX_INSTANCES);
@@ -63,6 +72,14 @@ namespace graphics
 
     void FbxRenderer::UpdateAndDraw(entt::registry& registry)
     {
+        // カメラ確認・行列更新は CameraSystem に委譲
+        auto& camSystem = sys::CameraSystem::Get();
+        if (!camSystem.HasMainCamera()) return;
+
+        // カメラバッファを今フレームのデータで更新
+        const auto& camData = camSystem.GetShaderData();
+        mCameraBuffer->Update(&camData, sizeof(CameraShaderData));
+
         // Transform + FbxModel を持つエンティティを収集
         auto view = registry.view<ecs::Transform, ecs::FbxModel>();
 
@@ -175,7 +192,7 @@ namespace graphics
 
     void FbxRenderer::End(ID3D12GraphicsCommandList* cmdList)
     {
-        if (mDrawCalls.empty()) return;
+        if (mDrawCalls.empty() || !sys::CameraSystem::Get().HasMainCamera()) return;
 
         // --- GPU バッファへ一括転送 ---
         mInstanceBuffer->Update(
@@ -197,15 +214,12 @@ namespace graphics
         ID3D12DescriptorHeap* heaps[] = { mHeapManager->GetNativeHeap() };
         cmdList->SetDescriptorHeaps(_countof(heaps), heaps);
 
-        // --- [t0] インスタンスバッファ（全ドローコール共通）---
         cmdList->SetGraphicsRootDescriptorTable(
-            FbxPipeline::SLOT_INSTANCE_BUFFER,
-            mInstanceBuffer->GetGpuHandle());
-
-        // --- [t1] ボーン行列バッファ（全ドローコール共通）---
+            FbxPipeline::SLOT_INSTANCE_BUFFER, mInstanceBuffer->GetGpuHandle());
         cmdList->SetGraphicsRootDescriptorTable(
-            FbxPipeline::SLOT_BONE_BUFFER,
-            mBoneBuffer->GetGpuHandle());
+            FbxPipeline::SLOT_BONE_BUFFER, mBoneBuffer->GetGpuHandle());
+        cmdList->SetGraphicsRootDescriptorTable(
+            FbxPipeline::SLOT_CAMERA_BUFFER, mCameraBuffer->GetGpuHandle());
 
         cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 

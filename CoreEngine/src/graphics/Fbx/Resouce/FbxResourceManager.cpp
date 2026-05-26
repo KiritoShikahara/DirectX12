@@ -15,6 +15,7 @@ namespace graphics
         auto resource = std::make_shared<FbxResource>();
         if (!resource->Load(cmdList, binPath, anmPath))  // cmdList ‚ð“n‚·
         {
+            DEBUG_LOG(sys::eLogLevel::Error, "FbxResourceManager: Failed to load '{}'", binPath);
             return nullptr;
         }
 

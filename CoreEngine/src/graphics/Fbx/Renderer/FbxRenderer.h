@@ -69,6 +69,7 @@ namespace graphics
 		std::unique_ptr<FbxPipeline>     mPipeline;
 		std::unique_ptr<StructuredBuffer> mInstanceBuffer;  // FbxInstanceData
 		std::unique_ptr<StructuredBuffer> mBoneBuffer;       // XMFLOAT4X4
+		std::unique_ptr<StructuredBuffer> mCameraBuffer;
 
 		// フレームデータ begin() でクリアして UpdateAndDraw() で蓄積する。End() で GPU 転送して発行する。
 		std::vector<FbxInstanceData>          mInstanceData;

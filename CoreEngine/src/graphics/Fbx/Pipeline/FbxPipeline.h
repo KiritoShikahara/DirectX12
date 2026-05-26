@@ -29,7 +29,7 @@ namespace graphics
 		static constexpr UINT SLOT_INSTANCE_BUFFER = 0;  // t0
 		static constexpr UINT SLOT_BONE_BUFFER = 1;  // t1
 		static constexpr UINT SLOT_DIFFUSE_TEX = 2;  // t2
-
+		static constexpr UINT SLOT_CAMERA_BUFFER = 3;  // t3
 	private:
 		bool CreateRootSignature(ID3D12Device* device);
 		bool CreatePipeline(ID3D12Device* device, ShaderManager& shaderManager);
