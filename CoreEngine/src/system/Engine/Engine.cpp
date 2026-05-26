@@ -12,6 +12,7 @@
 #include<graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeapManager.h>
 #include<ecs/entity/EntityManager.h>
 #include<graphics/Dx12/RenderContext.h>
+#include<system/Camera/CameraSystem.h>
 
 #include<graphics/Shader/ShaderManager.h>
 #include<graphics/Texture/TextureManager.h>
@@ -37,6 +38,7 @@ void SpriteRenderTest()
 
 void FbxRenderTest()
 {
+	auto res
 	auto entity = ecs::EntityManager::Get().CreateEntity();
 	auto& tr = ecs::EntityManager::Get().AddComponent<ecs::Transform>(entity);
 }
