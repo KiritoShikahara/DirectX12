@@ -10,8 +10,17 @@ struct FbxInstanceData
     float3 _pad;
 };
 
+// カメラデータ
+struct CameraShaderData
+{
+    float4x4 ViewProjection; // VP 行列（転置済み）
+    float3 Position;
+    float _pad;
+};
+
 StructuredBuffer<FbxInstanceData> gInstances : register(t0);
 StructuredBuffer<float4x4> gBoneMatrices : register(t1);
+StructuredBuffer<CameraShaderData> gCamera : register(t3);
 
 // ----------------------------------------------------------
 //  入出力構造体
