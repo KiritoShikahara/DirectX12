@@ -1,9 +1,5 @@
 #pragma once
-
-namespace ecs
-{
-	class EntityManager;
-}
+#include<entt/entt.hpp>
 
 namespace graphics
 {
@@ -13,6 +9,6 @@ namespace graphics
 	class AnimationSystem
 	{
 	public:
-		static void UpdateAnimation(ecs::EntityManager& entityManager, float deltaTime);
+		static void UpdateAnimation(entt::registry& registry, float deltatime);
 	};
 }

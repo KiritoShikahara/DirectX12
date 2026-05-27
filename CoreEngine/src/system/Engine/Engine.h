@@ -50,14 +50,26 @@ namespace sys
 		bool Finalize();
 	private:
 		/// <summary>
+		/// 事前更新
+		/// </summary>
+		void PreUpdate();
+
+		/// <summary>
 		/// 状態更新
 		/// </summary>
 		void Update();
 
 		/// <summary>
+		/// 事後更新
+		/// </summary>
+		void PostUpdate();
+
+		/// <summary>
 		/// 描画
 		/// </summary>
 		void Render();
+
+
 
 	private:
 		/// <summary>

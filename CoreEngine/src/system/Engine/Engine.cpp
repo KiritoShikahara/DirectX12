@@ -13,6 +13,7 @@
 #include<ecs/entity/EntityManager.h>
 #include<graphics/Dx12/RenderContext.h>
 #include<system/Camera/CameraSystem.h>
+#include<graphics/Fbx/Animation/AnimationSystem.h>
 
 #include<graphics/Shader/ShaderManager.h>
 #include<graphics/Texture/TextureManager.h>
@@ -38,7 +39,6 @@ void SpriteRenderTest()
 
 void FbxRenderTest()
 {
-	auto res
 	auto entity = ecs::EntityManager::Get().CreateEntity();
 	auto& tr = ecs::EntityManager::Get().AddComponent<ecs::Transform>(entity);
 }
@@ -174,12 +174,16 @@ namespace sys
 			mIsRunning = false;
 			return false;
 		}
+		// 事前更新
+		this->PreUpdate();
 
-		// Timeの更新
-		mTime.Update();
-
-		// TODO:更新処理
+		// メイン更新
 		this->Update();
+
+		// 事後更新
+		this->PostUpdate();
+
+
 
 		auto context = mDX12Renderer->GetContext();
 
@@ -230,6 +234,16 @@ namespace sys
 	}
 
 	/// <summary>
+	/// 事前更新
+	/// </summary>
+	void Engine::PreUpdate()
+	{
+		// Timeの更新
+		mTime.Update();
+
+	}
+
+	/// <summary>
 	/// 状態更新
 	/// </summary>
 	void Engine::Update()
@@ -238,6 +252,21 @@ namespace sys
 		{
 			std::cout << "Push" << std::endl;
 		}
+	}
+
+	/// <summary>
+	/// 事後更新
+	/// </summary>
+	void Engine::PostUpdate()
+	{
+		auto& registry = ecs::EntityManager::Get().GetRegistry();
+
+		// カメラ
+		sys::CameraSystem::Get().Update(registry);
+
+		// アニメーション
+		graphics::AnimationSystem::UpdateAnimation(registry, mTime.GetDeltaTime());
+
 	}
 
 	/// <summary>
