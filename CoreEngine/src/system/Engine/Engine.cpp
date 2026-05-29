@@ -12,17 +12,10 @@
 #include<graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeapManager.h>
 #include<ecs/entity/EntityManager.h>
 #include<graphics/Dx12/RenderContext.h>
-#include<system/Camera/CameraSystem.h>
-#include<graphics/Fbx/Animation/AnimationSystem.h>
 
 #include<graphics/Shader/ShaderManager.h>
 #include<graphics/Texture/TextureManager.h>
 #include<graphics/Sprite/Renderer/SpriteRenderer.h>
-
-#include<graphics/Fbx/Renderer/FbxRenderer.h>
-#include<graphics/Fbx/Resouce/FbxResourceManager.h>
-#include<ecs/component/fbx/FbxComponent.h>
-#include<ecs/component/fbx/AnimationComponent.h>
 
 #include<ecs/component/transform/TransformComponent.h>
 #include<ecs/component/sprite/SpriteComponent.h>
@@ -136,13 +129,6 @@ namespace sys
 		// Renderer
 		SINGLETON_REF(graphics::SpriteRenderer, SpriteRenderer);
 		if(SpriteRenderer.Initialize(*mDevice, descriptorHeapManager, graphics::ShaderManager::Get(), *mWindow) == false)
-		{
-			return false;
-		}
-
-		// Fbx Renderer
-		SINGLETON_REF(graphics::FbxRenderer, FbxRenderer);
-		if (FbxRenderer.Initialize(*mDevice, descriptorHeapManager, graphics::ShaderManager::Get()) == false)
 		{
 			return false;
 		}
@@ -261,12 +247,6 @@ namespace sys
 	{
 		auto& registry = ecs::EntityManager::Get().GetRegistry();
 
-		// カメラ
-		sys::CameraSystem::Get().Update(registry);
-
-		// アニメーション
-		graphics::AnimationSystem::UpdateAnimation(registry, mTime.GetDeltaTime());
-
 	}
 
 	/// <summary>
@@ -280,11 +260,6 @@ namespace sys
 		spriteRenderer.Begin();
 		spriteRenderer.UpdateAndDraw(mEntityManager->GetRegistry());
 		spriteRenderer.End(context->GetCommandList());
-
-		SINGLETON_REF(graphics::FbxRenderer, fbxRenderer);
-		fbxRenderer.Begin();
-		fbxRenderer.UpdateAndDraw(mEntityManager->GetRegistry());
-		fbxRenderer.End(context->GetCommandList());
 
 	}
 }

@@ -3,6 +3,7 @@
 #include  <utility/Singleton/Singleton.hpp>
 #include <Utility/Export/Export.h>
 #include<vector>
+#include<mutex>
 
 #include "Dx12Type.h"
 
@@ -58,6 +59,22 @@ namespace graphics
 		bool UploadTextureData(ID3D12Resource* pResource,
 			const std::vector<D3D12_SUBRESOURCE_DATA>& subresources);
 
+		/// <summary>
+		/// GPU にバッファデータを転送する。
+		/// UploadTextureData と同じく専用アップロードキューで同期的に完結する。
+		/// スレッドセーフ (内部で mutex によって排他制御される)。
+		/// cmdList は不要。描画ループに依存しない。
+		/// </summary>
+		/// <param name="pResource">転送先リソース (DEFAULT heap, COPY_DEST 状態で作成済み)</param>
+		/// <param name="data">転送するデータポインタ (nullptr 禁止)</param>
+		/// <param name="size">転送バイト数 (0 禁止)</param>
+		/// <param name="targetState">転送完了後のリソース状態</param>
+		bool UploadBufferData(
+			ID3D12Resource* pResource,
+			const void* data,
+			size_t                size,
+			D3D12_RESOURCE_STATES targetState = D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+
 	private:
 		/// <summary>
 		/// デバッグレイヤーの有効化（デバッグビルドのみ）
@@ -104,6 +121,12 @@ namespace graphics
 		/// <summary>アップロード完了待ちイベントハンドル</summary>
 		HANDLE          mUploadEvent = nullptr;
 
+		/// <summary>
+		/// アップロードコンテキスト用の排他制御
+		///  UploadTextureData / UploadBufferData を複数スレッドから同時に呼んだ場合に
+        /// mUploadAllocator / mUploadCmdList への同時アクセスを防ぐ
+		/// </summary>
+		std::mutex mUploadMutex;
 	};
 }
 

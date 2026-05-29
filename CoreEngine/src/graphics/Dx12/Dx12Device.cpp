@@ -156,6 +156,78 @@ namespace graphics
 	}
 
 	/// <summary>
+	/// GPU にバッファデータを転送する。
+	/// UploadTextureData と同じく専用アップロードキューで同期的に完結する。
+	/// スレッドセーフ (内部で mutex によって排他制御される)。
+	/// cmdList は不要。描画ループに依存しない。
+	/// </summary>
+	bool DX12Device::UploadBufferData(ID3D12Resource* pResource, const void* data, size_t size, D3D12_RESOURCE_STATES targetState)
+	{
+		if (!pResource || !data || size == 0)
+		{
+			// TODO: ログ出力
+			DEBUG_LOG(sys::eLogLevel::Error, "Fail UploadBufferData.");
+			return false;
+		}
+
+		// UploadTextureData と同じアップロードコンテキストを排他的に使用
+		std::lock_guard<std::mutex> lock(mUploadMutex);
+
+		mUploadAllocator->Reset();
+		mUploadCmdList->Reset(mUploadAllocator.Get(), nullptr);
+
+		// ステージングバリア
+		D3D12MA::ALLOCATION_DESC uploadAllocDesc = {};
+		uploadAllocDesc.HeapType = D3D12_HEAP_TYPE_UPLOAD;
+
+		Resource     uploadRes;
+		MAAllocation uploadAlloc;
+		auto         bufDesc = CD3DX12_RESOURCE_DESC::Buffer(size);
+
+		HRESULT hr = mMAAllocator->CreateResource(
+			&uploadAllocDesc, &bufDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr, &uploadAlloc, IID_PPV_ARGS(&uploadRes));
+		if (FAILED(hr))
+		{
+			DEBUG_LOG(sys::eLogLevel::Error, "Failed MAAlloc CreateResource.");
+			return false;
+		}
+
+		// CPU->ステージング
+		void* mapped = nullptr;
+		uploadRes->Map(0, nullptr, &mapped);
+		std::memcpy(mapped, data, size);
+		uploadRes->Unmap(0, nullptr);
+		
+		// ステージング->GPU
+		mUploadCmdList->CopyBufferRegion(pResource, 0, uploadRes.Get(), 0, size);
+
+		// 転送後の状態遷移
+		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			pResource,
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			targetState);
+		mUploadCmdList->ResourceBarrier(1, &barrier);
+
+		// コマンド送信 + 同期待ち
+		mUploadCmdList->Close();
+		ID3D12CommandList* ppCmdLists[] = { mUploadCmdList.Get() };
+		mUploadCmdQueue->ExecuteCommandLists(1, ppCmdLists);
+
+		mUploadFenceValue++;
+		mUploadCmdQueue->Signal(mUploadFence.Get(), mUploadFenceValue);
+		if (mUploadFence->GetCompletedValue() < mUploadFenceValue)
+		{
+			mUploadFence->SetEventOnCompletion(mUploadFenceValue, mUploadEvent);
+			WaitForSingleObject(mUploadEvent, INFINITE);
+		}
+
+		return true;
+
+	}
+
+	/// <summary>
 	/// デバッグレイヤーの有効化（デバッグビルドのみ）
 	/// </summary>
 	void DX12Device::DebugLayerOn()
