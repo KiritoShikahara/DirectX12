@@ -127,11 +127,69 @@ namespace graphics
 		return true;
 	}
 
+	bool VertexBuffer::CreateStaticSync(const void* InitData, size_t Size, size_t Stride)
+	{
+		// ガード
+		if (!InitData || Size == 0 || Stride == 0)
+		{
+			DEBUG_LOG(sys::eLogLevel::Error,
+				"VertexBuffer::CreateStaticSync: Invalid arguments (nullptr or size=0).");
+			return false;
+		}
+
+		mBufferSize = Size;
+		mStride = Stride;
+		mIsDynamic = false;
+
+		// DEFAULT ヒープに頂点バッファを D3D12MA で確保
+		D3D12MA::ALLOCATION_DESC allocDesc = {};
+		allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+
+		auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(mBufferSize);
+
+		HRESULT hr = graphics::DX12Device::Get().GetMAAllocator()->CreateResource(
+			&allocDesc,
+			&resDesc,
+			D3D12_RESOURCE_STATE_COPY_DEST,   // UploadBufferData が COPY_DEST を期待する
+			nullptr,
+			&mBufferAllocation,
+			IID_PPV_ARGS(&mBufferResource));
+
+		if (FAILED(hr))
+		{
+			DEBUG_LOG(sys::eLogLevel::Error,
+				"VertexBuffer::CreateStaticSync: Failed to create DEFAULT heap resource (D3D12MA).");
+			return false;
+		}
+
+		if (!graphics::DX12Device::Get().UploadBufferData(
+			mBufferResource.Get(), InitData, Size,
+			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER))
+		{
+			DEBUG_LOG(sys::eLogLevel::Error,
+				"VertexBuffer::CreateStaticSync: UploadBufferData failed.");
+			mBufferAllocation.Reset();
+			mBufferResource.Reset();
+			return false;
+		}
+
+		mBufferView.BufferLocation = mBufferResource->GetGPUVirtualAddress();
+		mBufferView.SizeInBytes = static_cast<UINT>(mBufferSize);
+		mBufferView.StrideInBytes = static_cast<UINT>(mStride);
+
+		return true;
+	}
+
 	/// <summary>
 	/// バッファの解放
 	/// </summary>
 	void VertexBuffer::Release()
 	{
+		if (mBufferAllocation != nullptr)
+		{
+			mBufferAllocation.Reset();
+		}
+
 		if (mBufferResource != nullptr)
 		{
 			if (mIsDynamic && mMapped != nullptr)

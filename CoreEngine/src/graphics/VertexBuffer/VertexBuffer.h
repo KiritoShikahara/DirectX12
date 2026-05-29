@@ -29,6 +29,14 @@ namespace graphics
 		bool CreateStatic(ID3D12GraphicsCommandList* CmdList, const void* InitData, const size_t Size, const size_t Stride);
 
 		/// <summary>
+		/// 同期的な静的頂点バッファの作成。
+		/// DX12Device の専用アップロードキューを使うため cmdList 不要。
+		/// DEFAULT ヒープは D3D12MA で確保し断片化を抑制。
+		/// スレッドセーフ (内部の UploadBufferData が mutex で保護)。
+		/// </summary>
+		bool CreateStaticSync(const void* InitData, size_t Size, size_t Stride);
+	
+		/// <summary>
 		/// バッファの解放
 		/// </summary>
 		void Release();
@@ -82,6 +90,11 @@ namespace graphics
 		/// キャッシュされたバッファビュー
 		/// </summary>
 		D3D12_VERTEX_BUFFER_VIEW mBufferView;
+
+		/// <summary>
+		/// D3D12MA アロケーション (CreateStaticSync 使用時のみ有効)
+		/// </summary>
+		MAAllocation mBufferAllocation;
 
 		/// <summary>
 		/// リソース本体

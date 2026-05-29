@@ -141,11 +141,82 @@ namespace graphics
 	}
 
 	/// <summary>
+	/// 同期的な静的インデックスバッファの作成。
+	/// DX12Device の専用アップロードキューを使うため cmdList 不要。
+	/// DEFAULT ヒープは D3D12MA で確保し断片化を抑制。
+	/// スレッドセーフ (内部の UploadBufferData が mutex で保護)。
+	/// </summary>
+	bool IndexBuffer::CreateStaticSync(const void* InitData, size_t Size, DXGI_FORMAT Format)
+	{
+		// ガード
+		if (!InitData || Size == 0)
+		{
+			DEBUG_LOG(sys::eLogLevel::Error,
+				"IndexBuffer::CreateStaticSync: Invalid arguments (nullptr or size=0).");
+			return false;
+		}
+		if (Format != DXGI_FORMAT_R16_UINT && Format != DXGI_FORMAT_R32_UINT)
+		{
+			DEBUG_LOG(sys::eLogLevel::Error,
+				"IndexBuffer::CreateStaticSync: Invalid format. Use R16_UINT or R32_UINT.");
+			return false;
+		}
+
+		mBufferSize = Size;
+		mFormat = Format;
+		mIsDynamic = false;
+
+		// DEFAULTでインデックスバッファを確保
+		D3D12MA::ALLOCATION_DESC allocDesc = {};
+		allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+
+		auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(mBufferSize);
+
+		HRESULT hr = graphics::DX12Device::Get().GetMAAllocator()->CreateResource(
+			&allocDesc,
+			&resDesc,
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			nullptr,
+			&mBufferAllocation,
+			IID_PPV_ARGS(&mBufferResource));
+
+		if (FAILED(hr))
+		{
+			DEBUG_LOG(sys::eLogLevel::Error,
+				"IndexBuffer::CreateStaticSync: Failed to create DEFAULT heap resource (D3D12MA).");
+			return false;
+		}
+
+		if (!graphics::DX12Device::Get().UploadBufferData(
+			mBufferResource.Get(), InitData, Size,
+			D3D12_RESOURCE_STATE_INDEX_BUFFER))
+		{
+			DEBUG_LOG(sys::eLogLevel::Error,
+				"IndexBuffer::CreateStaticSync: UploadBufferData failed.");
+			mBufferAllocation.Reset();
+			mBufferResource.Reset();
+			return false;
+		}
+
+		// キャッシュ
+		mBufferView.BufferLocation = mBufferResource->GetGPUVirtualAddress();
+		mBufferView.SizeInBytes = static_cast<UINT>(mBufferSize);
+		mBufferView.Format = mFormat;
+
+		return true;
+	}
+
+	/// <summary>
 	/// バッファの解放
 	/// 動的バッファのみ Unmap を行う（静的バッファは Map していないため不要）
 	/// </summary>
 	void IndexBuffer::Release()
 	{
+		if (mBufferAllocation != nullptr)
+		{
+			mBufferAllocation.Reset();
+		}
+
 		if (mBufferResource != nullptr)
 		{
 			if (mIsDynamic && mMapped != nullptr)
