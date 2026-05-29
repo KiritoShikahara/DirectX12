@@ -2,8 +2,8 @@
 
 #include <entt/entt.hpp>
 #include <Utility/Singleton/Singleton.hpp>
-#include<graphics/Fbx/Resouce/FbxData.h>
 #include<Utility/Export/Export.h>
+#include<graphics/Model/ModelData.h>
 
 namespace ecs
 {
@@ -32,7 +32,7 @@ namespace sys
         bool HasMainCamera() const { return mHasMainCamera; }
 
         /// <summary>GPU 転送用カメラデータ（HasMainCamera() == true のとき有効）</summary>
-        const graphics::CameraShaderData& GetShaderData() const { return mShaderData; }
+        const graphics::ModelCameraData& GetShaderData() const { return mShaderData; }
 
         entt::entity GetMainCameraEntity() const { return mMainCameraEntity; }
 
@@ -44,7 +44,7 @@ namespace sys
         void UpdateMatrices(entt::registry& registry);
 
         entt::entity               mMainCameraEntity = entt::null;
-        graphics::CameraShaderData mShaderData = {};
+        graphics::ModelCameraData mShaderData = {};
         bool                       mHasMainCamera = false;
     };
 }
