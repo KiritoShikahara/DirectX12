@@ -64,8 +64,13 @@ void Create3DModel()
 	
 	auto entity = Manager.CreateEntity();
 
+	auto scale = 0.2f;
+
 	auto& tr = Manager.AddComponent<ecs::Transform>(entity);
+	tr.SetScale(scale);
+
 	auto& model = Manager.AddComponent<ecs::Model>(entity);
+	model.Resource = res.get();
 	model.IsVisible = true;
 	model.Intensity = 1.f;
 	model.Layer = 0;
