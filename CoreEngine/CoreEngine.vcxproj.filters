@@ -345,12 +345,9 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="Assets\Shader\Sprite\SpriteHeader.hlsli" />
-    <None Include="Assets\Shader\Fbx\FbxHeader.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Assets\Shader\Sprite\PS_Sprite.hlsl" />
     <FxCompile Include="Assets\Shader\Sprite\VS_Sprite.hlsl" />
-    <FxCompile Include="Assets\Shader\Fbx\VS_Fbx.hlsl" />
-    <FxCompile Include="Assets\Shader\Fbx\PS_Fbx.hlsl" />
   </ItemGroup>
 </Project>
