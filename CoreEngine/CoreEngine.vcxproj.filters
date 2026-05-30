@@ -204,6 +204,9 @@
     <ClInclude Include="src\ecs\component\model\ModelComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\Model\Animation\ModelAnimationSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics\Dx12\Dx12Device.cpp">
@@ -341,13 +344,19 @@
     <ClCompile Include="src\graphics\Model\Renderer\ModelRenderer.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\Model\Animation\ModelAnimationSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="Assets\Shader\Sprite\SpriteHeader.hlsli" />
+    <None Include="Assets\Shader\Model\ModelHeader.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Assets\Shader\Sprite\PS_Sprite.hlsl" />
     <FxCompile Include="Assets\Shader\Sprite\VS_Sprite.hlsl" />
+    <FxCompile Include="Assets\Shader\Model\PS_Model.hlsl" />
+    <FxCompile Include="Assets\Shader\Model\VS_Model.hlsl" />
   </ItemGroup>
 </Project>
