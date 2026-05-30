@@ -75,9 +75,8 @@ void Create3DModel()
 	model.Intensity = 1.f;
 	model.Layer = 0;
 
-	auto& anim = Manager.AddComponent<ecs::ModelAnimComponent>(entity);
-
-	anim.Play(*res, "Atk_a", true);
+	//auto& anim = Manager.AddComponent<ecs::ModelAnimComponent>(entity);
+	//anim.Play(*res, "Atk_a", true);
 
 }
 
@@ -89,12 +88,17 @@ entt::entity CreateCamera()
 	entt::entity entity = ecs::EntityManager::Get().CreateEntity();
 
 	auto& tr = registry.emplace<ecs::Transform>(entity);
-	tr.SetPosition(0.0f, 1.5f, -5.0f);
+
+	tr.SetPosition(0.0f, 1.0f, -100.0f);
+
+	// もし Transform クラスに回転を設定する関数（SetRotation や LookAt）があれば、
+	// ここで「正面（(0,0,0) 方向）を向く」ように回転をリセット、または設定してください。
+	// 例: tr.SetRotation(0.0f, 0.0f, 0.0f); 
 
 	auto& cam = registry.emplace<ecs::CameraComponent>(entity);
 	cam.IsMainCamera = true;
 	cam.Fov = 60.0f;
-	cam.Near = 0.01f;
+	cam.Near = 0.1f;  // 近すぎてクリップするのを防ぐため 0.01f から 0.1f に推奨変更
 	cam.Far = 1000.0f;
 	cam.SetAspectRatioFromWindow(sys::Window::Get());
 
