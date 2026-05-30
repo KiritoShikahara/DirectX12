@@ -145,6 +145,8 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\ecs\component\model\ModelComponent.h" />
+    <ClInclude Include="src\graphics\Model\Renderer\ModelRenderer.h" />
     <ClInclude Include="src\graphics\Model\Pipeline\ModelPipeline.h" />
     <ClInclude Include="src\ecs\component\camera\CameraComponent.h" />
     <ClInclude Include="src\ecs\component\model\ModelAnimComponent.h" />
@@ -210,6 +212,7 @@
     <ClInclude Include="src\graphics\Texture\TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\graphics\Model\Renderer\ModelRenderer.cpp" />
     <ClCompile Include="src\graphics\Model\Pipeline\ModelPipeline.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
     </ClCompile>
