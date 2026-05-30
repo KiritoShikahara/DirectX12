@@ -12,7 +12,7 @@ namespace graphics
 	class ModelResource;
 
 	/// <summary>
-	/// ƒ‚ƒfƒ‹ƒŠƒ\[ƒX‚ÌŠÇ—
+	/// ãƒ¢ãƒ‡ãƒ«ãƒªã‚½ãƒ¼ã‚¹ã®ç®¡ç†
 	/// </summary>
     class ENGINE_API ModelResourceManager : public utility::Singleton<ModelResourceManager>
     {
@@ -21,27 +21,33 @@ namespace graphics
         SINGLETON_ACCESSOR(ModelResourceManager);
 
         /// <summary>
-        /// .bin ‚ğƒ[ƒh‚µ‚ÄƒLƒƒƒbƒVƒ…‚É“o˜^‚·‚éB
-        /// Šù‚ÉƒLƒƒƒbƒVƒ…Ï‚İ‚È‚ç‚»‚ê‚ğ•Ô‚· (“ñdƒ[ƒh‚µ‚È‚¢)B
+        /// .bin ã‚’ãƒ­ãƒ¼ãƒ‰ã—ã¦ã‚­ãƒ£ãƒƒã‚·ãƒ¥ã«ç™»éŒ²ã™ã‚‹ã€‚
+        /// æ—¢ã«ã‚­ãƒ£ãƒƒã‚·ãƒ¥æ¸ˆã¿ãªã‚‰ãã‚Œã‚’è¿”ã™ (äºŒé‡ãƒ­ãƒ¼ãƒ‰ã—ãªã„)ã€‚
         /// </summary>
         std::shared_ptr<ModelResource> Load(const std::string& binPath);
 
         /// <summary>
-        /// ƒLƒƒƒbƒVƒ…Ï‚İƒŠƒ\[ƒX‚É .anm ‚ğ’Ç‰Áƒ[ƒh‚·‚éB
-        /// æ‚É Load() ‚ğŒÄ‚ñ‚Å‚¨‚­•K—v‚ª‚ ‚éB
-        /// “¯‚¶ƒŠƒ\[ƒX‚É‰½“x‚Å‚àŒÄ‚×‚é (ƒNƒŠƒbƒv‚ª––”ö‚É’Ç‰Á‚³‚ê‚é)B
+        /// ã‚­ãƒ£ãƒƒã‚·ãƒ¥æ¸ˆã¿ãƒªã‚½ãƒ¼ã‚¹ã« .anm ã‚’è¿½åŠ ãƒ­ãƒ¼ãƒ‰ã™ã‚‹ã€‚
+        /// å…ˆã« Load() ã‚’å‘¼ã‚“ã§ãŠãå¿…è¦ãŒã‚ã‚‹ã€‚
+        /// åŒã˜ãƒªã‚½ãƒ¼ã‚¹ã«ä½•åº¦ã§ã‚‚å‘¼ã¹ã‚‹ (ã‚¯ãƒªãƒƒãƒ—ãŒæœ«å°¾ã«è¿½åŠ ã•ã‚Œã‚‹)ã€‚
         /// </summary>
-        bool AppendAnimation(const std::string& binPath, const std::string& anmPath);
+        /// <summary>
+        /// overrideName ã‚’æŒ‡å®šã™ã‚‹ã¨ã‚¯ãƒªãƒƒãƒ—åã‚’ãã®åå‰ã«ä¸Šæ›¸ãã§ãã‚‹ã€‚
+        /// çœç•¥ã™ã‚‹ã¨ .anm ãƒ•ã‚¡ã‚¤ãƒ«ã«ä¿å­˜ã•ã‚Œã¦ã„ã‚‹åå‰ã‚’ãã®ã¾ã¾ä½¿ã†ã€‚
+        /// </summary>
+        bool AppendAnimation(const std::string& binPath,
+            const std::string& anmPath,
+            const std::string& overrideName = "");
 
         /// <summary>
-        /// ƒLƒƒƒbƒVƒ…Ï‚İƒŠƒ\[ƒX‚ğæ“¾ (–¢ƒ[ƒh‚È‚ç nullptr)
+        /// ã‚­ãƒ£ãƒƒã‚·ãƒ¥æ¸ˆã¿ãƒªã‚½ãƒ¼ã‚¹ã‚’å–å¾— (æœªãƒ­ãƒ¼ãƒ‰ãªã‚‰ nullptr)
         /// </summary>
         std::shared_ptr<ModelResource> GetResource(const std::string& binPath) const;
 
-        /// <summary>QÆ‚ª‚È‚­‚È‚Á‚½ƒŠƒ\[ƒX‚ğƒLƒƒƒbƒVƒ…‚©‚çíœ</summary>
+        /// <summary>å‚ç…§ãŒãªããªã£ãŸãƒªã‚½ãƒ¼ã‚¹ã‚’ã‚­ãƒ£ãƒƒã‚·ãƒ¥ã‹ã‚‰å‰Šé™¤</summary>
         void Unload(const std::string& binPath);
 
-        /// <summary>‘SƒLƒƒƒbƒVƒ…‚ğƒNƒŠƒA</summary>
+        /// <summary>å…¨ã‚­ãƒ£ãƒƒã‚·ãƒ¥ã‚’ã‚¯ãƒªã‚¢</summary>
         void Clear();
 
     private:

@@ -1,14 +1,21 @@
-#include"pch.h"
-#include "ModelResouce.h"
+#include "pch.h"
+#include"ModelResouce.h"
 
 #include<graphics/Model/Formats/BinFormat.h>
 #include<graphics/Model/Formats/AnmFormat.h>
-#include<graphics/Texture/Texture.h>
-#include<graphics/Texture/TextureManager.h>
+#include <graphics/Texture/TextureManager.h>
+#include <graphics/Texture/Texture.h>
+
+#include <cstdio>
+#include <cstring>
+#include <algorithm>
 
 namespace graphics
 {
 
+    // ============================================================
+    //  Load (公開エントリ)
+    // ============================================================
     bool ModelResource::Load(const std::string& binPath)
     {
         std::vector<ModelVertex> verts;
@@ -28,45 +35,12 @@ namespace graphics
         return true;
     }
 
-    /// <summary>
-    /// .anm ��ǉ��ǂݍ��݂��ăN���b�v��ǋL����B
-    /// �������\�[�X�ɉ��x�ł��Ăׂ�i�N���b�v�������ɒǉ������j�B
-    /// </summary>
-    bool ModelResource::AppendAnimation(const std::string& anmPath)
-    {
-        if (!mIsLoaded)
-        {
-            DEBUG_LOG(sys::eLogLevel::Error,
-                "ModelResource::AppendAnimation: ���\�[�X�������[�h�ł��B");
-            return false;
-        }
-        if (!LoadAnm(anmPath))
-        {
-            DEBUG_LOG(sys::eLogLevel::Warning,
-                std::format("ModelResource::AppendAnimation: Failed: {}", anmPath));
-            return false;
-        }
-        ResolveBoneIndices();
-        DEBUG_LOG(sys::eLogLevel::Log,
-            std::format("ModelResource::AppendAnimation: Loaded '{}' (total {} clips)",
-                anmPath, mAnimClips.size()));
-        return true;
-    }
-
-    int ModelResource::FindClipIndex(const std::string& clipName) const
-    {
-        for (int i = 0; i < static_cast<int>(mAnimClips.size()); ++i)
-        {
-            if (mAnimClips[i].Name == clipName) return i;
-        }
-        return -1;
-    }
-
-    /// <summary>
-    /// .bin����CPU�o�b�t�@
-    /// </summary>
-    /// <returns></returns>
-    bool ModelResource::LoadBin(const std::string& path, std::vector<ModelVertex>& outVerts, std::vector<uint32_t>& outIndices)
+    // ============================================================
+    //  LoadBin (.bin → CPU バッファ)
+    // ============================================================
+    bool ModelResource::LoadBin(const std::string& path,
+        std::vector<ModelVertex>& outVerts,
+        std::vector<uint32_t>& outIndices)
     {
         FILE* fp = nullptr;
         if (fopen_s(&fp, path.c_str(), "rb") != 0 || !fp)
@@ -76,7 +50,7 @@ namespace graphics
             return false;
         }
 
-        // �w�b�_�[
+        // ── ヘッダー ────────────────────────────────────────────
         BinFmt::BinHeader header{};
         fread(&header, sizeof(header), 1, fp);
 
@@ -93,7 +67,8 @@ namespace graphics
                     header.version, BinFmt::VERSION));
         }
 
-        // �}�e���A��
+        // ── マテリアル ───────────────────────────────────────────
+        // 一時保存して後でメッシュとの対応付けに使う
         struct MatInfo
         {
             std::string name, diffuse, normal, specular, emissive;
@@ -119,7 +94,7 @@ namespace graphics
             m.flags = e.flags;
         }
 
-        // �{�[��
+        // ── ボーン ───────────────────────────────────────────────
         mBones.resize(header.boneCount);
         for (uint32_t i = 0; i < header.boneCount; ++i)
         {
@@ -128,12 +103,12 @@ namespace graphics
             auto& b = mBones[i];
             b.Name = e.name;
             b.ParentIndex = e.parentIndex;
-            // BinFmt::Mat4x4 �� XMFLOAT4X4 �͓������������C�A�E�g (float[4][4])
+            // BinFmt::Mat4x4 と XMFLOAT4X4 は同じメモリレイアウト (float[4][4])
             std::memcpy(&b.OffsetMatrix, &e.offsetMatrix, sizeof(DirectX::XMFLOAT4X4));
             std::memcpy(&b.LocalTransform, &e.localTransform, sizeof(DirectX::XMFLOAT4X4));
         }
 
-        // ���b�V��
+        // ── メッシュ → 頂点 / インデックスをマージ ──────────────
         uint32_t vertexCursor = 0;
         uint32_t indexCursor = 0;
 
@@ -142,13 +117,13 @@ namespace graphics
             BinFmt::MeshEntry meshEntry{};
             fread(&meshEntry, sizeof(meshEntry), 1, fp);
 
-            // ���_: BinFmt::Vertex �� ModelVertex �͓������C�A�E�g �� ���ړǂݍ���
+            // 頂点: BinFmt::Vertex と ModelVertex は同じレイアウト → 直接読み込み
             const uint32_t vc = meshEntry.vertexCount;
             const size_t   prevVertSize = outVerts.size();
             outVerts.resize(prevVertSize + vc);
             fread(outVerts.data() + prevVertSize, sizeof(ModelVertex), vc, fp);
 
-            // �C���f�b�N�X: 16 or 32 bit �� ��� 32bit �ɕϊ��� vertexCursor �Ń��x�[�X
+            // インデックス: 16 or 32 bit → 常に 32bit に変換し vertexCursor でリベース
             const uint32_t ic = meshEntry.indexCount;
             if (meshEntry.use32BitIndex)
             {
@@ -163,7 +138,7 @@ namespace graphics
                 for (auto idx : raw) outIndices.push_back(static_cast<uint32_t>(idx) + vertexCursor);
             }
 
-            // �Z�N�V��������
+            // セクション生成
             ModelSection sec{};
             sec.MeshName = meshEntry.name;
             sec.IndexOffset = indexCursor;
@@ -191,9 +166,9 @@ namespace graphics
         return true;
     }
 
-    /// <summary>
-    /// .anm -> ModelAnimClip
-    /// </summary>
+    // ============================================================
+    //  LoadAnm (.anm → ModelAnimClip[])
+    // ============================================================
     bool ModelResource::LoadAnm(const std::string& path)
     {
         FILE* fp = nullptr;
@@ -232,7 +207,7 @@ namespace graphics
                     auto& track = clip.BakedTracks[ci];
                     track.BoneName = ce.boneName;
                     track.Frames.resize(ce.frameCount);
-                    // ModelBakedFrame �� AnmFmt::BakedFrame �͓��ꃌ�C�A�E�g (40 bytes)
+                    // ModelBakedFrame と AnmFmt::BakedFrame は同一レイアウト (40 bytes)
                     fread(track.Frames.data(), sizeof(ModelBakedFrame), ce.frameCount, fp);
                 }
             }
@@ -249,7 +224,7 @@ namespace graphics
                     track.PosKeys.resize(ce.posKeyCount);
                     track.RotKeys.resize(ce.rotKeyCount);
                     track.ScaleKeys.resize(ce.scaleKeyCount);
-                    // ModelPosKey/RotKey/ScaleKey �� AnmFmt �ł͓��ꃌ�C�A�E�g
+                    // ModelPosKey/RotKey/ScaleKey と AnmFmt 版は同一レイアウト
                     fread(track.PosKeys.data(), sizeof(ModelPosKey), ce.posKeyCount, fp);
                     fread(track.RotKeys.data(), sizeof(ModelRotKey), ce.rotKeyCount, fp);
                     fread(track.ScaleKeys.data(), sizeof(ModelScaleKey), ce.scaleKeyCount, fp);
@@ -261,8 +236,14 @@ namespace graphics
         return true;
     }
 
-    bool ModelResource::UploadGPU(const std::vector<ModelVertex>& verts, const std::vector<uint32_t>& indices)
+    // ============================================================
+    //  UploadGPU
+    // ============================================================
+    bool ModelResource::UploadGPU(const std::vector<ModelVertex>& verts,
+        const std::vector<uint32_t>& indices)
     {
+        // CreateStaticSync: DX12Device の専用アップロードキューで同期転送
+        // → cmdList 不要、ReleaseUploadBuffers() の呼び出しも不要
         mVB = std::make_unique<VertexBuffer>();
         const uint32_t vbSize = static_cast<uint32_t>(verts.size() * sizeof(ModelVertex));
         if (!mVB->CreateStaticSync(verts.data(), vbSize, sizeof(ModelVertex)))
@@ -282,32 +263,97 @@ namespace graphics
         return true;
     }
 
+    // ============================================================
+    //  ResolveTextures
+    // ============================================================
+    //  FindTextureFile (内部ヘルパー)
+    //
+    //  検索優先順位:
+    //    1. baseDir/Textures/{filename}   ← Textures フォルダを最優先
+    //    2. baseDir 以下を再帰検索        ← なければ順番に探す
+    //
+    //  FBX/DCC ツールが絶対パスや相対パスを埋め込んでいても
+    //  filename 部分だけ使うため問題なし
+    // ============================================================
+    static std::filesystem::path FindTextureFile(
+        const std::filesystem::path& baseDir,
+        const std::string& texPathStr)
+    {
+        namespace fs = std::filesystem;
+        if (texPathStr.empty()) return {};
+
+        // DCC ツールが絶対パスや相対パスを埋め込んでいる場合もファイル名だけ取り出す
+        const fs::path filename = fs::path(texPathStr).filename();
+        if (filename.empty()) return {};
+
+        // ── 優先1: baseDir/Textures/{filename} ─────────────────────────────
+        {
+            const fs::path candidate = baseDir / "Textures" / filename;
+            if (fs::exists(candidate) && fs::is_regular_file(candidate))
+                return candidate;
+        }
+
+        // ── 優先2: baseDir 以下を再帰検索 ──────────────────────────────────
+        // skip_permission_denied でアクセス不可フォルダをスキップ
+        try
+        {
+            for (const auto& entry : fs::recursive_directory_iterator(
+                baseDir, fs::directory_options::skip_permission_denied))
+            {
+                if (entry.is_regular_file() && entry.path().filename() == filename)
+                    return entry.path();
+            }
+        }
+        catch (const fs::filesystem_error& e)
+        {
+            DEBUG_LOG(sys::eLogLevel::Warning,
+                std::format("ModelResource: FindTextureFile error: {}", e.what()));
+        }
+
+        return {};  // 見つからなかった
+    }
+
     void ModelResource::ResolveTextures(const std::filesystem::path& baseDir)
     {
         auto& texMgr = graphics::TextureManager::Get();
 
+        // テクスチャを検索してロードする共通ラムダ
+        auto load = [&](const std::string& pathStr) -> graphics::Texture*
+            {
+                if (pathStr.empty()) return nullptr;
+
+                const auto found = FindTextureFile(baseDir, pathStr);
+                if (found.empty())
+                {
+                    DEBUG_LOG(sys::eLogLevel::Warning,
+                        std::format("ModelResource: Texture not found: '{}' (searched under '{}')",
+                            pathStr, baseDir.string()));
+                    return nullptr;
+                }
+
+                DEBUG_LOG(sys::eLogLevel::Log,
+                    std::format("ModelResource: Texture found: '{}'", found.string()));
+
+                return texMgr.GetOrLoad(found);
+            };
+
         for (auto& sec : mSections)
         {
-            if (!sec.DiffuseTexPath.empty())
-            {
-                sec.DiffuseTexture = texMgr.GetOrLoad(baseDir / sec.DiffuseTexPath);
-                if (!sec.DiffuseTexture)
-                    DEBUG_LOG(sys::eLogLevel::Warning,
-                        std::format("ModelResource: Diffuse texture not found: {}", sec.DiffuseTexPath));
-            }
-            if (!sec.NormalTexPath.empty())
-                sec.NormalTexture = texMgr.GetOrLoad(baseDir / sec.NormalTexPath);
-
-            if (!sec.SpecularTexPath.empty())
-                sec.SpecularTexture = texMgr.GetOrLoad(baseDir / sec.SpecularTexPath);
+            sec.DiffuseTexture = load(sec.DiffuseTexPath);
+            sec.NormalTexture = load(sec.NormalTexPath);
+            sec.SpecularTexture = load(sec.SpecularTexPath);
         }
     }
 
+    // ============================================================
+    //  ResolveBoneIndices
+    //  アニメーショントラックのボーン名 → ボーンインデックスを解決
+    // ============================================================
     void ModelResource::ResolveBoneIndices()
     {
         if (mBones.empty() || mAnimClips.empty()) return;
 
-        // ���O �� �C���f�b�N�X �}�b�v���\�z
+        // 名前 → インデックス マップを構築
         std::unordered_map<std::string, int32_t> nameMap;
         nameMap.reserve(mBones.size());
         for (int32_t i = 0; i < static_cast<int32_t>(mBones.size()); ++i)
@@ -334,5 +380,70 @@ namespace graphics
         }
     }
 
-}
+    // ============================================================
+//  AppendAnimation (.anm を追記読み込み)
+// ============================================================
+    bool ModelResource::AppendAnimation(const std::string& anmPath,
+        const std::string& overrideName)
+    {
+        if (!mIsLoaded)
+        {
+            return false;
+        }
+
+        // ロード前のクリップ数を記録して、追加されたクリップを特定する
+        const size_t prevCount = mAnimClips.size();
+
+        if (!LoadAnm(anmPath))
+        {
+            DEBUG_LOG(sys::eLogLevel::Warning,
+                std::format("ModelResource::AppendAnimation: Failed: {}", anmPath));
+            return false;
+        }
+
+        // ── クリップ名の上書き ────────────────────────────────────────
+        if (!overrideName.empty())
+        {
+            const size_t addedCount = mAnimClips.size() - prevCount;
+            if (addedCount == 1)
+            {
+                // 1クリップ → 指定名をそのまま使う
+                mAnimClips[prevCount].Name = overrideName;
+            }
+            else
+            {
+                // 複数クリップ → "overrideName_0", "overrideName_1" ... と連番
+                for (size_t i = prevCount; i < mAnimClips.size(); ++i)
+                {
+                    mAnimClips[i].Name =
+                        overrideName + "_" + std::to_string(i - prevCount);
+                }
+            }
+        }
+
+        ResolveBoneIndices();
+
+        // ロードされたクリップ名をログ出力
+        for (size_t i = prevCount; i < mAnimClips.size(); ++i)
+        {
+            DEBUG_LOG(sys::eLogLevel::Log,
+                std::format("ModelResource::AppendAnimation: [{}] name='{}' dur={:.2f}s",
+                    i, mAnimClips[i].Name, mAnimClips[i].Duration));
+        }
+        return true;
+    }
+
+    // ============================================================
+    //  FindClipIndex (クリップ名 → インデックス)
+    // ============================================================
+    int ModelResource::FindClipIndex(const std::string& clipName) const
+    {
+        for (int i = 0; i < static_cast<int>(mAnimClips.size()); ++i)
+        {
+            if (mAnimClips[i].Name == clipName) return i;
+        }
+        return -1;
+    }
+
+} // namespace graphics
 

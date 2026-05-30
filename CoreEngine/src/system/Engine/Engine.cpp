@@ -20,12 +20,19 @@
 #include<graphics/Sprite/Renderer/SpriteRenderer.h>
 
 #include<graphics/Model/Renderer/ModelRenderer.h>
+#include<graphics/Model/Animation/ModelAnimationSystem.h>
+#include<graphics/Model/Resouce/ModelResourceManager.h>
+#include<graphics/Model/Resouce/ModelResouce.h>
 
 #include<ecs/component/transform/TransformComponent.h>
 #include<ecs/component/sprite/SpriteComponent.h>
+#include<ecs/component/model/ModelComponent.h>
+#include<ecs/component/model/ModelAnimComponent.h>
+#include<ecs/component/camera/CameraComponent.h>
+
 #include<graphics/Texture/Texture.h>
 
-
+// テスト用のSpriteの作成
 void SpriteRenderTest()
 {
 	auto texture = graphics::TextureManager::Get().GetOrLoad("Assets/Test/test.png");
@@ -34,10 +41,59 @@ void SpriteRenderTest()
 	auto& sprite = ecs::EntityManager::Get().AddComponent<ecs::Sprite>(entity,texture);
 }
 
-void FbxRenderTest()
+// テスト用のリソース読み込み
+void LoadResource()
 {
-	auto entity = ecs::EntityManager::Get().CreateEntity();
-	auto& tr = ecs::EntityManager::Get().AddComponent<ecs::Transform>(entity);
+	auto& mgr = graphics::ModelResourceManager::Get();
+
+	auto path = "Assets/Model/Faul.bin";
+	auto res = mgr.Load(path);
+	mgr.AppendAnimation(path, "Assets/Model/Animation/Attack_A.anm","Atk_a");
+	mgr.AppendAnimation(path, "Assets/Model/Animation/Attack_B.anm", "Atk_b");
+}
+
+
+// テスト用のFBXモデルの作成
+void Create3DModel()
+{
+	auto& mgr = graphics::ModelResourceManager::Get();
+	auto path = "Assets/Model/Faul.bin";
+	auto res = mgr.GetResource(path);
+	auto& Manager = ecs::EntityManager::Get(); 
+	auto& reg = ecs::EntityManager::Get().GetRegistry();
+	
+	auto entity = Manager.CreateEntity();
+
+	auto& tr = Manager.AddComponent<ecs::Transform>(entity);
+	auto& model = Manager.AddComponent<ecs::Model>(entity);
+	model.IsVisible = true;
+	model.Intensity = 1.f;
+	model.Layer = 0;
+
+	auto& anim = Manager.AddComponent<ecs::ModelAnimComponent>(entity);
+
+	anim.Play(*res, "Atk_a", true);
+
+}
+
+// テスト用のカメラ作成
+entt::entity CreateCamera()
+{
+	auto& registry = ecs::EntityManager::Get().GetRegistry();
+
+	entt::entity entity = ecs::EntityManager::Get().CreateEntity();
+
+	auto& tr = registry.emplace<ecs::Transform>(entity);
+	tr.SetPosition(0.0f, 1.5f, -5.0f);
+
+	auto& cam = registry.emplace<ecs::CameraComponent>(entity);
+	cam.IsMainCamera = true;
+	cam.Fov = 60.0f;
+	cam.Near = 0.01f;
+	cam.Far = 1000.0f;
+	cam.SetAspectRatioFromWindow(sys::Window::Get());
+
+	return entity;
 }
 
 namespace sys
@@ -137,9 +193,19 @@ namespace sys
 			return false;
 		}
 
-		// テスト用の読み込み
+		SINGLETON_REF(graphics::ModelRenderer, ModelRenderer);
+		if (ModelRenderer.Initialize(*mDevice, descriptorHeapManager, graphics::ShaderManager::Get()) == false)
+		{
+			return false;
+		}
+
+		// テスト用のインスタンス生成
+		CreateCamera();
+		LoadResource();
+		Create3DModel();
+
 		SpriteRenderTest();
-		FbxRenderTest();
+
 
 		mIsRunning = true;
 		mIsInitialized = true;
@@ -223,6 +289,7 @@ namespace sys
 		return true;
 	}
 
+
 	/// <summary>
 	/// 事前更新
 	/// </summary>
@@ -251,6 +318,11 @@ namespace sys
 	{
 		auto& registry = ecs::EntityManager::Get().GetRegistry();
 
+		// カメラ行列の更新
+		sys::CameraSystem::Get().Update(registry);
+
+		// アニメーション時間の更新
+		graphics::ModelAnimationSystem::Update(registry, mTime.GetDeltaTime());
 	}
 
 	/// <summary>
@@ -260,10 +332,19 @@ namespace sys
 	{
 		auto context = mDX12Renderer->GetContext();
 
+		auto& registry = mEntityManager->GetRegistry();
+		auto cmdList = context->GetCommandList();
+
+		// 3Dモデル
+		SINGLETON_REF(graphics::ModelRenderer, modelRenderer);
+		modelRenderer.Begin();
+		modelRenderer.UpdateAndDraw(registry);
+		modelRenderer.End(cmdList);
+
+		// 2DSprite
 		SINGLETON_REF(graphics::SpriteRenderer, spriteRenderer);
 		spriteRenderer.Begin();
-		spriteRenderer.UpdateAndDraw(mEntityManager->GetRegistry());
-		spriteRenderer.End(context->GetCommandList());
-
+		spriteRenderer.UpdateAndDraw(registry);
+		spriteRenderer.End(cmdList);
 	}
 }

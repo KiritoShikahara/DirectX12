@@ -1,19 +1,20 @@
 #pragma once
 
-#include<vector>
-#include<string>
-#include<memory>
-#include<filesystem>
-#include<Utility/Export/Export.h>
+#include <vector>
+#include <string>
+#include <memory>
+#include <filesystem>
+#include <Utility/Export/Export.h>
 
-#include<graphics/IndexBuffer/IndexBuffer.h>
-#include<graphics/VertexBuffer/VertexBuffer.h>
+#include <graphics/VertexBuffer/VertexBuffer.h>
+#include <graphics/IndexBuffer/IndexBuffer.h>
 #include<graphics/Model/ModelData.h>
+
 
 namespace graphics
 {
-	class ENGINE_API ModelResource
-	{
+    class ENGINE_API ModelResource
+    {
     public:
         ModelResource() = default;
         ~ModelResource() = default;
@@ -24,28 +25,32 @@ namespace graphics
         ModelResource& operator=(ModelResource&&) = delete;
 
         /// <summary>
-        /// .bin ��ǂݍ���� GPU �o�b�t�@���\�z����B
-        /// �A�j���[�V�����͌ォ�� AppendAnimation() �Œǉ�����B
+        /// .bin を読み込んで GPU バッファを構築する。
+        /// アニメーションは後から AppendAnimation() で追加する。
         /// </summary>
         bool Load(const std::string& binPath);
 
         /// <summary>
-        /// .anm ��ǉ��ǂݍ��݂��ăN���b�v��ǋL����B
-        /// �������\�[�X�ɉ��x�ł��Ăׂ�i�N���b�v�������ɒǉ������j�B
+        /// .anm を追加読み込みしてクリップを追記する。
+        /// 同じリソースに何度でも呼べる（クリップが末尾に追加される）。
+        /// overrideName を指定するとクリップ名を上書きできる。
+        ///   クリップ1つ  → overrideName をそのまま使用
+        ///   クリップ複数 → "overrideName_0", "overrideName_1" ... と連番付与
         /// </summary>
-        bool AppendAnimation(const std::string& anmPath);
+        bool AppendAnimation(const std::string& anmPath,
+            const std::string& overrideName = "");
 
-        // ���
+        // ── 状態 ──────────────────────────────────────────────
         bool IsLoaded()     const { return mIsLoaded; }
         bool HasSkinning()  const { return !mBones.empty(); }
         bool HasAnimation() const { return !mAnimClips.empty(); }
         int  GetBoneCount() const { return static_cast<int>(mBones.size()); }
         int  GetClipCount() const { return static_cast<int>(mAnimClips.size()); }
 
-        /// <summary>�N���b�v������C���f�b�N�X������ (-1 = �����炸)</summary>
+        /// <summary>クリップ名からインデックスを検索 (-1 = 見つからず)</summary>
         int FindClipIndex(const std::string& clipName) const;
 
-        // �f�[�^�A�N�Z�T 
+        // ── データアクセサ ─────────────────────────────────────
         const std::vector<ModelSection>& GetSections()  const { return mSections; }
         std::vector<ModelSection>& GetSections() { return mSections; }
         const std::vector<ModelBoneData>& GetBones()     const { return mBones; }
@@ -55,7 +60,6 @@ namespace graphics
         IndexBuffer* GetIndexBuffer()  const { return mIB.get(); }
 
     private:
-
         bool LoadBin(const std::string& path,
             std::vector<ModelVertex>& outVerts,
             std::vector<uint32_t>& outIndices);
@@ -65,7 +69,6 @@ namespace graphics
         void ResolveTextures(const std::filesystem::path& baseDir);
         void ResolveBoneIndices();
 
-    private:
         bool mIsLoaded = false;
 
         std::unique_ptr<VertexBuffer> mVB;
@@ -74,5 +77,6 @@ namespace graphics
         std::vector<ModelSection>  mSections;
         std::vector<ModelBoneData> mBones;
         std::vector<ModelAnimClip> mAnimClips;
-	};
-}
+    };
+
+} // namespace graphics

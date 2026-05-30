@@ -22,17 +22,18 @@ namespace graphics
 	}
 
 	bool ModelResourceManager::AppendAnimation(const std::string& binPath,
-		const std::string& anmPath)
+		const std::string& anmPath,
+		const std::string& overrideName)
 	{
 		auto it = mCache.find(binPath);
 		if (it == mCache.end())
 		{
 			DEBUG_LOG(sys::eLogLevel::Error,
 				std::format("ModelResourceManager::AppendAnimation: "
-					"æ‚É Load() ‚ðŒÄ‚ñ‚Å‚­‚¾‚³‚¢: '{}'", binPath));
+					"å…ˆã« Load() ã‚’å‘¼ã‚“ã§ãã ã•ã„: '{}'", binPath));
 			return false;
 		}
-		return it->second->AppendAnimation(anmPath);
+		return it->second->AppendAnimation(anmPath, overrideName);
 	}
 
 	std::shared_ptr<ModelResource> ModelResourceManager::GetResource(const std::string& binPath) const
