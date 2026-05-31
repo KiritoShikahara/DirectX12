@@ -3,6 +3,7 @@
 
 #include <ecs/component/fbx/FbxComponent.h>
 #include <ecs/component/fbx/FbxAnimComponent.h>
+#include<graphics/Fbx/Resource/FbxResource.h>
 
 namespace graphics
 {

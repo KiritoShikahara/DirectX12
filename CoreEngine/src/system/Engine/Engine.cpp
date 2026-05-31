@@ -6,32 +6,27 @@
 
 #include<system/Input/InputManager.h>
 
+// Dx12
 #include<graphics/Dx12/Dx12Device.h>
 #include<graphics/Dx12/Dx12Context.h>
-#include<system/Logger/Logger.h>
 #include<graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeapManager.h>
-#include<ecs/entity/EntityManager.h>
 #include<graphics/Dx12/RenderContext.h>
 
+#include<system/Logger/Logger.h>
 #include<system/Camera/CameraSystem.h>
 
+// 2D
 #include<graphics/Shader/ShaderManager.h>
 #include<graphics/Texture/TextureManager.h>
 #include<graphics/Sprite/Renderer/SpriteRenderer.h>
 
-#include<graphics/Model/Renderer/ModelRenderer.h>
-#include<graphics/Model/Animation/ModelAnimationSystem.h>
-#include<graphics/Model/Resouce/ModelResourceManager.h>
-#include<graphics/Model/Resouce/ModelResouce.h>
-
+// Component
+#include<ecs/entity/EntityManager.h>
 #include<ecs/component/transform/TransformComponent.h>
 #include<ecs/component/sprite/SpriteComponent.h>
-#include<ecs/component/model/ModelComponent.h>
-#include<ecs/component/model/ModelAnimComponent.h>
 #include<ecs/component/camera/CameraComponent.h>
 
-#include<system/AnimDebugUI/AnimDebugUI.h>
-
+// Resoruce
 #include<graphics/Texture/Texture.h>
 
 // テスト用のSpriteの作成
@@ -46,41 +41,13 @@ void SpriteRenderTest()
 // テスト用のリソース読み込み
 void LoadResource()
 {
-	auto& mgr = graphics::ModelResourceManager::Get();
-
-	auto path = "Assets/Model/Faul.bin";
-	auto res = mgr.Load(path);
-	mgr.AppendAnimation(path, "Assets/Model/Animation/Attack_A.anm","Atk_a");
-	mgr.AppendAnimation(path, "Assets/Model/Animation/Attack_B.anm", "Atk_b");
 }
 
 
 // テスト用のFBXモデルの作成
 void Create3DModel()
 {
-	auto& mgr = graphics::ModelResourceManager::Get();
-	auto path = "Assets/Model/Faul.bin";
-	auto res = mgr.GetResource(path);
-	auto& Manager = ecs::EntityManager::Get(); 
-	auto& reg = ecs::EntityManager::Get().GetRegistry();
 	
-	auto entity = Manager.CreateEntity();
-
-	auto scale = 1.0f;
-
-
-	auto& tr = Manager.AddComponent<ecs::Transform>(entity);
-	tr.SetScale(scale);
-	tr.SetEulerAnglesDeg(90, 90, 90);
-
-	auto& model = Manager.AddComponent<ecs::Model>(entity);
-	model.Resource = res.get();
-	model.IsVisible = true;
-	model.Intensity = 1.f;
-	model.Layer = 0;
-
-	auto& anim = Manager.AddComponent<ecs::ModelAnimComponent>(entity);
-	anim.Play(*res, "Atk_a", true);
 
 }
 
@@ -206,11 +173,6 @@ namespace sys
 			return false;
 		}
 
-		SINGLETON_REF(graphics::ModelRenderer, ModelRenderer);
-		if (ModelRenderer.Initialize(*mDevice, descriptorHeapManager, graphics::ShaderManager::Get()) == false)
-		{
-			return false;
-		}
 
 		// カメラ
 		if (sys::CameraSystem::Get().Initialize() == false)
@@ -218,10 +180,6 @@ namespace sys
 			return false;
 		}
 
-		// デバック用表示
-#ifdef _DEBUG
-		sys::AnimationDebugUI::Register(mEntityManager->GetRegistry());
-#endif // _DEBUG
 
 
 
@@ -348,7 +306,6 @@ namespace sys
 		sys::CameraSystem::Get().Update(registry);
 
 		// アニメーション時間の更新
-		graphics::ModelAnimationSystem::Update(registry, mTime.GetDeltaTime());
 	}
 
 	/// <summary>
@@ -362,10 +319,7 @@ namespace sys
 		auto cmdList = context->GetCommandList();
 
 		// 3Dモデル
-		SINGLETON_REF(graphics::ModelRenderer, modelRenderer);
-		modelRenderer.Begin();
-		modelRenderer.UpdateAndDraw(registry);
-		modelRenderer.End(cmdList);
+
 
 		// 2DSprite
 		SINGLETON_REF(graphics::SpriteRenderer, spriteRenderer);
