@@ -145,6 +145,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\ecs\component\Fbx\FbxComponent.h" />
     <ClInclude Include="src\graphics\Fbx\Renderer\FbxRenderer.h" />
     <ClInclude Include="src\graphics\Fbx\Pipeline\FbxPipeline.h" />
     <ClInclude Include="src\graphics\Fbx\Resource\FbxResource.h" />
