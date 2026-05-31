@@ -30,6 +30,8 @@
 #include<ecs/component/model/ModelAnimComponent.h>
 #include<ecs/component/camera/CameraComponent.h>
 
+#include<system/AnimDebugUI/AnimDebugUI.h>
+
 #include<graphics/Texture/Texture.h>
 
 // テスト用のSpriteの作成
@@ -64,7 +66,7 @@ void Create3DModel()
 	
 	auto entity = Manager.CreateEntity();
 
-	auto scale = 0.2f;
+	auto scale = 1.0f;
 
 
 	auto& tr = Manager.AddComponent<ecs::Transform>(entity);
@@ -216,13 +218,19 @@ namespace sys
 			return false;
 		}
 
+		// デバック用表示
+#ifdef _DEBUG
+		sys::AnimationDebugUI::Register(mEntityManager->GetRegistry());
+#endif // _DEBUG
+
+
 
 		// テスト用のインスタンス生成
 		CreateCamera();
 		LoadResource();
 		Create3DModel();
 
-		SpriteRenderTest();
+		//SpriteRenderTest();
 
 
 		mIsRunning = true;

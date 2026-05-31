@@ -11,7 +11,7 @@
 
 struct ModelInstanceData
 {
-    float4x4 World; // ← row_major 不要。CPU 側で Transpose 済み
+    float4x4 World;
     float4 BaseColor;
     float Metallic;
     float Roughness;

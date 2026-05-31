@@ -1,102 +1,67 @@
 #pragma once
 
-#include<vector>
-#include<string>
-#include<DirectXMath.h>
-#include<Utility/Export/Export.h>
+#include <vector>
+#include <string>
+#include <DirectXMath.h>
+#include <Utility/Export/Export.h>
 #include<graphics/Model/ModelData.h>
 
-namespace graphics
-{
-	class ModelResource;
-}
+namespace graphics { class ModelResource; }
 
 namespace ecs
 {
-	struct ENGINE_API ModelAnimComponent
-	{
-        // Œ»İƒNƒŠƒbƒv 
+    struct ENGINE_API ModelAnimComponent
+    {
+        // â”€â”€ ç¾åœ¨ã‚¯ãƒªãƒƒãƒ— â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         int   CurrentClipIndex = 0;
         float CurrentTime = 0.f;
         float PlaySpeed = 1.f;
         bool  IsLoop = true;
         bool  IsPlaying = true;
 
-        // ƒuƒŒƒ“ƒh—p
-        int   PrevClipIndex = -1;    // -1 = ƒuƒŒƒ“ƒh‚È‚µ
+        // â”€â”€ ãƒ–ãƒ¬ãƒ³ãƒ‰ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        int   PrevClipIndex = -1;
         float PrevTime = 0.f;
-        float BlendTime = 0.f;   // ƒuƒŒƒ“ƒhŒo‰ßŠÔ
-        float BlendDuration = 0.2f;  // ƒuƒŒƒ“ƒh‚É—v‚·‚é•b”
+        float BlendTime = 0.f;
+        float BlendDuration = 0.2f;
 
-        /// <summary>HLSL —pƒXƒLƒjƒ“ƒOs—ñ”z—ñ (“]’uÏ‚İ)</summary>
+        // â”€â”€ å‡ºåŠ› â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         std::vector<DirectX::XMFLOAT4X4> BoneMatrices;
 
-        // ó‘Ôæ“¾
-        bool  IsBlending()      const { return PrevClipIndex >= 0; }
-        float GetBlendFactor()  const
+        // â”€â”€ çŠ¶æ…‹å–å¾— â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        bool  IsBlending()     const { return PrevClipIndex >= 0; }
+        float GetBlendFactor() const
         {
             return (BlendDuration > 0.f)
                 ? std::min(BlendTime / BlendDuration, 1.f) : 1.f;
         }
 
-        /// <summary>ƒCƒ“ƒfƒbƒNƒXw’è‚Å‘¦Ä¶</summary>
+        // â”€â”€ å†ç”Ÿåˆ¶å¾¡ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         void Play(int clipIndex = 0, bool loop = true);
-
-        /// <summary>ƒNƒŠƒbƒv–¼w’è‚Å‘¦Ä¶</summary>
         void Play(const graphics::ModelResource& resource,
             const std::string& clipName, bool loop = true);
-
-        /// <summary>
-        /// ƒCƒ“ƒfƒbƒNƒXw’è‚ÅƒuƒŒƒ“ƒhØ‚è‘Ö‚¦B
-        /// Œ»İ‚ÌƒNƒŠƒbƒv‚©‚ç blendDuration •b‚©‚¯‚ÄƒtƒF[ƒh‚·‚éB
-        /// “¯ƒNƒŠƒbƒv‚ğw’è‚µ‚½ê‡‚Í‰½‚à‚µ‚È‚¢B
-        /// </summary>
-        void CrossFade(int newClipIndex,
-            float blendDuration = 0.2f, bool loop = true);
-
-        /// <summary>ƒNƒŠƒbƒv–¼w’è‚ÅƒuƒŒƒ“ƒhØ‚è‘Ö‚¦</summary>
+        void CrossFade(int newClipIndex, float blendDuration = 0.2f, bool loop = true);
         void CrossFade(const graphics::ModelResource& resource,
             const std::string& clipName,
             float blendDuration = 0.2f, bool loop = true);
-
-        // Ä¶§Œä
         void Pause() { IsPlaying = false; }
         void Resume() { IsPlaying = true; }
         void Rewind() { CurrentTime = 0.f; }
 
-        /// <summary>ƒfƒ‹ƒ^ƒ^ƒCƒ€‚ÅÄ¶ŠÔ‚ği‚ß‚é (ƒuƒŒƒ“ƒhŠÔ‚àXV)</summary>
         void Update(float deltaTime, const graphics::ModelResource& resource);
-
-        /// <summary>
-        /// ƒXƒLƒjƒ“ƒOs—ñ‚ğ BoneMatrices ‚É‘‚«‚ŞB
-        /// ƒuƒŒƒ“ƒh’†‚Í TRS ‹óŠÔ‚Å•âŠÔ‚µ‚Ä‚©‚çs—ñ‚ğ\’z‚·‚éB
-        /// </summary>
         void CalcBoneMatrices(const graphics::ModelResource& resource);
 
     private:
-        // “à•” TRS \‘¢‘Ì 
-        struct BoneTRS
-        {
-            DirectX::XMVECTOR T; // ˆÊ’u
-            DirectX::XMVECTOR R; // ‰ñ“]ƒNƒH[ƒ^ƒjƒIƒ“
-            DirectX::XMVECTOR S; // ƒXƒP[ƒ‹
-        };
+        // ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã‚¯ãƒªãƒƒãƒ—ã‚’ localMats ã«ä¸Šæ›¸ãã™ã‚‹
+        static void ApplyClip(
+            const graphics::ModelAnimClip& clip,
+            float                               time,
+            std::vector<DirectX::XMMATRIX>& localMats);
 
-        /// <summary>w’èƒNƒŠƒbƒv/‚Ì‘Sƒ{[ƒ“ LocalTRS ‚ğŒvZ (ƒŒƒXƒgƒ|[ƒY‚Å‰Šú‰»Ï‚İ)</summary>
-        static void CalcLocalTRS(
-            const graphics::ModelResource& resource,
-            int clipIndex, float time,
-            std::vector<BoneTRS>& outTRS);
+        // ã‚¹ãƒ‘ãƒ¼ã‚¹è£œé–“ãƒ˜ãƒ«ãƒ‘ãƒ¼
+        static DirectX::XMVECTOR EvalPosV(const std::vector<graphics::ModelPosKey>&, float t);
+        static DirectX::XMVECTOR EvalRotV(const std::vector<graphics::ModelRotKey>&, float t);
+        static DirectX::XMVECTOR EvalScaleV(const std::vector<graphics::ModelScaleKey>&, float t);
+    };
 
-        /// <summary>TRS ”z—ñ‚©‚çƒXƒLƒjƒ“ƒOs—ñ‚ğ\’z‚µ‚Ä outMatrices ‚ÉŠi”[</summary>
-        static void BuildSkinMatrices(
-            const graphics::ModelResource& resource,
-            const std::vector<BoneTRS>& trs,
-            std::vector<DirectX::XMFLOAT4X4>& outMatrices);
-
-        // ƒXƒp[ƒX•âŠÔƒwƒ‹ƒp[
-        static DirectX::XMVECTOR EvalPosV(const std::vector<graphics::ModelPosKey>& keys, float t);
-        static DirectX::XMVECTOR EvalRotV(const std::vector<graphics::ModelRotKey>& keys, float t);
-        static DirectX::XMVECTOR EvalScaleV(const std::vector<graphics::ModelScaleKey>& keys, float t);
-	};
-}
+} // namespace ecs
