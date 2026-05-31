@@ -1,13 +1,16 @@
 #include "pch.h"
 #include "FbxPipeline.h"
 
-#include<graphics/Dx12/Dx12Device.h>
-#include<graphics/Shader/ShaderManager.h>
-#include<system/AssetPath/AssetPathManager.h>
+#include <graphics/Dx12/Dx12Device.h>
+#include <graphics/Shader/ShaderManager.h>
+#include <system/AssetPath/AssetPathManager.h>
+#include <d3dx12.h>
 
-namespace graphics 
+namespace graphics
 {
-	// ステート記述ヘルパー
+
+    // ── ステート記述ヘルパー ──────────────────────────────────────
+
     D3D12_DEPTH_STENCIL_DESC FbxPipeline::MakeDepthStencilDesc()
     {
         D3D12_DEPTH_STENCIL_DESC desc = {};
@@ -63,7 +66,8 @@ namespace graphics
         return desc;
     }
 
-    // ルートシグネチャ
+    // ── ルートシグネチャ ──────────────────────────────────────────
+
     bool FbxPipeline::CreateRootSignature(ID3D12Device* device)
     {
         CD3DX12_DESCRIPTOR_RANGE1 rangeInstance, rangeBone,
@@ -153,9 +157,10 @@ namespace graphics
         psoDesc.VS = CD3DX12_SHADER_BYTECODE(VS.Get());
         psoDesc.PS = CD3DX12_SHADER_BYTECODE(PS.Get());
         psoDesc.InputLayout = { inputLayout, _countof(inputLayout) };
-        psoDesc.BlendState = MakeBlendDesc();
-        psoDesc.RasterizerState = MakeRasterizerDesc();
-        psoDesc.DepthStencilState = MakeDepthStencilDesc();
+        psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+        psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+        psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+        psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
         psoDesc.SampleMask = UINT_MAX;
         psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
         psoDesc.NumRenderTargets = 1;
@@ -182,4 +187,5 @@ namespace graphics
         DEBUG_LOG(sys::eLogLevel::Log, "FbxPipeline: Created successfully.");
         return true;
     }
-}
+
+} // namespace graphics

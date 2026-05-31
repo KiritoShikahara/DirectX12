@@ -15,6 +15,10 @@
 #include<system/Logger/Logger.h>
 #include<system/Camera/CameraSystem.h>
 
+// Fbx
+#include<graphics/Fbx/Renderer/FbxRenderer.h>
+#include<graphics/Fbx/Animation/FbxAnimSystem.h>
+
 // 2D
 #include<graphics/Shader/ShaderManager.h>
 #include<graphics/Texture/TextureManager.h>
@@ -25,9 +29,13 @@
 #include<ecs/component/transform/TransformComponent.h>
 #include<ecs/component/sprite/SpriteComponent.h>
 #include<ecs/component/camera/CameraComponent.h>
+#include<ecs/component/Fbx/FbxComponent.h>
+#include<ecs/component/Fbx/FbxAnimComponent.h>
 
 // Resoruce
 #include<graphics/Texture/Texture.h>
+#include<graphics/Fbx/Resource/FbxResourceManager.h>
+#include<graphics/Fbx/Resource/FbxResource.h>
 
 // テスト用のSpriteの作成
 void SpriteRenderTest()
@@ -41,13 +49,32 @@ void SpriteRenderTest()
 // テスト用のリソース読み込み
 void LoadResource()
 {
+	auto& manager = graphics::FbxResourceManager::Get();
+	auto res = manager.Load("Assets/Fbx/Faul.fbx.bin");
+	bool ret = manager.LoadAnm("Assets/Fbx/Faul.fbx.bin", "Assets/Fbx/Animation/Attack_A.fbx.anm", "Attack_A");
 }
 
 
 // テスト用のFBXモデルの作成
 void Create3DModel()
 {
-	
+	auto& manager = ecs::EntityManager::Get();
+	auto& reg = manager.GetRegistry();
+
+	auto res = graphics::FbxResourceManager::Get().Load("Assets/Fbx/Faul.fbx.bin");
+
+	float scale = 0.2f;
+
+	auto entity = manager.CreateEntity();
+	auto& tr = manager.AddComponent<ecs::Transform>(entity);
+	tr.SetScale(scale);
+	tr.SetEulerAnglesDeg(0, 90, -90);
+
+	auto& fbx = manager.AddComponent<ecs::FbxComponent>(entity);
+	fbx.Resource = res;
+
+	auto& anim = manager.AddComponent<ecs::FbxAnimComponent>(entity);
+	anim.Play(*fbx.Resource, "Attack_A", true);
 
 }
 
@@ -173,6 +200,12 @@ namespace sys
 			return false;
 		}
 
+		// Fbx
+		SINGLETON_REF(graphics::FbxRenderer, FbxRenderer);
+		if (FbxRenderer.Initialize(*mDevice, descriptorHeapManager, graphics::ShaderManager::Get()) == false)
+		{
+			return false;
+		}
 
 		// カメラ
 		if (sys::CameraSystem::Get().Initialize() == false)
@@ -301,11 +334,13 @@ namespace sys
 	void Engine::PostUpdate()
 	{
 		auto& registry = ecs::EntityManager::Get().GetRegistry();
+		auto dt = mTime.GetDeltaTime();
 
 		// カメラ行列の更新
 		sys::CameraSystem::Get().Update(registry);
 
 		// アニメーション時間の更新
+		graphics::FbxAnimSystem::Update(registry, dt);
 	}
 
 	/// <summary>
@@ -319,7 +354,10 @@ namespace sys
 		auto cmdList = context->GetCommandList();
 
 		// 3Dモデル
-
+		SINGLETON_REF(graphics::FbxRenderer, FbxRenderer);
+		FbxRenderer.Begin();
+		FbxRenderer.UpdateAndDraw(registry);
+		FbxRenderer.End(cmdList);
 
 		// 2DSprite
 		SINGLETON_REF(graphics::SpriteRenderer, spriteRenderer);

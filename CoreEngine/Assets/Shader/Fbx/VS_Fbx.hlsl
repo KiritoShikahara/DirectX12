@@ -23,7 +23,7 @@ VSOutput main(VSInput input, uint instIdx : SV_InstanceID)
                 // BoneIndex は頂点ごとのボーンインデックス (モデルローカル)
                 // BoneOffset はこのエンティティのボーンがBoneBuffer内で始まるオフセット
                 uint boneIdx = inst.BoneOffset + (uint) max(input.BoneIndex[i], 0);
-                float4x4 boneMat = BoneBuffer[boneIdx];
+                float4x4 boneMat = BoneBuffer[boneIdx].Mat;
 
                 skinnedPos += mul(float4(pos, 1.0f), boneMat).xyz * input.Weight[i];
                 skinnedNormal += mul(normal, (float3x3) boneMat) * input.Weight[i];

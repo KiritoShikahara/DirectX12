@@ -1,9 +1,28 @@
+//=============================================================================
+// FbxShader.hlsli  -  PBRスキンメッシュ 共通定義
+//=============================================================================
 
 static const float PI = 3.14159265359f;
 
+// ============================================================
+//  StructuredBuffer 定義
+//
+//  行列の方針: CPU側で XMMatrixTranspose() して格納、
+//  シェーダーはデフォルト column-major float4x4 で受け取る
+//  → 旧プロジェクトの cbuffer matrix と同じ方針
+//  → row_major は使わない (mulの結果が一致しなくなるため)
+// ============================================================
+
+// ボーン行列ラッパー
+// (StructuredBuffer<float4x4> は直接書けないためラップが必要)
+struct FbxBoneMatrix
+{
+    float4x4 Mat; // CPU側転置済み / column-major として解釈
+};
+
 struct FbxInstanceData
 {
-    row_major float4x4 World;
+    float4x4 World; // CPU側転置済み
 
     float3 BaseColorFactor;
     float MetallicFactor;
@@ -24,18 +43,13 @@ struct FbxInstanceData
 
 struct FbxSceneData
 {
-    row_major float4x4 ViewProjection;
+    float4x4 ViewProjection; // CPU側転置済み
     float3 CameraPosition;
     float _pad0;
     float3 LightDirection;
     float LightIntensity;
     float3 LightColor;
     float _pad1;
-};
-
-struct FbxBoneMatrix
-{
-    row_major float4x4 Mat;
 };
 
 StructuredBuffer<FbxInstanceData> InstanceBuffer : register(t0);
@@ -50,6 +64,9 @@ StructuredBuffer<FbxSceneData> SceneBuffer : register(t8);
 
 SamplerState LinearSampler : register(s0);
 
+// ============================================================
+//  頂点入出力 (InputLayout / FbxVertex と完全一致)
+// ============================================================
 struct VSInput
 {
     float3 Position : POSITION;
@@ -70,6 +87,10 @@ struct VSOutput
     float3 WorldBitan : TEXCOORD4;
     uint InstIdx : TEXCOORD5;
 };
+
+// ============================================================
+//  PBR ヘルパー関数
+// ============================================================
 
 float D_GGX(float NdotH, float roughness)
 {
