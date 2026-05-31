@@ -68,7 +68,7 @@ void Create3DModel()
 	auto entity = manager.CreateEntity();
 	auto& tr = manager.AddComponent<ecs::Transform>(entity);
 	tr.SetScale(scale);
-	tr.SetEulerAnglesDeg(0, 90, -90);
+	tr.SetEulerAnglesDeg(-90, -90, -90);
 
 	auto& fbx = manager.AddComponent<ecs::FbxComponent>(entity);
 	fbx.Resource = res;
