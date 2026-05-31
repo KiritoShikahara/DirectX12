@@ -13,7 +13,7 @@ namespace ecs
         CurrentTime = 0.f;
         IsLoop = loop;
         IsPlaying = true;
-        // ƒuƒŒƒ“ƒh‚ğƒŠƒZƒbƒg
+        // ãƒ–ãƒ¬ãƒ³ãƒ‰ã‚’ãƒªã‚»ãƒƒãƒˆ
         PrevClipIndex = -1;
         BlendTime = 0.f;
 	}
@@ -30,18 +30,18 @@ namespace ecs
         Play(idx, loop);
     }
 
-    // ƒuƒŒƒ“ƒhØ‚è‘Ö‚¦
+    // ãƒ–ãƒ¬ãƒ³ãƒ‰åˆ‡ã‚Šæ›¿ãˆ
     void ModelAnimComponent::CrossFade(int newClipIndex, float blendDuration, bool loop)
     {
-        if (newClipIndex == CurrentClipIndex) return; // “¯ƒNƒŠƒbƒv‚È‚ç‰½‚à‚µ‚È‚¢
+        if (newClipIndex == CurrentClipIndex) return; // åŒã‚¯ãƒªãƒƒãƒ—ãªã‚‰ä½•ã‚‚ã—ãªã„
 
-        // Œ»İ‚Ìó‘Ô‚ğƒuƒŒƒ“ƒhŒ³‚Æ‚µ‚Ä‘Ş”ğ
+        // ç¾åœ¨ã®çŠ¶æ…‹ã‚’ãƒ–ãƒ¬ãƒ³ãƒ‰å…ƒã¨ã—ã¦é€€é¿
         PrevClipIndex = CurrentClipIndex;
         PrevTime = CurrentTime;
         BlendTime = 0.f;
         BlendDuration = blendDuration;
 
-        // VƒNƒŠƒbƒv‚ÖØ‚è‘Ö‚¦
+        // æ–°ã‚¯ãƒªãƒƒãƒ—ã¸åˆ‡ã‚Šæ›¿ãˆ
         CurrentClipIndex = newClipIndex;
         CurrentTime = 0.f;
         IsLoop = loop;
@@ -62,7 +62,7 @@ namespace ecs
         CrossFade(idx, blendDuration, loop);
     }
 
-    // Ä¶ŠÔ‚ÌXV
+    // å†ç”Ÿæ™‚é–“ã®æ›´æ–°
     void ModelAnimComponent::Update(float deltaTime, const graphics::ModelResource& resource)
     {
         if (!IsPlaying || !resource.HasAnimation()) return;
@@ -70,12 +70,12 @@ namespace ecs
         const auto& clips = resource.GetAnimClips();
         if (CurrentClipIndex < 0 || CurrentClipIndex >= static_cast<int>(clips.size())) return;
 
-        // „Ÿ„Ÿ ƒuƒŒƒ“ƒhŠÔ‚ği‚ß‚é „Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ
+        // â”€â”€ ãƒ–ãƒ¬ãƒ³ãƒ‰æ™‚é–“ã‚’é€²ã‚ã‚‹ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if (PrevClipIndex >= 0)
         {
             BlendTime += deltaTime;
 
-            // ‘OƒNƒŠƒbƒv‚à“Æ—§‚µ‚ÄÄ¶‚ğ‘±‚¯‚é (“rØ‚ê‚È‚­ƒtƒF[ƒhƒAƒEƒg)
+            // å‰ã‚¯ãƒªãƒƒãƒ—ã‚‚ç‹¬ç«‹ã—ã¦å†ç”Ÿã‚’ç¶šã‘ã‚‹ (é€”åˆ‡ã‚Œãªããƒ•ã‚§ãƒ¼ãƒ‰ã‚¢ã‚¦ãƒˆ)
             if (PrevClipIndex < static_cast<int>(clips.size()))
             {
                 const float prevDur = clips[PrevClipIndex].Duration;
@@ -87,7 +87,7 @@ namespace ecs
                 }
             }
 
-            // ƒuƒŒƒ“ƒhŠ®—¹
+            // ãƒ–ãƒ¬ãƒ³ãƒ‰å®Œäº†
             if (BlendTime >= BlendDuration)
             {
                 PrevClipIndex = -1;
@@ -95,7 +95,7 @@ namespace ecs
             }
         }
 
-        // „Ÿ„Ÿ Œ»İƒNƒŠƒbƒv‚ÌŠÔ‚ği‚ß‚é „Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ
+        // â”€â”€ ç¾åœ¨ã‚¯ãƒªãƒƒãƒ—ã®æ™‚é–“ã‚’é€²ã‚ã‚‹ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         const float duration = clips[CurrentClipIndex].Duration;
         if (duration <= 0.f) return;
 
@@ -113,24 +113,24 @@ namespace ecs
         }
     }
 
-    // ƒuƒŒƒ“ƒh{ƒXƒLƒ“s—ñŒvZ
+    // ãƒ–ãƒ¬ãƒ³ãƒ‰ï¼‹ã‚¹ã‚­ãƒ³è¡Œåˆ—è¨ˆç®—
     void ModelAnimComponent::CalcBoneMatrices(const graphics::ModelResource& resource)
     {
         if (!resource.HasSkinning()) return;
 
-        // „Ÿ„Ÿ Œ»İƒNƒŠƒbƒv‚Ì TRS ‚ğŒvZ „Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ
+        // â”€â”€ ç¾åœ¨ã‚¯ãƒªãƒƒãƒ—ã® TRS ã‚’è¨ˆç®— â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         std::vector<BoneTRS> currTRS;
         CalcLocalTRS(resource, CurrentClipIndex, CurrentTime, currTRS);
 
         if (PrevClipIndex >= 0 && BlendDuration > 0.f)
         {
-            // „Ÿ„Ÿ ƒuƒŒƒ“ƒh: TRS ‹óŠÔ‚Å•âŠÔ „Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ
-            //   T/S ¨ LERPAR ¨ SLERP
-            //   s—ñ‚ğ’¼Ú•âŠÔ‚·‚é‚Æ skew ‚ª”­¶‚·‚é‚½‚ß TRS ‚Ås‚¤
+            // â”€â”€ ãƒ–ãƒ¬ãƒ³ãƒ‰: TRS ç©ºé–“ã§è£œé–“ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            //   T/S â†’ LERPã€R â†’ SLERP
+            //   è¡Œåˆ—ã‚’ç›´æ¥è£œé–“ã™ã‚‹ã¨ skew ãŒç™ºç”Ÿã™ã‚‹ãŸã‚ TRS ã§è¡Œã†
             std::vector<BoneTRS> prevTRS;
             CalcLocalTRS(resource, PrevClipIndex, PrevTime, prevTRS);
 
-            const float alpha = GetBlendFactor();  // 0(‘O) ¨ 1(Œ»İ)
+            const float alpha = GetBlendFactor();  // 0(å‰) â†’ 1(ç¾åœ¨)
             const int   boneCount = resource.GetBoneCount();
             std::vector<BoneTRS> blended(boneCount);
 
@@ -145,12 +145,12 @@ namespace ecs
         }
         else
         {
-            // ƒuƒŒƒ“ƒh‚È‚µ
+            // ãƒ–ãƒ¬ãƒ³ãƒ‰ãªã—
             BuildSkinMatrices(resource, currTRS, BoneMatrices);
         }
     }
 
-    // w’èƒNƒŠƒbƒv/‚Ì‘Sƒ{[ƒ“ LocalTRS ‚ğŒvZ‚·‚é
+    // æŒ‡å®šã‚¯ãƒªãƒƒãƒ—/æ™‚åˆ»ã®å…¨ãƒœãƒ¼ãƒ³ LocalTRS ã‚’è¨ˆç®—ã™ã‚‹
     void ModelAnimComponent::CalcLocalTRS(
         const graphics::ModelResource& resource,
         int clipIndex, float time,
@@ -160,7 +160,7 @@ namespace ecs
         const int   boneCount = static_cast<int>(bones.size());
         outTRS.resize(boneCount);
 
-        // „Ÿ„Ÿ ƒŒƒXƒgƒ|[ƒY‚Å‰Šú‰» „Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ
+        // â”€â”€ ãƒ¬ã‚¹ãƒˆãƒãƒ¼ã‚ºã§åˆæœŸåŒ– â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         for (int i = 0; i < boneCount; ++i)
         {
             XMMATRIX local = XMLoadFloat4x4(&bones[i].LocalTransform);
@@ -176,7 +176,7 @@ namespace ecs
 
         if (clip.IsBaked)
         {
-            // „Ÿ„Ÿ ƒxƒCƒN: ƒCƒ“ƒfƒbƒNƒX’¼ˆø‚« „Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ
+            // â”€â”€ ãƒ™ã‚¤ã‚¯: ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ç›´å¼•ã â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             int maxFrame = 0;
             if (!clip.BakedTracks.empty() && !clip.BakedTracks[0].Frames.empty())
                 maxFrame = static_cast<int>(clip.BakedTracks[0].Frames.size()) - 1;
@@ -197,7 +197,7 @@ namespace ecs
         }
         else
         {
-            // „Ÿ„Ÿ ƒXƒp[ƒX: •âŠÔ „Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ
+            // â”€â”€ ã‚¹ãƒ‘ãƒ¼ã‚¹: è£œé–“ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             for (const auto& track : clip.SparseTracks)
             {
                 if (track.BoneIndex < 0 || track.BoneIndex >= boneCount) continue;
@@ -218,29 +218,36 @@ namespace ecs
         const int   boneCount = static_cast<int>(bones.size());
         outMatrices.resize(boneCount);
 
-        // ƒOƒ[ƒoƒ‹s—ñ (DFS ‡‚È‚Ì‚Åe‚Í•K‚¸æ‚ÉŒvZÏ‚İ)
+        // ãƒ†ã‚¹ãƒˆï¼šå˜ä½è¡Œåˆ—ã«ã—ã¦ã¿ã‚‹ã€‚
+        //for (int i = 0; i < boneCount; ++i)
+        //{
+        //    XMStoreFloat4x4(&outMatrices[i],
+        //        XMMatrixTranspose(XMMatrixIdentity()));
+        //}
+
+        // ã‚°ãƒ­ãƒ¼ãƒãƒ«è¡Œåˆ— (DFS é †ãªã®ã§è¦ªã¯å¿…ãšå…ˆã«è¨ˆç®—æ¸ˆã¿)
         std::vector<XMMATRIX> globalMats(boneCount, XMMatrixIdentity());
 
         for (int i = 0; i < boneCount; ++i)
         {
-            // TRS ¨ ƒ[ƒJƒ‹s—ñ
+            // TRS â†’ ãƒ­ãƒ¼ã‚«ãƒ«è¡Œåˆ—
             XMMATRIX local = XMMatrixAffineTransformation(
                 trs[i].S, XMVectorZero(), trs[i].R, trs[i].T);
 
-            // ƒOƒ[ƒoƒ‹s—ñ: Child * Parent (sƒxƒNƒgƒ‹•û®)
+            // ã‚°ãƒ­ãƒ¼ãƒãƒ«è¡Œåˆ—: Child * Parent (è¡Œãƒ™ã‚¯ãƒˆãƒ«æ–¹å¼)
             const int parent = bones[i].ParentIndex;
             globalMats[i] = (parent < 0)
                 ? local
                 : local * globalMats[parent];
 
-            // ƒXƒLƒ“s—ñ = OffsetMatrix * GlobalMatrix (“]’u‚µ‚Ä HLSL ‚Ö)
+            // ã‚¹ã‚­ãƒ³è¡Œåˆ— = OffsetMatrix * GlobalMatrix (è»¢ç½®ã—ã¦ HLSL ã¸)
             const XMMATRIX offset = XMLoadFloat4x4(&bones[i].OffsetMatrix);
             XMStoreFloat4x4(&outMatrices[i],
                 XMMatrixTranspose(offset * globalMats[i]));
         }
     }
 
-    // ƒXƒp[ƒX•âŠÔ
+    // ã‚¹ãƒ‘ãƒ¼ã‚¹è£œé–“
     XMVECTOR ModelAnimComponent::EvalPosV(
         const std::vector<graphics::ModelPosKey>& keys, float t)
     {

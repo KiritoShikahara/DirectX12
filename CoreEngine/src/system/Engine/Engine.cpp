@@ -66,8 +66,10 @@ void Create3DModel()
 
 	auto scale = 0.2f;
 
+
 	auto& tr = Manager.AddComponent<ecs::Transform>(entity);
 	tr.SetScale(scale);
+	tr.SetEulerAnglesDeg(90, 90, 90);
 
 	auto& model = Manager.AddComponent<ecs::Model>(entity);
 	model.Resource = res.get();
@@ -75,8 +77,8 @@ void Create3DModel()
 	model.Intensity = 1.f;
 	model.Layer = 0;
 
-	//auto& anim = Manager.AddComponent<ecs::ModelAnimComponent>(entity);
-	//anim.Play(*res, "Atk_a", true);
+	auto& anim = Manager.AddComponent<ecs::ModelAnimComponent>(entity);
+	anim.Play(*res, "Atk_a", true);
 
 }
 
@@ -207,6 +209,13 @@ namespace sys
 		{
 			return false;
 		}
+
+		// カメラ
+		if (sys::CameraSystem::Get().Initialize() == false)
+		{
+			return false;
+		}
+
 
 		// テスト用のインスタンス生成
 		CreateCamera();

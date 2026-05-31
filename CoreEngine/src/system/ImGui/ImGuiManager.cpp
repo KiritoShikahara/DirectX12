@@ -14,11 +14,15 @@ namespace sys
 {
 
 	/// <summary>
-	/// ImGui‰Šú‰»
+	/// ImGuiåˆæœŸåŒ–
 	/// </summary>
-	/// <returns>true:¬Œ÷ false:¸”s</returns>
+	/// <returns>true:æˆåŠŸ false:å¤±æ•—</returns>
 	bool ImGuiManager::Initialize(sys::Window& window, graphics::DX12Device& device, graphics::DX12Context& context, graphics::GDescriptorHeapManager& descriptorHeapManager)
 	{
+#if !defined(_DEBUG)
+		mIsInitialized = false; // åˆæœŸåŒ–ãƒ•ãƒ©ã‚°ã¯falseã®ã¾ã¾
+		return true;
+#endif
 		IMGUI_CHECKVERSION();
 		mContext = ImGui::CreateContext();
 
@@ -37,7 +41,7 @@ namespace sys
 
 		ImGui::StyleColorsDark();
 
-		// ---- Win32 ƒoƒbƒNƒGƒ“ƒh‚Ì‰Šú‰» ----
+		// ---- Win32 ãƒãƒƒã‚¯ã‚¨ãƒ³ãƒ‰ã®åˆæœŸåŒ– ----
 		if (!ImGui_ImplWin32_Init(window.GetHWND()))
 		{
 			DEBUG_LOG(sys::eLogLevel::Error, "ImGuiManager: Failed to init Win32 backend.");
@@ -51,13 +55,13 @@ namespace sys
 			return false;
 		}
 
-		// ---- DX12 ƒoƒbƒNƒGƒ“ƒh‚Ì‰Šú‰» ----
+		// ---- DX12 ãƒãƒƒã‚¯ã‚¨ãƒ³ãƒ‰ã®åˆæœŸåŒ– ----
 		ImGui_ImplDX12_InitInfo initInfo = {};
 		initInfo.Device = device.GetDevice();
 		initInfo.CommandQueue = context.GetCommandQueue();
 		initInfo.NumFramesInFlight = graphics::FRAME_COUNT;
 		initInfo.RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-		initInfo.DSVFormat = DXGI_FORMAT_UNKNOWN; // ImGui ‚Í[“xƒoƒbƒtƒ@‚ğg‚í‚È‚¢
+		initInfo.DSVFormat = DXGI_FORMAT_UNKNOWN; // ImGui ã¯æ·±åº¦ãƒãƒƒãƒ•ã‚¡ã‚’ä½¿ã‚ãªã„
 
 		initInfo.SrvDescriptorHeap = descriptorHeapManager.GetNativeHeap();
 		initInfo.LegacySingleSrvCpuDescriptor = mFontHeap.GetCpuHandle();
@@ -69,7 +73,7 @@ namespace sys
 			return false;
 		}
 
-		// EndFrame() ‚Å–ˆƒtƒŒ[ƒ€g‚¤‚à‚Ì‚¾‚¯•Û‚·‚é
+		// EndFrame() ã§æ¯ãƒ•ãƒ¬ãƒ¼ãƒ ä½¿ã†ã‚‚ã®ã ã‘ä¿æŒã™ã‚‹
 		mRendererContext = &context;
 		mHeapManager = &descriptorHeapManager;
 
@@ -79,13 +83,13 @@ namespace sys
 	}
 
 	/// <summary>
-	/// I—¹ˆ—
+	/// çµ‚äº†å‡¦ç†
 	/// </summary>
 	void ImGuiManager::Finalize()
 	{
 		if (!mIsInitialized) return;
 
-		// ImGui ƒoƒbƒNƒGƒ“ƒh‚ÌI—¹
+		// ImGui ãƒãƒƒã‚¯ã‚¨ãƒ³ãƒ‰ã®çµ‚äº†
 		ImGui_ImplDX12_Shutdown();
 		ImGui_ImplWin32_Shutdown();
 
@@ -101,7 +105,7 @@ namespace sys
 		DEBUG_LOG(sys::eLogLevel::Log, "ImGuiManager finalized.");
 	}
 
-	/// <summary>ƒtƒŒ[ƒ€ŠJnBBeginRendering ‚Ì’¼Œã‚ÉŒÄ‚ÔB</summary>
+	/// <summary>ãƒ•ãƒ¬ãƒ¼ãƒ é–‹å§‹ã€‚BeginRendering ã®ç›´å¾Œã«å‘¼ã¶ã€‚</summary>
 	void ImGuiManager::NewFrame()
 	{
 #if defined(_DEBUG) || DEV_TOOL_ENABLED
@@ -112,8 +116,8 @@ namespace sys
 	}
 
 	/// <summary>
-	/// “o˜^‚³‚ê‚½ UI ŠÖ”‚ğ‡‚ÉŒÄ‚Ño‚·B
-	/// NewFrame() ‚Æ EndFrame() ‚ÌŠÔ‚ÉŒÄ‚Ô‚±‚ÆB
+	/// ç™»éŒ²ã•ã‚ŒãŸ UI é–¢æ•°ã‚’é †ã«å‘¼ã³å‡ºã™ã€‚
+	/// NewFrame() ã¨ EndFrame() ã®é–“ã«å‘¼ã¶ã“ã¨ã€‚
 	/// </summary>
 	void ImGuiManager::Update()
 	{
@@ -126,18 +130,18 @@ namespace sys
 	}
 
 	/// <summary>
-	/// •`‰æƒf[ƒ^‚ÌŠm’è‚Æ ImGui ƒRƒ}ƒ“ƒh‚Ì”­sB
-	/// Flip() ‚Ì’¼‘O‚ÉŒÄ‚ÔB
+	/// æç”»ãƒ‡ãƒ¼ã‚¿ã®ç¢ºå®šã¨ ImGui ã‚³ãƒãƒ³ãƒ‰ã®ç™ºè¡Œã€‚
+	/// Flip() ã®ç›´å‰ã«å‘¼ã¶ã€‚
 	/// </summary>
 	void ImGuiManager::EndFrame()
 	{
 #if defined(_DEBUG) || DEV_TOOL_ENABLED
-		// •`‰æƒf[ƒ^‚ÌŠm’è
+		// æç”»ãƒ‡ãƒ¼ã‚¿ã®ç¢ºå®š
 		ImGui::Render();
 
-		// ƒRƒ}ƒ“ƒhƒŠƒXƒg‚Ö‚Ì•`‰æƒRƒ}ƒ“ƒh”­s
-		// SetDescriptorHeaps ‚Í•`‰æ’¼‘O‚ÉŒÄ‚Ô•K—v‚ª‚ ‚é
-		// iDX12 ‚Ìd—lãAŒã‚©‚çŒÄ‚ñ‚¾‚à‚Ì‚ª—LŒø‚É‚È‚é‚½‚ßj
+		// ã‚³ãƒãƒ³ãƒ‰ãƒªã‚¹ãƒˆã¸ã®æç”»ã‚³ãƒãƒ³ãƒ‰ç™ºè¡Œ
+		// SetDescriptorHeaps ã¯æç”»ç›´å‰ã«å‘¼ã¶å¿…è¦ãŒã‚ã‚‹
+		// ï¼ˆDX12 ã®ä»•æ§˜ä¸Šã€å¾Œã‹ã‚‰å‘¼ã‚“ã ã‚‚ã®ãŒæœ‰åŠ¹ã«ãªã‚‹ãŸã‚ï¼‰
 		auto* cmdList = mRendererContext->GetCommandList();
 
 		ID3D12DescriptorHeap* heaps[] = { mHeapManager->GetNativeHeap() };
@@ -145,7 +149,7 @@ namespace sys
 
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), cmdList);
 
-		// ƒ}ƒ‹ƒ`ƒrƒ…[ƒ|[ƒg‚ÌXViViewportsEnable ‚Ì‚İj
+		// ãƒãƒ«ãƒãƒ“ãƒ¥ãƒ¼ãƒãƒ¼ãƒˆã®æ›´æ–°ï¼ˆViewportsEnable æ™‚ã®ã¿ï¼‰
 		if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
 			ImGui::UpdatePlatformWindows();
@@ -155,8 +159,8 @@ namespace sys
 	}
 
 	/// <summary>
-	/// ƒfƒoƒbƒO UI •`‰æŠÖ”‚ğ“o˜^‚·‚éB
-	/// “o˜^‚µ‚½ŠÖ”‚Í Update() “à‚Å–ˆƒtƒŒ[ƒ€ŒÄ‚Î‚ê‚éB
+	/// ãƒ‡ãƒãƒƒã‚° UI æç”»é–¢æ•°ã‚’ç™»éŒ²ã™ã‚‹ã€‚
+	/// ç™»éŒ²ã—ãŸé–¢æ•°ã¯ Update() å†…ã§æ¯ãƒ•ãƒ¬ãƒ¼ãƒ å‘¼ã°ã‚Œã‚‹ã€‚
 	/// </summary>
 	void ImGuiManager::AddDebugUI(std::function<void()> guiFunc)
 	{

@@ -15,29 +15,38 @@ namespace sys
 {
 
     /// <summary>
-    /// ƒJƒƒ‰‚ÌƒVƒXƒeƒ€
+    /// ã‚«ãƒ¡ãƒ©ã®ã‚·ã‚¹ãƒ†ãƒ 
     /// </summary>
     class ENGINE_API CameraSystem : public utility::Singleton<CameraSystem>
     {
         SINGLETON_CLASS(CameraSystem);
     public:
         SINGLETON_ACCESSOR(CameraSystem);
+        
+        /// <summary>
+        /// åˆæœŸåŒ–
+        /// </summary>
+        /// <returns></returns>
+        bool Initialize();
 
         /// <summary>
-        /// ƒtƒŒ[ƒ€æ“ª‚ÅŒÄ‚ÔB
-        /// ƒLƒƒƒbƒVƒ…‚ª–³Œø‚È‚çÄŒŸõ‚µs—ñ‚ğXV‚·‚éB
+        /// ãƒ•ãƒ¬ãƒ¼ãƒ å…ˆé ­ã§å‘¼ã¶ã€‚
+        /// ã‚­ãƒ£ãƒƒã‚·ãƒ¥ãŒç„¡åŠ¹ãªã‚‰å†æ¤œç´¢ã—è¡Œåˆ—ã‚’æ›´æ–°ã™ã‚‹ã€‚
         /// </summary>
         void Update(entt::registry& registry);
 
         bool HasMainCamera() const { return mHasMainCamera; }
 
-        /// <summary>GPU “]‘——pƒJƒƒ‰ƒf[ƒ^iHasMainCamera() == true ‚Ì‚Æ‚«—LŒøj</summary>
+        /// <summary>GPU è»¢é€ç”¨ã‚«ãƒ¡ãƒ©ãƒ‡ãƒ¼ã‚¿ï¼ˆHasMainCamera() == true ã®ã¨ãæœ‰åŠ¹ï¼‰</summary>
         const graphics::ModelCameraData& GetShaderData() const { return mShaderData; }
 
         entt::entity GetMainCameraEntity() const { return mMainCameraEntity; }
 
-        /// <summary>ƒvƒƒOƒ‰ƒ€‚©‚çƒƒCƒ“ƒJƒƒ‰‚ğØ‚è‘Ö‚¦‚é</summary>
+        /// <summary>ãƒ—ãƒ­ã‚°ãƒ©ãƒ ã‹ã‚‰ãƒ¡ã‚¤ãƒ³ã‚«ãƒ¡ãƒ©ã‚’åˆ‡ã‚Šæ›¿ãˆã‚‹</summary>
         void SetMainCameraEntity(entt::registry& registry, entt::entity entity);
+
+        /// <summary>ã‚«ãƒ¡ãƒ©ã‚’ImGuiã‹ã‚‰æ“ä½œã§ãã‚‹ã‚ˆã†ã«ã™ã‚‹ã€‚</summary>
+        void ImGuiUpdate(entt::registry& registry);
 
     private:
         void SearchMainCamera(entt::registry& registry);

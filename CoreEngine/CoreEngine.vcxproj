@@ -145,6 +145,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\Editor\Parameter\EditorParameter.h" />
     <ClInclude Include="src\graphics\Model\Animation\ModelAnimationSystem.h" />
     <ClInclude Include="src\ecs\component\model\ModelComponent.h" />
     <ClInclude Include="src\graphics\Model\Renderer\ModelRenderer.h" />
