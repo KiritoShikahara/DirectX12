@@ -145,6 +145,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\graphics\Fbx\Renderer\FbxRenderer.h" />
     <ClInclude Include="src\graphics\Fbx\Pipeline\FbxPipeline.h" />
     <ClInclude Include="src\graphics\Fbx\Resource\FbxResource.h" />
     <ClInclude Include="src\graphics\Fbx\Data\FbxData.h" />
@@ -220,6 +221,7 @@
     <ClInclude Include="src\graphics\Texture\TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\graphics\Fbx\Renderer\FbxRenderer.cpp" />
     <ClCompile Include="src\graphics\Fbx\Pipeline\FbxPipeline.cpp" />
     <ClCompile Include="src\graphics\Fbx\Resource\FbxResource.cpp" />
     <ClCompile Include="src\system\AnimDebugUI\AnimDebugUI.cpp" />

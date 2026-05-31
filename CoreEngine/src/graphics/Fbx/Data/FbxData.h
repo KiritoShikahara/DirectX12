@@ -3,6 +3,7 @@
 #include<DirectXMath.h>
 #include<cstdint>
 #include<string>
+#include<vector>
 #include<Utility/Export/Export.h>
 
 namespace graphics
@@ -103,5 +104,20 @@ namespace graphics
         std::string             Name;
         int32_t                 ParentIndex = -1;
         DirectX::XMFLOAT4X4    BindMatrix = {};
+        DirectX::XMFLOAT4X4    LocalTransform = {};
+    };
+
+    /// <summary>
+    /// アニメーションクリップ（.anmのエントリ）
+    /// </summary>
+    struct ENGINE_API FbxAnimClip
+    {
+        std::string Name;
+        int         NumFrame = 0;
+        float       FrameRate = 60.0f;
+        float       Duration = 0.0f;   // NumFrame / FrameRate
+
+        // KeyFrames[BoneIndex][FrameIndex] = ローカル変換行列 (未転置)
+        std::vector<std::vector<DirectX::XMFLOAT4X4>> KeyFrames;
     };
 }
