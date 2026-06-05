@@ -145,6 +145,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\audio\BGM\BGMStream.h" />
     <ClInclude Include="src\audio\Resource\AudioResourceManager.h" />
     <ClInclude Include="src\audio\Manager\AudioManager.h" />
     <ClInclude Include="src\audio\Device\AudioDevice.h" />
@@ -231,6 +232,7 @@
     <ClInclude Include="src\graphics\Texture\TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\audio\BGM\BGMStream.cpp" />
     <ClCompile Include="src\audio\Resource\AudioResourceManager.cpp" />
     <ClCompile Include="src\audio\Manager\AudioManager.cpp" />
     <ClCompile Include="src\audio\Device\AudioDevice.cpp" />
