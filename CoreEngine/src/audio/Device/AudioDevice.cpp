@@ -8,7 +8,7 @@ namespace audio
 	bool AudioDevice::Initialize(
 		AudioManager* manager, uint32_t sampleRate, uint16_t channels)
 	{
-		if (manager)
+		if (manager == nullptr)
 		{
 			return false;
 		}

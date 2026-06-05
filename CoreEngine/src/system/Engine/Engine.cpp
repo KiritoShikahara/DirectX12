@@ -15,6 +15,10 @@
 #include<system/Logger/Logger.h>
 #include<system/Camera/CameraSystem.h>
 
+// Audio
+#include<audio/Device/AudioDevice.h>
+#include<audio/Manager/AudioManager.h>
+
 // Fbx
 #include<graphics/Fbx/Renderer/FbxRenderer.h>
 #include<graphics/Fbx/Animation/FbxAnimSystem.h>
@@ -213,7 +217,17 @@ namespace sys
 			return false;
 		}
 
-
+		// Audio
+		SINGLETON_REF(audio::AudioManager, AudioManager);
+		if (AudioManager.Initialize() == false)
+		{
+			return false;
+		}
+		SINGLETON_REF(audio::AudioDevice, AudioDevice);
+		if(AudioDevice.Initialize(&AudioManager) == false)
+		{
+			return false;
+		}
 
 
 		// テスト用のインスタンス生成

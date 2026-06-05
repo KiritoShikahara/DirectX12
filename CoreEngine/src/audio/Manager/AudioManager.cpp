@@ -1,10 +1,11 @@
 #include "pch.h"
 #include "AudioManager.h"
 
+#define MINIAUDIO_IMPLEMENTATION
+#include"miniaudio/miniaudio.h"
+
 #include"../Resource/AudioResource.h"
 #include"../Resource/AudioResourceManager.h"
-#include"../BGM/BGMStream.h"
-#include"../SE/SoundEffect.h"
 
 namespace audio
 {

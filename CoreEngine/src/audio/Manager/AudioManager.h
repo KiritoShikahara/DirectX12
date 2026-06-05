@@ -9,16 +9,19 @@
 #include<mutex>
 
 #include"miniaudio/miniaudio.h"
+#include"../BGM/BGMStream.h"
+#include"../SE/SoundEffect.h"
 
 namespace audio
 {
 	class AudioResourceManager;
-	class SoundEffect;
-	class BGMStream;
 
 	class AudioManager : public utility::Singleton<AudioManager>
 	{
+		SINGLETON_CLASS(AudioManager);
 	public:
+		SINGLETON_ACCESSOR(AudioManager);
+
 		/// <summary>
 		/// èâä˙âª
 		/// </summary>
