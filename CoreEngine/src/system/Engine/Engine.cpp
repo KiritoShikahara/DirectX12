@@ -73,8 +73,8 @@ void Create3DModel()
 	auto& fbx = manager.AddComponent<ecs::FbxComponent>(entity);
 	fbx.Resource = res;
 
-	//auto& anim = manager.AddComponent<ecs::FbxAnimComponent>(entity);
-	//anim.Play(*fbx.Resource, "Attack_A", true);
+	auto& anim = manager.AddComponent<ecs::FbxAnimComponent>(entity);
+	anim.Play(*fbx.Resource, "Attack_A", true);
 
 }
 
