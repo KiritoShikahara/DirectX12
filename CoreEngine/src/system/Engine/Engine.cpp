@@ -250,7 +250,7 @@ namespace sys
 		// テスト用のインスタンス生成
 		CreateCamera();
 		LoadResource();
-		Create3DModel();
+		//Create3DModel();
 		//CreateSound();
 		//SpriteRenderTest();
 

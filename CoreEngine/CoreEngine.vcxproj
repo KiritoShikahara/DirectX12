@@ -145,6 +145,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\ecs\system\manager\ComponentSystemManager.h" />
     <ClInclude Include="src\audio\BGM\BGMStream.h" />
     <ClInclude Include="src\audio\Resource\AudioResourceManager.h" />
     <ClInclude Include="src\audio\Manager\AudioManager.h" />
@@ -152,6 +153,7 @@
     <ClInclude Include="src\audio\SE\SoundEffect.h" />
     <ClInclude Include="src\audio\Resource\AudioResource.h" />
     <ClInclude Include="src\audio\Data\AudioHeader.h" />
+    <ClInclude Include="src\ecs\system\manager\IComponentSystem.h" />
     <ClInclude Include="src\graphics\Fbx\Resource\FbxResourceManager.h" />
     <ClInclude Include="src\graphics\Fbx\Animation\FbxAnimSystem.h" />
     <ClInclude Include="src\ecs\component\Fbx\FbxComponent.h" />
@@ -221,6 +223,7 @@
     <ClInclude Include="src\graphics\Texture\TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\ecs\system\manager\ComponentSystemManager.cpp" />
     <ClCompile Include="src\audio\BGM\BGMStream.cpp" />
     <ClCompile Include="src\audio\Resource\AudioResourceManager.cpp" />
     <ClCompile Include="src\audio\Manager\AudioManager.cpp" />
