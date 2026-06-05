@@ -8,6 +8,9 @@ namespace audio
 {
     class AudioManager;
 
+    /// <summary>
+	/// ma_device‚ğŠÇ—‚·‚éƒNƒ‰ƒX
+    /// </summary>
     class AudioDevice : public utility::Singleton<AudioDevice>
     {
         SINGLETON_CLASS(AudioDevice);
@@ -18,6 +21,7 @@ namespace audio
             uint32_t sampleRate = 44100,
             uint16_t channels = 2);
 
+		void Finalize();
 
     private:
         ma_device     mDevice = {};

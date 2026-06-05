@@ -17,12 +17,11 @@ namespace audio
         mCurrentFrame = other.mCurrentFrame;
         mIsPersistent = other.mIsPersistent;
 
-        // atomic は load して初期化（other から値を読み出す）
         mVolume.store(other.mVolume.load());
         mLoop.store(other.mLoop.load());
         mPlaying.store(other.mPlaying.load());
 
-        // 移動元のポインタなどはクリアしておく（二重解放などの防止）
+        // 移動元のポインタなどはクリアしておく
         other.mResource = nullptr;
         other.mCurrentFrame = 0;
         other.mPlaying.store(false);
@@ -79,7 +78,7 @@ namespace audio
                     sample = static_cast<int32_t>(mResource->PcmData[(mCurrentFrame + frame) * srcChannels + srcCh] * finalVolume);
                 }
 
-                // 飽和加算（クランプ）
+                // クランプ
                 const int32_t mixed = static_cast<int32_t>(output[frame * outputChannels + ch]) + sample;
                 output[frame * outputChannels + ch] = static_cast<int16_t>(
                     std::clamp(mixed, static_cast<int32_t>(INT16_MIN), static_cast<int32_t>(INT16_MAX)));
