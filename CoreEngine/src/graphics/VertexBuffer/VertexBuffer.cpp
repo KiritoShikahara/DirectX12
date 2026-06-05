@@ -8,6 +8,7 @@ namespace graphics
 	VertexBuffer::VertexBuffer()
 		:mBufferView({})
 		, mBufferResource(nullptr)
+		, mUploadResource(nullptr)
 		, mBufferSize(0)
 		, mStride(0)
 		, mMapped(nullptr)
@@ -25,7 +26,7 @@ namespace graphics
 	/// <param name="size">バッファのサイズ</param>
 	/// <param name="stride">1頂点のデータサイズ</param>
 	/// <returns>true:成功</returns>
-	bool VertexBuffer::Create(const size_t Size, const size_t Stride)
+	bool VertexBuffer::CreateDynamic(const size_t Size, const size_t Stride)
 	{
 
 		mBufferSize = Size;
@@ -58,6 +59,124 @@ namespace graphics
 		mBufferView.SizeInBytes = static_cast<UINT>(mBufferSize);
 		mBufferView.StrideInBytes = static_cast<UINT>(mStride);
 
+		// フラグを立て
+		mIsDynamic = true;
+
+
+		return true;
+	}
+
+	/// <summary>
+	/// 静的な頂点バッファの作成
+	/// </summary>
+	/// <returns></returns>
+	bool VertexBuffer::CreateStatic(ID3D12GraphicsCommandList* CmdList, const void* InitData, const size_t Size, const size_t Stride)
+	{
+		mBufferSize = Size;
+		mStride = Stride;
+		mIsDynamic = false;
+		auto device = graphics::DX12Device::Get().GetDevice();
+		auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(mBufferSize);
+
+		// Default ヒープにリソースを作成
+		auto defaultHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+		HRESULT hr = device->CreateCommittedResource(
+			&defaultHeap,
+			D3D12_HEAP_FLAG_NONE,
+			&resDesc,
+			D3D12_RESOURCE_STATE_COPY_DEST, // ★最初はコピー先として作成
+			nullptr,
+			IID_PPV_ARGS(&mBufferResource)
+		);
+		if (FAILED(hr)) return false;
+
+		// CPUから書き込める Upload ヒープに一時リソースを作成
+		auto uploadHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+		hr = device->CreateCommittedResource(
+			&uploadHeap,
+			D3D12_HEAP_FLAG_NONE,
+			&resDesc,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&mUploadResource)
+		);
+		if (FAILED(hr)) return false;
+
+		// 一時リソースにデータを書き込む
+		void* mapped = nullptr;
+		mUploadResource->Map(0, nullptr, &mapped);
+		memcpy(mapped, InitData, Size);
+		mUploadResource->Unmap(0, nullptr);
+
+		// GPU上で Upload -> Default へデータをコピーするコマンドを積む
+		CmdList->CopyBufferRegion(mBufferResource.Get(), 0, mUploadResource.Get(), 0, Size);
+
+		// バッファの状態を「コピー先」から「頂点バッファとして読み取り可能」に変更
+		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+			mBufferResource.Get(),
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER
+		);
+		CmdList->ResourceBarrier(1, &barrier);
+
+		// ビューのキャッシュ
+		mBufferView.BufferLocation = mBufferResource->GetGPUVirtualAddress();
+		mBufferView.SizeInBytes = static_cast<UINT>(mBufferSize);
+		mBufferView.StrideInBytes = static_cast<UINT>(mStride);
+
+		return true;
+	}
+
+	bool VertexBuffer::CreateStaticSync(const void* InitData, size_t Size, size_t Stride)
+	{
+		// ガード
+		if (!InitData || Size == 0 || Stride == 0)
+		{
+			DEBUG_LOG(sys::eLogLevel::Error,
+				"VertexBuffer::CreateStaticSync: Invalid arguments (nullptr or size=0).");
+			return false;
+		}
+
+		mBufferSize = Size;
+		mStride = Stride;
+		mIsDynamic = false;
+
+		// DEFAULT ヒープに頂点バッファを D3D12MA で確保
+		D3D12MA::ALLOCATION_DESC allocDesc = {};
+		allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+
+		auto resDesc = CD3DX12_RESOURCE_DESC::Buffer(mBufferSize);
+
+		HRESULT hr = graphics::DX12Device::Get().GetMAAllocator()->CreateResource(
+			&allocDesc,
+			&resDesc,
+			D3D12_RESOURCE_STATE_COPY_DEST,   // UploadBufferData が COPY_DEST を期待する
+			nullptr,
+			&mBufferAllocation,
+			IID_PPV_ARGS(&mBufferResource));
+
+		if (FAILED(hr))
+		{
+			DEBUG_LOG(sys::eLogLevel::Error,
+				"VertexBuffer::CreateStaticSync: Failed to create DEFAULT heap resource (D3D12MA).");
+			return false;
+		}
+
+		if (!graphics::DX12Device::Get().UploadBufferData(
+			mBufferResource.Get(), InitData, Size,
+			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER))
+		{
+			DEBUG_LOG(sys::eLogLevel::Error,
+				"VertexBuffer::CreateStaticSync: UploadBufferData failed.");
+			mBufferAllocation.Reset();
+			mBufferResource.Reset();
+			return false;
+		}
+
+		mBufferView.BufferLocation = mBufferResource->GetGPUVirtualAddress();
+		mBufferView.SizeInBytes = static_cast<UINT>(mBufferSize);
+		mBufferView.StrideInBytes = static_cast<UINT>(mStride);
+
 		return true;
 	}
 
@@ -66,12 +185,25 @@ namespace graphics
 	/// </summary>
 	void VertexBuffer::Release()
 	{
+		if (mBufferAllocation != nullptr)
+		{
+			mBufferAllocation.Reset();
+		}
+
 		if (mBufferResource != nullptr)
 		{
-			mBufferResource->Unmap(0, nullptr);
-			mMapped = nullptr;
+			if (mIsDynamic && mMapped != nullptr)
+			{
+				mBufferResource->Unmap(0, nullptr);
+				mMapped = nullptr;
+			}
 			mBufferResource.Reset();
 		}
+	}
+
+	void VertexBuffer::ReleaseUploadBuffer()
+	{
+		mUploadResource.Reset();
 	}
 
 	/// <summary>
@@ -82,6 +214,12 @@ namespace graphics
 	/// <param name="Offset">バッファ先頭からの書き込みオフセット</param>
 	void VertexBuffer::Update(const void* SrcData, size_t Size, size_t Offset)
 	{
+		if (!mIsDynamic)
+		{
+			DEBUG_LOG(sys::eLogLevel::Warning, "Attempting to update a static VertexBuffer. This operation is not allowed.");
+			return;
+		}
+
 		if (mMapped == nullptr || (Offset + Size) > mBufferSize)
 		{
 			DEBUG_LOG(sys::eLogLevel::Warning, "VertexBuffer update out of range or not initialized.");

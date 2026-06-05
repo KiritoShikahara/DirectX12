@@ -6,36 +6,36 @@
 namespace ecs
 {
     /// <summary>
-    /// 2DE3D ‹¤—pƒgƒ‰ƒ“ƒXƒtƒH[ƒ€B
+    /// 2Dãƒ»3D å…±ç”¨ãƒˆãƒ©ãƒ³ã‚¹ãƒ•ã‚©ãƒ¼ãƒ ã€‚
     ///
-    /// “à•”‚Íí‚É 3DiPosition/Rotation/Scalej‚Å•Û‚·‚éB
-    /// 2D ‚Æ‚µ‚Äg‚¤ê‡‚Í Z=0E‰ñ“]‚ÍZ²ƒNƒH[ƒ^ƒjƒIƒ“‚É•ÏŠ·‚µ‚ÄŠi”[‚·‚éB
+    /// å†…éƒ¨ã¯å¸¸ã« 3Dï¼ˆPosition/Rotation/Scaleï¼‰ã§ä¿æŒã™ã‚‹ã€‚
+    /// 2D ã¨ã—ã¦ä½¿ã†å ´åˆã¯ Z=0ãƒ»å›è»¢ã¯Zè»¸ã‚¯ã‚©ãƒ¼ã‚¿ãƒ‹ã‚ªãƒ³ã«å¤‰æ›ã—ã¦æ ¼ç´ã™ã‚‹ã€‚
     ///
-    /// ƒ[ƒ‹ƒhs—ñ‚Íƒ_[ƒeƒBƒtƒ‰ƒO‚ÅŠÇ—‚µA
-    /// •ÏX‚ª‚ ‚Á‚½ƒtƒŒ[ƒ€‚Ì‚İÄŒvZ‚·‚éi–ˆƒtƒŒ[ƒ€ŒÄ‚ñ‚Å‚àˆÀ‘SjB
+    /// ãƒ¯ãƒ¼ãƒ«ãƒ‰è¡Œåˆ—ã¯ãƒ€ãƒ¼ãƒ†ã‚£ãƒ•ãƒ©ã‚°ã§ç®¡ç†ã—ã€
+    /// å¤‰æ›´ãŒã‚ã£ãŸãƒ•ãƒ¬ãƒ¼ãƒ ã®ã¿å†è¨ˆç®—ã™ã‚‹ï¼ˆæ¯ãƒ•ãƒ¬ãƒ¼ãƒ å‘¼ã‚“ã§ã‚‚å®‰å…¨ï¼‰ã€‚
     /// </summary>
     struct ENGINE_API Transform
     {
         // ==============================================================
-        //  ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+        //  ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
         // ==============================================================
 
         Transform() = default;
 
-        /// <summary>3D —pƒRƒ“ƒXƒgƒ‰ƒNƒ^</summary>
+        /// <summary>3D ç”¨ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿</summary>
         Transform(
             DirectX::XMFLOAT3 position,
             DirectX::XMFLOAT4 rotation = { 0.f, 0.f, 0.f, 1.f },
             DirectX::XMFLOAT3 scale = { 1.f, 1.f, 1.f });
 
-        /// <summary>2D —pƒRƒ“ƒXƒgƒ‰ƒNƒ^iZ=0E‰ñ“]‚ÍZ²j</summary>
+        /// <summary>2D ç”¨ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ï¼ˆZ=0ãƒ»å›è»¢ã¯Zè»¸ï¼‰</summary>
         Transform(
             DirectX::XMFLOAT2 position,
             float             rotationRad = 0.f,
             DirectX::XMFLOAT2 scale = { 1.f, 1.f });
 
         // ==============================================================
-        //  3D ƒZƒbƒ^[
+        //  3D ã‚»ãƒƒã‚¿ãƒ¼
         // ==============================================================
 
         void SetPosition(DirectX::FXMVECTOR v);
@@ -49,8 +49,10 @@ namespace ecs
         void SetScale(const DirectX::XMFLOAT3& v);
         void SetScale(float uniform);
 
+        void SetEulerAngles(float pitchRad, float yawRad, float rollRad);
+        void SetEulerAnglesDeg(float pitchDeg, float yawDeg, float rollDeg);
         // ==============================================================
-        //  2D ƒZƒbƒ^[
+        //  2D ã‚»ãƒƒã‚¿ãƒ¼
         // ==============================================================
 
         void Set2DPosition(DirectX::XMFLOAT2 v);
@@ -59,7 +61,7 @@ namespace ecs
         void Set2DScale(DirectX::XMFLOAT2 v);
 
         // ==============================================================
-        //  ‘€ìƒƒ\ƒbƒh
+        //  æ“ä½œãƒ¡ã‚½ãƒƒãƒ‰
         // ==============================================================
 
         void Translate(DirectX::FXMVECTOR delta);
@@ -69,7 +71,7 @@ namespace ecs
         void ScaleBy(float factor);
 
         // ==============================================================
-        //  ƒQƒbƒ^[
+        //  ã‚²ãƒƒã‚¿ãƒ¼
         // ==============================================================
 
         const DirectX::XMFLOAT3& GetPosition()  const { return mPosition; }
@@ -80,7 +82,7 @@ namespace ecs
         float Get2DRotation() const;
 
         // ==============================================================
-        //  •ûŒüƒxƒNƒgƒ‹
+        //  æ–¹å‘ãƒ™ã‚¯ãƒˆãƒ«
         // ==============================================================
 
         DirectX::XMVECTOR GetForward() const;
@@ -91,14 +93,14 @@ namespace ecs
         DirectX::XMVECTOR GetLeft()    const;
 
         // ==============================================================
-        //  ƒ[ƒ‹ƒhs—ñ
+        //  ãƒ¯ãƒ¼ãƒ«ãƒ‰è¡Œåˆ—
         // ==============================================================
 
         const DirectX::XMMATRIX& GetWorldMatrix() const;
         DirectX::XMMATRIX Get2DWorldMatrix() const;
 
         // ==============================================================
-        //  ƒ†[ƒeƒBƒŠƒeƒB
+        //  ãƒ¦ãƒ¼ãƒ†ã‚£ãƒªãƒ†ã‚£
         // ==============================================================
 
         void Reset();
@@ -107,12 +109,12 @@ namespace ecs
     private:
         void MarkDirty() const { mIsDirty = true; }
 
-        // ---- ƒf[ƒ^ ----
+        // ---- ãƒ‡ãƒ¼ã‚¿ ----
         DirectX::XMFLOAT3 mPosition = { 0.f, 0.f, 0.f };
         DirectX::XMFLOAT4 mRotation = { 0.f, 0.f, 0.f, 1.f };
         DirectX::XMFLOAT3 mScale = { 1.f, 1.f, 1.f };
 
-        // ---- ƒLƒƒƒbƒVƒ… ----
+        // ---- ã‚­ãƒ£ãƒƒã‚·ãƒ¥ ----
         mutable DirectX::XMMATRIX mCachedMatrix = DirectX::XMMatrixIdentity();
         mutable bool              mIsDirty = true;
     };

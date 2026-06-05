@@ -25,7 +25,7 @@ namespace sys
 namespace graphics
 {
 	class DX12Device;
-	class DX12Renderer;
+	class DX12Context;
 	class GDescriptorHeapManager;
 	class ShaderManager;
 

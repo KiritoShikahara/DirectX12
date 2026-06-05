@@ -55,7 +55,7 @@ namespace graphics
 		};
 
 		mVB = std::make_unique<VertexBuffer>();
-		if (!mVB->Create(sizeof(vertices), sizeof(SpriteVertex)))
+		if (!mVB->CreateDynamic(sizeof(vertices), sizeof(SpriteVertex)))
 		{
 			DEBUG_LOG(sys::eLogLevel::Error, "SpriteRenderer: Failed to create vertex buffer.");
 			return false;

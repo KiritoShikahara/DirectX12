@@ -8,6 +8,7 @@
 namespace graphics
 {
 	class DX12Device;
+	class DX12Renderer;
 }
 
 namespace ecs
@@ -20,6 +21,7 @@ namespace sys
 	class Window;
 	struct EngineContext;
 	class ImGuiManager;
+	class InputManager;
 
 	class ENGINE_API Engine : public utility::Singleton<Engine>
 	{
@@ -30,68 +32,90 @@ namespace sys
 		SINGLETON_ACCESSOR(Engine);
 
 		/// <summary>
-		/// App‰Šú‰»
+		/// AppåˆæœŸåŒ–
 		/// </summary>
-		/// <param name="context">‰Šú‰»î•ñ</param>
-		/// <returns>true:¬Œ÷ false:¸”s</returns>
+		/// <param name="context">åˆæœŸåŒ–æƒ…å ±</param>
+		/// <returns>true:æˆåŠŸ false:å¤±æ•—</returns>
 		bool Initialize(EngineContext context);
 
 		/// <summary>
-		/// App‚ÌÀs
+		/// Appã®å®Ÿè¡Œ
 		/// </summary>
 		bool Run();
 
 		/// <summary>
-		/// AppI—¹ˆ—
+		/// Appçµ‚äº†å‡¦ç†
 		/// </summary>
-		/// <returns>true:¬Œ÷ false:¸”s</returns>
+		/// <returns>true:æˆåŠŸ false:å¤±æ•—</returns>
 		bool Finalize();
 	private:
 		/// <summary>
-		/// •`‰æ
+		/// äº‹å‰æ›´æ–°
+		/// </summary>
+		void PreUpdate();
+
+		/// <summary>
+		/// çŠ¶æ…‹æ›´æ–°
+		/// </summary>
+		void Update();
+
+		/// <summary>
+		/// äº‹å¾Œæ›´æ–°
+		/// </summary>
+		void PostUpdate();
+
+		/// <summary>
+		/// æç”»
 		/// </summary>
 		void Render();
 
+
+
 	private:
 		/// <summary>
-		/// Às’†ƒtƒ‰ƒO@true:Às’† false:I—¹
+		/// å®Ÿè¡Œä¸­ãƒ•ãƒ©ã‚°ã€€true:å®Ÿè¡Œä¸­ false:çµ‚äº†
 		/// </summary>
 		bool mIsRunning;
 
 		/// <summary>
-		/// ‰Šú‰»Š®—¹ƒtƒ‰ƒO@true:‰Šú‰»Š®—¹ false:–¢‰Šú‰»
+		/// åˆæœŸåŒ–å®Œäº†ãƒ•ãƒ©ã‚°ã€€true:åˆæœŸåŒ–å®Œäº† false:æœªåˆæœŸåŒ–
 		/// </summary>
 		bool mIsInitialized;
 
 	private:
 		/// <summary>
-		/// ŠÔŠÇ—
+		/// æ™‚é–“ç®¡ç†
 		/// </summary>
 		sys::Time mTime;
 
 		/// <summary>
-		/// ƒEƒBƒ“ƒhƒEŠÇ—ƒNƒ‰ƒX
+		/// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ç®¡ç†ã‚¯ãƒ©ã‚¹
 		/// </summary>
 		Window* mWindow;
 
 		/// <summary>
-		/// DX12ƒfƒoƒCƒXŠÇ—
+		/// DX12ãƒ‡ãƒã‚¤ã‚¹ç®¡ç†
 		/// </summary>
 		graphics::DX12Device* mDevice;
 
 		/// <summary>
-		/// Dx12•`‰æŠÇ—ƒNƒ‰ƒX
+		/// DX12ãƒ¬ãƒ³ãƒ€ãƒ¼ç”¨ã‚³ãƒ³ãƒ†ã‚­ã‚¹ãƒˆç®¡ç†
 		/// </summary>
-		std::unique_ptr<graphics::DX12Renderer> mRenderer;
+		graphics::DX12Renderer* mDX12Renderer;
 
 		/// <summary>
-		/// ImGuiŠÇ—ƒNƒ‰ƒX
+		/// ImGuiç®¡ç†ã‚¯ãƒ©ã‚¹
 		/// </summary>
 		ImGuiManager* mImGuiManager;
 
 		/// <summary>
-		/// ƒGƒ“ƒeƒBƒeƒBŠÇ—ƒNƒ‰ƒX
+		/// ã‚¨ãƒ³ãƒ†ã‚£ãƒ†ã‚£ç®¡ç†ã‚¯ãƒ©ã‚¹
 		/// </summary>
 		ecs::EntityManager* mEntityManager;
+
+		/// <summary>
+		/// å…¥åŠ›ç®¡ç†ã‚¯ãƒ©ã‚¹
+		/// </summary>
+		InputManager* mInputManager;
 	};
 }

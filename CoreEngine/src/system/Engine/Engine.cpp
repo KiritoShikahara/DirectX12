@@ -4,27 +4,103 @@
 #include<system/Window/Window.h>
 #include<system/Engine/EngineContext.h>
 
+#include<system/Input/InputManager.h>
+
+// Dx12
 #include<graphics/Dx12/Dx12Device.h>
-#include<system/Logger/Logger.h>
+#include<graphics/Dx12/Dx12Context.h>
 #include<graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeapManager.h>
-#include<ecs/entity/EntityManager.h>
 #include<graphics/Dx12/RenderContext.h>
 
+#include<system/Logger/Logger.h>
+#include<system/Camera/CameraSystem.h>
+
+// Fbx
+#include<graphics/Fbx/Renderer/FbxRenderer.h>
+#include<graphics/Fbx/Animation/FbxAnimSystem.h>
+
+// 2D
 #include<graphics/Shader/ShaderManager.h>
 #include<graphics/Texture/TextureManager.h>
 #include<graphics/Sprite/Renderer/SpriteRenderer.h>
 
+// Component
+#include<ecs/entity/EntityManager.h>
 #include<ecs/component/transform/TransformComponent.h>
 #include<ecs/component/sprite/SpriteComponent.h>
+#include<ecs/component/camera/CameraComponent.h>
+#include<ecs/component/Fbx/FbxComponent.h>
+#include<ecs/component/Fbx/FbxAnimComponent.h>
+
+// Resoruce
 #include<graphics/Texture/Texture.h>
+#include<graphics/Fbx/Resource/FbxResourceManager.h>
+#include<graphics/Fbx/Resource/FbxResource.h>
 
-
+// ãƒ†ã‚¹ãƒˆç”¨ã®Spriteã®ä½œæˆ
 void SpriteRenderTest()
 {
 	auto texture = graphics::TextureManager::Get().GetOrLoad("Assets/Test/test.png");
 	auto entity = ecs::EntityManager::Get().CreateEntity();
 	auto& tr = ecs::EntityManager::Get().AddComponent<ecs::Transform>(entity);
 	auto& sprite = ecs::EntityManager::Get().AddComponent<ecs::Sprite>(entity,texture);
+}
+
+// ãƒ†ã‚¹ãƒˆç”¨ã®ãƒªã‚½ãƒ¼ã‚¹èª­ã¿è¾¼ã¿
+void LoadResource()
+{
+	auto& manager = graphics::FbxResourceManager::Get();
+	auto res = manager.Load("Assets/Fbx/Faul.fbx.bin");
+	bool ret = manager.LoadAnm("Assets/Fbx/Faul.fbx.bin", "Assets/Fbx/Animation/Attack_A.fbx.anm", "Attack_A");
+}
+
+
+// ãƒ†ã‚¹ãƒˆç”¨ã®FBXãƒ¢ãƒ‡ãƒ«ã®ä½œæˆ
+void Create3DModel()
+{
+	auto& manager = ecs::EntityManager::Get();
+	auto& reg = manager.GetRegistry();
+
+	auto res = graphics::FbxResourceManager::Get().Load("Assets/Fbx/Faul.fbx.bin");
+
+	float scale = 0.2f;
+
+	auto entity = manager.CreateEntity();
+	auto& tr = manager.AddComponent<ecs::Transform>(entity);
+	tr.SetScale(scale);
+	tr.SetEulerAnglesDeg(-90, -90, -90);
+
+	auto& fbx = manager.AddComponent<ecs::FbxComponent>(entity);
+	fbx.Resource = res;
+
+	auto& anim = manager.AddComponent<ecs::FbxAnimComponent>(entity);
+	anim.Play(*fbx.Resource, "Attack_A", true);
+
+}
+
+// ãƒ†ã‚¹ãƒˆç”¨ã®ã‚«ãƒ¡ãƒ©ä½œæˆ
+entt::entity CreateCamera()
+{
+	auto& registry = ecs::EntityManager::Get().GetRegistry();
+
+	entt::entity entity = ecs::EntityManager::Get().CreateEntity();
+
+	auto& tr = registry.emplace<ecs::Transform>(entity);
+
+	tr.SetPosition(0.0f, 1.0f, -100.0f);
+
+	// ã‚‚ã— Transform ã‚¯ãƒ©ã‚¹ã«å›è»¢ã‚’è¨­å®šã™ã‚‹é–¢æ•°ï¼ˆSetRotation ã‚„ LookAtï¼‰ãŒã‚ã‚Œã°ã€
+	// ã“ã“ã§ã€Œæ­£é¢ï¼ˆ(0,0,0) æ–¹å‘ï¼‰ã‚’å‘ãã€ã‚ˆã†ã«å›è»¢ã‚’ãƒªã‚»ãƒƒãƒˆã€ã¾ãŸã¯è¨­å®šã—ã¦ãã ã•ã„ã€‚
+	// ä¾‹: tr.SetRotation(0.0f, 0.0f, 0.0f); 
+
+	auto& cam = registry.emplace<ecs::CameraComponent>(entity);
+	cam.IsMainCamera = true;
+	cam.Fov = 60.0f;
+	cam.Near = 0.1f;  // è¿‘ã™ãã¦ã‚¯ãƒªãƒƒãƒ—ã™ã‚‹ã®ã‚’é˜²ããŸã‚ 0.01f ã‹ã‚‰ 0.1f ã«æ¨å¥¨å¤‰æ›´
+	cam.Far = 1000.0f;
+	cam.SetAspectRatioFromWindow(sys::Window::Get());
+
+	return entity;
 }
 
 namespace sys
@@ -35,70 +111,77 @@ namespace sys
 		, mIsInitialized(false)
 		, mWindow(nullptr)
 		, mDevice(nullptr)
-		, mRenderer(nullptr)
 		, mImGuiManager(nullptr)
+		, mInputManager(nullptr)
+		, mDX12Renderer(nullptr)
 	{
 	}
 
 	/// <summary>
-	/// App‰Šú‰»
+	/// AppåˆæœŸåŒ–
 	/// </summary>
-	/// <param name="context">‰Šú‰»î•ñ</param>
-	/// <returns>true:¬Œ÷ false:¸”s</returns>
+	/// <param name="context">åˆæœŸåŒ–æƒ…å ±</param>
+	/// <returns>true:æˆåŠŸ false:å¤±æ•—</returns>
 	bool Engine::Initialize(EngineContext context)
 	{
-		// Logger‚Ì‰Šú‰»
+		// Loggerã®åˆæœŸåŒ–
 		if (sys::Logger::Get().Initialize() == false)
 		{
 			return false;
 		}
 
-		// Time‚Ì‰Šú‰»
+		// Timeã®åˆæœŸåŒ–
 		mTime.Initialize();
 
-		// ƒEƒBƒ“ƒhƒE‚Ì‰Šú‰»
+		// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®åˆæœŸåŒ–
 		mWindow = &Window::Get();
-		if(mWindow->Initialize(context.WindowContext) == false)
+		if (mWindow->Initialize(context.WindowContext) == false)
 		{
 			return false;
 		}
 
-		// DX12ƒfƒoƒCƒX‰Šú‰»
+		// DX12ãƒ‡ãƒã‚¤ã‚¹åˆæœŸåŒ–
 		mDevice = &graphics::DX12Device::Get();
 		if (mDevice->Initialize() == false)
 		{
 			return false;
 		}
 
-		// DX12•`‰æŠÇ—ƒNƒ‰ƒX‰Šú‰»
-		mRenderer = std::make_unique<graphics::DX12Renderer>();
-		if (mRenderer->Initialize(
-			mDevice, 
-			mWindow->GetHWND(), 
-			mWindow->GetWidth(), 
+		// DX12æç”»ç®¡ç†ã‚¯ãƒ©ã‚¹åˆæœŸåŒ–
+		mDX12Renderer = &graphics::DX12Renderer::Get();
+		if (mDX12Renderer->Initialize(
+			mDevice,
+			mWindow->GetHWND(),
+			mWindow->GetWidth(),
 			mWindow->GetHeight()
 		) == false)
 		{
 			return false;
 		}
 
-		// GraphicsDescriptorHeapManager‚Ì‰Šú‰»
+		// GraphicsDescriptorHeapManagerã®åˆæœŸåŒ–
 		auto& descriptorHeapManager = graphics::GDescriptorHeapManager::Get();
-		if(descriptorHeapManager.Initialize(mDevice->GetDevice()) == false)
+		if (descriptorHeapManager.Initialize(mDevice->GetDevice()) == false)
 		{
 			return false;
 		}
 
-		// ImGuiManager‚Ì‰Šú‰»
+		// ImGuiManagerã®åˆæœŸåŒ–
 		mImGuiManager = &sys::ImGuiManager::Get();
-		if (mImGuiManager->Initialize(*mWindow, *mDevice, *mRenderer, descriptorHeapManager) == false)
+		if (mImGuiManager->Initialize(*mWindow, *mDevice, *mDX12Renderer->GetContext(), descriptorHeapManager) == false)
 		{
 			return false;
 		}
 
-		// EntityManager‚Ì‰Šú‰»
+		// EntityManagerã®åˆæœŸåŒ–
 		mEntityManager = &ecs::EntityManager::Get();
 		if (mEntityManager->Initialize() == false)
+		{
+			return false;
+		}
+
+		mInputManager = &sys::InputManager::Get();
+		if (mInputManager->Initialize() == false)
 		{
 			return false;
 		}
@@ -117,8 +200,28 @@ namespace sys
 			return false;
 		}
 
-		// ƒeƒXƒg—p‚Ì“Ç‚İ‚İ
-		SpriteRenderTest();
+		// Fbx
+		SINGLETON_REF(graphics::FbxRenderer, FbxRenderer);
+		if (FbxRenderer.Initialize(*mDevice, descriptorHeapManager, graphics::ShaderManager::Get()) == false)
+		{
+			return false;
+		}
+
+		// ã‚«ãƒ¡ãƒ©
+		if (sys::CameraSystem::Get().Initialize() == false)
+		{
+			return false;
+		}
+
+
+
+
+		// ãƒ†ã‚¹ãƒˆç”¨ã®ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ç”Ÿæˆ
+		CreateCamera();
+		LoadResource();
+		Create3DModel();
+
+		//SpriteRenderTest();
 
 
 		mIsRunning = true;
@@ -130,13 +233,13 @@ namespace sys
 	}
 
 	/// <summary>
-	/// App‚ÌÀs
+	/// Appã®å®Ÿè¡Œ
 	/// </summary>
 	bool Engine::Run()
 	{
 		if (mIsInitialized == false)  return false;
 
-		// OSƒƒbƒZˆ—
+		// OSãƒ¡ãƒƒã‚»å‡¦ç†
 		mWindow->ProcessMessages();
 
 		if (mWindow->IsQuitRequested())
@@ -144,70 +247,122 @@ namespace sys
 			mIsRunning = false;
 			return false;
 		}
+		// äº‹å‰æ›´æ–°
+		this->PreUpdate();
 
-		// Time‚ÌXV
-		mTime.Update();
+		// ãƒ¡ã‚¤ãƒ³æ›´æ–°
+		this->Update();
 
-		// TODO:XVˆ—
+		// äº‹å¾Œæ›´æ–°
+		this->PostUpdate();
 
-		// TODO:•`‰æˆ—
-		mRenderer->BeginRendering();
-		mRenderer->SetViewPort(
-			static_cast<float>(mWindow->GetWidth()),
-			static_cast<float>(mWindow->GetHeight()));
 
-		graphics::RenderContext::Get().SetFrameIndex(mRenderer->GetCurrentFrameIndex());
+
+		auto context = mDX12Renderer->GetContext();
+
+		// TODO:æç”»å‡¦ç†
+		mDX12Renderer->BeginFrame();
+		graphics::RenderContext::Get().SetFrameIndex(context->GetCurrentFrameIndex());
 
 		mImGuiManager->NewFrame();
 		mImGuiManager->Update();
 		Render();
 
 		mImGuiManager->EndFrame();
-		mRenderer->Flip();
+		mDX12Renderer->EndFrame();
 
-		// TODO:ƒtƒŒ[ƒ€‚ÌI—¹ˆ—
+		// TODO:ãƒ•ãƒ¬ãƒ¼ãƒ ã®çµ‚äº†å‡¦ç†
+		mInputManager->Update();
 
 		return true;
 	}
 
 	/// <summary>
-	/// AppI—¹ˆ—
+	/// Appçµ‚äº†å‡¦ç†
 	/// </summary>
-	/// <returns>true:¬Œ÷ false:¸”s</returns>
+	/// <returns>true:æˆåŠŸ false:å¤±æ•—</returns>
 	bool Engine::Finalize()
 	{
 		if (mIsInitialized == false)  return false;
 
-		// GPUŠ®—¹‘Ò‚¿
-		if (mRenderer != nullptr)
+		// GPUå®Œäº†å¾…ã¡
+		if (mDX12Renderer != nullptr)
 		{
-			mRenderer->WaitForGPU();
+			mDX12Renderer->WaitForGPU();
 		}
 
-		// Dx12Renderer‚Ì”jŠü
-		mRenderer->Finalize();
-		mRenderer.reset();
+		// Dx12Rendererã®ç ´æ£„
+		mDX12Renderer->Finalize();
+		mDX12Renderer = nullptr;
 
-		// Dx12Device‚Ì”jŠü
+		// Dx12Deviceã®ç ´æ£„
 		mDevice->Finalize();
 		mDevice = nullptr;
 
-		// TODO:ƒƒOo—Í
+		// TODO:ãƒ­ã‚°å‡ºåŠ›
 
 		sys::Logger::Get().Finalize();
 
 		return true;
 	}
 
+
 	/// <summary>
-	/// •`‰æ
+	/// äº‹å‰æ›´æ–°
+	/// </summary>
+	void Engine::PreUpdate()
+	{
+		// Timeã®æ›´æ–°
+		mTime.Update();
+
+	}
+
+	/// <summary>
+	/// çŠ¶æ…‹æ›´æ–°
+	/// </summary>
+	void Engine::Update()
+	{
+		if (INPUT_PAD->IsPressed(sys::ePadButton::R2))
+		{
+			std::cout << "Push" << std::endl;
+		}
+	}
+
+	/// <summary>
+	/// äº‹å¾Œæ›´æ–°
+	/// </summary>
+	void Engine::PostUpdate()
+	{
+		auto& registry = ecs::EntityManager::Get().GetRegistry();
+		auto dt = mTime.GetDeltaTime();
+
+		// ã‚«ãƒ¡ãƒ©è¡Œåˆ—ã®æ›´æ–°
+		sys::CameraSystem::Get().Update(registry);
+
+		// ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³æ™‚é–“ã®æ›´æ–°
+		graphics::FbxAnimSystem::Update(registry, dt);
+	}
+
+	/// <summary>
+	/// æç”»
 	/// </summary>
 	void Engine::Render()
 	{
+		auto context = mDX12Renderer->GetContext();
+
+		auto& registry = mEntityManager->GetRegistry();
+		auto cmdList = context->GetCommandList();
+
+		// 3Dãƒ¢ãƒ‡ãƒ«
+		SINGLETON_REF(graphics::FbxRenderer, FbxRenderer);
+		FbxRenderer.Begin();
+		FbxRenderer.UpdateAndDraw(registry);
+		FbxRenderer.End(cmdList);
+
+		// 2DSprite
 		SINGLETON_REF(graphics::SpriteRenderer, spriteRenderer);
 		spriteRenderer.Begin();
-		spriteRenderer.UpdateAndDraw(mEntityManager->GetRegistry());
-		spriteRenderer.End(mRenderer->GetCommandList());
-
+		spriteRenderer.UpdateAndDraw(registry);
+		spriteRenderer.End(cmdList);
 	}
 }

@@ -8,7 +8,7 @@
 namespace graphics
 {
 	class DX12Device;
-	class DX12Renderer;
+	class DX12Context;
 	class GDescriptorHeapManager;
 }
 
@@ -32,7 +32,7 @@ namespace sys
 		bool Initialize(
 			sys::Window&window,
 			graphics::DX12Device& device,
-			graphics::DX12Renderer& renderer,
+			graphics::DX12Context& context,
 			graphics::GDescriptorHeapManager& descriptorHeapManager
 		);
 
@@ -74,7 +74,7 @@ namespace sys
 		/// EndFrame() で毎フレーム使うコマンドリストの供給元。
 		/// ライフタイムは Engine 側が保証する前提でポインタ保持。
 		/// </summary>
-		graphics::DX12Renderer* mRenderer = nullptr;
+		graphics::DX12Context* mRendererContext = nullptr;
 
 		/// <summary>
 		/// EndFrame() で SetDescriptorHeaps に渡すネイティブヒープの供給元。

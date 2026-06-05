@@ -1,7 +1,7 @@
 #pragma once
 
-#include<Utility/Export/Export.h>
-#include<Utility/Singleton/Singleton.hpp>
+#include <Utility/Export/Export.h>
+#include <Utility/Singleton/Singleton.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -14,197 +14,178 @@
 
 namespace sys
 {
-	/// <summary>
-	/// ƒƒO‚Ìo—ÍƒŒƒxƒ‹B’l‚ª‘å‚«‚¢‚Ù‚Çd“ÄB
-	/// </summary>
-	enum class ENGINE_API eLogLevel : uint8_t
-	{
-		/// <summary>’ÊíƒƒO</summary>
-		Log,
-		/// <summary>ŒxƒƒO</summary>
-		Warning,
-		/// <summary>ƒGƒ‰[ƒƒO</summary>
-		Error,
-		/// <summary>’v–½“IƒGƒ‰[B‚»‚Ìê‚ÅƒvƒƒOƒ‰ƒ€‚ğ’â~‚·‚éB</summary>
-		Fatal
-	};
+    /// <summary>
+    /// ãƒ­ã‚°ã®å‡ºåŠ›ãƒ¬ãƒ™ãƒ«ã€‚å€¤ãŒå¤§ãã„ã»ã©é‡ç¯¤ã€‚
+    /// </summary>
+    enum class ENGINE_API eLogLevel : uint8_t
+    {
+        /// <summary>é€šå¸¸ãƒ­ã‚°</summary>
+        Log,
+        /// <summary>è­¦å‘Šãƒ­ã‚°</summary>
+        Warning,
+        /// <summary>ã‚¨ãƒ©ãƒ¼ãƒ­ã‚°</summary>
+        Error,
+        /// <summary>è‡´å‘½çš„ã‚¨ãƒ©ãƒ¼ã€‚ãã®å ´ã§ãƒ—ãƒ­ã‚°ãƒ©ãƒ ã‚’åœæ­¢ã™ã‚‹ã€‚</summary>
+        Fatal
+    };
 
-	/// <summary>
-	/// ƒtƒH[ƒ}ƒbƒg•¶š—ñ‚ÆŒÄ‚Ño‚µŒ³î•ñ‚ğ‚Ü‚Æ‚ß‚½\‘¢‘ÌB
-	///
-	/// ‚±‚Ìƒ‰ƒbƒp[‚ğŒo—R‚·‚é‚±‚Æ‚ÅAŒÄ‚Ño‚µ‘¤‚Í
-	///   ECSE_LOG(eLogLevel::Warning, "val={}", x)
-	/// ‚Æ‘‚­‚¾‚¯‚Å source_location ‚ª©“®‚ÅƒLƒƒƒvƒ`ƒƒ‚³‚ê‚éB
-	/// </summary>
-	struct ENGINE_API LogMessage
-	{
-		std::string_view     fmt;
-		std::source_location location;
+    /// <summary>
+    /// ãƒ•ã‚©ãƒ¼ãƒãƒƒãƒˆæ–‡å­—åˆ—ã¨å‘¼ã³å‡ºã—å…ƒæƒ…å ±ã‚’ã¾ã¨ã‚ãŸæ§‹é€ ä½“ã€‚
+    /// </summary>
+    struct ENGINE_API LogMessage
+    {
+        std::string_view     fmt;
+        std::source_location location;
 
-		/// <summary>
-		/// ˆÃ–Ù•ÏŠ·ƒRƒ“ƒXƒgƒ‰ƒNƒ^B
-		/// •¶š—ñƒŠƒeƒ‰ƒ‹‚ğ“n‚·‚¾‚¯‚Å location ‚ª©“®æ“¾‚³‚ê‚é
-		/// </summary>
-		LogMessage(
-			std::string_view     f,
-			std::source_location loc = std::source_location::current())
-			: fmt(f), location(loc)
-		{
-		}
-	};
+        /// <summary>
+        /// æš—é»™å¤‰æ›ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã€‚
+        /// æ–‡å­—åˆ—ãƒªãƒ†ãƒ©ãƒ«ã‚’æ¸¡ã™ã ã‘ã§ location ãŒè‡ªå‹•å–å¾—ã•ã‚Œã‚‹
+        /// </summary>
+        LogMessage(
+            std::string_view     f,
+            std::source_location loc = std::source_location::current())
+            : fmt(f), location(loc)
+        {
+        }
+    };
 
-	/// <summary>
-	/// ƒƒO‚Ì‘‚«o‚µæ‚ğ’ŠÛ‰»‚·‚éƒCƒ“ƒ^[ƒtƒF[ƒXB
-	/// ConsoleLogSink / FileLogSink / DebugOutputSink ‚ª‚±‚ê‚ğÀ‘•‚·‚éB
-	/// Logger ‚É AddSink() ‚Å’Ç‰Á‚·‚é‚±‚Æ‚Åo—Íæ‚ğ©—R‚É‘g‚İ‡‚í‚¹‚ç‚ê‚éB
-	/// </summary>
-	class ENGINE_API ILogSink
-	{
-	public:
-		virtual ~ILogSink() = default;
+    /// <summary>
+    /// ãƒ­ã‚°ã®æ›¸ãå‡ºã—å…ˆã‚’æŠ½è±¡åŒ–ã™ã‚‹ã‚¤ãƒ³ã‚¿ãƒ¼ãƒ•ã‚§ãƒ¼ã‚¹ã€‚
+    /// </summary>
+    class ENGINE_API ILogSink
+    {
+    public:
+        virtual ~ILogSink() = default;
 
-		/// <summary>
-		/// ƒƒO‚ğ‘‚«o‚·BLogger ‚Ì“à•”ƒ~ƒ…[ƒeƒbƒNƒX‚ªŠ|‚©‚Á‚½ó‘Ô‚ÅŒÄ‚Î‚ê‚éB
-		/// </summary>
-		virtual void Write(
-			eLogLevel                    level,
-			std::string_view             message,
-			const std::source_location& location) = 0;
-	};
+        /// <summary>
+        /// ãƒ­ã‚°ã‚’æ›¸ãå‡ºã™ã€‚Logger ã®å†…éƒ¨ãƒŸãƒ¥ãƒ¼ãƒ†ãƒƒã‚¯ã‚¹ãŒæ›ã‹ã£ãŸçŠ¶æ…‹ã§å‘¼ã°ã‚Œã‚‹ã€‚
+        /// </summary>
+        virtual void Write(
+            eLogLevel                   level,
+            std::string_view             message,
+            const std::source_location& location) = 0;
+    };
 
-	/// <summary>
-	/// ƒƒO‚ğŠe ILogSink ‚Ö”z‘—‚·‚éƒNƒ‰ƒXB
-	///
-	/// ’¼ÚŒÄ‚Î‚¸ ECSE_LOG ƒ}ƒNƒŒo—R‚Åg‚¤‚±‚ÆB
-	///
-	/// OnCreate() ‚Å•W€ƒVƒ“ƒN‚ğ“o˜^‚·‚éB
-	/// ’Ç‰Á‚Ìo—Íæ‚ª•K—v‚Èê‡‚Í AddSink() ‚ÅƒVƒ“ƒN‚ğ·‚µ‚ŞB
-	/// </summary>
-	class ENGINE_API Logger : public utility::Singleton<Logger>
-	{
-		SINGLETON_CLASS(Logger);
-	public:
-		SINGLETON_ACCESSOR(Logger);
+    /// <summary>
+    /// ãƒ­ã‚°ã‚’å„ ILogSink ã¸é…é€ã™ã‚‹ã‚¯ãƒ©ã‚¹ã€‚
+    /// </summary>
+    class ENGINE_API Logger : public utility::Singleton<Logger>
+    {
+        SINGLETON_CLASS(Logger);
+    public:
+        SINGLETON_ACCESSOR(Logger);
 
-		/// <summary>
-		/// ‰Šú‰»
-		/// </summary>
-		/// <returns>true:¬Œ÷ false:¸”s</returns>
-		bool Initialize();
+        /// <summary>
+        /// åˆæœŸåŒ–
+        /// </summary>
+        bool Initialize();
 
-		/// <summary>
-		/// I—¹ˆ—
-		/// </summary>
-		void Finalize();
+        /// <summary>
+        /// çµ‚äº†å‡¦ç†
+        /// </summary>
+        void Finalize();
 
-		/// <summary>
-		/// ƒVƒ“ƒN‚ğ’Ç‰Á‚·‚éBƒXƒŒƒbƒhƒZ[ƒtB
-		/// </summary>
-		void AddSink(std::unique_ptr<ILogSink> sink);
+        /// <summary>
+        /// ã‚·ãƒ³ã‚¯ã‚’è¿½åŠ ã™ã‚‹ã€‚ã‚¹ãƒ¬ãƒƒãƒ‰ã‚»ãƒ¼ãƒ•ã€‚
+        /// </summary>
+        void AddSink(std::unique_ptr<ILogSink> sink);
 
-		/// <summary>
-		/// ƒƒO‚ğo—Í‚·‚éBECSE_LOG ƒ}ƒNƒŒo—R‚Å‚Ìg—p‚ğ„§B
-		/// </summary>
-		template<typename... Args>
-		void Output(eLogLevel level, LogMessage msg, Args&&... args)
-		{
-			try
-			{
-				std::string message = std::vformat(
-					msg.fmt,
-					std::make_format_args(args...));
+        /// <summary>
+        /// ãƒ­ã‚°ã‚’å‡ºåŠ›ã™ã‚‹ã€‚ECSE_LOG ãƒã‚¯ãƒ­çµŒç”±ã§ã®ä½¿ç”¨ã‚’æ¨å¥¨ã€‚
+        /// </summary>
+        template<typename... Args>
+        void Output(eLogLevel level, LogMessage msg, Args&&... args)
+        {
+            try
+            {
+                std::string message = std::vformat(
+                    msg.fmt,
+                    std::make_format_args(args...));
 
-				Dispatch(level, message, msg.location);
-			}
-			catch (const std::format_error& e)
-			{
-				std::string errMsg = std::string("FormatError: ") + e.what();
-				Dispatch(eLogLevel::Error, errMsg, msg.location);
-			}
-		}
+                Dispatch(level, message, msg.location);
+            }
+            catch (const std::format_error& e)
+            {
+                std::string errMsg = std::string("FormatError: ") + e.what();
+                Dispatch(eLogLevel::Error, errMsg, msg.location);
+            }
+        }
 
-	private:
-		/// <summary>
-		/// ‘SƒVƒ“ƒN‚Ö”z‘—‚·‚éBFatal ‚Ìê‡‚Í MessageBox + DebugBreak ‚às‚¤B
-		/// </summary>
-		void Dispatch(
-			eLogLevel                    level,
-			const std::string& message,
-			const std::source_location& location);
+    private:
+        /// <summary>
+        /// å…¨ã‚·ãƒ³ã‚¯ã¸é…é€ã™ã‚‹ã€‚
+        /// </summary>
+        void Dispatch(
+            eLogLevel                   level,
+            const std::string& message,
+            const std::source_location& location);
 
-		static std::mutex                          sMutex;
-		std::vector<std::unique_ptr<ILogSink>>     mSinks;
+        static std::mutex                       sMutex;
+        std::vector<std::unique_ptr<ILogSink>>      mSinks;
+    };
 
-	};
+    /// <summary>
+    /// Visual Studio ã®å‡ºåŠ›ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã¸ OutputDebugStringA ã§æ›¸ãå‡ºã™ã‚·ãƒ³ã‚¯ã€‚
+    /// </summary>
+    class ENGINE_API DebugOutputSink : public ILogSink
+    {
+    public:
+        void Write(
+            eLogLevel                   level,
+            std::string_view             message,
+            const std::source_location& location) override;
+    };
 
-	/// <summary>
-	/// Visual Studio ‚Ìo—ÍƒEƒBƒ“ƒhƒE‚Ö OutputDebugStringA ‚Å‘‚«o‚·ƒVƒ“ƒNB
-	/// </summary>
-	class ENGINE_API DebugOutputSink : public ILogSink
-	{
-	public:
-		void Write(
-			eLogLevel                    level,
-			std::string_view             message,
-			const std::source_location& location) override;
-	};
+    /// <summary>
+    /// AllocConsole ã§ç”Ÿæˆã—ãŸã‚³ãƒ³ã‚½ãƒ¼ãƒ«ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã¸æ›¸ãå‡ºã™ã‚·ãƒ³ã‚¯ã€‚
+    /// </summary>
+    class ENGINE_API ConsoleLogSink : public ILogSink
+    {
+    public:
+        explicit ConsoleLogSink(bool allocConsole);
+        ~ConsoleLogSink() override;
 
-	/// <summary>
-	/// AllocConsole ‚Å¶¬‚µ‚½ƒRƒ“ƒ\[ƒ‹ƒEƒBƒ“ƒhƒE‚Ö‘‚«o‚·ƒVƒ“ƒNB
-	/// ƒfƒoƒbƒOƒrƒ‹ƒh‚Å‚Ì‚İ—LŒøB
-	/// </summary>
-	class ENGINE_API ConsoleLogSink : public ILogSink
-	{
-	public:
-		/// <param name="allocConsole">true ‚Ì‚Æ‚« AllocConsole ‚ğŒÄ‚Ô</param>
-		explicit ConsoleLogSink(bool allocConsole);
-		~ConsoleLogSink() override;
+        void Write(
+            eLogLevel                   level,
+            std::string_view             message,
+            const std::source_location& location) override;
 
-		void Write(
-			eLogLevel                    level,
-			std::string_view             message,
-			const std::source_location& location) override;
+    private:
+        void SetTextColor(eLogLevel level);
+        void ResetTextColor();
 
-	private:
-		void SetTextColor(eLogLevel level);
-		void ResetTextColor();
+        bool mOwnsConsole = false;
+    };
 
-		bool mOwnsConsole = false;
-	};
+    /// <summary>
+    /// ãƒ†ã‚­ã‚¹ãƒˆãƒ•ã‚¡ã‚¤ãƒ«ã¸ã‚¿ã‚¤ãƒ ã‚¹ã‚¿ãƒ³ãƒ—ä»˜ãã§è¿½è¨˜ã™ã‚‹ã‚·ãƒ³ã‚¯
+    /// </summary>
+    class ENGINE_API FileLogSink : public ILogSink
+    {
+    public:
+        explicit FileLogSink(std::string_view filePath);
+        ~FileLogSink() override;
 
-	/// <summary>
-	/// ƒeƒLƒXƒgƒtƒ@ƒCƒ‹‚Öƒ^ƒCƒ€ƒXƒ^ƒ“ƒv•t‚«‚Å’Ç‹L‚·‚éƒVƒ“ƒN
-	/// </summary>
-	class ENGINE_API FileLogSink : public ILogSink
-	{
-	public:
-		/// <param name="filePath">‘‚«o‚·ƒtƒ@ƒCƒ‹ƒpƒXi’Ç‹Lƒ‚[ƒhj</param>
-		explicit FileLogSink(std::string_view filePath);
-		~FileLogSink() override;
+        void Write(
+            eLogLevel                   level,
+            std::string_view             message,
+            const std::source_location& location) override;
 
-		void Write(
-			eLogLevel                    level,
-			std::string_view             message,
-			const std::source_location& location) override;
+    private:
+        FILE* mFile = nullptr;
+    };
 
-	private:
-		FILE* mFile = nullptr;
-	};
-
-	/// <summary>
-	/// ƒRƒ“ƒpƒCƒ‹‚ÉƒƒOƒŒƒxƒ‹‚Ì—LŒøE–³Œø‚ğ”»’è‚·‚éB
-	/// if constexpr ‚Åg‚¦‚é‚æ‚¤ constexpr ŠÖ”‚É‚·‚éB
-	/// </summary>
-	constexpr bool IsLogLevelEnabled([[maybe_unused]] eLogLevel level) noexcept
-	{
+    /// <summary>
+    /// ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«æ™‚ã«ãƒ­ã‚°ãƒ¬ãƒ™ãƒ«ã®æœ‰åŠ¹ãƒ»ç„¡åŠ¹ã‚’åˆ¤å®šã™ã‚‹ã€‚
+    /// </summary>
+    constexpr bool IsLogLevelEnabled([[maybe_unused]] eLogLevel level) noexcept
+    {
 #ifdef _DEBUG
-		return true;
+        return true;
 #else
-		// ƒŠƒŠ[ƒXƒrƒ‹ƒh‚Å‚Í Error ˆÈã‚Ì‚İ—LŒø
-		return level >= eLogLevel::Error;
+        return level >= eLogLevel::Error;
 #endif
-	}
-
+    }
 }
 
 #define DEBUG_LOG(level, format, ...) \

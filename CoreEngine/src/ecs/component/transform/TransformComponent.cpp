@@ -1,9 +1,10 @@
+#include"pch.h"
 #include"TransformComponent.h"
 
 namespace ecs
 {
     // ==============================================================
-    //  ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+    //  ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
     // ==============================================================
 
     Transform::Transform(
@@ -25,7 +26,7 @@ namespace ecs
     }
 
     // ==============================================================
-    //  3D ƒZƒbƒ^[
+    //  3D ã‚»ãƒƒã‚¿ãƒ¼
     // ==============================================================
 
     void Transform::SetPosition(DirectX::FXMVECTOR v)
@@ -51,8 +52,23 @@ namespace ecs
     void Transform::SetScale(const DirectX::XMFLOAT3& v) { mScale = v; MarkDirty(); }
     void Transform::SetScale(float uniform) { mScale = { uniform, uniform, uniform }; MarkDirty(); }
 
+    void Transform::SetEulerAngles(float pitchRad, float yawRad, float rollRad)
+    {
+        DirectX::XMStoreFloat4(&mRotation,
+            DirectX::XMQuaternionRotationRollPitchYaw(pitchRad, yawRad, rollRad));
+        MarkDirty();
+    }
+
+    void Transform::SetEulerAnglesDeg(float pitchDeg, float yawDeg, float rollDeg)
+    {
+        SetEulerAngles(
+            DirectX::XMConvertToRadians(pitchDeg),
+            DirectX::XMConvertToRadians(yawDeg),
+            DirectX::XMConvertToRadians(rollDeg));
+    }
+
     // ==============================================================
-    //  2D ƒZƒbƒ^[
+    //  2D ã‚»ãƒƒã‚¿ãƒ¼
     // ==============================================================
 
     void Transform::Set2DPosition(DirectX::XMFLOAT2 v)
@@ -79,7 +95,7 @@ namespace ecs
     }
 
     // ==============================================================
-    //  ‘€ìƒƒ\ƒbƒh
+    //  æ“ä½œãƒ¡ã‚½ãƒƒãƒ‰
     // ==============================================================
 
     void Transform::Translate(DirectX::FXMVECTOR delta)
@@ -112,7 +128,7 @@ namespace ecs
     }
 
     // ==============================================================
-    //  ƒQƒbƒ^[
+    //  ã‚²ãƒƒã‚¿ãƒ¼
     // ==============================================================
 
     float Transform::Get2DRotation() const
@@ -126,7 +142,7 @@ namespace ecs
     }
 
     // ==============================================================
-    //  •ûŒüƒxƒNƒgƒ‹
+    //  æ–¹å‘ãƒ™ã‚¯ãƒˆãƒ«
     // ==============================================================
 
     DirectX::XMVECTOR Transform::GetForward() const
@@ -152,7 +168,7 @@ namespace ecs
     DirectX::XMVECTOR Transform::GetLeft() const { return DirectX::XMVectorNegate(GetRight()); }
 
     // ==============================================================
-    //  ƒ[ƒ‹ƒhs—ñ
+    //  ãƒ¯ãƒ¼ãƒ«ãƒ‰è¡Œåˆ—
     // ==============================================================
 
     const DirectX::XMMATRIX& Transform::GetWorldMatrix() const
@@ -180,7 +196,7 @@ namespace ecs
     }
 
     // ==============================================================
-    //  ƒ†[ƒeƒBƒŠƒeƒB
+    //  ãƒ¦ãƒ¼ãƒ†ã‚£ãƒªãƒ†ã‚£
     // ==============================================================
 
     void Transform::Reset()

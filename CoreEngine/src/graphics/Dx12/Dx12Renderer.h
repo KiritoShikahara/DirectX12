@@ -1,146 +1,86 @@
 #pragma once
 
-#include<Utility/Export/Export.h>
-#include<graphics/Color/Color.h>
-
-#include<array>
-#include"Dx12Type.h"
+#include <Utility/Export/Export.h>
+#include <memory>
+#include<graphics/Dx12/Dx12Context.h>
+#include<Utility/Singleton/Singleton.hpp>
 
 namespace graphics
 {
-	class DX12Device;
+    class DX12Device;
 
-	/// <summary>
-	/// DX12描画層の管理クラス
-	/// スワップチェインを使ったフレーム描画ループを担う。
-	/// デバイス層（DX12Device）に依存する。
-	/// </summary>
-	class ENGINE_API DX12Renderer
-	{
-	public:
-		DX12Renderer();
-		virtual ~DX12Renderer();
+    /// <summary>
+    /// 描画系の上位管理クラス
+    /// DX12Context(低レベルDX12操作)を所有・管理し、
+    /// ゲームループから呼ばれる描画フローの窓口を提供する。
+    /// </summary>
+    class ENGINE_API DX12Renderer : public utility::Singleton<DX12Renderer>
+    {
+        SINGLETON_CLASS_CUSTOM_CTOR(DX12Renderer);
 
-		/// <summary>
-		/// 初期化
-		/// </summary>
-		/// <param name="pDevice">初期化済みの DX12Device</param>
-		/// <param name="WindowHandle">対象ウィンドウのハンドル</param>
-		/// <param name="Width">スクリーン横幅</param>
-		/// <param name="Height">スクリーン縦幅</param>
-		/// <returns>true:成功</returns>
-		bool Initialize(DX12Device* pDevice, HWND WindowHandle, UINT Width, UINT Height);
+        DX12Renderer();
+    public:
+        SINGLETON_ACCESSOR(DX12Renderer);
 
-		/// <summary>
-		/// 終了処理
-		/// </summary>
-		/// <returns>true:成功</returns>
-		bool Finalize();
+        /// <summary>
+        /// 初期化
+        /// DX12Context を生成し描画に必要な全リソースを確保する。
+        /// </summary>
+        /// <param name="pDevice">初期化済みの DX12Device</param>
+        /// <param name="WindowHandle">描画先ウィンドウのハンドル</param>
+        /// <param name="Width">スクリーン横幅</param>
+        /// <param name="Height">スクリーン縦幅</param>
+        /// <returns>true:成功</returns>
+        bool Initialize(DX12Device* pDevice, HWND WindowHandle, UINT Width, UINT Height);
 
-		/// <summary>
-		/// フレーム描画の開始
-		/// （バックバッファのクリア・レンダーターゲット設定）
-		/// </summary>
-		void BeginRendering();
+        /// <summary>
+        /// 終了処理
+        /// 全GPU コマンドの完了を待ってからリソースを解放する。
+        /// </summary>
+        /// <returns>true:成功</returns>
+        bool Finalize();
 
-		/// <summary>
-		/// 画面のフリップ（コマンド送信・Present）
-		/// </summary>
-		void Flip();
+        /// <summary>
+        /// フレーム開始
+        /// バックバッファのクリア・レンダーターゲット設定・ビューポート設定を行う。
+        /// </summary>
+        void BeginFrame();
 
-		/// <summary>
-		/// 全GPUコマンドの完了を待機する
-		/// </summary>
-		void WaitForGPU();
+        /// <summary>
+        /// フレーム終了
+        /// コマンドを GPU へ送信し画面をフリップする。
+        /// </summary>
+        void EndFrame();
 
-		/// <summary>
-		/// ビューポートとシザー矩形の設定
-		/// </summary>
-		void SetViewPort(float Width, float Height, float x = 0.0f, float y = 0.0f);
+        /// <summary>
+        /// GPU コマンドの完了を待機する(リソース解放前などに使用)
+        /// </summary>
+        void WaitForGPU();
 
-		/// <summary>
-		/// 描画用コマンドリストの取得
-		/// </summary>
-		ID3D12GraphicsCommandList* GetCommandList();
+        /// <summary>
+        /// 管理している DX12Context を取得する
+        /// 描画コマンドの発行などに使用する。
+        /// </summary>
+        /// <returns>DX12Context へのポインタ(nullptr の場合は未初期化)</returns>
+        DX12Context* GetContext() const;
 
-		/// <summary>
-		/// 現在フレームのコマンドアロケーターの取得
-		/// </summary>
-		ID3D12CommandAllocator* GetCommandAllocator();
+        /// <summary>
+        /// 初期化済みかどうか
+        /// </summary>
+        bool IsInitialized() const;
 
-		/// <summary>
-		/// コマンドキューの取得
-		/// </summary>
-		ID3D12CommandQueue* GetCommandQueue();
+    private:
+        /// <summary>所有する描画コンテキスト</summary>
+        std::unique_ptr<DX12Context> mContext;
 
-		/// <summary>
-		/// 現在フレームのD3D12MAアップロードプールの取得
-		/// </summary>
-		D3D12MA::Pool* GetMAUploadPool();
+        /// <summary>描画対象のスクリーン横幅(ビューポート設定に使用)</summary>
+        UINT mWidth = 0;
+        /// <summary>描画対象のスクリーン縦幅(ビューポート設定に使用)</summary>
+        UINT mHeight = 0;
 
-		/// <summary>
-		/// 現在フレームのインデックスの取得
-		/// </summary>
-		UINT GetCurrentFrameIndex() const;
+        /// <summary>初期化済みフラグ</summary>
+        bool mIsInitialized = false;
 
-	public:
+    };
 
-	private:
-		bool InitializeCommandObjects();
-		bool InitializeSwapChain(HWND WindowHandle, UINT Width, UINT Height);
-		bool InitializeBackBufferHeap();
-		bool InitializeDepthHeap(UINT Width, UINT Height);
-		bool InitializeFence();
-
-		/// <summary>
-		/// フレームごとのリソースまとめ
-		/// </summary>
-		struct FrameResource
-		{
-			/// <summary>コマンドリストの記録に使うメモリ領域。実行中はリセット不可</summary>
-			CmdAlloc Allocator = nullptr;
-			/// <summary>実際に色が書き込まれるバックバッファテクスチャ</summary>
-			Resource BackBuffer = nullptr;
-			/// <summary>このフレームのGPU完了を確認するためのフェンス値</summary>
-			UINT64   FenceValue = 0;
-			/// <summary>このフレーム専用のアップロードプール</summary>
-			MAPool   UploadPool = nullptr;
-		};
-
-		/// <summary>DX12Deviceへの参照（ライフタイムの管理はサービス側が行う）</summary>
-		DX12Device* mDeviceService = nullptr;
-
-		/// <summary>フロント・バックバッファの入れ替え</summary>
-		SwapChain    mSwapChain;
-		/// <summary>書き終えたコマンドをGPUへ送り出すキュー</summary>
-		CmdQueue     mCmdQueue;
-		/// <summary>GPUへの命令を記録するコマンドリスト</summary>
-		CmdList      mCmdList;
-
-		/// <summary>フレームごとのリソース配列</summary>
-		std::array<FrameResource, graphics::FRAME_COUNT> mFrames;
-
-		/// <summary>深度バッファリソース（前後関係の判定に使う）</summary>
-		Resource     mDepthBuffer;
-		/// <summary>RTV用ディスクリプタヒープ</summary>
-		Heap         mRtvHeap;
-		/// <summary>DSV用ディスクリプタヒープ</summary>
-		Heap         mDsvHeap;
-
-		/// <summary>CPUとGPUの同期用フェンス</summary>
-		Fence        mFence;
-
-		/// <summary>GPU待ちイベントハンドル</summary>
-		HANDLE       mWaitForGPUEventHandle = nullptr;
-		/// <summary>次にSignalする値</summary>
-		UINT64       mNextFenceValue = 1;
-		/// <summary>現在フレームのインデックス</summary>
-		UINT         mFrameIndex = 0;
-
-		/// <summary>背景クリア色</summary>
-		Color        mClearColor;
-		/// <summary>バックバッファのフォーマット</summary>
-		DXGI_FORMAT  mFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-	};
-}
-
+} // namespace graphics
