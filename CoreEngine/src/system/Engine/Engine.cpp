@@ -18,6 +18,7 @@
 // Audio
 #include<audio/Device/AudioDevice.h>
 #include<audio/Manager/AudioManager.h>
+#include<audio/Resource/AudioResourceManager.h>
 
 // Fbx
 #include<graphics/Fbx/Renderer/FbxRenderer.h>
@@ -53,11 +54,20 @@ void SpriteRenderTest()
 // テスト用のリソース読み込み
 void LoadResource()
 {
-	auto& manager = graphics::FbxResourceManager::Get();
-	auto res = manager.Load("Assets/Fbx/Faul.fbx.bin");
-	bool ret = manager.LoadAnm("Assets/Fbx/Faul.fbx.bin", "Assets/Fbx/Animation/Attack_A.fbx.anm", "Attack_A");
-}
+	// fbx
+	{
+		auto& manager = graphics::FbxResourceManager::Get();
+		auto res = manager.Load("Assets/Fbx/Faul.fbx.bin");
+		bool ret = manager.LoadAnm("Assets/Fbx/Faul.fbx.bin", "Assets/Fbx/Animation/Attack_A.fbx.anm", "Attack_A");
+	}
 
+	// audio
+	{
+		auto& ResManager = audio::AudioResourceManager::Get();
+		auto res = ResManager.GetResource("Assets/SE/TestSE.aud");
+	}
+
+}
 
 // テスト用のFBXモデルの作成
 void Create3DModel()
@@ -80,6 +90,13 @@ void Create3DModel()
 	auto& anim = manager.AddComponent<ecs::FbxAnimComponent>(entity);
 	anim.Play(*fbx.Resource, "Attack_A", true);
 
+}
+
+void CreateSound()
+{
+	auto& AudioManager = audio::AudioManager::Get();
+	AudioManager.PlaySE("Assets/SE/TestSE.aud");
+	AudioManager.PlayBGM("Assets/SE/TestBGM.aud");
 }
 
 // テスト用のカメラ作成
@@ -224,7 +241,7 @@ namespace sys
 			return false;
 		}
 		SINGLETON_REF(audio::AudioDevice, AudioDevice);
-		if(AudioDevice.Initialize(&AudioManager) == false)
+		if(AudioDevice.Initialize(&AudioManager, 48000U) == false)
 		{
 			return false;
 		}
@@ -234,7 +251,7 @@ namespace sys
 		CreateCamera();
 		LoadResource();
 		Create3DModel();
-
+		CreateSound();
 		//SpriteRenderTest();
 
 
