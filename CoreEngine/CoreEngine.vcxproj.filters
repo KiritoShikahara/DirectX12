@@ -252,6 +252,15 @@
     <ClInclude Include="src\audio\SE\SoundEffect.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\audio\Device\AudioDevice.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\audio\Manager\AudioManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\audio\Resource\AudioResourceManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics\Dx12\Dx12Device.cpp">
@@ -417,6 +426,15 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\audio\SE\SoundEffect.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\audio\Device\AudioDevice.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\audio\Manager\AudioManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\audio\Resource\AudioResourceManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
