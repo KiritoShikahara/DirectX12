@@ -10,6 +10,44 @@ namespace audio
 	{
 	}
 
+    // 移動コンストラクタのカスタム実装
+    SoundEffect::SoundEffect(SoundEffect&& other) noexcept
+    {
+        mResource = other.mResource;
+        mCurrentFrame = other.mCurrentFrame;
+        mIsPersistent = other.mIsPersistent;
+
+        // atomic は load して初期化（other から値を読み出す）
+        mVolume.store(other.mVolume.load());
+        mLoop.store(other.mLoop.load());
+        mPlaying.store(other.mPlaying.load());
+
+        // 移動元のポインタなどはクリアしておく（二重解放などの防止）
+        other.mResource = nullptr;
+        other.mCurrentFrame = 0;
+        other.mPlaying.store(false);
+    }
+
+    // 移動代入演算子のカスタム実装
+    SoundEffect& SoundEffect::operator=(SoundEffect&& other) noexcept
+    {
+        if (this != &other)
+        {
+            mResource = other.mResource;
+            mCurrentFrame = other.mCurrentFrame;
+            mIsPersistent = other.mIsPersistent;
+
+            mVolume.store(other.mVolume.load());
+            mLoop.store(other.mLoop.load());
+            mPlaying.store(other.mPlaying.load());
+
+            other.mResource = nullptr;
+            other.mCurrentFrame = 0;
+            other.mPlaying.store(false);
+        }
+        return *this;
+    }
+
 	void SoundEffect::ApplyAndMix(int16_t* output, size_t framesRequested, uint16_t outputChannels, float masterVolume, float seVolume)
 	{
 		if (!mPlaying.load() || mResource == nullptr || mResource->Channels == 0) return;

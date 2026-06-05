@@ -10,6 +10,14 @@ namespace audio
 	class SoundEffect
 	{
 	public:
+		// コピーは禁止
+		SoundEffect(const SoundEffect&) = delete;
+		SoundEffect& operator=(const SoundEffect&) = delete;
+
+		// 移動をカスタム定義する（= default を外す）
+		SoundEffect(SoundEffect&& other) noexcept;
+		SoundEffect& operator=(SoundEffect&& other) noexcept;
+
 		explicit SoundEffect(AudioResource* resource);
 		~SoundEffect() = default;
 

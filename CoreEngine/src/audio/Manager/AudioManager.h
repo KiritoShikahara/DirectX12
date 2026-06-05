@@ -14,6 +14,7 @@ namespace audio
 {
 	class AudioResourceManager;
 	class SoundEffect;
+	class BGMStream;
 
 	class AudioManager : public utility::Singleton<AudioManager>
 	{
@@ -55,9 +56,9 @@ namespace audio
 		void MixSounds(int16_t* output, size_t framesRequested, uint16_t channels);
 
 		AudioResourceManager* mResources = nullptr;
-		std::vector<SoundEffect>       mSeSounds;
-		//std::unique_ptr<BgmStream> mActiveBgm = nullptr; // 単一アクティブBGMスロット
-		std::recursive_mutex       mMtx;
+		std::vector<SoundEffect> mSoundEffects;
+		std::unique_ptr<BGMStream> mActiveBgm = nullptr; // 単一アクティブBGMスロット
+		std::recursive_mutex mMtx;
 
 		std::atomic<float> mMasterVolume{ 1.0f };
 		std::atomic<float> mBgmVolume{ 1.0f };
