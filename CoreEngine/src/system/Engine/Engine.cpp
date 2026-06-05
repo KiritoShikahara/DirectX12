@@ -251,7 +251,7 @@ namespace sys
 		CreateCamera();
 		LoadResource();
 		Create3DModel();
-		CreateSound();
+		//CreateSound();
 		//SpriteRenderTest();
 
 
