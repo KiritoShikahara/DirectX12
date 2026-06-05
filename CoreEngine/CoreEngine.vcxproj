@@ -160,20 +160,9 @@
     <ClInclude Include="src\graphics\Fbx\Pipeline\FbxPipeline.h" />
     <ClInclude Include="src\graphics\Fbx\Resource\FbxResource.h" />
     <ClInclude Include="src\graphics\Fbx\Data\FbxData.h" />
-    <ClInclude Include="src\graphics\Model\Formats\AnmFormat.h" />
-    <ClInclude Include="src\graphics\Model\Formats\BinFormat.h" />
-    <ClInclude Include="src\system\AnimDebugUI\AnimDebugUI.h" />
     <ClInclude Include="src\Editor\Parameter\EditorParameter.h" />
-    <ClInclude Include="src\graphics\Model\Animation\ModelAnimationSystem.h" />
-    <ClInclude Include="src\ecs\component\model\ModelComponent.h" />
-    <ClInclude Include="src\graphics\Model\Renderer\ModelRenderer.h" />
-    <ClInclude Include="src\graphics\Model\Pipeline\ModelPipeline.h" />
     <ClInclude Include="src\ecs\component\camera\CameraComponent.h" />
-    <ClInclude Include="src\ecs\component\model\ModelAnimComponent.h" />
-    <ClInclude Include="src\graphics\Model\Resouce\ModelResourceManager.h" />
     <ClInclude Include="src\graphics\Dx12\Dx12Context.h" />
-    <ClInclude Include="src\graphics\Model\ModelData.h" />
-    <ClInclude Include="src\graphics\Model\Resouce\ModelResouce.h" />
     <ClInclude Include="src\system\Camera\CameraSystem.h" />
     <ClInclude Include="src\system\Input\PAD\PadManager.h" />
     <ClInclude Include="src\system\Input\PAD\Pad.h" />
@@ -244,26 +233,8 @@
     <ClCompile Include="src\graphics\Fbx\Renderer\FbxRenderer.cpp" />
     <ClCompile Include="src\graphics\Fbx\Pipeline\FbxPipeline.cpp" />
     <ClCompile Include="src\graphics\Fbx\Resource\FbxResource.cpp" />
-    <ClCompile Include="src\system\AnimDebugUI\AnimDebugUI.cpp" />
-    <ClCompile Include="src\graphics\Model\Animation\ModelAnimationSystem.cpp" />
-    <ClCompile Include="src\graphics\Model\Renderer\ModelRenderer.cpp" />
-    <ClCompile Include="src\graphics\Model\Pipeline\ModelPipeline.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="src\ecs\component\camera\CameraComponent.cpp" />
-    <ClCompile Include="src\ecs\component\model\ModelAnimComponent.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="src\graphics\Model\Resouce\ModelResourceManager.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="src\graphics\Dx12\Dx12Context.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="src\graphics\Model\Resouce\ModelResouce.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
     </ClCompile>

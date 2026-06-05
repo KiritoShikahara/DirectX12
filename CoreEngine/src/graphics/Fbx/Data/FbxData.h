@@ -120,4 +120,13 @@ namespace graphics
         // KeyFrames[BoneIndex][FrameIndex] = ローカル変換行列 (未転置)
         std::vector<std::vector<DirectX::XMFLOAT4X4>> KeyFrames;
     };
+
+    // カメラGPUデータ
+    struct alignas(16) FbxCameraData
+    {
+        DirectX::XMFLOAT4X4 ViewProjection;
+        DirectX::XMFLOAT3   Position;
+        float               _pad = 0.f;
+    };
+    static_assert(sizeof(FbxCameraData) == 80);
 }
