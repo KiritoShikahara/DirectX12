@@ -145,6 +145,9 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\audio\SE\SoundEffect.h" />
+    <ClInclude Include="src\audio\Resource\AudioResource.h" />
+    <ClInclude Include="src\audio\Data\AudioHeader.h" />
     <ClInclude Include="src\graphics\Fbx\Resource\FbxResourceManager.h" />
     <ClInclude Include="src\graphics\Fbx\Animation\FbxAnimSystem.h" />
     <ClInclude Include="src\ecs\component\Fbx\FbxComponent.h" />
@@ -225,6 +228,8 @@
     <ClInclude Include="src\graphics\Texture\TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\audio\SE\SoundEffect.cpp" />
+    <ClCompile Include="src\audio\Resource\AudioResource.cpp" />
     <ClCompile Include="src\graphics\Fbx\Resource\FbxResourceManager.cpp" />
     <ClCompile Include="src\graphics\Fbx\Animation\FbxAnimSystem.cpp" />
     <ClCompile Include="src\ecs\component\Fbx\FbxAnimComponent.cpp" />
