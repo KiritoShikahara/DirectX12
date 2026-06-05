@@ -121,6 +121,8 @@ namespace sys
 
     void CameraSystem::ImGuiUpdate(entt::registry& registry)
     {
+#ifdef _DEBUG
+
 
         if (ImGui::Begin("Camera"))
         {
@@ -217,6 +219,8 @@ namespace sys
         }
 
         ImGui::End();
+#endif // _DEBUG
     }
+
 }
 
