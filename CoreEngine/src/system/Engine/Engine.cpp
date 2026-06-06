@@ -346,16 +346,27 @@ namespace sys
 
 		// メイン更新
 		{
+			
+			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PreUpdate, registry, dt);
 
+			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::Update, registry, dt);
+
+			// 物理演算の更新
+
+			// 座標更新、行列更新
+
+			// 衝突イベント発火
+
+			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PostUpdate, registry, dt);
 		}
 
 		// 事後更新
 		{
-			// カメラ行列の更新
-			sys::CameraSystem::Get().Update(registry);
-
 			// アニメーション時間の更新
 			graphics::FbxAnimSystem::Update(registry, dt);
+
+			// カメラ行列の更新
+			sys::CameraSystem::Get().Update(registry);
 
 		}
 	}
