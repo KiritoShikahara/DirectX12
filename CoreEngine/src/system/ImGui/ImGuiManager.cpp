@@ -153,7 +153,7 @@ namespace sys
 		if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
 			ImGui::UpdatePlatformWindows();
-			ImGui::RenderPlatformWindowsDefault();
+			ImGui::RenderPlatformWindowsDefault(nullptr, (void*)cmdList);
 		}
 #endif
 	}

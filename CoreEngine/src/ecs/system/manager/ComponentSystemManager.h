@@ -16,7 +16,6 @@ namespace ecs
     enum class eUpdatePhase
     {
         PreUpdate,   // 物理・メイン更新の前処理
-        FixedUpdate, // 物理シミュレーション
         Update,      // メインのゲームロジック
         PostUpdate,  // 後処理
     };
