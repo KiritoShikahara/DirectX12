@@ -14,6 +14,7 @@ namespace graphics
 namespace ecs
 {
 	class EntityManager;
+	class ComponentSystemManager;
 }
 
 namespace sys
@@ -49,10 +50,6 @@ namespace sys
 		/// <returns>true:成功 false:失敗</returns>
 		bool Finalize();
 	private:
-		/// <summary>
-		/// 事前更新
-		/// </summary>
-		void PreUpdate();
 
 		/// <summary>
 		/// 状態更新
@@ -60,16 +57,14 @@ namespace sys
 		void Update();
 
 		/// <summary>
-		/// 事後更新
-		/// </summary>
-		void PostUpdate();
-
-		/// <summary>
 		/// 描画
 		/// </summary>
 		void Render();
 
-
+		/// <summary>
+		/// フレーム末の処理
+		/// </summary>
+		void Conclude();
 
 	private:
 		/// <summary>
@@ -112,6 +107,11 @@ namespace sys
 		/// エンティティ管理クラス
 		/// </summary>
 		ecs::EntityManager* mEntityManager;
+
+		/// <summary>
+		/// コンポーネントのシステム管理
+		/// </summary>
+		ecs::ComponentSystemManager* mComponentSystemManager;
 
 		/// <summary>
 		/// 入力管理クラス

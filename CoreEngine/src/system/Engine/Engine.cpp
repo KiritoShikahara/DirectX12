@@ -29,8 +29,12 @@
 #include<graphics/Texture/TextureManager.h>
 #include<graphics/Sprite/Renderer/SpriteRenderer.h>
 
-// Component
+// ECS
 #include<ecs/entity/EntityManager.h>
+#include<ecs/system/manager/ComponentSystemManager.h>
+
+
+// Component
 #include<ecs/component/transform/TransformComponent.h>
 #include<ecs/component/sprite/SpriteComponent.h>
 #include<ecs/component/camera/CameraComponent.h>
@@ -201,6 +205,11 @@ namespace sys
 			return false;
 		}
 
+		// ComponentSystemManagerの初期化
+		mComponentSystemManager = &ecs::ComponentSystemManager::Get();
+		mComponentSystemManager->ClearUserSystems();
+
+		// 入力管理の初期化
 		mInputManager = &sys::InputManager::Get();
 		if (mInputManager->Initialize() == false)
 		{
@@ -278,32 +287,15 @@ namespace sys
 			mIsRunning = false;
 			return false;
 		}
-		// 事前更新
-		this->PreUpdate();
 
-		// メイン更新
+		// 更新
 		this->Update();
 
-		// 事後更新
-		this->PostUpdate();
+		// 描画
+		this->Render();
 
-
-
-		auto context = mDX12Renderer->GetContext();
-
-		// TODO:描画処理
-		mDX12Renderer->BeginFrame();
-		graphics::RenderContext::Get().SetFrameIndex(context->GetCurrentFrameIndex());
-
-		mImGuiManager->NewFrame();
-		mImGuiManager->Update();
-		Render();
-
-		mImGuiManager->EndFrame();
-		mDX12Renderer->EndFrame();
-
-		// TODO:フレームの終了処理
-		mInputManager->Update();
+		// フレーム末の処理
+		this->Conclude();
 
 		return true;
 	}
@@ -337,41 +329,35 @@ namespace sys
 		return true;
 	}
 
-
-	/// <summary>
-	/// 事前更新
-	/// </summary>
-	void Engine::PreUpdate()
-	{
-		// Timeの更新
-		mTime.Update();
-
-	}
-
 	/// <summary>
 	/// 状態更新
 	/// </summary>
 	void Engine::Update()
 	{
-		if (INPUT_PAD->IsPressed(sys::ePadButton::R2))
+		// 事前更新
 		{
-			std::cout << "Push" << std::endl;
+			// 時間経過
+			mTime.Update();
 		}
-	}
 
-	/// <summary>
-	/// 事後更新
-	/// </summary>
-	void Engine::PostUpdate()
-	{
+		// 取得
 		auto& registry = ecs::EntityManager::Get().GetRegistry();
 		auto dt = mTime.GetDeltaTime();
 
-		// カメラ行列の更新
-		sys::CameraSystem::Get().Update(registry);
+		// メイン更新
+		{
 
-		// アニメーション時間の更新
-		graphics::FbxAnimSystem::Update(registry, dt);
+		}
+
+		// 事後更新
+		{
+			// カメラ行列の更新
+			sys::CameraSystem::Get().Update(registry);
+
+			// アニメーション時間の更新
+			graphics::FbxAnimSystem::Update(registry, dt);
+
+		}
 	}
 
 	/// <summary>
@@ -384,16 +370,45 @@ namespace sys
 		auto& registry = mEntityManager->GetRegistry();
 		auto cmdList = context->GetCommandList();
 
-		// 3Dモデル
-		SINGLETON_REF(graphics::FbxRenderer, FbxRenderer);
-		FbxRenderer.Begin();
-		FbxRenderer.UpdateAndDraw(registry);
-		FbxRenderer.End(cmdList);
+		// Begin
+		{
+			mDX12Renderer->BeginFrame();
+			graphics::RenderContext::Get().SetFrameIndex(context->GetCurrentFrameIndex());
 
-		// 2DSprite
-		SINGLETON_REF(graphics::SpriteRenderer, spriteRenderer);
-		spriteRenderer.Begin();
-		spriteRenderer.UpdateAndDraw(registry);
-		spriteRenderer.End(cmdList);
+			mImGuiManager->NewFrame();
+			mImGuiManager->Update();
+		}
+
+		// Draw
+		{
+			// 3Dモデル
+			SINGLETON_REF(graphics::FbxRenderer, FbxRenderer);
+			FbxRenderer.Begin();
+			FbxRenderer.UpdateAndDraw(registry);
+			FbxRenderer.End(cmdList);
+
+			// 2DSprite
+			SINGLETON_REF(graphics::SpriteRenderer, spriteRenderer);
+			spriteRenderer.Begin();
+			spriteRenderer.UpdateAndDraw(registry);
+			spriteRenderer.End(cmdList);
+		}
+
+		// End
+		{
+
+			mImGuiManager->EndFrame();
+			mDX12Renderer->EndFrame();
+
+		}
+	}
+
+	/// <summary>
+	/// フレーム末の処理
+	/// </summary>
+	void Engine::Conclude()
+	{
+		// フレーム末の処理
+		mInputManager->Update();
 	}
 }
