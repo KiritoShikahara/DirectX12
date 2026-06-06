@@ -243,6 +243,9 @@
     <ClInclude Include="src\ecs\component\rigidbody\RigidbodyComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\system\ContactListener\ContactListener.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics\Dx12\Dx12Device.cpp">
@@ -402,6 +405,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\ecs\system\manager\ComponentSystemManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\ContactListener\ContactListener.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

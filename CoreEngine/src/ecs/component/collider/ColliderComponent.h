@@ -2,6 +2,8 @@
 
 #include<DirectXMath.h>
 #include<Utility/Export/Export.h>
+#include<entt/entt.hpp>
+#include<vector>
 
 namespace ecs
 {
@@ -58,5 +60,21 @@ namespace ecs
             c.Offset = offset;
             return c;
         }
+    };
+
+    /// <summary>
+	/// 衝突開始イベント。衝突が開始したフレームに発行される。
+    /// </summary>
+    struct ENGINE_API CollisionEnterEvent
+    {
+        std::vector<entt::entity> OtherEntities;
+    };
+
+    /// <summary>
+	/// センサーへの侵入イベント。センサーに他のエンティティが侵入したフレームに発行される。
+    /// </summary>
+    struct ENGINE_API SensorEnterEvent
+    {
+        std::vector<entt::entity> Visitors;
     };
 }
