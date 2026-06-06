@@ -145,6 +145,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\ecs\component\collider\ColliderComponent.h" />
     <ClInclude Include="src\ecs\system\manager\ComponentSystemManager.h" />
     <ClInclude Include="src\audio\BGM\BGMStream.h" />
     <ClInclude Include="src\audio\Resource\AudioResourceManager.h" />
