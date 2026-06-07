@@ -39,7 +39,9 @@ namespace sys
 
 	class PhysicsManager : public utility::Singleton<PhysicsManager>
 	{
+		SINGLETON_CLASS(PhysicsManager);
 	public:
+		SINGLETON_ACCESSOR(PhysicsManager);
 
 		/// <summary>
 		/// Jolt を初期化する。アプリ起動時に一度だけ呼ぶこと。

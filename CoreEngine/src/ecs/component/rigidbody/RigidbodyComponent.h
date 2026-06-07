@@ -8,39 +8,39 @@
 namespace ecs
 {
     /// <summary>
-    /// RigidBody ‚Ì“®ìƒ‚[ƒh
-    /// Jolt ‚Ì EMotionType ‚Æ‘Î‰‚³‚¹‚é‚ªAƒGƒ“ƒWƒ“‘¤‚ÌŒ^‚Æ‚µ‚Ä’è‹`‚·‚é
+    /// RigidBody ã®å‹•ä½œãƒ¢ãƒ¼ãƒ‰
+    /// Jolt ã® EMotionType ã¨å¯¾å¿œã•ã›ã‚‹ãŒã€ã‚¨ãƒ³ã‚¸ãƒ³å´ã®å‹ã¨ã—ã¦å®šç¾©ã™ã‚‹
     /// </summary>
     enum class eMotionType
     {
-        Static,    // Š®‘S‚ÉÃ~
-        Kinematic, // •¨—‰‰Z‚É‰e‹¿‚³‚ê‚¸Aè“®‚ÅˆÚ“®‚·‚é
-        Dynamic,   // Š®‘S‚È•¨—‰‰Z‘ÎÛ
+        Static,    // å®Œå…¨ã«é™æ­¢
+        Kinematic, // ç‰©ç†æ¼”ç®—ã«å½±éŸ¿ã•ã‚Œãšã€æ‰‹å‹•ã§ç§»å‹•ã™ã‚‹
+        Dynamic,   // å®Œå…¨ãªç‰©ç†æ¼”ç®—å¯¾è±¡
     };
 
     /// <summary>
-    /// JoltPhysics ‚Ì Body ‚É‘Î‰‚·‚éƒRƒ“ƒ|[ƒlƒ“ƒgB
+    /// JoltPhysics ã® Body ã«å¯¾å¿œã™ã‚‹ã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆã€‚
     /// </summary>
     struct ENGINE_API RigidBodyComponent
     {
         // ID
-		JPH::BodyID bodyID;
+		JPH::BodyID BodyID;
 
-        // •¨—İ’è
+        // ç‰©ç†è¨­å®š
         eMotionType MotionType = eMotionType::Dynamic;
-        float Mass = 1.0f; // ¿—Ê kg
-        float Friction = 0.5f; // –€CŒW” [0, 1]
-        float Restitution = 0.0f;        // ”½”­ŒW” [0, 1]i0=”½”­‚È‚µA1=Š®‘S’e«j
+        float Mass = 1.0f; // è³ªé‡ kg
+        float Friction = 0.5f; // æ‘©æ“¦ä¿‚æ•° [0, 1]
+        float Restitution = 0.0f;        // åç™ºä¿‚æ•° [0, 1]ï¼ˆ0=åç™ºãªã—ã€1=å®Œå…¨å¼¾æ€§ï¼‰
 
-        // S‘©
+        // æ‹˜æŸ
         bool LockRotationX = false;
         bool LockRotationY = false;
         bool LockRotationZ = false;
 
-        // ó‘Ô
+        // çŠ¶æ…‹
         bool IsBodyCreated = false;
 
-        // ƒtƒ@ƒNƒgƒŠ
+        // ãƒ•ã‚¡ã‚¯ãƒˆãƒª
         static RigidBodyComponent MakeDynamic(float mass = 1.0f, float friction = 0.5f)
         {
             RigidBodyComponent rb;
@@ -66,12 +66,12 @@ namespace ecs
     };
 
     /// <summary>
-	/// ƒZƒ“ƒT[i“–‚½‚è”»’è‚Ì‚İ‚Å•¨—‰‰Z‚É‰e‹¿‚³‚ê‚È‚¢ƒIƒuƒWƒFƒNƒgj‚ğ¦‚·ƒ^ƒOƒRƒ“ƒ|[ƒlƒ“ƒgB
+	/// ã‚»ãƒ³ã‚µãƒ¼ï¼ˆå½“ãŸã‚Šåˆ¤å®šã®ã¿ã§ç‰©ç†æ¼”ç®—ã«å½±éŸ¿ã•ã‚Œãªã„ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆï¼‰ã‚’ç¤ºã™ã‚¿ã‚°ã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆã€‚
     /// </summary>
     struct ENGINE_API SensorTagComponent {};
 
     /// <summary>
-    /// Transform ‚ªŠO•”‚©‚ç’¼Ú‘‚«Š·‚¦‚ç‚ê‚½‚±‚Æ‚ğ¦‚·ƒ^ƒOB
+    /// Transform ãŒå¤–éƒ¨ã‹ã‚‰ç›´æ¥æ›¸ãæ›ãˆã‚‰ã‚ŒãŸã“ã¨ã‚’ç¤ºã™ã‚¿ã‚°ã€‚
     /// </summary>
     struct ENGINE_API TransformDirtyTag {};
 
