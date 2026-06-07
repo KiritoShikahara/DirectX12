@@ -55,7 +55,8 @@ namespace graphics
         void Submit(
             const FbxResource& resource,
             const DirectX::XMFLOAT4X4& world,
-            const std::vector<DirectX::XMFLOAT4X4>* boneMatrices);
+            const std::vector<DirectX::XMFLOAT4X4>* boneMatrices,
+            const DirectX::XMFLOAT4& customColor);
 
         // ── DrawCall 単位 ────────────────────────────────────────
         struct DrawCall

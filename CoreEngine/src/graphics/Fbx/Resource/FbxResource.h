@@ -58,6 +58,8 @@ namespace graphics
         const std::vector<FbxBoneData>& GetBones()     const { return mBones; }
         const std::vector<FbxAnimClip>& GetAnimClips() const { return mAnimClips; }
 
+        const DirectX::XMFLOAT3& GetBottomCenterPivot() const { return mBottomCenterPivot; }
+
         /// <summary>クリップ名からインデックスを返す (-1: 見つからない)</summary>
         int FindClipIndex(const std::string& name) const;
 
@@ -82,6 +84,9 @@ namespace graphics
 
         std::unique_ptr<VertexBuffer> mVB;
         std::unique_ptr<IndexBuffer>  mIB;
+
+        /// <summary>バインドポーズAABBの底面中心オフセット (LoadBinで自動計算)</summary>
+        DirectX::XMFLOAT3 mBottomCenterPivot = { 0.f, 0.f, 0.f };
 
         bool mIsLoaded = false;
     };

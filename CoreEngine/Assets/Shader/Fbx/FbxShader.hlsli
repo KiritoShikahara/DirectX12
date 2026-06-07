@@ -5,19 +5,25 @@
 static const float PI = 3.14159265359f;
 
 // ============================================================
+//  インスタンスインデックス (Root32BitConstant / b0)
+//  DrawCall毎に SetGraphicsRoot32BitConstant で直接書き込む
+//  → SV_InstanceID + StartInstanceLocation の挙動依存を排除
+//  → 複数モデルを描画しても確実に正しいインスタンスデータを参照できる
+// ============================================================
+cbuffer FbxInstanceIndexCB : register(b0)
+{
+    uint g_InstanceIndex;
+};
+
+// ============================================================
 //  StructuredBuffer 定義
-//
-//  行列の方針: CPU側で XMMatrixTranspose() して格納、
+//  行列: CPU側で XMMatrixTranspose() して格納、
 //  シェーダーはデフォルト column-major float4x4 で受け取る
-//  → 旧プロジェクトの cbuffer matrix と同じ方針
-//  → row_major は使わない (mulの結果が一致しなくなるため)
 // ============================================================
 
-// ボーン行列ラッパー
-// (StructuredBuffer<float4x4> は直接書けないためラップが必要)
 struct FbxBoneMatrix
 {
-    float4x4 Mat; // CPU側転置済み / column-major として解釈
+    float4x4 Mat; // CPU側転置済み
 };
 
 struct FbxInstanceData
@@ -39,8 +45,8 @@ struct FbxInstanceData
     uint HasRoughness;
     uint HasAO;
     uint HasEmissive;
-    
-    float4 CustomColor;
+
+    float4 CustomColor; // 乗算カラー (デフォルト = {1,1,1,1})
 };
 
 // ライト種別定数
@@ -86,7 +92,7 @@ StructuredBuffer<LightData> LightBuffer : register(t9);
 SamplerState LinearSampler : register(s0);
 
 // ============================================================
-//  頂点入出力 (InputLayout / FbxVertex と完全一致)
+//  頂点入出力 (InstIdx は g_InstanceIndex に統一したので不要)
 // ============================================================
 struct VSInput
 {
@@ -106,7 +112,6 @@ struct VSOutput
     float3 WorldNormal : TEXCOORD2;
     float3 WorldTangent : TEXCOORD3;
     float3 WorldBitan : TEXCOORD4;
-    uint InstIdx : TEXCOORD5;
 };
 
 // ============================================================

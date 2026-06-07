@@ -39,6 +39,10 @@
 #include<ecs/entity/EntityManager.h>
 #include<ecs/system/manager/ComponentSystemManager.h>
 
+// Phisics
+#include<system/Physics/System/PhysicsSystem.h>
+#include<system/Physics/Manager/PhysicsManager.h>
+
 
 // Component
 #include<ecs/component/transform/TransformComponent.h>
@@ -75,6 +79,7 @@ void LoadResource()
 		auto& manager = graphics::FbxResourceManager::Get();
 		auto res = manager.Load("Assets/Fbx/Faul.fbx.bin");
 		bool ret = manager.LoadAnm("Assets/Fbx/Faul.fbx.bin", "Assets/Fbx/Animation/Attack_A.fbx.anm", "Attack_A");
+		ret = manager.LoadAnm("Assets/Fbx/Faul.fbx.bin", "Assets/Fbx/Animation/Attack_B.fbx.anm", "Attack_B");
 	}
 
 	// audio
@@ -98,10 +103,11 @@ void Create3DModel()
 	auto entity = manager.CreateEntity();
 	auto& tr = manager.AddComponent<ecs::Transform>(entity);
 	tr.SetScale(scale);
-	tr.SetEulerAnglesDeg(-90, -90, -90);
+	//tr.SetEulerAnglesDeg(-90, -90, -90);
 
 	auto& fbx = manager.AddComponent<ecs::FbxComponent>(entity);
 	fbx.Resource = res;
+	fbx.CustomColor = { 1,1,1,1 };
 
 	auto& anim = manager.AddComponent<ecs::FbxAnimComponent>(entity);
 	anim.Play(*fbx.Resource, "Attack_A", true);
@@ -125,10 +131,6 @@ entt::entity CreateCamera()
 	auto& tr = registry.emplace<ecs::Transform>(entity);
 
 	tr.SetPosition(0.0f, 1.0f, -100.0f);
-
-	// もし Transform クラスに回転を設定する関数（SetRotation や LookAt）があれば、
-	// ここで「正面（(0,0,0) 方向）を向く」ように回転をリセット、または設定してください。
-	// 例: tr.SetRotation(0.0f, 0.0f, 0.0f); 
 
 	auto& cam = registry.emplace<ecs::CameraComponent>(entity);
 	cam.IsMainCamera = true;
@@ -161,8 +163,8 @@ void CreateField()
 	auto& registry = ecs::EntityManager::Get().GetRegistry();
 
 	// Resource取得
-	auto res = graphics::PrimitiveResourceManager::Get().GetResource("Plane");
-	float scale = 1;
+	auto res = graphics::PrimitiveResourceManager::Get().GetResource("Field");
+	float scale = 10;
 
 	auto entity = manager.CreateEntity();
 	auto& tr = manager.AddComponent<ecs::Transform>(entity);
@@ -170,6 +172,8 @@ void CreateField()
 
 	auto& fbx = manager.AddComponent<ecs::FbxComponent>(entity);
 	fbx.Resource = res;
+	fbx.CustomColor = { 1,0,0,1 };
+	fbx.PivotOffset = { 0.5,0,0.5 };
 }
 
 void CreateDebugObject()
@@ -334,6 +338,13 @@ namespace sys
 			return false;
 		}
 
+		// 物理
+		SINGLETON_REF(sys::PhysicsManager, PhysicsManager);
+	/*	if (PhysicsManager.Initialize(mEntityManager->GetRegistry()) == false)
+		{
+			return false;
+		}*/
+
 
 		// テスト用のインスタンス生成
 		CreateDebugObject();
@@ -398,6 +409,9 @@ namespace sys
 		mDevice->Finalize();
 		mDevice = nullptr;
 
+		// 物理
+		sys::PhysicsManager::Get().Finalize();
+
 		// TODO:ログ出力
 
 		sys::Logger::Get().Finalize();
@@ -436,7 +450,11 @@ namespace sys
 
 			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::Update, registry, dt);
 
-			// 物理演算の更新
+			while (mTime.AccumulateFixedStep())
+			{
+				// 物理演算の更新 固定ステップにする。
+				sys::PhysicsSystem::Update(registry, mTime.GetFixedDeltaTime());
+			}
 
 			// 座標更新、行列更新
 

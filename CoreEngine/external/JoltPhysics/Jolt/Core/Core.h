@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include"Core.h"
+
 // Jolt library version
 #define JPH_VERSION_MAJOR 5
 #define JPH_VERSION_MINOR 5

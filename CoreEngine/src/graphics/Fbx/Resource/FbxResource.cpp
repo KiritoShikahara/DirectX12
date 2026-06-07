@@ -80,6 +80,27 @@ namespace graphics
         // ---- 頂点 ----
         std::vector<FbxVertex> vertices(vertexCount);
         fread(vertices.data(), sizeof(FbxVertex), vertexCount, fp);
+        {
+            float minX = FLT_MAX, maxX = -FLT_MAX;
+            float minY = FLT_MAX, maxY = -FLT_MAX;
+            float minZ = FLT_MAX, maxZ = -FLT_MAX;
+            for (const auto& v : vertices)
+            {
+                minX = std::min(minX, v.Position.x); maxX = std::max(maxX, v.Position.x);
+                minY = std::min(minY, v.Position.y); maxY = std::max(maxY, v.Position.y);
+                minZ = std::min(minZ, v.Position.z); maxZ = std::max(maxZ, v.Position.z);
+            }
+            if (vertexCount > 0)
+            {
+                // 底面(minY)が y=0 になり、XZ が中心になるオフセット
+                mBottomCenterPivot =
+                {
+                    -(minX + maxX) * 0.5f,
+                    -minY,
+                    -(minZ + maxZ) * 0.5f
+                };
+            }
+        }
 
         // ---- インデックス ----
         int32_t indexCount = 0;

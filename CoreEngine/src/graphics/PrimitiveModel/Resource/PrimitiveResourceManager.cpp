@@ -24,6 +24,7 @@ namespace graphics
             { PrimitiveType::Box,      "Box",      1.f,  1.f,  1.f,  1,   1  },
             { PrimitiveType::Sphere,   "Sphere",   0.5f, 0.f,  0.f,  32,  16 },
             { PrimitiveType::Plane,    "Plane",    1.f,  1.f,  0.f,  1,   1  },
+            { PrimitiveType::Plane,    "Field",    100.f, 100.f, 0.f,  20,  20 },
             { PrimitiveType::Cylinder, "Cylinder", 0.5f, 0.5f, 1.f,  32,  1  },
             { PrimitiveType::Capsule,  "Capsule",  0.5f, 1.f,  0.f,  32,  8  },
         };

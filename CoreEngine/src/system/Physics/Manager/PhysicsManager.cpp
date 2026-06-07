@@ -106,9 +106,12 @@ namespace sys
         // Joltグローバル初期化
         if (!sJoltGlobalInitialized)
         {
-            JPH::RegisterDefaultAllocator();
-            JPH::Factory::sInstance = new JPH::Factory();
-            JPH::RegisterTypes();
+            if (JPH::Factory::sInstance == nullptr)
+            {
+                JPH::RegisterDefaultAllocator();
+                JPH::Factory::sInstance = new JPH::Factory();
+                JPH::RegisterTypes();
+            }
             sJoltGlobalInitialized = true;
         }
 

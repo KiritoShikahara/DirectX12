@@ -185,7 +185,6 @@ namespace ecs
 
         std::vector<XMMATRIX> worldMats(boneCount);
 
-        // 親から子の順 (FBX はインデックス順に親が先)
         for (int i = 0; i < boneCount; ++i)
         {
             const int parent = bones[i].ParentIndex;
@@ -195,7 +194,6 @@ namespace ecs
                 worldMats[i] = localMats[i];
         }
 
-        // スキン行列 = BindMatrix * WorldMatrix (転置済みで格納)
         for (int i = 0; i < boneCount; ++i)
         {
             XMMATRIX bind = XMLoadFloat4x4(&bones[i].BindMatrix);
@@ -213,6 +211,7 @@ namespace ecs
 
         std::vector<XMMATRIX> currLocal;
         EvalLocalMats(resource, CurrentClipIndex, CurrentTime, currLocal);
+
 
         if (PrevClipIndex >= 0 && BlendDuration > 0.f)
         {

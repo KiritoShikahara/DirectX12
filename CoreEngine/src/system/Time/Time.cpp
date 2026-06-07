@@ -12,21 +12,34 @@ namespace sys
 
     void Time::Update() {
         auto currentTime = std::chrono::high_resolution_clock::now();
-
-        // ‘OƒtƒŒ[ƒ€‚©‚ç‚ÌŒo‰ßŠÔ‚ğŒvZ
-        std::chrono::duration<float> elapsed = currentTime - mPreviousTime;
+        std::chrono::duration<float> deltaTime = currentTime - mPreviousTime;
         mPreviousTime = currentTime;
 
-        float rawFrameTime = elapsed.count();
+        mDeltaTime = deltaTime.count();
 
-        // ˆ——‚¿‚âƒfƒoƒbƒO’â~‚É‚æ‚éˆÙí‚È’·ŠÔideltaTimej‚ğƒJƒbƒg‚·‚é
-        if (rawFrameTime > MAX_DELTA_TIME) {
+        if (mDeltaTime > MAX_DELTA_TIME)
+        {
             mDeltaTime = MAX_DELTA_TIME;
         }
-        else {
-            mDeltaTime = rawFrameTime;
-        }
 
-        mTotalTime += mDeltaTime;
+        mTotalTime += mDeltaTime * mTimeScale;
+
+        mPhysicsAccumulator += mDeltaTime * mTimeScale;
+
+        if (mPhysicsAccumulator > MAX_DELTA_TIME)
+        {
+            mPhysicsAccumulator = MAX_DELTA_TIME;
+        }
+    }
+
+    bool Time::AccumulateFixedStep()
+    {
+        // è“„ç©ã•ã‚ŒãŸæ™‚é–“ãŒå›ºå®šã‚¹ãƒ†ãƒƒãƒ—ã®æ­©å¹…ã‚’è¶…ãˆã¦ã„ã‚Œã°ã€1å›åˆ†ã®ã‚¹ãƒ†ãƒƒãƒ—ã‚’è¨±å¯
+        if (mPhysicsAccumulator >= FIXED_DELTA_TIME)
+        {
+            mPhysicsAccumulator -= FIXED_DELTA_TIME;
+            return true;
+        }
+        return false;
     }
 }
