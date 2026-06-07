@@ -243,13 +243,19 @@
     <ClInclude Include="src\ecs\component\rigidbody\RigidbodyComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="src\system\ContactListener\ContactListener.h">
+    <ClInclude Include="src\system\Physics\ContactListener\ContactListener.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\PrimitiveModel\Generator\GeometryGenerator.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\PrimitiveModel\Resource\PrimitiveResourceManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Physics\System\PhysicsSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Physics\Manager\PhysicsManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
@@ -413,13 +419,19 @@
     <ClCompile Include="src\ecs\system\manager\ComponentSystemManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="src\system\ContactListener\ContactListener.cpp">
+    <ClCompile Include="src\system\Physics\ContactListener\ContactListener.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\PrimitiveModel\Generator\GeometryGenerator.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\PrimitiveModel\Resource\PrimitiveResourceManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Physics\System\PhysicsSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Physics\Manager\PhysicsManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

@@ -145,9 +145,11 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\system\Physics\Manager\PhysicsManager.h" />
+    <ClInclude Include="src\system\Physics\System\PhysicsSystem.h" />
     <ClInclude Include="src\graphics\PrimitiveModel\Resource\PrimitiveResourceManager.h" />
     <ClInclude Include="src\graphics\PrimitiveModel\Generator\GeometryGenerator.h" />
-    <ClInclude Include="src\system\ContactListener\ContactListener.h" />
+    <ClInclude Include="src\system\Physics\ContactListener\ContactListener.h" />
     <ClInclude Include="src\ecs\component\collider\ColliderComponent.h" />
     <ClInclude Include="src\ecs\component\rigidbody\RigidbodyComponent.h" />
     <ClInclude Include="src\ecs\system\manager\ComponentSystemManager.h" />
@@ -228,9 +230,11 @@
     <ClInclude Include="src\graphics\Texture\TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\system\Physics\Manager\PhysicsManager.cpp" />
+    <ClCompile Include="src\system\Physics\System\PhysicsSystem.cpp" />
     <ClCompile Include="src\graphics\PrimitiveModel\Resource\PrimitiveResourceManager.cpp" />
     <ClCompile Include="src\graphics\PrimitiveModel\Generator\GeometryGenerator.cpp" />
-    <ClCompile Include="src\system\ContactListener\ContactListener.cpp" />
+    <ClCompile Include="src\system\Physics\ContactListener\ContactListener.cpp" />
     <ClCompile Include="src\ecs\system\manager\ComponentSystemManager.cpp" />
     <ClCompile Include="src\audio\BGM\BGMStream.cpp" />
     <ClCompile Include="src\audio\Resource\AudioResourceManager.cpp" />

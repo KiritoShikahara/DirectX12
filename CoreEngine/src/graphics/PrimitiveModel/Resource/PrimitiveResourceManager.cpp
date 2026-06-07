@@ -134,7 +134,9 @@ namespace graphics
 
         auto res = std::make_unique<FbxResource>();
         if (!res->BuildFromMemory(vertices, indices, { sec }))
+        {
             return nullptr;
+        }
 
         return res;
     }
