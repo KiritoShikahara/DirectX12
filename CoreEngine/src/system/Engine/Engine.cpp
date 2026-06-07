@@ -103,7 +103,6 @@ void Create3DModel()
 	auto entity = manager.CreateEntity();
 	auto& tr = manager.AddComponent<ecs::Transform>(entity);
 	tr.SetScale(scale);
-	//tr.SetEulerAnglesDeg(-90, -90, -90);
 
 	auto& fbx = manager.AddComponent<ecs::FbxComponent>(entity);
 	fbx.Resource = res;
@@ -340,10 +339,10 @@ namespace sys
 
 		// 物理
 		SINGLETON_REF(sys::PhysicsManager, PhysicsManager);
-	/*	if (PhysicsManager.Initialize(mEntityManager->GetRegistry()) == false)
+		if (PhysicsManager.Initialize(mEntityManager->GetRegistry()) == false)
 		{
 			return false;
-		}*/
+		}
 
 
 		// テスト用のインスタンス生成
