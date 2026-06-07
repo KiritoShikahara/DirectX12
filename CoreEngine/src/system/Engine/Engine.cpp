@@ -46,11 +46,17 @@
 #include<ecs/component/camera/CameraComponent.h>
 #include<ecs/component/Fbx/FbxComponent.h>
 #include<ecs/component/Fbx/FbxAnimComponent.h>
+#include<ecs/component/Light/LightComponent.h>
 
 // Resoruce
 #include<graphics/Texture/Texture.h>
 #include<graphics/Fbx/Resource/FbxResourceManager.h>
 #include<graphics/Fbx/Resource/FbxResource.h>
+
+
+// define
+#include"EngineDefine.h"
+
 
 // テスト用のSpriteの作成
 void SpriteRenderTest()
@@ -132,6 +138,50 @@ entt::entity CreateCamera()
 	cam.SetAspectRatioFromWindow(sys::Window::Get());
 
 	return entity;
+}
+
+// テスト用のライト作成
+void CreateLight()
+{
+	auto& registry = ecs::EntityManager::Get().GetRegistry();
+	entt::entity entity = ecs::EntityManager::Get().CreateEntity();
+
+	// 座標系
+	auto& tr = registry.emplace<ecs::Transform>(entity);
+
+	// ライト
+	auto& light = registry.emplace<ecs::DirectionalLightComponent>(entity);
+
+}
+
+void CreateDebugObject()
+{
+	// fbx
+#if	DEBUG_FBX
+	LoadResource();
+	Create3DModel();
+#endif
+
+	// sprite
+#if	DEBUG_SPRITE
+	SpriteRenderTest();
+#endif
+
+	// camera
+#if	DEBUG_CAMERA
+	CreateCamera();
+#endif
+
+	// sound
+#if	DEBUG_SOUND
+	CreateSound();
+#endif
+
+	// light
+#if	DEBUG_LIGHT
+	CreateLight();
+#endif
+
 }
 
 namespace sys
@@ -267,11 +317,7 @@ namespace sys
 
 
 		// テスト用のインスタンス生成
-		CreateCamera();
-		LoadResource();
-		Create3DModel();
-		//CreateSound();
-		//SpriteRenderTest();
+		CreateDebugObject();
 
 		InitializeDebugUI();
 

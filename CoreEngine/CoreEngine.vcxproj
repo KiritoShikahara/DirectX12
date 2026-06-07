@@ -145,6 +145,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\system\Engine\EngineDefine.h" />
     <ClInclude Include="src\system\Light\LightSystem.h" />
     <ClInclude Include="src\ecs\component\Light\LightComponent.h" />
     <ClInclude Include="src\system\Physics\Manager\PhysicsManager.h" />
