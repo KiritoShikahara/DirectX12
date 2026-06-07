@@ -39,6 +39,8 @@ struct FbxInstanceData
     uint HasRoughness;
     uint HasAO;
     uint HasEmissive;
+    
+    float4 CustomColor;
 };
 
 // ライト種別定数

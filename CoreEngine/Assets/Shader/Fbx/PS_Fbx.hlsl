@@ -10,9 +10,10 @@ float4 main(VSOutput input) : SV_TARGET
     float4 albedoSample = inst.HasAlbedo
         ? AlbedoTexture.Sample(LinearSampler, input.UV)
         : float4(1.0f, 1.0f, 1.0f, 1.0f);
-    float3 albedo = albedoSample.rgb * inst.BaseColorFactor;
-    float alpha = 1.0f;
-
+    float3 rawAlbedo = albedoSample.rgb * inst.BaseColorFactor;
+    float3 albedo = rawAlbedo * inst.CustomColor.rgb;
+    float alpha = albedoSample.a * inst.CustomColor.a;
+    
     // Metallic / Roughness
     float metallic = inst.HasMetallic
         ? MetallicTexture.Sample(LinearSampler, input.UV).r

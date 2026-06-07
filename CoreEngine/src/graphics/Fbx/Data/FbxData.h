@@ -51,8 +51,11 @@ namespace graphics
         uint32_t            HasRoughness;     //  4
         uint32_t            HasAO;            //  4
         uint32_t            HasEmissive;      //  4
+
+        // 色
+        DirectX::XMFLOAT4 CustomColor = {1,1,1,1}; // 16
     };
-    static_assert(sizeof(FbxInstanceData) == 128);
+    static_assert(sizeof(FbxInstanceData) == 144);
     static_assert(sizeof(FbxInstanceData) % 16 == 0);
 
     /// <summary>

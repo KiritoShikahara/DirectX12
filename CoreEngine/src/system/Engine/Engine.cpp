@@ -154,12 +154,31 @@ void CreateLight()
 
 }
 
+// テスト用のfieldの作成
+void CreateField()
+{
+	auto& manager = ecs::EntityManager::Get();
+	auto& registry = ecs::EntityManager::Get().GetRegistry();
+
+	// Resource取得
+	auto res = graphics::PrimitiveResourceManager::Get().GetResource("Plane");
+	float scale = 1;
+
+	auto entity = manager.CreateEntity();
+	auto& tr = manager.AddComponent<ecs::Transform>(entity);
+	tr.SetScale(scale);
+
+	auto& fbx = manager.AddComponent<ecs::FbxComponent>(entity);
+	fbx.Resource = res;
+}
+
 void CreateDebugObject()
 {
 	// fbx
 #if	DEBUG_FBX
 	LoadResource();
 	Create3DModel();
+	CreateField();
 #endif
 
 	// sprite
