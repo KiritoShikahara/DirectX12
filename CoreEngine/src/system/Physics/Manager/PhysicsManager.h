@@ -1,5 +1,6 @@
 #pragma once
 #include<Utility/Singleton/Singleton.hpp>
+
 #include <Jolt/Jolt.h>
 #include <Jolt/Core/TempAllocator.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
@@ -8,9 +9,10 @@
 #include <Jolt/Physics/Collision/ObjectLayer.h>
 #include <Utility/Export/Export.h>
 #include <entt/entt.hpp>
-
 #include<cstdint>
 #include<memory>
+
+#include"../ContactListener/ContactListener.h"
 
 namespace sys
 {
@@ -117,7 +119,7 @@ namespace sys
 		std::unique_ptr<JPH::PhysicsSystem> mPhysicsSystem;
 
 		// 衝突イベントリスナー
-		std::unique_ptr<class ContactListener> mContactListener;
+		std::unique_ptr<ContactListener> mContactListener;
 
 	};
 }

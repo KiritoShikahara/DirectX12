@@ -61,6 +61,9 @@ namespace graphics
         mDefaultBlackTexture = textureManager.GetOrLoad(
             ASSET_PATH("/Engine/Assets/Texture/Black.dds").string());
 
+        mLightBuffer = std::make_unique<StructuredBuffer>();
+        mLightBuffer->Create(sizeof(LightData), MAX_LIGHTS);
+
         mHeapManager = &heapManager;
 
         mInstanceData.reserve(MAX_FBX_INSTANCES);
@@ -71,15 +74,6 @@ namespace graphics
         return true;
     }
 
-    void FbxRenderer::SetLight(
-        const XMFLOAT3& direction,
-        const XMFLOAT3& color,
-        float            intensity)
-    {
-        mLightDirection = direction;
-        mLightColor = color;
-        mLightIntensity = intensity;
-    }
 
     void FbxRenderer::Begin()
     {
@@ -99,10 +93,16 @@ namespace graphics
         FbxSceneData scene = {};
         std::memcpy(&scene.ViewProjection, &cam.ViewProjection, sizeof(XMFLOAT4X4));
         scene.CameraPosition = cam.Position;
-        scene.LightDirection = mLightDirection;
-        scene.LightIntensity = mLightIntensity;
-        scene.LightColor = mLightColor;
+        scene.LightCount = static_cast<uint32_t>(mLightData.size());
         mSceneBuffer->Update(&scene, sizeof(FbxSceneData));
+
+        // LightBuffer 書き込み
+        if (!mLightData.empty())
+        {
+            mLightBuffer->Update(
+                mLightData.data(),
+                sizeof(LightData) * mLightData.size());
+        }
 
         // Transform + FbxComponent を持つエンティティを収集
         struct RenderItem
@@ -233,6 +233,8 @@ namespace graphics
             FbxPipeline::SLOT_BONE_BUFFER, mBoneBuffer->GetGpuHandle());
         cmdList->SetGraphicsRootDescriptorTable(
             FbxPipeline::SLOT_SCENE_BUFFER, mSceneBuffer->GetGpuHandle());
+        cmdList->SetGraphicsRootDescriptorTable(
+            FbxPipeline::SLOT_LIGHT_BUFFER, mLightBuffer->GetGpuHandle());
 
         // ── DrawCall ループ ───────────────────────────────────────
         // テクスチャ変更時のみ SetGraphicsRootDescriptorTable を呼ぶよう
@@ -273,5 +275,10 @@ namespace graphics
             cmdList->DrawIndexedInstanced(
                 sec.IndexCount, 1, sec.IndexOffset, 0, dc.InstanceIndex);
         }
+    }
+
+    void FbxRenderer::SetLights(const std::vector<LightData>& lights)
+    {
+        mLightData = lights;
     }
 }

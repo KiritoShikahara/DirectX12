@@ -13,17 +13,22 @@
 #include<graphics/Dx12/RenderContext.h>
 
 #include<system/Logger/Logger.h>
-#include<system/Camera/CameraSystem.h>
 
 // Audio
 #include<audio/Device/AudioDevice.h>
 #include<audio/Manager/AudioManager.h>
 #include<audio/Resource/AudioResourceManager.h>
 
-// Fbx
+// 3D
 #include<graphics/Fbx/Renderer/FbxRenderer.h>
 #include<graphics/Fbx/Animation/FbxAnimSystem.h>
 #include<graphics/PrimitiveModel/Resource/PrimitiveResourceManager.h>
+
+// Camera
+#include<system/Camera/CameraSystem.h>
+
+// Light
+#include<system/Light/LightSystem.h>
 
 // 2D
 #include<graphics/Shader/ShaderManager.h>
@@ -264,10 +269,11 @@ namespace sys
 		// テスト用のインスタンス生成
 		CreateCamera();
 		LoadResource();
-		//Create3DModel();
+		Create3DModel();
 		//CreateSound();
 		//SpriteRenderTest();
 
+		InitializeDebugUI();
 
 		mIsRunning = true;
 		mIsInitialized = true;
@@ -334,6 +340,15 @@ namespace sys
 		return true;
 	}
 
+	void Engine::InitializeDebugUI()
+	{
+		auto& registry = mEntityManager->GetRegistry();
+
+		// ライト
+		sys::LightSystem::DebugUI(registry);
+
+	}
+
 	/// <summary>
 	/// 状態更新
 	/// </summary>
@@ -372,6 +387,9 @@ namespace sys
 
 			// カメラ行列の更新
 			sys::CameraSystem::Get().Update(registry);
+
+			// ライトの更新
+			sys::LightSystem::Update(registry);
 
 		}
 	}

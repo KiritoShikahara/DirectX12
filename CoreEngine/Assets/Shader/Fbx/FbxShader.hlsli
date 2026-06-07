@@ -41,15 +41,33 @@ struct FbxInstanceData
     uint HasEmissive;
 };
 
+// ライト種別定数
+static const uint LIGHT_TYPE_DIRECTIONAL = 0;
+static const uint LIGHT_TYPE_POINT = 1;
+static const uint LIGHT_TYPE_SPOT = 2;
+
+struct LightData
+{
+    float3 Color;
+    float Intensity;
+
+    float3 Direction; // Directional / Spot (正規化済み)
+    float Range; // Point / Spot
+
+    float3 Position; // Point / Spot
+    uint Type;
+
+    float InnerCosine; // Spot: cos(InnerConeRad)
+    float OuterCosine; // Spot: cos(OuterConeRad)
+    float _pad0;
+    float _pad1;
+};
+
 struct FbxSceneData
 {
     float4x4 ViewProjection; // CPU側転置済み
     float3 CameraPosition;
-    float _pad0;
-    float3 LightDirection;
-    float LightIntensity;
-    float3 LightColor;
-    float _pad1;
+    uint LightCount;
 };
 
 StructuredBuffer<FbxInstanceData> InstanceBuffer : register(t0);
@@ -61,6 +79,7 @@ Texture2D RoughnessTexture : register(t5);
 Texture2D AOTexture : register(t6);
 Texture2D EmissiveTexture : register(t7);
 StructuredBuffer<FbxSceneData> SceneBuffer : register(t8);
+StructuredBuffer<LightData> LightBuffer : register(t9);
 
 SamplerState LinearSampler : register(s0);
 

@@ -62,13 +62,32 @@ namespace graphics
     {
         DirectX::XMFLOAT4X4 ViewProjection;   // 64 bytes (転置済み)
         DirectX::XMFLOAT3   CameraPosition;   // 12
-        float               _pad0;            //  4
-        DirectX::XMFLOAT3   LightDirection;   // 12 (ワールド空間、シーン→光源方向)
-        float               LightIntensity;   //  4
-        DirectX::XMFLOAT3   LightColor;       // 12
-        float               _pad1;            //  4
+        uint32_t LightCount;    //  4 ライトの数
     };
-    static_assert(sizeof(FbxSceneData) == 112);
+    static_assert(sizeof(FbxSceneData) == 80);
+
+    /// <summary>
+    /// ライトデータ
+    /// 全種類のライトをtypeフィールドで識別して格納
+    /// </summary>
+    struct alignas(16) LightData
+    {
+        DirectX::XMFLOAT3 Color;        // 12
+        float             Intensity;    //  4
+
+        DirectX::XMFLOAT3 Direction;    // 12  Directional / Spot 用 (正規化済み)
+        float             Range;        //  4  Point / Spot 用
+
+        DirectX::XMFLOAT3 Position;     // 12  Point / Spot 用
+        uint32_t          Type;         //  4  eLightType
+
+        float             InnerCosine;  //  4  Spot 用 cos(InnerConeRad)
+        float             OuterCosine;  //  4  Spot 用 cos(OuterConeRad)
+        float             _pad0;        //  4
+        float             _pad1;        //  4
+    };
+    static_assert(sizeof(LightData) == 64);
+    static_assert(sizeof(LightData) % 16 == 0);
 
     /// <summary>
     /// １セクションごとの情報（マテリアル単位の描画情報）

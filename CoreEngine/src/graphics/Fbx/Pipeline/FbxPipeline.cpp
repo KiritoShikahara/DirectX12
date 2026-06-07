@@ -74,7 +74,7 @@ namespace graphics
             rangeAlbedo, rangeNormal,
             rangeMetallic, rangeRoughness,
             rangeAO, rangeEmissive,
-            rangeScene;
+            rangeScene, rangeLight;        // ← rangeLight 追加
 
         rangeInstance.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0
         rangeBone.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1); // t1
@@ -85,8 +85,9 @@ namespace graphics
         rangeAO.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 6); // t6
         rangeEmissive.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 7); // t7
         rangeScene.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 8); // t8
+        rangeLight.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 9); // t9
 
-        CD3DX12_ROOT_PARAMETER1 params[9];
+        CD3DX12_ROOT_PARAMETER1 params[10];  // ← 9 → 10
         params[SLOT_INSTANCE_BUFFER].InitAsDescriptorTable(1, &rangeInstance, D3D12_SHADER_VISIBILITY_ALL);
         params[SLOT_BONE_BUFFER].InitAsDescriptorTable(1, &rangeBone, D3D12_SHADER_VISIBILITY_VERTEX);
         params[SLOT_ALBEDO_TEX].InitAsDescriptorTable(1, &rangeAlbedo, D3D12_SHADER_VISIBILITY_PIXEL);
@@ -96,6 +97,7 @@ namespace graphics
         params[SLOT_AO_TEX].InitAsDescriptorTable(1, &rangeAO, D3D12_SHADER_VISIBILITY_PIXEL);
         params[SLOT_EMISSIVE_TEX].InitAsDescriptorTable(1, &rangeEmissive, D3D12_SHADER_VISIBILITY_PIXEL);
         params[SLOT_SCENE_BUFFER].InitAsDescriptorTable(1, &rangeScene, D3D12_SHADER_VISIBILITY_ALL);
+        params[SLOT_LIGHT_BUFFER].InitAsDescriptorTable(1, &rangeLight, D3D12_SHADER_VISIBILITY_PIXEL);
 
         CD3DX12_STATIC_SAMPLER_DESC sampler(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR);
 

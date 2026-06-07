@@ -50,6 +50,10 @@ namespace sys
 		/// <returns>true:成功 false:失敗</returns>
 		bool Finalize();
 	private:
+		/// <summary>
+		/// デバックUIの初期化
+		/// </summary>
+		void InitializeDebugUI();
 
 		/// <summary>
 		/// 状態更新

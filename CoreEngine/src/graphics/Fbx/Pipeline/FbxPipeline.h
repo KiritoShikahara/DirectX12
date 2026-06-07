@@ -43,6 +43,7 @@ namespace graphics
 		static constexpr UINT SLOT_AO_TEX = 6; // t6 : PIXEL
 		static constexpr UINT SLOT_EMISSIVE_TEX = 7; // t7 : PIXEL
 		static constexpr UINT SLOT_SCENE_BUFFER = 8; // t8 : ALL
+		static constexpr UINT SLOT_LIGHT_BUFFER = 9; // t9 : light
 
 
 	private:
