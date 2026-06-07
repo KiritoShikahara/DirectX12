@@ -23,6 +23,7 @@
 // Fbx
 #include<graphics/Fbx/Renderer/FbxRenderer.h>
 #include<graphics/Fbx/Animation/FbxAnimSystem.h>
+#include<graphics/PrimitiveModel/Resource/PrimitiveResourceManager.h>
 
 // 2D
 #include<graphics/Shader/ShaderManager.h>
@@ -236,6 +237,10 @@ namespace sys
 		{
 			return false;
 		}
+
+		// PrimitiveModel
+		SINGLETON_REF(graphics::PrimitiveResourceManager, PrimitiveResourceManager);
+		PrimitiveResourceManager.Initialize();
 
 		// カメラ
 		if (sys::CameraSystem::Get().Initialize() == false)
