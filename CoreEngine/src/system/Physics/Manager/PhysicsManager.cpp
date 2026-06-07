@@ -6,8 +6,39 @@
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Core/Factory.h>
 
+using namespace JPH;
+using namespace JPH::literals;
+
+
+
 namespace sys
 {
+    static void TraceImpl(const char* inFMT, ...)
+    {
+        // Format the message
+        va_list list;
+        va_start(list, inFMT);
+        char buffer[1024];
+        vsnprintf(buffer, sizeof(buffer), inFMT, list);
+        va_end(list);
+
+        // Print to the TTY
+        std::cout << buffer << std::endl;
+    }
+
+#ifdef JPH_ENABLE_ASSERTS
+
+    // Callback for asserts, connect this to your own assert handler if you have one
+    static bool AssertFailedImpl(const char* inExpression, const char* inMessage, const char* inFile, uint inLine)
+    {
+        // Print to the TTY
+        std::cout << inFile << ":" << inLine << ": (" << inExpression << ") " << (inMessage != nullptr ? inMessage : "") << std::endl;
+
+        // Breakpoint
+        return true;
+    };
+#endif
+
 	bool PhysicsManager::sJoltGlobalInitialized = false;
 
     // ==============================================================
@@ -109,7 +140,27 @@ namespace sys
             if (JPH::Factory::sInstance == nullptr)
             {
                 JPH::RegisterDefaultAllocator();
+
+                Trace = TraceImpl;
+                JPH_IF_ENABLE_ASSERTS(AssertFailed = AssertFailedImpl;)
+
                 JPH::Factory::sInstance = new JPH::Factory();
+
+#ifdef JPH_DOUBLE_PRECISION
+#pragma message("JPH_DOUBLE_PRECISION ON")
+#endif
+
+#ifdef JPH_PROFILE_ENABLED
+#pragma message("JPH_PROFILE_ENABLED ON")
+#endif
+
+#ifdef JPH_DEBUG_RENDERER
+#pragma message("JPH_DEBUG_RENDERER ON")
+#endif
+
+#ifdef JPH_FLOATING_POINT_EXCEPTIONS_ENABLED
+#pragma message("JPH_FLOATING_POINT_EXCEPTIONS_ENABLED ON")
+#endif
                 JPH::RegisterTypes();
             }
             sJoltGlobalInitialized = true;
