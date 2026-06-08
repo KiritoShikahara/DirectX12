@@ -164,6 +164,8 @@ namespace sys
 	/// </summary>
 	void ImGuiManager::AddDebugUI(std::function<void()> guiFunc)
 	{
+#if defined(_DEBUG) || DEV_TOOL_ENABLED
 		mDebugUIFunctions.push_back(std::move(guiFunc));
+#endif
 	}
 }

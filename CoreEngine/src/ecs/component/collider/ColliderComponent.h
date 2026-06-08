@@ -8,7 +8,7 @@
 namespace ecs
 {
     /// <summary>
-    /// ƒRƒ‰ƒCƒ_[‚ÌŒ`óí•Ê
+    /// ã‚³ãƒ©ã‚¤ãƒ€ãƒ¼ã®å½¢çŠ¶ç¨®åˆ¥
     /// </summary>
     enum class eColliderShape
     {
@@ -19,7 +19,7 @@ namespace ecs
 
     struct ENGINE_API ColliderComponent
     {
-        // ‹¤’Ê
+        // å…±é€š
         eColliderShape Shape = eColliderShape::Box;
 
         // Box
@@ -31,10 +31,10 @@ namespace ecs
         // Capsule
 		float HalfHeight = 1.0f;
 
-        // ƒIƒtƒZƒbƒg
+        // ã‚ªãƒ•ã‚»ãƒƒãƒˆ
         DirectX::XMFLOAT3 Offset = { 0.0f, 0.0f, 0.0f };
 
-        // ƒtƒ@ƒNƒgƒŠŠÖ”
+        // ãƒ•ã‚¡ã‚¯ãƒˆãƒªé–¢æ•°
         static ColliderComponent MakeBox(DirectX::XMFLOAT3 halfExtent, DirectX::XMFLOAT3 offset = {})
         {
             ColliderComponent c;
@@ -63,7 +63,7 @@ namespace ecs
     };
 
     /// <summary>
-	/// Õ“ËŠJnƒCƒxƒ“ƒgBÕ“Ë‚ªŠJn‚µ‚½ƒtƒŒ[ƒ€‚É”­s‚³‚ê‚éB
+	/// è¡çªé–‹å§‹ã‚¤ãƒ™ãƒ³ãƒˆã€‚è¡çªãŒé–‹å§‹ã—ãŸãƒ•ãƒ¬ãƒ¼ãƒ ã«ç™ºè¡Œã•ã‚Œã‚‹ã€‚
     /// </summary>
     struct ENGINE_API CollisionEnterEvent
     {
@@ -71,10 +71,16 @@ namespace ecs
     };
 
     /// <summary>
-	/// ƒZƒ“ƒT[‚Ö‚ÌN“üƒCƒxƒ“ƒgBƒZƒ“ƒT[‚É‘¼‚ÌƒGƒ“ƒeƒBƒeƒB‚ªN“ü‚µ‚½ƒtƒŒ[ƒ€‚É”­s‚³‚ê‚éB
+	/// ã‚»ãƒ³ã‚µãƒ¼ã¸ã®ä¾µå…¥ã‚¤ãƒ™ãƒ³ãƒˆã€‚ã‚»ãƒ³ã‚µãƒ¼ã«ä»–ã®ã‚¨ãƒ³ãƒ†ã‚£ãƒ†ã‚£ãŒä¾µå…¥ã—ãŸãƒ•ãƒ¬ãƒ¼ãƒ ã«ç™ºè¡Œã•ã‚Œã‚‹ã€‚
     /// </summary>
     struct ENGINE_API SensorEnterEvent
     {
         std::vector<entt::entity> Visitors;
     };
+
+
+    /// <summary>
+    /// ã‚»ãƒ³ã‚µãƒ¼ï¼ˆå½“ãŸã‚Šåˆ¤å®šã®ã¿ã§ç‰©ç†æ¼”ç®—ã«å½±éŸ¿ã•ã‚Œãªã„ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆï¼‰ã‚’ç¤ºã™ã‚¿ã‚°ã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆã€‚
+    /// </summary>
+    struct ENGINE_API SensorTagComponent {};
 }

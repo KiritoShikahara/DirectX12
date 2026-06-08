@@ -66,11 +66,6 @@ namespace ecs
     };
 
     /// <summary>
-	/// センサー（当たり判定のみで物理演算に影響されないオブジェクト）を示すタグコンポーネント。
-    /// </summary>
-    struct ENGINE_API SensorTagComponent {};
-
-    /// <summary>
     /// Transform が外部から直接書き換えられたことを示すタグ。
     /// </summary>
     struct ENGINE_API TransformDirtyTag {};

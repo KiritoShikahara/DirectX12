@@ -42,6 +42,7 @@
 // Phisics
 #include<system/Physics/System/PhysicsSystem.h>
 #include<system/Physics/Manager/PhysicsManager.h>
+#include<system/Physics/DebugLine/PhysicsDebugRenderer.h>
 
 
 // Component
@@ -51,6 +52,8 @@
 #include<ecs/component/Fbx/FbxComponent.h>
 #include<ecs/component/Fbx/FbxAnimComponent.h>
 #include<ecs/component/Light/LightComponent.h>
+#include<ecs/component/collider/ColliderComponent.h>
+#include<ecs/component/rigidbody/RigidbodyComponent.h>
 
 // Resoruce
 #include<graphics/Texture/Texture.h>
@@ -110,6 +113,12 @@ void Create3DModel()
 
 	auto& anim = manager.AddComponent<ecs::FbxAnimComponent>(entity);
 	anim.Play(*fbx.Resource, "Attack_A", true);
+
+	reg.emplace<ecs::ColliderComponent>(entity,
+		ecs::ColliderComponent::MakeBox({ 10,30,10 }));
+
+	reg.emplace<ecs::RigidBodyComponent>(entity,
+		ecs::RigidBodyComponent::MakeDynamic());
 
 }
 
@@ -172,7 +181,13 @@ void CreateField()
 	auto& fbx = manager.AddComponent<ecs::FbxComponent>(entity);
 	fbx.Resource = res;
 	fbx.CustomColor = { 1,0,0,1 };
-	fbx.PivotOffset = { 0.5,0,0.5 };
+
+	//registry.emplace<ecs::ColliderComponent>(entity,
+	//	ecs::ColliderComponent::MakeBox({ 50.f, 0.5f, 50.f })); // 幅100 × 高さ1 × 奥行100
+
+	//registry.emplace<ecs::RigidBodyComponent>(entity,
+	//	ecs::RigidBodyComponent::MakeStatic());
+
 }
 
 void CreateDebugObject()
@@ -344,6 +359,11 @@ namespace sys
 			return false;
 		}
 
+#ifdef _DEBUG
+		sys::PhysicsDebugRenderer::Get().Initialize(mEntityManager->GetRegistry());
+#endif // _DEBUG
+
+
 
 		// テスト用のインスタンス生成
 		CreateDebugObject();
@@ -508,6 +528,11 @@ namespace sys
 			spriteRenderer.Begin();
 			spriteRenderer.UpdateAndDraw(registry);
 			spriteRenderer.End(cmdList);
+
+#ifdef _DEBUG
+			sys::PhysicsDebugRenderer::Get().Draw(registry);
+#endif // _DEBUG
+
 		}
 
 		// End

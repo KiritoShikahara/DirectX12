@@ -146,6 +146,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\system\Physics\DebugLine\PhysicsDebugRenderer.h" />
     <ClInclude Include="src\system\Engine\EngineDefine.h" />
     <ClInclude Include="src\system\Light\LightSystem.h" />
     <ClInclude Include="src\ecs\component\Light\LightComponent.h" />
@@ -234,6 +235,7 @@
     <ClInclude Include="src\graphics\Texture\TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\system\Physics\DebugLine\PhysicsDebugRenderer.cpp" />
     <ClCompile Include="src\system\Light\LightSystem.cpp" />
     <ClCompile Include="src\system\Physics\Manager\PhysicsManager.cpp" />
     <ClCompile Include="src\system\Physics\System\PhysicsSystem.cpp" />
