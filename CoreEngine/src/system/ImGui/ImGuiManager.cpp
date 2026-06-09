@@ -153,7 +153,7 @@ namespace sys
 		if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
 			ImGui::UpdatePlatformWindows();
-			ImGui::RenderPlatformWindowsDefault();
+			ImGui::RenderPlatformWindowsDefault(nullptr, (void*)cmdList);
 		}
 #endif
 	}
@@ -164,6 +164,8 @@ namespace sys
 	/// </summary>
 	void ImGuiManager::AddDebugUI(std::function<void()> guiFunc)
 	{
+#if defined(_DEBUG) || DEV_TOOL_ENABLED
 		mDebugUIFunctions.push_back(std::move(guiFunc));
+#endif
 	}
 }

@@ -5,19 +5,25 @@
 static const float PI = 3.14159265359f;
 
 // ============================================================
+//  インスタンスインデックス (Root32BitConstant / b0)
+//  DrawCall毎に SetGraphicsRoot32BitConstant で直接書き込む
+//  → SV_InstanceID + StartInstanceLocation の挙動依存を排除
+//  → 複数モデルを描画しても確実に正しいインスタンスデータを参照できる
+// ============================================================
+cbuffer FbxInstanceIndexCB : register(b0)
+{
+    uint g_InstanceIndex;
+};
+
+// ============================================================
 //  StructuredBuffer 定義
-//
-//  行列の方針: CPU側で XMMatrixTranspose() して格納、
+//  行列: CPU側で XMMatrixTranspose() して格納、
 //  シェーダーはデフォルト column-major float4x4 で受け取る
-//  → 旧プロジェクトの cbuffer matrix と同じ方針
-//  → row_major は使わない (mulの結果が一致しなくなるため)
 // ============================================================
 
-// ボーン行列ラッパー
-// (StructuredBuffer<float4x4> は直接書けないためラップが必要)
 struct FbxBoneMatrix
 {
-    float4x4 Mat; // CPU側転置済み / column-major として解釈
+    float4x4 Mat; // CPU側転置済み
 };
 
 struct FbxInstanceData
@@ -39,17 +45,37 @@ struct FbxInstanceData
     uint HasRoughness;
     uint HasAO;
     uint HasEmissive;
+
+    float4 CustomColor; // 乗算カラー (デフォルト = {1,1,1,1})
+};
+
+// ライト種別定数
+static const uint LIGHT_TYPE_DIRECTIONAL = 0;
+static const uint LIGHT_TYPE_POINT = 1;
+static const uint LIGHT_TYPE_SPOT = 2;
+
+struct LightData
+{
+    float3 Color;
+    float Intensity;
+
+    float3 Direction; // Directional / Spot (正規化済み)
+    float Range; // Point / Spot
+
+    float3 Position; // Point / Spot
+    uint Type;
+
+    float InnerCosine; // Spot: cos(InnerConeRad)
+    float OuterCosine; // Spot: cos(OuterConeRad)
+    float _pad0;
+    float _pad1;
 };
 
 struct FbxSceneData
 {
     float4x4 ViewProjection; // CPU側転置済み
     float3 CameraPosition;
-    float _pad0;
-    float3 LightDirection;
-    float LightIntensity;
-    float3 LightColor;
-    float _pad1;
+    uint LightCount;
 };
 
 StructuredBuffer<FbxInstanceData> InstanceBuffer : register(t0);
@@ -61,11 +87,12 @@ Texture2D RoughnessTexture : register(t5);
 Texture2D AOTexture : register(t6);
 Texture2D EmissiveTexture : register(t7);
 StructuredBuffer<FbxSceneData> SceneBuffer : register(t8);
+StructuredBuffer<LightData> LightBuffer : register(t9);
 
 SamplerState LinearSampler : register(s0);
 
 // ============================================================
-//  頂点入出力 (InputLayout / FbxVertex と完全一致)
+//  頂点入出力 (InstIdx は g_InstanceIndex に統一したので不要)
 // ============================================================
 struct VSInput
 {
@@ -85,7 +112,6 @@ struct VSOutput
     float3 WorldNormal : TEXCOORD2;
     float3 WorldTangent : TEXCOORD3;
     float3 WorldBitan : TEXCOORD4;
-    uint InstIdx : TEXCOORD5;
 };
 
 // ============================================================

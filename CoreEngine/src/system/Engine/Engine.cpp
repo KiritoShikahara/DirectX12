@@ -13,34 +13,57 @@
 #include<graphics/Dx12/RenderContext.h>
 
 #include<system/Logger/Logger.h>
-#include<system/Camera/CameraSystem.h>
 
 // Audio
 #include<audio/Device/AudioDevice.h>
 #include<audio/Manager/AudioManager.h>
 #include<audio/Resource/AudioResourceManager.h>
 
-// Fbx
+// 3D
 #include<graphics/Fbx/Renderer/FbxRenderer.h>
 #include<graphics/Fbx/Animation/FbxAnimSystem.h>
+#include<graphics/PrimitiveModel/Resource/PrimitiveResourceManager.h>
+
+// Camera
+#include<system/Camera/CameraSystem.h>
+
+// Light
+#include<system/Light/LightSystem.h>
 
 // 2D
 #include<graphics/Shader/ShaderManager.h>
 #include<graphics/Texture/TextureManager.h>
 #include<graphics/Sprite/Renderer/SpriteRenderer.h>
 
-// Component
+// ECS
 #include<ecs/entity/EntityManager.h>
+#include<ecs/system/manager/ComponentSystemManager.h>
+
+// Phisics
+#include<system/Physics/System/PhysicsSystem.h>
+#include<system/Physics/Manager/PhysicsManager.h>
+#include<graphics/Line/Renderer/PhysicsDebugRenderer.h>
+
+
+// Component
 #include<ecs/component/transform/TransformComponent.h>
 #include<ecs/component/sprite/SpriteComponent.h>
 #include<ecs/component/camera/CameraComponent.h>
 #include<ecs/component/Fbx/FbxComponent.h>
 #include<ecs/component/Fbx/FbxAnimComponent.h>
+#include<ecs/component/Light/LightComponent.h>
+#include<ecs/component/collider/ColliderComponent.h>
+#include<ecs/component/rigidbody/RigidbodyComponent.h>
 
 // Resoruce
 #include<graphics/Texture/Texture.h>
 #include<graphics/Fbx/Resource/FbxResourceManager.h>
 #include<graphics/Fbx/Resource/FbxResource.h>
+
+
+// define
+#include"EngineDefine.h"
+
 
 // テスト用のSpriteの作成
 void SpriteRenderTest()
@@ -59,6 +82,7 @@ void LoadResource()
 		auto& manager = graphics::FbxResourceManager::Get();
 		auto res = manager.Load("Assets/Fbx/Faul.fbx.bin");
 		bool ret = manager.LoadAnm("Assets/Fbx/Faul.fbx.bin", "Assets/Fbx/Animation/Attack_A.fbx.anm", "Attack_A");
+		ret = manager.LoadAnm("Assets/Fbx/Faul.fbx.bin", "Assets/Fbx/Animation/Attack_B.fbx.anm", "Attack_B");
 	}
 
 	// audio
@@ -82,13 +106,20 @@ void Create3DModel()
 	auto entity = manager.CreateEntity();
 	auto& tr = manager.AddComponent<ecs::Transform>(entity);
 	tr.SetScale(scale);
-	tr.SetEulerAnglesDeg(-90, -90, -90);
+	tr.SetPosition(0, 10, 0);
 
 	auto& fbx = manager.AddComponent<ecs::FbxComponent>(entity);
 	fbx.Resource = res;
+	fbx.CustomColor = { 1,1,1,1 };
 
 	auto& anim = manager.AddComponent<ecs::FbxAnimComponent>(entity);
 	anim.Play(*fbx.Resource, "Attack_A", true);
+
+	reg.emplace<ecs::ColliderComponent>(entity,
+		ecs::ColliderComponent::MakeBox({ 1,3,1 }));
+
+	reg.emplace<ecs::RigidBodyComponent>(entity,
+		ecs::RigidBodyComponent::MakeDynamic());
 
 }
 
@@ -110,10 +141,6 @@ entt::entity CreateCamera()
 
 	tr.SetPosition(0.0f, 1.0f, -100.0f);
 
-	// もし Transform クラスに回転を設定する関数（SetRotation や LookAt）があれば、
-	// ここで「正面（(0,0,0) 方向）を向く」ように回転をリセット、または設定してください。
-	// 例: tr.SetRotation(0.0f, 0.0f, 0.0f); 
-
 	auto& cam = registry.emplace<ecs::CameraComponent>(entity);
 	cam.IsMainCamera = true;
 	cam.Fov = 60.0f;
@@ -122,6 +149,77 @@ entt::entity CreateCamera()
 	cam.SetAspectRatioFromWindow(sys::Window::Get());
 
 	return entity;
+}
+
+// テスト用のライト作成
+void CreateLight()
+{
+	auto& registry = ecs::EntityManager::Get().GetRegistry();
+	entt::entity entity = ecs::EntityManager::Get().CreateEntity();
+
+	// 座標系
+	auto& tr = registry.emplace<ecs::Transform>(entity);
+
+	// ライト
+	auto& light = registry.emplace<ecs::DirectionalLightComponent>(entity);
+
+}
+
+// テスト用のfieldの作成
+void CreateField()
+{
+	auto& manager = ecs::EntityManager::Get();
+	auto& registry = ecs::EntityManager::Get().GetRegistry();
+
+	// Resource取得
+	auto res = graphics::PrimitiveResourceManager::Get().GetResource("Field");
+	float scale = 10;
+
+	auto entity = manager.CreateEntity();
+	auto& tr = manager.AddComponent<ecs::Transform>(entity);
+	tr.SetScale(scale);
+
+	auto& fbx = manager.AddComponent<ecs::FbxComponent>(entity);
+	fbx.Resource = res;
+	fbx.CustomColor = { 1,0,0,1 };
+
+	registry.emplace<ecs::ColliderComponent>(entity,
+		ecs::ColliderComponent::MakeBox({ 50.f, 0.5f, 50.f })); // 幅100 × 高さ1 × 奥行100
+
+	registry.emplace<ecs::RigidBodyComponent>(entity,
+		ecs::RigidBodyComponent::MakeStatic());
+
+}
+
+void CreateDebugObject()
+{
+	// fbx
+#if	DEBUG_FBX
+	LoadResource();
+	Create3DModel();
+	CreateField();
+#endif
+
+	// sprite
+#if	DEBUG_SPRITE
+	SpriteRenderTest();
+#endif
+
+	// camera
+#if	DEBUG_CAMERA
+	CreateCamera();
+#endif
+
+	// sound
+#if	DEBUG_SOUND
+	CreateSound();
+#endif
+
+	// light
+#if	DEBUG_LIGHT
+	CreateLight();
+#endif
+
 }
 
 namespace sys
@@ -201,6 +299,11 @@ namespace sys
 			return false;
 		}
 
+		// ComponentSystemManagerの初期化
+		mComponentSystemManager = &ecs::ComponentSystemManager::Get();
+		mComponentSystemManager->ClearUserSystems();
+
+		// 入力管理の初期化
 		mInputManager = &sys::InputManager::Get();
 		if (mInputManager->Initialize() == false)
 		{
@@ -228,6 +331,10 @@ namespace sys
 			return false;
 		}
 
+		// PrimitiveModel
+		SINGLETON_REF(graphics::PrimitiveResourceManager, PrimitiveResourceManager);
+		PrimitiveResourceManager.Initialize();
+
 		// カメラ
 		if (sys::CameraSystem::Get().Initialize() == false)
 		{
@@ -246,14 +353,27 @@ namespace sys
 			return false;
 		}
 
+		// 物理
+		SINGLETON_REF(sys::PhysicsManager, PhysicsManager);
+		if (PhysicsManager.Initialize(mEntityManager->GetRegistry()) == false)
+		{
+			return false;
+		}
+
+#ifdef _DEBUG
+		if (graphics::PhysicsDebugRenderer::Get().Initialize() == false)
+		{
+			return false;
+		}
+
+#endif // _DEBUG
+
+
 
 		// テスト用のインスタンス生成
-		CreateCamera();
-		LoadResource();
-		Create3DModel();
-		//CreateSound();
-		//SpriteRenderTest();
+		CreateDebugObject();
 
+		InitializeDebugUI();
 
 		mIsRunning = true;
 		mIsInitialized = true;
@@ -278,32 +398,15 @@ namespace sys
 			mIsRunning = false;
 			return false;
 		}
-		// 事前更新
-		this->PreUpdate();
 
-		// メイン更新
+		// 更新
 		this->Update();
 
-		// 事後更新
-		this->PostUpdate();
+		// 描画
+		this->Render();
 
-
-
-		auto context = mDX12Renderer->GetContext();
-
-		// TODO:描画処理
-		mDX12Renderer->BeginFrame();
-		graphics::RenderContext::Get().SetFrameIndex(context->GetCurrentFrameIndex());
-
-		mImGuiManager->NewFrame();
-		mImGuiManager->Update();
-		Render();
-
-		mImGuiManager->EndFrame();
-		mDX12Renderer->EndFrame();
-
-		// TODO:フレームの終了処理
-		mInputManager->Update();
+		// フレーム末の処理
+		this->Conclude();
 
 		return true;
 	}
@@ -330,6 +433,12 @@ namespace sys
 		mDevice->Finalize();
 		mDevice = nullptr;
 
+		// 物理
+		sys::PhysicsManager::Get().Finalize();
+#ifdef _DEBUG
+		graphics::PhysicsDebugRenderer::Get().Finalize();
+#endif // _DEBUG
+
 		// TODO:ログ出力
 
 		sys::Logger::Get().Finalize();
@@ -337,14 +446,12 @@ namespace sys
 		return true;
 	}
 
-
-	/// <summary>
-	/// 事前更新
-	/// </summary>
-	void Engine::PreUpdate()
+	void Engine::InitializeDebugUI()
 	{
-		// Timeの更新
-		mTime.Update();
+		auto& registry = mEntityManager->GetRegistry();
+
+		// ライト
+		sys::LightSystem::DebugUI(registry);
 
 	}
 
@@ -353,25 +460,52 @@ namespace sys
 	/// </summary>
 	void Engine::Update()
 	{
-		if (INPUT_PAD->IsPressed(sys::ePadButton::R2))
+		// 事前更新
 		{
-			std::cout << "Push" << std::endl;
+			// 時間経過
+			mTime.Update();
 		}
-	}
 
-	/// <summary>
-	/// 事後更新
-	/// </summary>
-	void Engine::PostUpdate()
-	{
+		// 取得
 		auto& registry = ecs::EntityManager::Get().GetRegistry();
 		auto dt = mTime.GetDeltaTime();
 
-		// カメラ行列の更新
-		sys::CameraSystem::Get().Update(registry);
+		// メイン更新
+		{
+			
+			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PreUpdate, registry, dt);
 
-		// アニメーション時間の更新
-		graphics::FbxAnimSystem::Update(registry, dt);
+			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::Update, registry, dt);
+
+			sys::PhysicsSystem::BuildPendingBodies(registry);
+			sys::PhysicsSystem::SyncFromTransform(registry);
+
+			while (mTime.AccumulateFixedStep())
+			{
+				// 物理演算の更新 固定ステップにする。
+				sys::PhysicsSystem::Update(registry, mTime.GetFixedDeltaTime());
+			}
+			sys::PhysicsSystem::SyncToTransform(registry);
+
+			// 座標更新、行列更新
+
+			// 衝突イベント発火
+
+			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PostUpdate, registry, dt);
+		}
+
+		// 事後更新
+		{
+			// アニメーション時間の更新
+			graphics::FbxAnimSystem::Update(registry, dt);
+
+			// カメラ行列の更新
+			sys::CameraSystem::Get().Update(registry);
+
+			// ライトの更新
+			sys::LightSystem::Update(registry);
+
+		}
 	}
 
 	/// <summary>
@@ -384,16 +518,51 @@ namespace sys
 		auto& registry = mEntityManager->GetRegistry();
 		auto cmdList = context->GetCommandList();
 
-		// 3Dモデル
-		SINGLETON_REF(graphics::FbxRenderer, FbxRenderer);
-		FbxRenderer.Begin();
-		FbxRenderer.UpdateAndDraw(registry);
-		FbxRenderer.End(cmdList);
+		// Begin
+		{
+			mDX12Renderer->BeginFrame();
+			graphics::RenderContext::Get().SetFrameIndex(context->GetCurrentFrameIndex());
 
-		// 2DSprite
-		SINGLETON_REF(graphics::SpriteRenderer, spriteRenderer);
-		spriteRenderer.Begin();
-		spriteRenderer.UpdateAndDraw(registry);
-		spriteRenderer.End(cmdList);
+			mImGuiManager->NewFrame();
+			mImGuiManager->Update();
+		}
+
+		// Draw
+		{
+			// 3Dモデル
+			SINGLETON_REF(graphics::FbxRenderer, FbxRenderer);
+			FbxRenderer.Begin();
+			FbxRenderer.UpdateAndDraw(registry);
+			FbxRenderer.End(cmdList);
+
+			// 2DSprite
+			SINGLETON_REF(graphics::SpriteRenderer, spriteRenderer);
+			spriteRenderer.Begin();
+			spriteRenderer.UpdateAndDraw(registry);
+			spriteRenderer.End(cmdList);
+
+#ifdef _DEBUG
+
+			graphics::PhysicsDebugRenderer::Get().Draw(registry, cmdList);
+#endif // _DEBUG
+
+		}
+
+		// End
+		{
+
+			mImGuiManager->EndFrame();
+			mDX12Renderer->EndFrame();
+
+		}
+	}
+
+	/// <summary>
+	/// フレーム末の処理
+	/// </summary>
+	void Engine::Conclude()
+	{
+		// フレーム末の処理
+		mInputManager->Update();
 	}
 }

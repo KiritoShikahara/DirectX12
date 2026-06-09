@@ -45,10 +45,7 @@ namespace graphics
         /// 指向性ライトのパラメータを設定する
         /// ※ Begin() の前に毎フレーム呼ぶこと
         /// </summary>
-        void SetLight(
-            const DirectX::XMFLOAT3& direction,
-            const DirectX::XMFLOAT3& color,
-            float                    intensity);
+        void SetLights(const std::vector<LightData>& lights);
 
     private:
         /// <summary>
@@ -58,7 +55,8 @@ namespace graphics
         void Submit(
             const FbxResource& resource,
             const DirectX::XMFLOAT4X4& world,
-            const std::vector<DirectX::XMFLOAT4X4>* boneMatrices);
+            const std::vector<DirectX::XMFLOAT4X4>* boneMatrices,
+            const DirectX::XMFLOAT4& customColor);
 
         // ── DrawCall 単位 ────────────────────────────────────────
         struct DrawCall
@@ -89,9 +87,9 @@ namespace graphics
         Texture* mDefaultBlackTexture = nullptr; // Emissive 用
 
         // ── ライトデータ ─────────────────────────────────────────
-        DirectX::XMFLOAT3 mLightDirection = { 0.577f, -0.577f, 0.577f };
-        DirectX::XMFLOAT3 mLightColor = { 1.0f,   1.0f,   1.0f };
-        float             mLightIntensity = 1.0f;
+        std::unique_ptr<StructuredBuffer> mLightBuffer;   // LightData[] (t9)
+        std::vector<LightData>            mLightData;
+        static constexpr uint32_t         MAX_LIGHTS = 64u;
 
         // ── 依存 ─────────────────────────────────────────────────
         GDescriptorHeapManager* mHeapManager = nullptr;

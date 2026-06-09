@@ -80,6 +80,27 @@ namespace graphics
         // ---- 頂点 ----
         std::vector<FbxVertex> vertices(vertexCount);
         fread(vertices.data(), sizeof(FbxVertex), vertexCount, fp);
+        {
+            float minX = FLT_MAX, maxX = -FLT_MAX;
+            float minY = FLT_MAX, maxY = -FLT_MAX;
+            float minZ = FLT_MAX, maxZ = -FLT_MAX;
+            for (const auto& v : vertices)
+            {
+                minX = std::min(minX, v.Position.x); maxX = std::max(maxX, v.Position.x);
+                minY = std::min(minY, v.Position.y); maxY = std::max(maxY, v.Position.y);
+                minZ = std::min(minZ, v.Position.z); maxZ = std::max(maxZ, v.Position.z);
+            }
+            if (vertexCount > 0)
+            {
+                // 底面(minY)が y=0 になり、XZ が中心になるオフセット
+                mBottomCenterPivot =
+                {
+                    -(minX + maxX) * 0.5f,
+                    -minY,
+                    -(minZ + maxZ) * 0.5f
+                };
+            }
+        }
 
         // ---- インデックス ----
         int32_t indexCount = 0;
@@ -226,6 +247,50 @@ namespace graphics
             if (mAnimClips[i].Name == name) return i;
         }
         return -1;
+    }
+
+    bool FbxResource::BuildFromMemory(const std::vector<FbxVertex>& vertices, const std::vector<uint32_t>& indices, const std::vector<FbxSection>& sections)
+    {
+        if (vertices.empty() || indices.empty())
+        {
+            DEBUG_LOG(sys::eLogLevel::Error,
+                "FbxResource::BuildFromMemory: empty vertices or indices.");
+            return false;
+        }
+
+        mSections = sections;
+        // mBones / mAnimClips は空のまま (スキニングなし)
+
+        const uint32_t vertexCount = static_cast<uint32_t>(vertices.size());
+        const uint32_t indexCount = static_cast<uint32_t>(indices.size());
+
+        mVB = std::make_unique<VertexBuffer>();
+        if (!mVB->CreateStaticSync(
+            vertices.data(),
+            sizeof(FbxVertex) * vertexCount,
+            sizeof(FbxVertex)))
+        {
+            DEBUG_LOG(sys::eLogLevel::Error,
+                "FbxResource::BuildFromMemory: Failed to create vertex buffer.");
+            return false;
+        }
+
+        mIB = std::make_unique<IndexBuffer>();
+        if (!mIB->CreateStaticSync(
+            indices.data(),
+            sizeof(uint32_t) * indexCount,
+            DXGI_FORMAT_R32_UINT))
+        {
+            DEBUG_LOG(sys::eLogLevel::Error,
+                "FbxResource::BuildFromMemory: Failed to create index buffer.");
+            return false;
+        }
+
+        mIsLoaded = true;
+        DEBUG_LOG(sys::eLogLevel::Log,
+            std::format("FbxResource::BuildFromMemory: {} verts, {} indices, {} sections.",
+                vertexCount, indexCount, sections.size()));
+        return true;
     }
 
     // ============================================================

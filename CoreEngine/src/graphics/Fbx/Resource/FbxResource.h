@@ -46,20 +46,31 @@ namespace graphics
             const std::string& anmPath,
             const std::string& clipName = "");
 
-        // ── 状態 ──────────────────────────────────────────────
+        // 状態
         bool IsLoaded()    const { return mIsLoaded; }
         bool HasSkinning() const { return !mBones.empty(); }
         bool HasAnimation()const { return !mAnimClips.empty(); }
         int  GetBoneCount()const { return static_cast<int>(mBones.size()); }
 
-        // ── データアクセサ ─────────────────────────────────────
+        // データアクセサ
         const std::vector<FbxSection>& GetSections()  const { return mSections; }
         std::vector<FbxSection>& GetSections() { return mSections; }
         const std::vector<FbxBoneData>& GetBones()     const { return mBones; }
         const std::vector<FbxAnimClip>& GetAnimClips() const { return mAnimClips; }
 
+        const DirectX::XMFLOAT3& GetBottomCenterPivot() const { return mBottomCenterPivot; }
+
         /// <summary>クリップ名からインデックスを返す (-1: 見つからない)</summary>
         int FindClipIndex(const std::string& name) const;
+
+        /// <summary>
+        /// メモリ上の頂点・インデックス・セクション情報から直接 GPU バッファを構築する
+        /// GeometryGenerator と組み合わせてプリミティブを生成する際に使用する
+        /// </summary>
+        bool BuildFromMemory(
+            const std::vector<FbxVertex>& vertices,
+            const std::vector<uint32_t>& indices,
+            const std::vector<FbxSection>& sections);
 
         /// <summary>VB/IB をコマンドリストにセットする</summary>
         void SetBuffers(ID3D12GraphicsCommandList* cmdList) const;
@@ -73,6 +84,9 @@ namespace graphics
 
         std::unique_ptr<VertexBuffer> mVB;
         std::unique_ptr<IndexBuffer>  mIB;
+
+        /// <summary>バインドポーズAABBの底面中心オフセット (LoadBinで自動計算)</summary>
+        DirectX::XMFLOAT3 mBottomCenterPivot = { 0.f, 0.f, 0.f };
 
         bool mIsLoaded = false;
     };

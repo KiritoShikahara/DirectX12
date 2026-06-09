@@ -8,64 +8,6 @@
 
 namespace graphics
 {
-
-    // ── ステート記述ヘルパー ──────────────────────────────────────
-
-    D3D12_DEPTH_STENCIL_DESC FbxPipeline::MakeDepthStencilDesc()
-    {
-        D3D12_DEPTH_STENCIL_DESC desc = {};
-        desc.DepthEnable = TRUE;
-        desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-        desc.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-        desc.StencilEnable = FALSE;
-        desc.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
-        desc.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
-        desc.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
-        desc.FrontFace.StencilDepthFailOp = D3D12_STENCIL_OP_KEEP;
-        desc.FrontFace.StencilPassOp = D3D12_STENCIL_OP_KEEP;
-        desc.FrontFace.StencilFunc = D3D12_COMPARISON_FUNC_ALWAYS;
-        desc.BackFace = desc.FrontFace;
-        return desc;
-    }
-
-    D3D12_BLEND_DESC FbxPipeline::MakeBlendDesc()
-    {
-        D3D12_BLEND_DESC desc = {};
-        desc.AlphaToCoverageEnable = FALSE;
-        desc.IndependentBlendEnable = FALSE;
-
-        D3D12_RENDER_TARGET_BLEND_DESC rt = {};
-        rt.BlendEnable = TRUE;
-        rt.LogicOpEnable = FALSE;
-        rt.SrcBlend = D3D12_BLEND_SRC_ALPHA;
-        rt.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
-        rt.BlendOp = D3D12_BLEND_OP_ADD;
-        rt.SrcBlendAlpha = D3D12_BLEND_ONE;
-        rt.DestBlendAlpha = D3D12_BLEND_ZERO;
-        rt.BlendOpAlpha = D3D12_BLEND_OP_ADD;
-        rt.LogicOp = D3D12_LOGIC_OP_NOOP;
-        rt.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-        for (auto& target : desc.RenderTarget) target = rt;
-        return desc;
-    }
-
-    D3D12_RASTERIZER_DESC FbxPipeline::MakeRasterizerDesc()
-    {
-        D3D12_RASTERIZER_DESC desc = {};
-        desc.FillMode = D3D12_FILL_MODE_SOLID;
-        desc.CullMode = D3D12_CULL_MODE_BACK;
-        desc.FrontCounterClockwise = FALSE;
-        desc.DepthBias = 0;
-        desc.DepthBiasClamp = 0.f;
-        desc.SlopeScaledDepthBias = 0.f;
-        desc.DepthClipEnable = TRUE;
-        desc.MultisampleEnable = FALSE;
-        desc.AntialiasedLineEnable = FALSE;
-        desc.ForcedSampleCount = 0;
-        desc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
-        return desc;
-    }
-
     // ── ルートシグネチャ ──────────────────────────────────────────
 
     bool FbxPipeline::CreateRootSignature(ID3D12Device* device)
@@ -74,7 +16,7 @@ namespace graphics
             rangeAlbedo, rangeNormal,
             rangeMetallic, rangeRoughness,
             rangeAO, rangeEmissive,
-            rangeScene;
+            rangeScene, rangeLight;
 
         rangeInstance.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0
         rangeBone.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1); // t1
@@ -85,8 +27,10 @@ namespace graphics
         rangeAO.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 6); // t6
         rangeEmissive.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 7); // t7
         rangeScene.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 8); // t8
+        rangeLight.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 9); // t9
 
-        CD3DX12_ROOT_PARAMETER1 params[9];
+        CD3DX12_ROOT_PARAMETER1 params[11];
+        params[SLOT_INSTANCE_INDEX].InitAsConstants(1, 0, 0, D3D12_SHADER_VISIBILITY_ALL);
         params[SLOT_INSTANCE_BUFFER].InitAsDescriptorTable(1, &rangeInstance, D3D12_SHADER_VISIBILITY_ALL);
         params[SLOT_BONE_BUFFER].InitAsDescriptorTable(1, &rangeBone, D3D12_SHADER_VISIBILITY_VERTEX);
         params[SLOT_ALBEDO_TEX].InitAsDescriptorTable(1, &rangeAlbedo, D3D12_SHADER_VISIBILITY_PIXEL);
@@ -96,6 +40,7 @@ namespace graphics
         params[SLOT_AO_TEX].InitAsDescriptorTable(1, &rangeAO, D3D12_SHADER_VISIBILITY_PIXEL);
         params[SLOT_EMISSIVE_TEX].InitAsDescriptorTable(1, &rangeEmissive, D3D12_SHADER_VISIBILITY_PIXEL);
         params[SLOT_SCENE_BUFFER].InitAsDescriptorTable(1, &rangeScene, D3D12_SHADER_VISIBILITY_ALL);
+        params[SLOT_LIGHT_BUFFER].InitAsDescriptorTable(1, &rangeLight, D3D12_SHADER_VISIBILITY_PIXEL);
 
         CD3DX12_STATIC_SAMPLER_DESC sampler(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR);
 
@@ -124,6 +69,7 @@ namespace graphics
         }
         mRootSignature->SetName(L"FbxRootSignature");
         return true;
+
     }
 
     // ── PSO ──────────────────────────────────────────────────────

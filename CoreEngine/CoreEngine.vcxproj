@@ -106,10 +106,11 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;JPH_PROFILE_ENABLED;JPH_DEBUG_RENDERER;JPH_FLOATING_POINT_EXCEPTIONS_ENABLED
+;JPH_OBJECT_STREAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)external;$(ProjectDir)src;$(ProjectDir)src\pch</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)external;$(ProjectDir)src;$(ProjectDir)src\pch;$(ProjectDir)external\JoltPhysics</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
@@ -118,8 +119,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)external\JoltPhysics\lib\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Jolt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -128,10 +129,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;JPH_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)external;$(ProjectDir)src;$(ProjectDir)src\pch</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)external;$(ProjectDir)src;$(ProjectDir)src\pch;$(ProjectDir)external\JoltPhysics</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
@@ -140,11 +141,24 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)external\JoltPhysics\lib\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Jolt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\graphics\Line\Renderer\PhysicsDebugRenderer.h" />
+    <ClInclude Include="src\graphics\Line\Pipeline\LinePipeline.h" />
+    <ClInclude Include="src\system\Engine\EngineDefine.h" />
+    <ClInclude Include="src\system\Light\LightSystem.h" />
+    <ClInclude Include="src\ecs\component\Light\LightComponent.h" />
+    <ClInclude Include="src\system\Physics\Manager\PhysicsManager.h" />
+    <ClInclude Include="src\system\Physics\System\PhysicsSystem.h" />
+    <ClInclude Include="src\graphics\PrimitiveModel\Resource\PrimitiveResourceManager.h" />
+    <ClInclude Include="src\graphics\PrimitiveModel\Generator\GeometryGenerator.h" />
+    <ClInclude Include="src\system\Physics\ContactListener\ContactListener.h" />
+    <ClInclude Include="src\ecs\component\collider\ColliderComponent.h" />
+    <ClInclude Include="src\ecs\component\rigidbody\RigidbodyComponent.h" />
+    <ClInclude Include="src\ecs\system\manager\ComponentSystemManager.h" />
     <ClInclude Include="src\audio\BGM\BGMStream.h" />
     <ClInclude Include="src\audio\Resource\AudioResourceManager.h" />
     <ClInclude Include="src\audio\Manager\AudioManager.h" />
@@ -152,6 +166,7 @@
     <ClInclude Include="src\audio\SE\SoundEffect.h" />
     <ClInclude Include="src\audio\Resource\AudioResource.h" />
     <ClInclude Include="src\audio\Data\AudioHeader.h" />
+    <ClInclude Include="src\ecs\system\manager\IComponentSystem.h" />
     <ClInclude Include="src\graphics\Fbx\Resource\FbxResourceManager.h" />
     <ClInclude Include="src\graphics\Fbx\Animation\FbxAnimSystem.h" />
     <ClInclude Include="src\ecs\component\Fbx\FbxComponent.h" />
@@ -160,20 +175,9 @@
     <ClInclude Include="src\graphics\Fbx\Pipeline\FbxPipeline.h" />
     <ClInclude Include="src\graphics\Fbx\Resource\FbxResource.h" />
     <ClInclude Include="src\graphics\Fbx\Data\FbxData.h" />
-    <ClInclude Include="src\graphics\Model\Formats\AnmFormat.h" />
-    <ClInclude Include="src\graphics\Model\Formats\BinFormat.h" />
-    <ClInclude Include="src\system\AnimDebugUI\AnimDebugUI.h" />
     <ClInclude Include="src\Editor\Parameter\EditorParameter.h" />
-    <ClInclude Include="src\graphics\Model\Animation\ModelAnimationSystem.h" />
-    <ClInclude Include="src\ecs\component\model\ModelComponent.h" />
-    <ClInclude Include="src\graphics\Model\Renderer\ModelRenderer.h" />
-    <ClInclude Include="src\graphics\Model\Pipeline\ModelPipeline.h" />
     <ClInclude Include="src\ecs\component\camera\CameraComponent.h" />
-    <ClInclude Include="src\ecs\component\model\ModelAnimComponent.h" />
-    <ClInclude Include="src\graphics\Model\Resouce\ModelResourceManager.h" />
     <ClInclude Include="src\graphics\Dx12\Dx12Context.h" />
-    <ClInclude Include="src\graphics\Model\ModelData.h" />
-    <ClInclude Include="src\graphics\Model\Resouce\ModelResouce.h" />
     <ClInclude Include="src\system\Camera\CameraSystem.h" />
     <ClInclude Include="src\system\Input\PAD\PadManager.h" />
     <ClInclude Include="src\system\Input\PAD\Pad.h" />
@@ -232,6 +236,15 @@
     <ClInclude Include="src\graphics\Texture\TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\graphics\Line\Renderer\PhysicsDebugRenderer.cpp" />
+    <ClCompile Include="src\graphics\Line\Pipeline\LinePipeline.cpp" />
+    <ClCompile Include="src\system\Light\LightSystem.cpp" />
+    <ClCompile Include="src\system\Physics\Manager\PhysicsManager.cpp" />
+    <ClCompile Include="src\system\Physics\System\PhysicsSystem.cpp" />
+    <ClCompile Include="src\graphics\PrimitiveModel\Resource\PrimitiveResourceManager.cpp" />
+    <ClCompile Include="src\graphics\PrimitiveModel\Generator\GeometryGenerator.cpp" />
+    <ClCompile Include="src\system\Physics\ContactListener\ContactListener.cpp" />
+    <ClCompile Include="src\ecs\system\manager\ComponentSystemManager.cpp" />
     <ClCompile Include="src\audio\BGM\BGMStream.cpp" />
     <ClCompile Include="src\audio\Resource\AudioResourceManager.cpp" />
     <ClCompile Include="src\audio\Manager\AudioManager.cpp" />
@@ -244,26 +257,8 @@
     <ClCompile Include="src\graphics\Fbx\Renderer\FbxRenderer.cpp" />
     <ClCompile Include="src\graphics\Fbx\Pipeline\FbxPipeline.cpp" />
     <ClCompile Include="src\graphics\Fbx\Resource\FbxResource.cpp" />
-    <ClCompile Include="src\system\AnimDebugUI\AnimDebugUI.cpp" />
-    <ClCompile Include="src\graphics\Model\Animation\ModelAnimationSystem.cpp" />
-    <ClCompile Include="src\graphics\Model\Renderer\ModelRenderer.cpp" />
-    <ClCompile Include="src\graphics\Model\Pipeline\ModelPipeline.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="src\ecs\component\camera\CameraComponent.cpp" />
-    <ClCompile Include="src\ecs\component\model\ModelAnimComponent.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="src\graphics\Model\Resouce\ModelResourceManager.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="src\graphics\Dx12\Dx12Context.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="src\graphics\Model\Resouce\ModelResouce.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
     </ClCompile>
@@ -416,6 +411,26 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Assets\Shader\PhysicsDebug\PS_PhysicsDebug.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="Assets\Shader\PhysicsDebug\VS_PhysicsDebug.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="Assets\Shader\Fbx\PS_Fbx.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>

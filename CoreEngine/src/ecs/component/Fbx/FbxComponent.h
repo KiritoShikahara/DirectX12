@@ -16,5 +16,20 @@ namespace ecs
 
         /// <summary>false にすると UpdateAndDraw で無視される</summary>
         bool IsVisible = true;
+
+        /// <summary>
+        /// 基準点を自動で足元に設定するかどうか true:する false:しない
+        /// </summary>
+        bool AutoPivot = true;
+
+        /// <summary>
+        /// ローカルの基準点オフセット
+        /// </summary>
+        DirectX::XMFLOAT3 PivotOffset = { 0.f, 0.f, 0.f };
+
+        /// <summary>
+        /// マテリアルの乗算するカラー
+        /// </summary>
+        DirectX::XMFLOAT4 CustomColor = { 1.f, 1.f, 1.f, 1.f };
     };
 }

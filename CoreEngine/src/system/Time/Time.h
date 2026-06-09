@@ -1,47 +1,61 @@
 #pragma once
-#include<Utility/Export/Export.h>
-#include<chrono>
+#include <Utility/Export/Export.h>
+#include <chrono>
 
 namespace sys
 {
     /// <summary>
-    /// �G���W���S�̂̎��Ԃ��Ǘ�����N���X�B
+    /// エンジン全体の時間を管理するクラス。
     /// </summary>
     class ENGINE_API Time {
     public:
         Time() = default;
 
-        // ������
+        // 初期化
         void Initialize();
 
-        // ���C�����[�v�̐擪�Ŗ��t���[��1��Ă�
+        // メインループの先頭で毎フレーム1回呼ぶ
         void Update();
 
-        // �^�C���X�P�[���K�p��̌o�ߎ��ԁi�A�j���[�V������ړ��Ɏg�p�j
+        // タイムスケール適用後の経過時間（アニメーションや移動に使用）
         float GetDeltaTime() const { return mDeltaTime * mTimeScale; }
 
-        // ���̌o�ߎ��ԁiUI�̉��o��v���t�@�C�����O�Ɏg�p�j
+        // 生の経過時間（UIの演出やプロファイリングに使用）
         float GetRawDeltaTime() const { return mDeltaTime; }
 
-        // �Q�[���N������̗ݐώ��ԁi�V�F�[�_�[�̔g�Ȃǂ̉��o�Ɏg�p�j
+        // ゲーム起動からの累積時間（シェーダーの波などの演出に使用）
         float GetTotalTime() const { return mTotalTime; }
 
-        // ���݂̃^�C���X�P�[��
+        // 現在のタイムスケール
         float GetTimeScale() const { return mTimeScale; }
 
-        // �^�C���X�P�[���̕ύX�i0.5f�ŃX���[�A0.0f�Ń|�[�Y�A2.0f�Ŕ{���j
+        // タイムスケールの変更（0.5fでスロー、0.0fでポーズ、2.0fで倍速）
         void SetTimeScale(float scale) { mTimeScale = (scale < 0.0f) ? 0.0f : scale; }
 
+        /// <summary> 固定更新用のデルタタイム (60FPS固定なら 約0.01666秒) </summary>
+        static constexpr float FIXED_DELTA_TIME = 1.0f / 60.0f;
+
+        /// <summary>
+        /// 固定更新のステップを実行すべきか判定し、実行する場合はTrueを返し時間を消費する。
+        /// while(time.AccumulateFixedStep()) { ... } のように使用する。
+        /// </summary>
+        bool AccumulateFixedStep();
+
+        /// <summary> 固定ステップ用のタイムスケール適用済みデルタタイム </summary>
+        float GetFixedDeltaTime() const { return FIXED_DELTA_TIME * mTimeScale; }
+
     private:
-        // ���x�̍����N���b�N���g�p
+        // 精度の高いクロックを使用
         std::chrono::high_resolution_clock::time_point mPreviousTime;
 
         float mDeltaTime = 0.0f;
         float mTotalTime = 0.0f;
         float mTimeScale = 1.0f;
 
-        // 1�t���[���̍ő厞�Ԃ�0.1�b�i10FPS�����j�ɐ�������K�[�h�ݒ�
+        // 1フレームの最大時間を0.1秒（10FPS相当）に制限するガード設定
         const float MAX_DELTA_TIME = 0.1f;
+
+        // ⚡ 物理用の時間蓄積バッファ
+        float mPhysicsAccumulator = 0.0f;
     };
 }
-
