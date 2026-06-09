@@ -198,7 +198,7 @@ namespace sys
             fixedDeltaTime,
             collisionSteps,
             &mgr.GetTempAllocator(),
-            nullptr); // JobSystem は PhysicsSystem 内部に渡し済み
+            &mgr.GetJobSystem()); // JobSystem は PhysicsSystem 内部に渡し済み
     }
 
     /// <summary>

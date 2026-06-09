@@ -42,7 +42,7 @@
 // Phisics
 #include<system/Physics/System/PhysicsSystem.h>
 #include<system/Physics/Manager/PhysicsManager.h>
-#include<system/Physics/DebugLine/PhysicsDebugRenderer.h>
+#include<graphics/Line/Renderer/PhysicsDebugRenderer.h>
 
 
 // Component
@@ -106,6 +106,7 @@ void Create3DModel()
 	auto entity = manager.CreateEntity();
 	auto& tr = manager.AddComponent<ecs::Transform>(entity);
 	tr.SetScale(scale);
+	tr.SetPosition(0, 10, 0);
 
 	auto& fbx = manager.AddComponent<ecs::FbxComponent>(entity);
 	fbx.Resource = res;
@@ -115,7 +116,7 @@ void Create3DModel()
 	anim.Play(*fbx.Resource, "Attack_A", true);
 
 	reg.emplace<ecs::ColliderComponent>(entity,
-		ecs::ColliderComponent::MakeBox({ 10,30,10 }));
+		ecs::ColliderComponent::MakeBox({ 1,3,1 }));
 
 	reg.emplace<ecs::RigidBodyComponent>(entity,
 		ecs::RigidBodyComponent::MakeDynamic());
@@ -182,11 +183,11 @@ void CreateField()
 	fbx.Resource = res;
 	fbx.CustomColor = { 1,0,0,1 };
 
-	//registry.emplace<ecs::ColliderComponent>(entity,
-	//	ecs::ColliderComponent::MakeBox({ 50.f, 0.5f, 50.f })); // 幅100 × 高さ1 × 奥行100
+	registry.emplace<ecs::ColliderComponent>(entity,
+		ecs::ColliderComponent::MakeBox({ 50.f, 0.5f, 50.f })); // 幅100 × 高さ1 × 奥行100
 
-	//registry.emplace<ecs::RigidBodyComponent>(entity,
-	//	ecs::RigidBodyComponent::MakeStatic());
+	registry.emplace<ecs::RigidBodyComponent>(entity,
+		ecs::RigidBodyComponent::MakeStatic());
 
 }
 
@@ -360,7 +361,11 @@ namespace sys
 		}
 
 #ifdef _DEBUG
-		sys::PhysicsDebugRenderer::Get().Initialize(mEntityManager->GetRegistry());
+		if (graphics::PhysicsDebugRenderer::Get().Initialize() == false)
+		{
+			return false;
+		}
+
 #endif // _DEBUG
 
 
@@ -430,6 +435,9 @@ namespace sys
 
 		// 物理
 		sys::PhysicsManager::Get().Finalize();
+#ifdef _DEBUG
+		graphics::PhysicsDebugRenderer::Get().Finalize();
+#endif // _DEBUG
 
 		// TODO:ログ出力
 
@@ -469,11 +477,15 @@ namespace sys
 
 			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::Update, registry, dt);
 
+			sys::PhysicsSystem::BuildPendingBodies(registry);
+			sys::PhysicsSystem::SyncFromTransform(registry);
+
 			while (mTime.AccumulateFixedStep())
 			{
 				// 物理演算の更新 固定ステップにする。
 				sys::PhysicsSystem::Update(registry, mTime.GetFixedDeltaTime());
 			}
+			sys::PhysicsSystem::SyncToTransform(registry);
 
 			// 座標更新、行列更新
 
@@ -530,7 +542,8 @@ namespace sys
 			spriteRenderer.End(cmdList);
 
 #ifdef _DEBUG
-			sys::PhysicsDebugRenderer::Get().Draw(registry);
+
+			graphics::PhysicsDebugRenderer::Get().Draw(registry, cmdList);
 #endif // _DEBUG
 
 		}

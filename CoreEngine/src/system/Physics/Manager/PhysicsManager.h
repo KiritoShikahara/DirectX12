@@ -71,6 +71,9 @@ namespace sys
 		JPH::BodyInterface& GetBodyInterface() { return mPhysicsSystem->GetBodyInterface(); }
 		JPH::TempAllocatorImpl& GetTempAllocator() { return *mTempAllocator; }
 		bool                     IsInitialized() const { return mIsInitialized; }
+
+		JPH::JobSystemThreadPool& GetJobSystem() { return *mJobSystem; }
+
 	private:
 
 		// 各フェーズ用のインナークラス

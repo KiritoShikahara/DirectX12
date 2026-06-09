@@ -267,7 +267,10 @@
     <ClInclude Include="src\system\Engine\EngineDefine.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="src\system\Physics\DebugLine\PhysicsDebugRenderer.h">
+    <ClInclude Include="src\graphics\Line\Pipeline\LinePipeline.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\Line\Renderer\PhysicsDebugRenderer.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
@@ -449,7 +452,10 @@
     <ClCompile Include="src\system\Light\LightSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="src\system\Physics\DebugLine\PhysicsDebugRenderer.cpp">
+    <ClCompile Include="src\graphics\Line\Pipeline\LinePipeline.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Line\Renderer\PhysicsDebugRenderer.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -466,5 +472,7 @@
     <FxCompile Include="Assets\Shader\Model\VS_Model.hlsl" />
     <FxCompile Include="Assets\Shader\Fbx\PS_Fbx.hlsl" />
     <FxCompile Include="Assets\Shader\Fbx\VS_Fbx.hlsl" />
+    <FxCompile Include="Assets\Shader\PhysicsDebug\VS_PhysicsDebug.hlsl" />
+    <FxCompile Include="Assets\Shader\PhysicsDebug\PS_PhysicsDebug.hlsl" />
   </ItemGroup>
 </Project>

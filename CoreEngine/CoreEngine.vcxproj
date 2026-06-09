@@ -146,7 +146,8 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\system\Physics\DebugLine\PhysicsDebugRenderer.h" />
+    <ClInclude Include="src\graphics\Line\Renderer\PhysicsDebugRenderer.h" />
+    <ClInclude Include="src\graphics\Line\Pipeline\LinePipeline.h" />
     <ClInclude Include="src\system\Engine\EngineDefine.h" />
     <ClInclude Include="src\system\Light\LightSystem.h" />
     <ClInclude Include="src\ecs\component\Light\LightComponent.h" />
@@ -235,7 +236,8 @@
     <ClInclude Include="src\graphics\Texture\TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\system\Physics\DebugLine\PhysicsDebugRenderer.cpp" />
+    <ClCompile Include="src\graphics\Line\Renderer\PhysicsDebugRenderer.cpp" />
+    <ClCompile Include="src\graphics\Line\Pipeline\LinePipeline.cpp" />
     <ClCompile Include="src\system\Light\LightSystem.cpp" />
     <ClCompile Include="src\system\Physics\Manager\PhysicsManager.cpp" />
     <ClCompile Include="src\system\Physics\System\PhysicsSystem.cpp" />
@@ -409,6 +411,26 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Assets\Shader\PhysicsDebug\PS_PhysicsDebug.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="Assets\Shader\PhysicsDebug\VS_PhysicsDebug.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="Assets\Shader\Fbx\PS_Fbx.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
