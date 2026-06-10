@@ -3,41 +3,49 @@
 
 #include<graphics/Dx12/Dx12Type.h>
 #include<graphics/Color/Color.h>
+#include<Utility/Export/Export.h>
 
 namespace graphics
 {
-	class TransitionRenderer : public utility::Singleton<TransitionRenderer>
-	{
-		SINGLETON_CLASS(TransitionRenderer);
-	public:
-		SINGLETON_ACCESSOR(TransitionRenderer);
+    /// <summary>
+    /// フルスクリーントランジション描画クラス
+    /// </summary>
+    class ENGINE_API TransitionRenderer : public utility::Singleton<TransitionRenderer>
+    {
+        SINGLETON_CLASS(TransitionRenderer);
+    public:
+        SINGLETON_ACCESSOR(TransitionRenderer);
 
-		/// <summary>
-		/// Sig + POS 作成
-		/// </summary>
-		void Initialize(ID3D12Device* device);
+        /// <summary>
+        /// RootSignature + PSO を生成する。
+        /// DX12 初期化後に一度だけ呼ぶ。
+        /// </summary>
+        bool Initialize();
 
-		/// <summary>
-		/// 描画
-		/// </summary>
-		/// <param name="cmdList">コマンドリスト</param>
-		/// <param name="color">色</param>
-		void Draw(ID3D12GraphicsCommandList* cmdList, const graphics::Color& color);
+        /// <summary>
+        /// フルスクリーンポリゴンを color で塗りつぶす。
+        /// color.a == 0 のとき即リターンする。
+        /// </summary>
+        /// <param name="cmdList">コマンドリスト</param>
+        /// <param name="color">描画色（RGBA）。A が不透明度</param>
+        void Draw(ID3D12GraphicsCommandList* cmdList, const graphics::Color& color);
 
-		/// <summary>
-		/// 終了処理
-		/// </summary>
-		void Finalize();
+        /// <summary>
+        /// GPU リソースを解放する。エンジン終了時に呼ぶ。
+        /// </summary>
+        void Finalize();
 
-	private:
-		void CreateRootSignature(ID3D12Device* device);
-		void CreatePSO(ID3D12Device* device);
+    private:
+        bool CreateRootSignature(ID3D12Device* device);
+        bool CreatePSO(ID3D12Device* device);
 
-	private:
-		RootSig  mRootSignature;
-		PSO mPSO;
+    private:
+        // Root32BitConstants スロット番号
+        static constexpr UINT SLOT_COLOR = 0; // b0: float4(RGBA)
 
-	};
+        RootSig mRootSignature;
+        PSO     mPSO;
+    };
 }
 
 
