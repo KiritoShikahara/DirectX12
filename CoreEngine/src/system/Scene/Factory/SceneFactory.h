@@ -11,6 +11,11 @@
 
 namespace sys
 {
+	/// <summary>
+	/// Sceneの生成メソッドを管理するクラス
+    /// App側でエンジンのInitializeが呼ばれる前に生成メソッドの登録と最初のシーンの登録を済ませておかないといけない
+    /// 現状はエディタとデータベースがないためこのような構成にしているが本来は、エンジンの前に設定のコンフィグデータをすべて読み込めるように
+	/// </summary>
 	class SceneFactory : public utility::Singleton<SceneFactory>
 	{
 		SINGLETON_CLASS(SceneFactory);
