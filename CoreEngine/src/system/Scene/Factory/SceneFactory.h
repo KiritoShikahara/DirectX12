@@ -55,6 +55,12 @@ namespace sys
 
 }
 
+/// <summary>
+/// クラス名をキーとして SceneFactory に登録する。
+///
+/// 例:
+///   REGISTER_SCENE(GameScene);
+/// </summary>
 #define REGISTER_SCENE(SceneClass) \
     static ::sys::SceneAutoRegister s_SceneAutoReg_##SceneClass( \
         #SceneClass, \
