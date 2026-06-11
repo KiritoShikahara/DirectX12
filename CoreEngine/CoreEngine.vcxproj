@@ -146,7 +146,9 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\system\Scene\SceneManager.h" />
+    <ClInclude Include="src\system\Scene\Default\DefaultScene.h" />
+    <ClInclude Include="src\system\Scene\Factory\SceneFactory.h" />
+    <ClInclude Include="src\system\Scene\Manager\SceneManager.h" />
     <ClInclude Include="src\graphics\Line\Renderer\PhysicsDebugRenderer.h" />
     <ClInclude Include="src\graphics\Line\Pipeline\LinePipeline.h" />
     <ClInclude Include="src\system\Engine\EngineDefine.h" />
@@ -239,7 +241,8 @@
     <ClInclude Include="src\graphics\Transition\TransitionRenderer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\system\Scene\SceneManager.cpp" />
+    <ClCompile Include="src\system\Scene\Factory\SceneFactory.cpp" />
+    <ClCompile Include="src\system\Scene\Manager\SceneManager.cpp" />
     <ClCompile Include="src\graphics\Line\Renderer\PhysicsDebugRenderer.cpp" />
     <ClCompile Include="src\graphics\Line\Pipeline\LinePipeline.cpp" />
     <ClCompile Include="src\system\Light\LightSystem.cpp" />

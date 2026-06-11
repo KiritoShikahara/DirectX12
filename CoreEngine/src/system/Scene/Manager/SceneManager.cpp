@@ -33,6 +33,7 @@ namespace sys
 			{
 				mFadeAlpha = 0.0f;
 				mTransitionState = eTransitionState::Idle;
+				mUseTransition = false;
 			}
 			break;
 		case sys::eTransitionState::Idle:

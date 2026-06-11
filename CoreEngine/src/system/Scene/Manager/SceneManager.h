@@ -1,7 +1,7 @@
 #pragma once
 
 #include<Utility/Singleton/Singleton.hpp>
-#include"IScene.h"
+#include"../IScene.h"
 
 #include<concepts>
 #include<functional>
@@ -112,7 +112,7 @@ namespace sys
 	template<TScene T, typename ...Args>
 	inline void SceneManager::Initialize(Args && ...args)
 	{
-		mCurrentScene = std::make_unique<IScene>(std::forward<Args>(args)...);
+		mCurrentScene = std::make_unique<T>(std::forward<Args>(args)...);
 		mCurrentScene->Initialize();
 	}
 
@@ -122,7 +122,7 @@ namespace sys
 		mPendingSceneFactory = [args = std::make_tuple(std::forward<Args>(args)...)]() mutable
 			{
 				return std::apply(
-					[](auto&&... a) { return std::make_unique<TScene>(std::forward<decltype(a)>(a)...); },
+					[](auto&&... a) { return std::make_unique<T>(std::forward<decltype(a)>(a)...); },
 					std::move(args));
 			};
 		mUseTransition = false;
@@ -137,7 +137,7 @@ namespace sys
 		mPendingSceneFactory = [args = std::make_tuple(std::forward<Args>(args)...)]() mutable
 			{
 				return std::apply(
-					[](auto&&... a) { return std::make_unique<TScene>(std::forward<decltype(a)>(a)...); },
+					[](auto&&... a) { return std::make_unique<T>(std::forward<decltype(a)>(a)...); },
 					std::move(args));
 			};
 

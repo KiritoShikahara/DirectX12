@@ -44,6 +44,8 @@
 #include<system/Physics/Manager/PhysicsManager.h>
 #include<graphics/Line/Renderer/PhysicsDebugRenderer.h>
 
+// Scene
+#include<system/Scene/SceneManager.h>
 
 // Component
 #include<ecs/component/transform/TransformComponent.h>
