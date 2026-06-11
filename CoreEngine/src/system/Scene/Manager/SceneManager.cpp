@@ -1,16 +1,29 @@
 #include "pch.h"
 #include "SceneManager.h"
 
+#include"../Factory/SceneFactory.h"
 #include<graphics/Transition/TransitionRenderer.h>
 
 namespace sys
 {
+	/// <summary>
+	/// 初期シーンを名前で開始する。
+	/// SceneFactory に未登録の場合は DefaultScene で開始する。
+	/// </summary>
+	void SceneManager::Initialize(const std::string& sceneName)
+	{
+		mCurrentScene = SceneFactory::Get().Create(sceneName);
+		mCurrentSceneName = sceneName;
+		mCurrentScene->Initialize();
+	}
+
 	void SceneManager::Update(float deltaTime)
 	{
 		// トランジションなし即時切替
 		if (mUseTransition && mPendingSceneFactory)
 		{
 			this->ApplyPendingScene();
+			mTransitionState = eTransitionState::Idle;
 			return;
 		}
 
@@ -68,7 +81,44 @@ namespace sys
 		mPendingSceneFactory = nullptr;
 		mTransitionState = eTransitionState::Idle;
 	}
-	
+
+	/// <summary>
+	/// トランジションなしで即座にシーンを切り替える（名前指定）。
+	/// SceneFactory に未登録の場合は DefaultScene に切り替わる。
+	/// </summary>
+	void SceneManager::ChangeScene(const std::string& sceneName)
+	{
+		mPendingSceneFactory = [sceneName]()
+			{
+				return SceneFactory::Get().Create(sceneName);
+			};
+		mPendingSceneName = sceneName;
+		mUseTransition = false;
+	}
+
+	/// <summary>
+	/// フェードトランジションつきでシーンを切り替える（名前指定）。
+	/// SceneFactory に未登録の場合は DefaultScene に切り替わる。
+	/// </summary>
+	void SceneManager::ChangeSceneWithTransition(const std::string& sceneName, float fadeSpeed, float r, float g, float b)
+	{
+		if (mTransitionState != eTransitionState::Idle) return;
+
+		mPendingSceneFactory = [sceneName]()
+			{
+				return SceneFactory::Get().Create(sceneName);
+			};
+		mPendingSceneName = sceneName;
+
+		mUseTransition = true;
+		mFadeSpeed = (fadeSpeed > 0.0f) ? fadeSpeed : 1.0f;
+		mFadeColorR = r;
+		mFadeColorG = g;
+		mFadeColorB = b;
+		mFadeAlpha = 0.0f;
+		mTransitionState = eTransitionState::FadeOut;
+	}
+
 	/// <summary>
 	/// シーン切り替え
 	/// </summary>

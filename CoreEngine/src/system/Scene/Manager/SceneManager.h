@@ -38,6 +38,13 @@ namespace sys
 		template<TScene T, typename... Args>
 		void Initialize(Args&&... args);
 
+
+		/// <summary>
+		/// 初期シーンを名前で開始する。
+		/// SceneFactory に未登録の場合は DefaultScene で開始する。
+		/// </summary>
+		void Initialize(const std::string& sceneName);
+
 		/// <summary>
 		/// シーン切り替えリクエスト・トランジション進行を処理する。
 		/// メインループの Update 相当フェーズで毎フレーム呼ぶ。
@@ -64,6 +71,12 @@ namespace sys
 		void ChangeScene(Args&&... args);
 
 		/// <summary>
+		/// トランジションなしで即座にシーンを切り替える（名前指定）。
+		/// SceneFactory に未登録の場合は DefaultScene に切り替わる。
+		/// </summary>
+		void ChangeScene(const std::string& sceneName);
+
+		/// <summary>
 		/// フェードトランジションつきでシーンを切り替える。
 		/// FadeOut → シーン切り替え → FadeIn の順に自動進行する。
 		/// </summary>
@@ -77,6 +90,14 @@ namespace sys
 			float r = 0.0f, float g = 0.0f, float b = 0.0f,
 			Args&&... args);
 
+		/// <summary>
+		/// フェードトランジションつきでシーンを切り替える（名前指定）。
+		/// SceneFactory に未登録の場合は DefaultScene に切り替わる。
+		/// </summary>
+		void ChangeSceneWithTransition(
+			const std::string& sceneName,
+			float fadeSpeed = 1.0f,
+			float r = 0.0f, float g = 0.0f, float b = 0.0f);
 	private:
 		/// <summary>
 		/// シーン切り替え
@@ -94,6 +115,16 @@ namespace sys
 		/// 次に切り替えるSceneファクトリ nullptr == 切り替えなし
 		/// </summary>
 		std::function<std::unique_ptr<IScene>()> mPendingSceneFactory;
+
+		/// <summary>
+		/// 今のスクリーンの名前
+		/// </summary>
+		std::string mCurrentSceneName;
+
+		/// <summary>
+		/// 次に切り替えるスクリーンの名前
+		/// </summary>
+		std::string mPendingSceneName;
 
 		/// <summary>
 		/// トランジションの状態
