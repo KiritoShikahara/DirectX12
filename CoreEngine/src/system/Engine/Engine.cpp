@@ -46,6 +46,7 @@
 
 // Scene
 #include<system/Scene/Manager/SceneManager.h>
+#include<system/Scene/Factory/SceneFactory.h>
 
 // Component
 #include<ecs/component/transform/TransformComponent.h>
@@ -370,6 +371,9 @@ namespace sys
 
 #endif // _DEBUG
 
+		// シーン
+		mSceneManager = &sys::SceneManager::Get();
+		mSceneManager->Initialize(sys::SceneFactory::Get().GetDefaultSceneName());
 
 
 		// テスト用のインスタンス生成

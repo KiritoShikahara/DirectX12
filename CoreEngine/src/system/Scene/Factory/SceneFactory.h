@@ -37,8 +37,15 @@ namespace sys
         /// <summary>指定の name が登録済みかどうかを返す</summary>
         bool IsRegistered(const std::string& name) const;
 
+        /// <summary>app起動時のdefaultのシーン名をセットする</summary>
+        void SetNextSceneName(const std::string& name);
+
+        /// <summary>app起動時のdefaultのシーン名を取得</summary>
+        const std::string& GetDefaultSceneName();
+
 	private:
 		std::unordered_map<std::string, CreatorFunc> mCreators;
+        std::string mDefaultSceneName;
 	};
 
     /// <summary>

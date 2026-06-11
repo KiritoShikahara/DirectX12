@@ -23,6 +23,7 @@ namespace sys
 	struct EngineContext;
 	class ImGuiManager;
 	class InputManager;
+	class SceneManager;
 
 	class ENGINE_API Engine : public utility::Singleton<Engine>
 	{
@@ -121,5 +122,10 @@ namespace sys
 		/// 入力管理クラス
 		/// </summary>
 		InputManager* mInputManager;
+
+		/// <summary>
+		/// シーン管理
+		/// </summary>
+		SceneManager* mSceneManager;
 	};
 }
