@@ -445,8 +445,10 @@ namespace sys
 		graphics::PhysicsDebugRenderer::Get().Finalize();
 #endif // _DEBUG
 
-		// TODO:ログ出力
+		// シーン
+		mSceneManager->PostUpdate();
 
+		// コンソールの終了
 		sys::Logger::Get().Finalize();
 
 		return true;
@@ -479,7 +481,8 @@ namespace sys
 
 		// メイン更新
 		{
-			
+			mSceneManager->Update(rawDt);
+
 			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PreUpdate, registry, dt, rawDt);
 
 			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::Update, registry, dt, rawDt);
@@ -569,7 +572,7 @@ namespace sys
 	/// </summary>
 	void Engine::Conclude()
 	{
-		// フレーム末の処理
 		mInputManager->Update();
+		mSceneManager->PostUpdate();
 	}
 }

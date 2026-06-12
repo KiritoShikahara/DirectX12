@@ -19,6 +19,7 @@ namespace sys
 	{
 		Idle,       // トランジションなし（通常状態）
 		FadeOut,    // 現シーンをフェードアウト中
+		WaitSwitch,     // フェードアウト完了、PostUpdate でシーン切り替え待ち
 		FadeIn,     // 次シーンをフェードイン中
 	};
 
@@ -51,6 +52,12 @@ namespace sys
 		/// </summary>
 		/// <param name="deltaTime">前フレームからの経過秒数</param>
 		void Update(float deltaTime);
+
+		/// <summary>
+		/// フラグが立っていたらシーンを切り替える
+		/// フレーム末で呼び出すこと。
+		/// </summary>
+		void PostUpdate();
 
 		/// <summary>
 		/// トランジション用のフルスクリーンオーバーレイを描画する。

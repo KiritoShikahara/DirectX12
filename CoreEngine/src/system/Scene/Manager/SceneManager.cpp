@@ -19,39 +19,57 @@ namespace sys
 
 	void SceneManager::Update(float deltaTime)
 	{
-		// トランジションなし即時切替
-		if (mUseTransition && mPendingSceneFactory)
-		{
-			this->ApplyPendingScene();
-			mTransitionState = eTransitionState::Idle;
-			return;
-		}
-
-		// トランジションあり
 		switch (mTransitionState)
 		{
-		case sys::eTransitionState::FadeOut:
+		case eTransitionState::FadeOut:
+		{
 			mFadeAlpha += mFadeSpeed * deltaTime;
 			if (mFadeAlpha >= 1.0f)
 			{
 				mFadeAlpha = 1.0f;
-				// フェードアウト完了 → シーン切り替え
-				ApplyPendingScene();
-				mTransitionState = eTransitionState::FadeIn;
+				// フェードアウト完了 → PostUpdate での切り替えを待つ
+				mTransitionState = eTransitionState::WaitSwitch;
 			}
 			break;
-		case sys::eTransitionState::FadeIn:
+		}
+
+		case eTransitionState::FadeIn:
+		{
 			mFadeAlpha -= mFadeSpeed * deltaTime;
 			if (mFadeAlpha <= 0.0f)
 			{
 				mFadeAlpha = 0.0f;
 				mTransitionState = eTransitionState::Idle;
-				mUseTransition = false;
 			}
 			break;
-		case sys::eTransitionState::Idle:
+		}
+
+		case eTransitionState::WaitSwitch:
+		case eTransitionState::Idle:
 		default:
 			break;
+		}
+	}
+
+	/// <summary>
+	/// フラグが立っていたらシーンを切り替える
+	/// フレーム末で呼び出すこと。
+	/// </summary>
+	void SceneManager::PostUpdate()
+	{
+		// トランジションなし：即切り替え
+		if (!mUseTransition && mPendingSceneFactory)
+		{
+			ApplyPendingScene();
+			mTransitionState = eTransitionState::Idle;
+			return;
+		}
+
+		// トランジションあり：FadeOut が完了した WaitSwitch 状態でのみ切り替える
+		if (mTransitionState == eTransitionState::WaitSwitch)
+		{
+			ApplyPendingScene();
+			mTransitionState = eTransitionState::FadeIn;
 		}
 	}
 
