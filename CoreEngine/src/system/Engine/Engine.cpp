@@ -490,16 +490,17 @@ namespace sys
 			sys::PhysicsSystem::BuildPendingBodies(registry);
 			sys::PhysicsSystem::SyncFromTransform(registry);
 
+			// 衝突イベント発火
 			while (mTime.AccumulateFixedStep())
 			{
 				// 物理演算の更新 固定ステップにする。
 				sys::PhysicsSystem::Update(registry, mTime.GetFixedDeltaTime());
 			}
+			// 座標更新、行列更新
 			sys::PhysicsSystem::SyncToTransform(registry);
 
-			// 座標更新、行列更新
 
-			// 衝突イベント発火
+			
 
 			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PostUpdate, registry, dt, rawDt);
 		}
