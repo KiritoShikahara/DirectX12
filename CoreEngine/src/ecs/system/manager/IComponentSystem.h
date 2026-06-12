@@ -11,10 +11,10 @@ namespace ecs
         virtual ~IUserSystem() = default;
 
         /// <summary>
-        /// XVˆ—
+        /// æ›´æ–°å‡¦ç†
         /// </summary>
-        /// <param name="registry">ECSƒŒƒWƒXƒgƒŠ</param>
-        /// <param name="deltaTime">‘OƒtƒŒ[ƒ€‚©‚ç‚ÌŒo‰ßŠÔ(•b)</param>
-        virtual void Update(entt::registry& registry, float deltaTime) = 0;
+        /// <param name="registry">ECSãƒ¬ã‚¸ã‚¹ãƒˆãƒª</param>
+        /// <param name="deltaTime">å‰ãƒ•ãƒ¬ãƒ¼ãƒ ã‹ã‚‰ã®çµŒéæ™‚é–“(ç§’)</param>
+        virtual void Update(entt::registry& registry, float deltaTime, float rawDeltaTime) = 0;
     };
 }

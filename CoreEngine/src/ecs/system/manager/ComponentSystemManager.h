@@ -11,17 +11,17 @@
 namespace ecs
 {
     /// <summary>
-    /// ƒVƒXƒeƒ€‚ÌXVƒ^ƒCƒ~ƒ“ƒO‚ð’è‹`‚·‚éƒtƒF[ƒY
+    /// ã‚·ã‚¹ãƒ†ãƒ ã®æ›´æ–°ã‚¿ã‚¤ãƒŸãƒ³ã‚°ã‚’å®šç¾©ã™ã‚‹ãƒ•ã‚§ãƒ¼ã‚º
     /// </summary>
     enum class eUpdatePhase
     {
-        PreUpdate,   // •¨—EƒƒCƒ“XV‚Ì‘Oˆ—
-        Update,      // ƒƒCƒ“‚ÌƒQ[ƒ€ƒƒWƒbƒN
-        PostUpdate,  // Œãˆ—
+        PreUpdate,   // ç‰©ç†ãƒ»ãƒ¡ã‚¤ãƒ³æ›´æ–°ã®å‰å‡¦ç†
+        Update,      // ãƒ¡ã‚¤ãƒ³ã®ã‚²ãƒ¼ãƒ ãƒ­ã‚¸ãƒƒã‚¯
+        PostUpdate,  // å¾Œå‡¦ç†
     };
 
 	/// <summary>
-	/// ƒ†[ƒU[’è‹`ƒVƒXƒeƒ€‚ÆƒGƒ“ƒWƒ“ŒÅ’èƒVƒXƒeƒ€‚ð“Š‡‚·‚éƒNƒ‰ƒX
+	/// ãƒ¦ãƒ¼ã‚¶ãƒ¼å®šç¾©ã‚·ã‚¹ãƒ†ãƒ ã¨ã‚¨ãƒ³ã‚¸ãƒ³å›ºå®šã‚·ã‚¹ãƒ†ãƒ ã‚’çµ±æ‹¬ã™ã‚‹ã‚¯ãƒ©ã‚¹
 	/// </summary>
 	class ComponentSystemManager : public utility::Singleton<ComponentSystemManager>
 	{
@@ -30,13 +30,13 @@ namespace ecs
         SINGLETON_ACCESSOR(ComponentSystemManager);
 
         /// <summary>
-        /// ƒ†[ƒU[’è‹`ƒVƒXƒeƒ€‚ðŽw’èƒtƒF[ƒY‚É“o˜^‚·‚é
-        /// “o˜^‡‚ÉŽÀs‚³‚ê‚é‚½‚ßAˆË‘¶ŠÖŒW‚ª‚ ‚éê‡‚ÍŒÄ‚Ño‚µ‡‚ðl—¶‚·‚é‚±‚Æ
+        /// ãƒ¦ãƒ¼ã‚¶ãƒ¼å®šç¾©ã‚·ã‚¹ãƒ†ãƒ ã‚’æŒ‡å®šãƒ•ã‚§ãƒ¼ã‚ºã«ç™»éŒ²ã™ã‚‹
+        /// ç™»éŒ²é †ã«å®Ÿè¡Œã•ã‚Œã‚‹ãŸã‚ã€ä¾å­˜é–¢ä¿‚ãŒã‚ã‚‹å ´åˆã¯å‘¼ã³å‡ºã—é †ã‚’è€ƒæ…®ã™ã‚‹ã“ã¨
         /// </summary>
-        /// <typeparam name="T">IUserSystem ‚ðŒp³‚µ‚½ƒVƒXƒeƒ€ƒNƒ‰ƒX</typeparam>
-        /// <typeparam name="Args">ƒRƒ“ƒXƒgƒ‰ƒNƒ^ˆø”‚ÌŒ^</typeparam>
-        /// <param name="phase">ŽÀsƒ^ƒCƒ~ƒ“ƒO</param>
-        /// <param name="args">ƒRƒ“ƒXƒgƒ‰ƒNƒ^ˆø”</param>
+        /// <typeparam name="T">IUserSystem ã‚’ç¶™æ‰¿ã—ãŸã‚·ã‚¹ãƒ†ãƒ ã‚¯ãƒ©ã‚¹</typeparam>
+        /// <typeparam name="Args">ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿å¼•æ•°ã®åž‹</typeparam>
+        /// <param name="phase">å®Ÿè¡Œã‚¿ã‚¤ãƒŸãƒ³ã‚°</param>
+        /// <param name="args">ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿å¼•æ•°</param>
         template <typename T, typename... Args>
         void AddUserSystem(eUpdatePhase phase, Args&&... args)
         {
@@ -50,21 +50,21 @@ namespace ecs
         }
 
         /// <summary>
-        /// Žw’èƒtƒF[ƒY‚ÌƒVƒXƒeƒ€‚ð“o˜^‡‚ÉˆêŠ‡ŽÀs‚·‚é
-        /// FixedUpdate ƒtƒF[ƒY‚ÍƒGƒ“ƒWƒ“‘¤‚Ì•¨—ƒXƒeƒbƒv‚à“à•”‚ÅŽÀs‚³‚ê‚é
+        /// æŒ‡å®šãƒ•ã‚§ãƒ¼ã‚ºã®ã‚·ã‚¹ãƒ†ãƒ ã‚’ç™»éŒ²é †ã«ä¸€æ‹¬å®Ÿè¡Œã™ã‚‹
+        /// FixedUpdate ãƒ•ã‚§ãƒ¼ã‚ºã¯ã‚¨ãƒ³ã‚¸ãƒ³å´ã®ç‰©ç†ã‚¹ãƒ†ãƒƒãƒ—ã‚‚å†…éƒ¨ã§å®Ÿè¡Œã•ã‚Œã‚‹
         /// </summary>
-        /// <param name="phase">ŽÀs‚·‚éƒtƒF[ƒY</param>
-        /// <param name="registry">ECSƒŒƒWƒXƒgƒŠ</param>
-        /// <param name="deltaTime">Œo‰ßŽžŠÔ(•b)</param>
-        void ExecutePhase(eUpdatePhase phase, entt::registry& registry, float deltaTime);
+        /// <param name="phase">å®Ÿè¡Œã™ã‚‹ãƒ•ã‚§ãƒ¼ã‚º</param>
+        /// <param name="registry">ECSãƒ¬ã‚¸ã‚¹ãƒˆãƒª</param>
+        /// <param name="deltaTime">çµŒéŽæ™‚é–“(ç§’)</param>
+        void ExecutePhase(eUpdatePhase phase, entt::registry& registry, float deltaTime,float rawDeltaTime);
 
         /// <summary>
-        /// “o˜^Ï‚Ý‚Ì‘Sƒ†[ƒU[ƒVƒXƒeƒ€‚ðíœ‚·‚é
+        /// ç™»éŒ²æ¸ˆã¿ã®å…¨ãƒ¦ãƒ¼ã‚¶ãƒ¼ã‚·ã‚¹ãƒ†ãƒ ã‚’å‰Šé™¤ã™ã‚‹
         /// </summary>
         void ClearUserSystems();
 	private:
         /// <summary>
-        /// ƒtƒF[ƒY‚²‚Æ‚ÉŠÇ—‚·‚éƒ†[ƒU[’è‹`ƒVƒXƒeƒ€‚ÌƒŠƒXƒg
+        /// ãƒ•ã‚§ãƒ¼ã‚ºã”ã¨ã«ç®¡ç†ã™ã‚‹ãƒ¦ãƒ¼ã‚¶ãƒ¼å®šç¾©ã‚·ã‚¹ãƒ†ãƒ ã®ãƒªã‚¹ãƒˆ
         /// </summary>
         std::unordered_map<eUpdatePhase, std::vector<std::unique_ptr<IUserSystem>>> mUserSystems;
 	};

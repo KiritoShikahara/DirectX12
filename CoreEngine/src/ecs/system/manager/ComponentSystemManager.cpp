@@ -3,9 +3,9 @@
 
 namespace ecs
 {
-	void ComponentSystemManager::ExecutePhase(eUpdatePhase phase, entt::registry& registry, float deltaTime)
+	void ComponentSystemManager::ExecutePhase(eUpdatePhase phase, entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
-		// ƒ†[ƒU[’è‹`ƒVƒXƒeƒ€‚ÌŽÀs
+		// ãƒ¦ãƒ¼ã‚¶ãƒ¼å®šç¾©ã‚·ã‚¹ãƒ†ãƒ ã®å®Ÿè¡Œ
 		const auto it = mUserSystems.find(phase);
 		if (it == mUserSystems.end())
 		{
@@ -14,7 +14,7 @@ namespace ecs
 
 		for (const auto& system : it->second)
 		{
-			system->Update(registry, deltaTime);
+			system->Update(registry, deltaTime, rawDeltaTime);
 		}
 	}
 

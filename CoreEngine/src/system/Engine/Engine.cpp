@@ -44,6 +44,9 @@
 #include<system/Physics/Manager/PhysicsManager.h>
 #include<graphics/Line/Renderer/PhysicsDebugRenderer.h>
 
+// Scene
+#include<system/Scene/Manager/SceneManager.h>
+#include<system/Scene/Factory/SceneFactory.h>
 
 // Component
 #include<ecs/component/transform/TransformComponent.h>
@@ -368,6 +371,9 @@ namespace sys
 
 #endif // _DEBUG
 
+		// シーン
+		mSceneManager = &sys::SceneManager::Get();
+		mSceneManager->Initialize(sys::SceneFactory::Get().GetDefaultSceneName());
 
 
 		// テスト用のインスタンス生成
@@ -439,8 +445,10 @@ namespace sys
 		graphics::PhysicsDebugRenderer::Get().Finalize();
 #endif // _DEBUG
 
-		// TODO:ログ出力
+		// シーン
+		mSceneManager->PostUpdate();
 
+		// コンソールの終了
 		sys::Logger::Get().Finalize();
 
 		return true;
@@ -469,13 +477,15 @@ namespace sys
 		// 取得
 		auto& registry = ecs::EntityManager::Get().GetRegistry();
 		auto dt = mTime.GetDeltaTime();
+		float rawDt = mTime.GetRawDeltaTime();
 
 		// メイン更新
 		{
-			
-			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PreUpdate, registry, dt);
+			mSceneManager->Update(rawDt);
 
-			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::Update, registry, dt);
+			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PreUpdate, registry, dt, rawDt);
+
+			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::Update, registry, dt, rawDt);
 
 			sys::PhysicsSystem::BuildPendingBodies(registry);
 			sys::PhysicsSystem::SyncFromTransform(registry);
@@ -491,12 +501,12 @@ namespace sys
 
 			// 衝突イベント発火
 
-			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PostUpdate, registry, dt);
+			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PostUpdate, registry, dt, rawDt);
 		}
 
 		// 事後更新
 		{
-			// アニメーション時間の更新
+			// FBXアニメーション時間の更新
 			graphics::FbxAnimSystem::Update(registry, dt);
 
 			// カメラ行列の更新
@@ -562,7 +572,7 @@ namespace sys
 	/// </summary>
 	void Engine::Conclude()
 	{
-		// フレーム末の処理
 		mInputManager->Update();
+		mSceneManager->PostUpdate();
 	}
 }
