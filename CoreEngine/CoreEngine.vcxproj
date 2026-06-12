@@ -149,6 +149,7 @@
     <ClInclude Include="src\Data\DataStorage\CsvParser.h" />
     <ClInclude Include="src\Data\DataStorage\DataManager.h" />
     <ClInclude Include="src\Data\DataStorage\DataReflection.h" />
+    <ClInclude Include="src\Data\DataStorage\DataRegistry.h" />
     <ClInclude Include="src\Data\DataStorage\JsonSerializer.h" />
     <ClInclude Include="src\Data\DataStorage\SqliteManager.h" />
     <ClInclude Include="src\system\Scene\Default\DefaultScene.h" />
