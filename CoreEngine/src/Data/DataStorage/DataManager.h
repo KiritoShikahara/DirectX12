@@ -18,6 +18,9 @@
 
 namespace data
 {
+	/// <summary>
+	/// é‡è¤‡ã™ã‚‹ä¸»ã‚­ãƒ¼ãŒæ¤œå‡ºã•ã‚ŒãŸéš›ã®ä¾‹å¤–
+	/// </summary>
 	struct DuplicateKeyError : std::runtime_error
 	{
 		int DuplicateId;
@@ -28,308 +31,350 @@ namespace data
 		}
 	};
 
+	/// <summary>
+	/// CSVãŠã‚ˆã³ãƒ‡ãƒ¼ã‚¿ãƒ™ãƒ¼ã‚¹ã¨ã®ãƒ‡ãƒ¼ã‚¿åŒæœŸãƒ»ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ç®¡ç†ã‚’è¡Œã†ãƒãƒãƒ¼ã‚¸ãƒ£ãƒ¼ã‚¯ãƒ©ã‚¹
+	/// </summary>
 	template<typename T>
 	class DataManager
 	{
 	public:
 
+		/// <summary>
+		/// å„ç¨®ãƒ‡ãƒ¼ã‚¿ãƒ•ã‚¡ã‚¤ãƒ«ã®ãƒ‘ã‚¹ã‚’æŒ‡å®šã—ã¦åˆæœŸåŒ–ã—ã¾ã™
+		/// </summary>
+		bool Initialize(const std::string& csvPath, const std::string& dbPath)
+		{
+			mCsvPath = csvPath;
+			mDbPath = dbPath;
+			return true;
+		}
 
-        bool Initialize(const std::string& csvPath, const std::string& dbPath)
-        {
-            mCsvPath = csvPath;
-            mDbPath = dbPath;
-            return true;
-        }
-
-        void Load()
-        {
+		/// <summary>
+		/// æ§‹æˆï¼ˆDebug/Releaseï¼‰ã«å¿œã˜ã¦ãƒ‡ãƒ¼ã‚¿ã‚’ãƒ­ãƒ¼ãƒ‰ã—ã¾ã™
+		/// </summary>
+		void Load()
+		{
 #ifdef _DEBUG
-            LoadFromCsv();
+			LoadFromCsv();
 #else
-            LoadFromDb();
+			LoadFromDb();
 #endif
-        }
+		}
 
-        void LoadFromCsv()
-        {
-            mItems = CsvParser::Load<T>(mCsvPath);
-            RebuildIndex();           // d•¡ƒ`ƒFƒbƒN + ƒCƒ“ƒfƒbƒNƒX\’z
-            SetMessage("[CSV] Loaded " + std::to_string(mItems.size()) + " records.");
-        }
+		/// <summary>
+		/// CSVãƒ•ã‚¡ã‚¤ãƒ«ã‹ã‚‰ãƒ‡ãƒ¼ã‚¿ã‚’ãƒ­ãƒ¼ãƒ‰ã—ã€ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚’å†æ§‹ç¯‰ã—ã¾ã™
+		/// </summary>
+		void LoadFromCsv()
+		{
+			mItems = CsvParser::Load<T>(mCsvPath);
+			RebuildIndex(); // é‡è¤‡ãƒã‚§ãƒƒã‚¯ + ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹æ§‹ç¯‰
+			SetMessage("[CSV] Loaded " + std::to_string(mItems.size()) + " records.");
+		}
 
-        void LoadFromDb()
-        {
-            EnsureDb();
-            mDb->EnsureTable<T>();
-            mItems = mDb->LoadAll<T>();
-            RebuildIndex();
-            SetMessage("[DB] Loaded " + std::to_string(mItems.size()) + " records.");
-        }
+		/// <summary>
+		/// ãƒ‡ãƒ¼ã‚¿ãƒ™ãƒ¼ã‚¹ã‹ã‚‰ãƒ‡ãƒ¼ã‚¿ã‚’ãƒ­ãƒ¼ãƒ‰ã—ã€ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚’å†æ§‹ç¯‰ã—ã¾ã™
+		/// </summary>
+		void LoadFromDb()
+		{
+			EnsureDb();
+			mDb->EnsureTable<T>();
+			mItems = mDb->LoadAll<T>();
+			RebuildIndex();
+			SetMessage("[DB] Loaded " + std::to_string(mItems.size()) + " records.");
+		}
 
-        // „Ÿ„Ÿ Save CSV ¨ DB „Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ
-        // d•¡ƒ`ƒFƒbƒN‚ğs‚Á‚Ä‚©‚ç‘‚«‚ŞBd•¡‚ª‚ ‚ê‚Î DuplicateKeyError ‚ğƒXƒ[
-        void SaveCsvToDb()
-        {
-            RebuildIndex();           // ‘‚«‚İ‘O‚É‚àƒ`ƒFƒbƒN
-            EnsureDb();
-            mDb->SaveAll<T>(mItems);
-            SetMessage("[DB] Saved " + std::to_string(mItems.size()) + " records.");
-        }
+		// --- ãƒ‡ãƒ¼ã‚¿ä¿å­˜ ---
 
-        // „Ÿ„Ÿ ƒAƒNƒZƒT „Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ
-        std::vector<T>& GetAll() { return mItems; }
-        const std::vector<T>& GetAll() const { return mItems; }
+		/// <summary>
+		/// é‡è¤‡ãƒã‚§ãƒƒã‚¯ã‚’è¡Œã£ãŸä¸Šã§ã€ç¾åœ¨ã®ãƒ‡ãƒ¼ã‚¿ã‚’ãƒ‡ãƒ¼ã‚¿ãƒ™ãƒ¼ã‚¹ã¸ä¿å­˜ã—ã¾ã™
+		/// </summary>
+		void SaveCsvToDb()
+		{
+			RebuildIndex(); // æ›¸ãè¾¼ã¿å‰ãƒã‚§ãƒƒã‚¯
+			EnsureDb();
+			mDb->SaveAll<T>(mItems);
+			SetMessage("[DB] Saved " + std::to_string(mItems.size()) + " records.");
+		}
 
-        // üŒ`ŒŸõiåƒL[‚ª–³‚¢Œ^E•¡‡ğŒ Œü‚¯j
-        T* Find(std::function<bool(const T&)> pred)
-        {
-            for (auto& item : mItems)
-                if (pred(item)) return &item;
-            return nullptr;
-        }
+		// --- ã‚¢ã‚¯ã‚»ã‚µ ---
 
-        // åƒL[iREFLECT_FIELD_IDj‚É‚æ‚é O(1) ŒŸõ
-        // åƒL[ƒtƒB[ƒ‹ƒh‚ª–¢“o˜^‚ÌŒ^‚Å‚Íí‚É nullptr ‚ğ•Ô‚·
-        T* GetById(int id)
-        {
-            auto it = mIndexById.find(id);
-            if (it == mIndexById.end()) return nullptr;
-            return it->second;
-        }
-        const T* GetById(int id) const
-        {
-            auto it = mIndexById.find(id);
-            if (it == mIndexById.end()) return nullptr;
-            return it->second;
-        }
+		/// <summary>
+		/// å…¨ãƒ¬ã‚³ãƒ¼ãƒ‰ã®å‚ç…§ã‚’å–å¾—ã—ã¾ã™
+		/// </summary>
+		std::vector<T>& GetAll() { return mItems; }
 
-        // ƒIƒ“ƒfƒ}ƒ“ƒh DB æ“¾iRelease Œü‚¯Èƒƒ‚ƒŠ‰^—pj
-        // mItems ‚É‚Í’Ç‰Á‚µ‚È‚¢B–ˆ‰ñ DB ƒNƒGƒŠ‚ğ”­s‚·‚é‚½‚ß‘å—ÊŒÄ‚Ño‚µ”ñ„§
-        std::optional<T> FetchById(int id)
-        {
-            EnsureDb();
-            return mDb->template FetchById<T>(id);
-        }
+		/// <summary>
+		/// å…¨ãƒ¬ã‚³ãƒ¼ãƒ‰ã®å®šæ•°å‚ç…§ã‚’å–å¾—ã—ã¾ã™
+		/// </summary>
+		const std::vector<T>& GetAll() const { return mItems; }
 
-        // „Ÿ„Ÿ ƒCƒ“ƒfƒbƒNƒXè“®Ä\’z „Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ
-        // mItems ‚ğ’¼Ú•ÏX‚µ‚½Œã‚ÉŒÄ‚Ô
-        void RebuildIndex()
-        {
-            mIndexById.clear();
-            const int pkFieldIdx = FindPrimaryKeyFieldIndex();
-            if (pkFieldIdx < 0) return;   // åƒL[ƒtƒB[ƒ‹ƒh–¢“o˜^‚È‚ç‰½‚à‚µ‚È‚¢
+		/// <summary>
+		/// æ¡ä»¶ã«ä¸€è‡´ã™ã‚‹è¦ç´ ã‚’ç·šå½¢æ¤œç´¢ã—ã¾ã™ï¼ˆä¸»ã‚­ãƒ¼ãŒãªã„å‹ã‚„è¤‡åˆæ¡ä»¶å‘ã‘ï¼‰
+		/// </summary>
+		T* Find(std::function<bool(const T&)> pred)
+		{
+			for (auto& item : mItems)
+				if (pred(item)) return &item;
+			return nullptr;
+		}
 
-            const auto& fields = reflect::TypeDescriptor<T>::Fields();
+		/// <summary>
+		/// ä¸»ã‚­ãƒ¼ã«ã‚ˆã‚‹é«˜é€Ÿæ¤œç´¢ï¼ˆO(1)ï¼‰ã‚’è¡Œã„ã¾ã™ã€‚æœªç™»éŒ²æ™‚ã¯ nullptr ã‚’è¿”ã—ã¾ã™
+		/// </summary>
+		T* GetById(int id)
+		{
+			auto it = mIndexById.find(id);
+			if (it == mIndexById.end()) return nullptr;
+			return it->second;
+		}
 
-            for (auto& item : mItems)
-            {
-                reflect::FieldValue fv = fields[pkFieldIdx].GetPtr(&item);
-                int* idPtr = std::get_if<int*>(&fv);
-                if (!idPtr) continue;
+		/// <summary>
+		/// ä¸»ã‚­ãƒ¼ã«ã‚ˆã‚‹é«˜é€Ÿæ¤œç´¢ï¼ˆO(1)ï¼‰ã‚’è¡Œã„ã¾ã™ï¼ˆå®šæ•°å‚ç…§ç‰ˆï¼‰ã€‚æœªç™»éŒ²æ™‚ã¯ nullptr ã‚’è¿”ã—ã¾ã™
+		/// </summary>
+		const T* GetById(int id) const
+		{
+			auto it = mIndexById.find(id);
+			if (it == mIndexById.end()) return nullptr;
+			return it->second;
+		}
 
-                const int id = **idPtr;
-                auto [it, inserted] = mIndexById.emplace(id, &item);
-                if (!inserted)
-                    throw DuplicateKeyError(id);
-            }
-        }
+		/// <summary>
+		/// ãƒ‡ãƒ¼ã‚¿ãƒ™ãƒ¼ã‚¹ã‹ã‚‰ç›´æ¥ãƒ‡ãƒ¼ã‚¿ã‚’ã‚ªãƒ³ãƒ‡ãƒãƒ³ãƒ‰ã§å–å¾—ã—ã¾ã™ï¼ˆReleaseå‘ã‘ã®çœãƒ¡ãƒ¢ãƒªé‹ç”¨ç”¨ï¼‰
+		/// </summary>
+		std::optional<T> FetchById(int id)
+		{
+			// mItems ã«ã¯è¿½åŠ ã›ãšæ¯å›ã‚¯ã‚¨ãƒªã‚’ç™ºè¡Œã™ã‚‹ãŸã‚ã€å¤§é‡å‘¼ã³å‡ºã—ã¯éæ¨å¥¨
+			EnsureDb();
+			return mDb->template FetchById<T>(id);
+		}
+
+		// --- ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹å†æ§‹ç¯‰ ---
+
+		/// <summary>
+		/// ã‚³ãƒ³ãƒ†ãƒŠå†…ã®ãƒ‡ãƒ¼ã‚¿ã‹ã‚‰æ¤œç´¢ç”¨ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚’æ‰‹å‹•ã§å†æ§‹ç¯‰ã—ã¾ã™
+		/// </summary>
+		void RebuildIndex()
+		{
+			mIndexById.clear();
+			const int pkFieldIdx = FindPrimaryKeyFieldIndex();
+			if (pkFieldIdx < 0) return; // ä¸»ã‚­ãƒ¼ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰æœªç™»éŒ²ãªã‚‰ä½•ã‚‚ã—ãªã„
+
+			const auto& fields = reflect::TypeDescriptor<T>::Fields();
+
+			for (auto& item : mItems)
+			{
+				reflect::FieldValue fv = fields[pkFieldIdx].GetPtr(&item);
+				int* idPtr = std::get_if<int*>(&fv);
+				if (!idPtr) continue;
+
+				const int id = **idPtr;
+				auto [it, inserted] = mIndexById.emplace(id, &item);
+				if (!inserted)
+					throw DuplicateKeyError(id);
+			}
+		}
 
 #ifdef _DEBUG
-        void DrawImGui(const char* windowLabel = nullptr)
-        {
-            const auto& fields = reflect::TypeDescriptor<T>::Fields();
-            const char* table = reflect::TypeDescriptor<T>::TableName();
-            const char* label = windowLabel ? windowLabel : table;
+		/// <summary>
+		/// ãƒ‡ãƒãƒƒã‚°ç”¨ã®ImGuiãƒ‡ãƒ¼ã‚¿ç·¨é›†ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’æç”»ã—ã¾ã™
+		/// </summary>
+		void DrawImGui(const char* windowLabel = nullptr)
+		{
+			const auto& fields = reflect::TypeDescriptor<T>::Fields();
+			const char* table = reflect::TypeDescriptor<T>::TableName();
+			const char* label = windowLabel ? windowLabel : table;
 
-            if (!ImGui::Begin(label)) { ImGui::End(); return; }
+			if (!ImGui::Begin(label)) { ImGui::End(); return; }
 
-            // „Ÿ„Ÿ ƒXƒe[ƒ^ƒXƒƒbƒZ[ƒW „Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ
-            if (mMessageTimer > 0.f)
-            {
-                mMessageTimer -= ImGui::GetIO().DeltaTime;
-                const ImVec4 color = mMessageIsError
-                    ? ImVec4{ 1.f, 0.3f, 0.3f, 1.f }
-                : ImVec4{ 0.3f, 1.f, 0.3f, 1.f };
-                ImGui::TextColored(color, "%s", mMessage.c_str());
-            }
+			// ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
+			if (mMessageTimer > 0.f)
+			{
+				mMessageTimer -= ImGui::GetIO().DeltaTime;
+				const ImVec4 color = mMessageIsError
+					? ImVec4{ 1.f, 0.3f, 0.3f, 1.f }
+				: ImVec4{ 0.3f, 1.f, 0.3f, 1.f };
+				ImGui::TextColored(color, "%s", mMessage.c_str());
+			}
 
-            // „Ÿ„Ÿ ƒc[ƒ‹ƒo[ „Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ
-            if (ImGui::Button("Load CSV"))
-                TryCall([&] { LoadFromCsv(); });
-            ImGui::SameLine();
-            if (ImGui::Button("Load DB"))
-                TryCall([&] { LoadFromDb(); });
-            ImGui::SameLine();
-            if (ImGui::Button("Save CSV->DB"))
-                TryCall([&] { SaveCsvToDb(); });
-            ImGui::SameLine();
-            if (ImGui::Button("Save to CSV"))
-            {
-                TryCall([&] {
-                    CsvParser::Save<T>(mCsvPath, mItems);
-                    SetMessage("[CSV] Saved " + std::to_string(mItems.size()) + " records.");
-                    });
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Add Row"))
-            {
-                mItems.emplace_back();
-                // ƒCƒ“ƒfƒbƒNƒX‚ğÄ\’zid•¡‚ª‚ ‚ê‚ÎŒx•\¦j
-                TryCall([&] { RebuildIndex(); });
-            }
+			// ãƒ„ãƒ¼ãƒ«ãƒãƒ¼
+			if (ImGui::Button("Load CSV"))
+				TryCall([&] { LoadFromCsv(); });
+			ImGui::SameLine();
+			if (ImGui::Button("Load DB"))
+				TryCall([&] { LoadFromDb(); });
+			ImGui::SameLine();
+			if (ImGui::Button("Save CSV->DB"))
+				TryCall([&] { SaveCsvToDb(); });
+			ImGui::SameLine();
+			if (ImGui::Button("Save to CSV"))
+			{
+				TryCall([&] {
+					CsvParser::Save<T>(mCsvPath, mItems);
+					SetMessage("[CSV] Saved " + std::to_string(mItems.size()) + " records.");
+					});
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Add Row"))
+			{
+				mItems.emplace_back();
+				TryCall([&] { RebuildIndex(); }); // é‡è¤‡ãŒã‚ã‚Œã°è­¦å‘Šè¡¨ç¤º
+			}
 
-            // „Ÿ„Ÿ d•¡ŒxƒCƒ“ƒWƒP[ƒ^[ „Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ
-            const int pkIdx = FindPrimaryKeyFieldIndex();
-            if (pkIdx >= 0)
-            {
-                ImGui::SameLine();
-                ImGui::TextDisabled("(PK: %s)", fields[pkIdx].Name.c_str());
-            }
+			// é‡è¤‡è­¦å‘Šã‚¤ãƒ³ã‚¸ã‚±ãƒ¼ã‚¿ãƒ¼
+			const int pkIdx = FindPrimaryKeyFieldIndex();
+			if (pkIdx >= 0)
+			{
+				ImGui::SameLine();
+				ImGui::TextDisabled("(PK: %s)", fields[pkIdx].Name.c_str());
+			}
 
-            ImGui::Separator();
+			ImGui::Separator();
 
-            // „Ÿ„Ÿ ƒe[ƒuƒ‹ „Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ„Ÿ
-            const int colCount = (int)fields.size() + 1; // +1 for íœƒ{ƒ^ƒ“
-            const ImGuiTableFlags flags =
-                ImGuiTableFlags_Borders |
-                ImGuiTableFlags_RowBg |
-                ImGuiTableFlags_ScrollY |
-                ImGuiTableFlags_ScrollX |
-                ImGuiTableFlags_Resizable |
-                ImGuiTableFlags_SizingFixedFit;
+			// ãƒ†ãƒ¼ãƒ–ãƒ«æç”»
+			const int colCount = (int)fields.size() + 1; // +1: å‰Šé™¤ãƒœã‚¿ãƒ³ç”¨
+			const ImGuiTableFlags flags =
+				ImGuiTableFlags_Borders |
+				ImGuiTableFlags_RowBg |
+				ImGuiTableFlags_ScrollY |
+				ImGuiTableFlags_ScrollX |
+				ImGuiTableFlags_Resizable |
+				ImGuiTableFlags_SizingFixedFit;
 
-            const float rowHeight = ImGui::GetTextLineHeightWithSpacing();
-            const float tableHeight = rowHeight * (float)std::min((int)mItems.size() + 2, 20);
+			const float rowHeight = ImGui::GetTextLineHeightWithSpacing();
+			const float tableHeight = rowHeight * (float)std::min((int)mItems.size() + 2, 20);
 
-            if (ImGui::BeginTable("##data", colCount, flags, ImVec2(0.f, tableHeight)))
-            {
-                ImGui::TableSetupScrollFreeze(0, 1);
-                for (const auto& f : fields)
-                {
-                    // åƒL[ƒJƒ‰ƒ€‚Íƒ‰ƒxƒ‹‚É "[PK]" ‚ğ•t‰Á
-                    if (reflect::HasFlag(f.Flags, reflect::eFieldFlag::PrimaryKey))
-                    {
-                        std::string header = "[PK] " + f.Name;
-                        ImGui::TableSetupColumn(header.c_str(),
-                            ImGuiTableColumnFlags_WidthFixed, 80.f);
-                    }
-                    else
-                    {
-                        ImGui::TableSetupColumn(f.Name.c_str(),
-                            ImGuiTableColumnFlags_WidthFixed, 100.f);
-                    }
-                }
-                ImGui::TableSetupColumn("##del", ImGuiTableColumnFlags_WidthFixed, 30.f);
-                ImGui::TableHeadersRow();
+			if (ImGui::BeginTable("##data", colCount, flags, ImVec2(0.f, tableHeight)))
+			{
+				ImGui::TableSetupScrollFreeze(0, 1);
+				for (const auto& f : fields)
+				{
+					// ä¸»ã‚­ãƒ¼ã‚«ãƒ©ãƒ ã¯ãƒ©ãƒ™ãƒ«ã« "[PK]" ã‚’ä»˜åŠ 
+					if (reflect::HasFlag(f.Flags, reflect::eFieldFlag::PrimaryKey))
+					{
+						std::string header = "[PK] " + f.Name;
+						ImGui::TableSetupColumn(header.c_str(),
+							ImGuiTableColumnFlags_WidthFixed, 80.f);
+					}
+					else
+					{
+						ImGui::TableSetupColumn(f.Name.c_str(),
+							ImGuiTableColumnFlags_WidthFixed, 100.f);
+					}
+				}
+				ImGui::TableSetupColumn("##del", ImGuiTableColumnFlags_WidthFixed, 30.f);
+				ImGui::TableHeadersRow();
 
-                // d•¡‚µ‚Ä‚¢‚é ID ‚ğûWisƒnƒCƒ‰ƒCƒg—pj
-                std::unordered_map<int, int> idCount;
-                if (pkIdx >= 0)
-                {
-                    for (auto& item : mItems)
-                    {
-                        reflect::FieldValue fv = fields[pkIdx].GetPtr(&item);
-                        if (int** pp = std::get_if<int*>(&fv)) idCount[**pp]++;
-                    }
-                }
+				// é‡è¤‡ã—ã¦ã„ã‚‹ ID ã‚’åé›†ï¼ˆè¡Œãƒã‚¤ãƒ©ã‚¤ãƒˆç”¨ï¼‰
+				std::unordered_map<int, int> idCount;
+				if (pkIdx >= 0)
+				{
+					for (auto& item : mItems)
+					{
+						reflect::FieldValue fv = fields[pkIdx].GetPtr(&item);
+						if (int** pp = std::get_if<int*>(&fv)) idCount[**pp]++;
+					}
+				}
 
-                int deleteIdx = -1;
-                for (int row = 0; row < (int)mItems.size(); ++row)
-                {
-                    ImGui::TableNextRow();
-                    ImGui::PushID(row);
+				int deleteIdx = -1;
+				for (int row = 0; row < (int)mItems.size(); ++row)
+				{
+					ImGui::TableNextRow();
+					ImGui::PushID(row);
 
-                    // d•¡s‚ğÔ‚­ƒnƒCƒ‰ƒCƒg
-                    bool isDuplicate = false;
-                    if (pkIdx >= 0)
-                    {
-                        reflect::FieldValue fv = fields[pkIdx].GetPtr(&mItems[row]);
-                        if (int** pp = std::get_if<int*>(&fv))
-                            isDuplicate = (idCount[**pp] > 1);
-                    }
-                    if (isDuplicate)
-                        ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0,
-                            IM_COL32(160, 40, 40, 100));
+					// é‡è¤‡è¡Œã‚’èµ¤ããƒã‚¤ãƒ©ã‚¤ãƒˆ
+					bool isDuplicate = false;
+					if (pkIdx >= 0)
+					{
+						reflect::FieldValue fv = fields[pkIdx].GetPtr(&mItems[row]);
+						if (int** pp = std::get_if<int*>(&fv))
+							isDuplicate = (idCount[**pp] > 1);
+					}
+					if (isDuplicate)
+						ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0,
+							IM_COL32(160, 40, 40, 100));
 
-                    for (int col = 0; col < (int)fields.size(); ++col)
-                    {
-                        ImGui::TableSetColumnIndex(col);
-                        DrawFieldWidget(fields[col], &mItems[row], row, col);
-                    }
+					for (int col = 0; col < (int)fields.size(); ++col)
+					{
+						ImGui::TableSetColumnIndex(col);
+						DrawFieldWidget(fields[col], &mItems[row], row, col);
+					}
 
-                    ImGui::TableSetColumnIndex((int)fields.size());
-                    if (ImGui::SmallButton("x"))
-                        deleteIdx = row;
+					ImGui::TableSetColumnIndex((int)fields.size());
+					if (ImGui::SmallButton("x"))
+						deleteIdx = row;
 
-                    ImGui::PopID();
-                }
+					ImGui::PopID();
+				}
 
-                if (deleteIdx >= 0)
-                {
-                    mItems.erase(mItems.begin() + deleteIdx);
-                    TryCall([&] { RebuildIndex(); });
-                }
+				if (deleteIdx >= 0)
+				{
+					mItems.erase(mItems.begin() + deleteIdx);
+					TryCall([&] { RebuildIndex(); });
+				}
 
-                ImGui::EndTable();
-            }
+				ImGui::EndTable();
+			}
 
-            ImGui::Text("Total: %d rows", (int)mItems.size());
-            ImGui::End();
-        }
+			ImGui::Text("Total: %d rows", (int)mItems.size());
+			ImGui::End();
+		}
 
-    private:
-        // ƒtƒB[ƒ‹ƒh1ŒÂ•ª‚ÌƒEƒBƒWƒFƒbƒg
-        // •ÒWŒã‚É RebuildIndex ‚ğŒÄ‚ñ‚Åd•¡‚ğƒŠƒAƒ‹ƒ^ƒCƒ€ŒŸo
-        void DrawFieldWidget(const reflect::FieldInfo& field, T* item, int row, int col)
-        {
-            char id[32];
-            snprintf(id, sizeof(id), "##r%dc%d", row, col);
+	private:
+		/// <summary>
+		/// å„ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ã«å¯¾å¿œã—ãŸImGuiå…¥åŠ›ã‚¦ã‚£ã‚¸ã‚§ãƒƒãƒˆã‚’æç”»ã—ã¾ã™
+		/// </summary>
+		void DrawFieldWidget(const reflect::FieldInfo& field, T* item, int row, int col)
+		{
+			char id[32];
+			snprintf(id, sizeof(id), "##r%dc%d", row, col);
 
-            reflect::FieldValue ptr = field.GetPtr(item);
-            bool changed = false;
+			reflect::FieldValue ptr = field.GetPtr(item);
+			bool changed = false;
 
-            std::visit([&](auto* p)
-                {
-                    using P = std::decay_t<decltype(*p)>;
-                    ImGui::SetNextItemWidth(-1.f);
+			std::visit([&](auto* p)
+				{
+					using P = std::decay_t<decltype(*p)>;
+					ImGui::SetNextItemWidth(-1.f);
 
-                    if constexpr (std::is_same_v<P, int>)
-                        changed = ImGui::InputInt(id, p);
-                    else if constexpr (std::is_same_v<P, float>)
-                        changed = ImGui::InputFloat(id, p, 0.f, 0.f, "%.3f");
-                    else if constexpr (std::is_same_v<P, bool>)
-                        changed = ImGui::Checkbox(id, p);
-                    else if constexpr (std::is_same_v<P, std::string>)
-                    {
-                        constexpr int kBufSize = 256;
-                        char buf[kBufSize];
-                        strncpy_s(buf, p->c_str(), kBufSize - 1);
-                        if (ImGui::InputText(id, buf, kBufSize))
-                        {
-                            *p = buf;
-                            changed = true;
-                        }
-                    }
-                }, ptr);
+					if constexpr (std::is_same_v<P, int>)
+						changed = ImGui::InputInt(id, p);
+					else if constexpr (std::is_same_v<P, float>)
+						changed = ImGui::InputFloat(id, p, 0.f, 0.f, "%.3f");
+					else if constexpr (std::is_same_v<P, bool>)
+						changed = ImGui::Checkbox(id, p);
+					else if constexpr (std::is_same_v<P, std::string>)
+					{
+						constexpr int kBufSize = 256;
+						char buf[kBufSize];
+						strncpy_s(buf, p->c_str(), kBufSize - 1);
+						if (ImGui::InputText(id, buf, kBufSize))
+						{
+							*p = buf;
+							changed = true;
+						}
+					}
+				}, ptr);
 
-            // åƒL[‚ª•ÏX‚³‚ê‚½‚çƒCƒ“ƒfƒbƒNƒX‚ğ‘¦Ä\’z
-            if (changed && reflect::HasFlag(field.Flags, reflect::eFieldFlag::PrimaryKey))
-                TryCall([&] { RebuildIndex(); });
-        }
+			// ä¸»ã‚­ãƒ¼ãŒå¤‰æ›´ã•ã‚ŒãŸã‚‰ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚’ãƒªã‚¢ãƒ«ã‚¿ã‚¤ãƒ ã§å†æ§‹ç¯‰
+			if (changed && reflect::HasFlag(field.Flags, reflect::eFieldFlag::PrimaryKey))
+				TryCall([&] { RebuildIndex(); });
+		}
 
-        // —áŠO‚ğƒLƒƒƒbƒ`‚µ‚ÄƒGƒ‰[ƒƒbƒZ[ƒW‚É•ÏŠ·‚·‚éƒwƒ‹ƒp[
-        void TryCall(std::function<void()> fn)
-        {
-            try { fn(); }
-            catch (const DuplicateKeyError& e)
-            {
-                SetMessage(e.what(), /*isError=*/true);
-            }
-            catch (const std::exception& e)
-            {
-                SetMessage(e.what(), /*isError=*/true);
-            }
-        }
+		/// <summary>
+		/// å‡¦ç†ã‚’å®Ÿè¡Œã—ã€ç™ºç”Ÿã—ãŸä¾‹å¤–ã‚’ã‚­ãƒ£ãƒƒãƒã—ã¦ã‚¨ãƒ©ãƒ¼ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã«å¤‰æ›ã™ã‚‹ãƒ˜ãƒ«ãƒ‘ãƒ¼
+		/// </summary>
+		void TryCall(std::function<void()> fn)
+		{
+			try { fn(); }
+			catch (const DuplicateKeyError& e)
+			{
+				SetMessage(e.what(), /*isError=*/true);
+			}
+			catch (const std::exception& e)
+			{
+				SetMessage(e.what(), /*isError=*/true);
+			}
+		}
 #endif // _DEBUG
 
 	private:

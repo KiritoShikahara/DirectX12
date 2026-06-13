@@ -17,31 +17,32 @@
 #endif
 
 #include<Utility/Singleton/Singleton.hpp>
+#include"RegistryBase.h"
 
 namespace data
 {
-	class DataRegistry : public utility::Singleton<DataRegistry>
+	class DataRegistry : public utility::Singleton<DataRegistry> , private data::RegistryBase
 	{
 		SINGLETON_CLASS(DataRegistry);
 	public:
 		SINGLETON_ACCESSOR(DataRegistry);
 
 		/// <summary>
-		/// “o˜^
+		/// ç™»éŒ²
 		/// </summary>
 		template<typename T>
 		void Register(const std::string& csvPath, const std::string& dbPath);
 
 		/// <summary>
-		/// ‘S‘Ìƒ[ƒh
+		/// å…¨ä½“ãƒ­ãƒ¼ãƒ‰
 		/// </summary>
 		void LoadAll();
 
 		template<typename T>
-		DataManager<T>& GetType();
+		DataManager<T>& GetData();
 
 		/// <summary>
-		/// “o˜^Šm”F
+		/// ç™»éŒ²ç¢ºèª
 		/// </summary>
 		template<typename T>
 		bool IsRegistered();
@@ -50,7 +51,7 @@ namespace data
 #ifdef _DEBUG
 		void DrawImGui()
 		{
-			// ƒ‰ƒ“ƒ`ƒƒ[ƒEƒBƒ“ƒhƒEFŒ^ˆê—— + •\¦Ø‘Öƒ`ƒFƒbƒNƒ{ƒbƒNƒX
+			// ãƒ©ãƒ³ãƒãƒ£ãƒ¼ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ï¼šå‹ä¸€è¦§ + è¡¨ç¤ºåˆ‡æ›¿ãƒã‚§ãƒƒã‚¯ãƒœãƒƒã‚¯ã‚¹
 			ImGui::SetNextWindowSize(ImVec2(260.f, 0.f), ImGuiCond_FirstUseEver);
 			if (ImGui::Begin("Data Registry"))
 			{
@@ -74,7 +75,7 @@ namespace data
 			}
 			ImGui::End();
 
-			// ŠeŒ^‚ÌƒGƒfƒBƒ^ƒEƒBƒ“ƒhƒE
+			// å„å‹ã®ã‚¨ãƒ‡ã‚£ã‚¿ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦
 			for (auto& key : mOrder)
 			{
 				auto& e = mEntries.at(key);
@@ -83,20 +84,10 @@ namespace data
 			}
 		}
 #endif
-	private:
-		struct Entry
-		{
-			// DataManager<T>* ‚ğ void* ‚Å•Û‚µAƒfƒŠ[ƒ^‚ÅŒ^‚ğ•œŒ³‚µ‚Ä delete
-			std::unique_ptr<void, void(*)(void*)> Ptr{ nullptr, [](void*) {} };
-			std::function<void()>                 LoadFn;
-			std::function<void()>                 DrawFn;
-			std::string                           Label;
-			bool                                  WindowOpen = true;
-		};
 
 	private:
 
-		std::unordered_map<std::type_index, Entry> mEntries;
+		std::unordered_map<std::type_index, RegistryEntry> mEntries;
 		std::vector<std::type_index>               mOrder;
 	};
 
@@ -110,7 +101,7 @@ namespace data
 		DataManager<T>* raw = new DataManager<T>();
 		raw->Initialize(csvPath, dbPath);
 
-		Entry entry;
+		RegistryEntry entry;
 		entry.Ptr = { raw, [](void* p) { delete static_cast<DataManager<T>*>(p); } };
 		entry.LoadFn = [raw]() { raw->Load(); };
 		entry.Label = reflect::TypeDescriptor<T>::TableName();
@@ -118,12 +109,11 @@ namespace data
 #ifdef _DEBUG
 		entry.DrawFn = [raw]() { raw->DrawImGui(); };
 #endif
-		mEntries.emplace(key, std::move(entry));
-		mOrder.push_back(key);
+		AddEntry(typeid(T), std::move(entry));
 	}
 
 	template<typename T>
-	inline DataManager<T>& DataRegistry::GetType()
+	inline DataManager<T>& DataRegistry::GetData()
 	{
 		const std::type_index key = typeid(T);
 		auto it = mEntries.find(key);
@@ -131,5 +121,11 @@ namespace data
 			&& "[DataRegistry] Type not registered. Call Register<T>() first.");
 
 		return *static_cast<DataManager<T>*>(it->second.Ptr.get());
+	}
+
+	template<typename T>
+	inline bool DataRegistry::IsRegistered()
+	{
+		return Contains(typeid(T));
 	}
 }
