@@ -146,6 +146,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\Data\DataStorage\Registry\ConfigRegistry.h" />
     <ClInclude Include="src\Data\DataStorage\ConfigManager.h" />
     <ClInclude Include="src\Data\DataStorage\CsvParser.h" />
     <ClInclude Include="src\Data\DataStorage\DataManager.h" />
@@ -249,7 +250,7 @@
     <ClInclude Include="src\graphics\Transition\TransitionRenderer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Data\DataStorage\ConfigManager.cpp" />
+    <ClCompile Include="src\Data\DataStorage\Registry\ConfigRegistry.cpp" />
     <ClCompile Include="external\SQLite\sqlite3.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>

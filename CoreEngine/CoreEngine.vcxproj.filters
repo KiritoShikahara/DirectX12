@@ -312,6 +312,9 @@
     <ClInclude Include="src\Data\DataStorage\RegistryBase.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\Data\DataStorage\Registry\ConfigRegistry.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics\Dx12\Dx12Device.cpp">
@@ -539,7 +542,7 @@
     <ClCompile Include="src\Data\DataStorage\DataRegistry.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="src\Data\DataStorage\ConfigManager.cpp">
+    <ClCompile Include="src\Data\DataStorage\Registry\ConfigRegistry.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
