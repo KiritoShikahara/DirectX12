@@ -291,22 +291,22 @@
     <ClInclude Include="src\Data\DataStorage\DataReflection.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="src\Data\DataStorage\SqliteManager.h">
+    <ClInclude Include="src\Data\DataStorage\Manager\SqliteManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="src\Data\DataStorage\CsvParser.h">
+    <ClInclude Include="src\Data\DataStorage\Loader\CsvParser.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="src\Data\DataStorage\JsonSerializer.h">
+    <ClInclude Include="src\Data\DataStorage\Loader\JsonSerializer.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="src\Data\DataStorage\DataManager.h">
+    <ClInclude Include="src\Data\DataStorage\Manager\DataManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="src\Data\DataStorage\DataRegistry.h">
+    <ClInclude Include="src\Data\DataStorage\Registry\DataRegistry.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="src\Data\DataStorage\ConfigManager.h">
+    <ClInclude Include="src\Data\DataStorage\Manager\ConfigManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\Data\DataStorage\RegistryBase.h">
@@ -533,13 +533,13 @@
     <ClCompile Include="external\SQLite\sqlite3.c">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="src\Data\DataStorage\SqliteManager.cpp">
+    <ClCompile Include="src\Data\DataStorage\Manager\SqliteManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="src\Data\DataStorage\CsvParser.cpp">
+    <ClCompile Include="src\Data\DataStorage\Loader\CsvParser.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="src\Data\DataStorage\DataRegistry.cpp">
+    <ClCompile Include="src\Data\DataStorage\Registry\DataRegistry.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\Data\DataStorage\Registry\ConfigRegistry.cpp">

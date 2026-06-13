@@ -1,5 +1,5 @@
 #pragma once
-#include"DataReflection.h"
+#include"../DataReflection.h"
 
 #include <string>
 #include <vector>
@@ -12,20 +12,20 @@ namespace data
     {
     public:
         /// <summary>
-        /// “Ç‚İ‚İ
+        /// èª­ã¿è¾¼ã¿
         /// </summary>
         template<typename T>
         static std::vector<T> Load(const std::string& filePath);
 
         /// <summary>
-        /// ‘‚«‚İ
+        /// æ›¸ãè¾¼ã¿
         /// </summary>
         template<typename T>
         static void Save(const std::string& filePath, const std::vector<T>& items);
 
     private:
         /// <summary>
-        /// CSV•ªŠ„
+        /// CSVåˆ†å‰²
         /// </summary>
         static std::vector<std::string> SplitCsv(const std::string& line);
 
@@ -47,13 +47,13 @@ namespace data
         std::vector<T> result;
         std::string line;
 
-        // ƒwƒbƒ_[s‚ğ“Ç‚ñ‚ÅƒJƒ‰ƒ€‡‚ğ‰ğŒˆ
+        // ãƒ˜ãƒƒãƒ€ãƒ¼è¡Œã‚’èª­ã‚“ã§ã‚«ãƒ©ãƒ é †ã‚’è§£æ±º
         if (!std::getline(file, line))
             return result;
 
         std::vector<std::string> headers = SplitCsv(line);
 
-        // ƒwƒbƒ_[–¼ ¨ ƒtƒB[ƒ‹ƒhƒCƒ“ƒfƒbƒNƒX ‚Ìƒ}ƒbƒv
+        // ãƒ˜ãƒƒãƒ€ãƒ¼å â†’ ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ ã®ãƒãƒƒãƒ—
         std::vector<int> colToField(headers.size(), -1);
         for (int col = 0; col < (int)headers.size(); ++col)
         {
@@ -68,7 +68,7 @@ namespace data
             }
         }
 
-        // ƒf[ƒ^s
+        // ãƒ‡ãƒ¼ã‚¿è¡Œ
         while (std::getline(file, line))
         {
             if (line.empty()) continue;
@@ -113,7 +113,7 @@ namespace data
         if (!file.is_open())
             throw std::runtime_error("[CsvParser] Failed to write: " + filePath);
 
-        // ƒwƒbƒ_[
+        // ãƒ˜ãƒƒãƒ€ãƒ¼
         for (int i = 0; i < (int)fields.size(); ++i)
         {
             if (i > 0) file << ',';
@@ -121,7 +121,7 @@ namespace data
         }
         file << '\n';
 
-        // ƒf[ƒ^
+        // ãƒ‡ãƒ¼ã‚¿
         for (const T& item : items)
         {
             for (int i = 0; i < (int)fields.size(); ++i)

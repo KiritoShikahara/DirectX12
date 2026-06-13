@@ -1,7 +1,7 @@
 #pragma once
 
-#include"DataReflection.h"
-#include"DataManager.h"
+#include"../DataReflection.h"
+#include"../Manager/DataManager.h"
 
 #include <typeindex>
 #include <typeinfo>
@@ -17,7 +17,7 @@
 #endif
 
 #include<Utility/Singleton/Singleton.hpp>
-#include"RegistryBase.h"
+#include"../RegistryBase.h"
 
 namespace data
 {

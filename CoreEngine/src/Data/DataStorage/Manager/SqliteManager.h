@@ -1,6 +1,6 @@
 #pragma once
 
-#include"DataReflection.h"
+#include"../DataReflection.h"
 #include<SQLiteCpp/SQLiteCpp.h>
 
 #include <string>
@@ -17,33 +17,33 @@ namespace data
 	public:
 
 		/// <summary>
-		/// ƒf[ƒ^ƒx[ƒX‚Ì‰Šú‰»
+		/// ãƒ‡ãƒ¼ã‚¿ãƒ™ãƒ¼ã‚¹ã®åˆæœŸåŒ–
 		/// </summary>
 		bool Initialize(const std::string& dbPath);
 
 		/// <summary>
-		/// ƒe[ƒuƒ‹‚ª‚È‚¯‚ê‚Îì¬
-		/// PrimaryKeyƒtƒ‰ƒO‚ª—§‚Á‚Ä‚¢‚éƒtƒB[ƒ‹ƒh‚Í PRIMARY KEY ‚Æ‚µ‚Ä’è‹`
+		/// ãƒ†ãƒ¼ãƒ–ãƒ«ãŒãªã‘ã‚Œã°ä½œæˆ
+		/// PrimaryKeyãƒ•ãƒ©ã‚°ãŒç«‹ã£ã¦ã„ã‚‹ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ã¯ PRIMARY KEY ã¨ã—ã¦å®šç¾©
 		/// </summary>
 		template<typename T>
 		void EnsureTable();
 
 		/// <summary>
-		/// ‘SŒ“Ç‚İ‚İ
+		/// å…¨ä»¶èª­ã¿è¾¼ã¿
 		/// </summary>
 		template<typename T>
 		std::vector<T> LoadAll();
 
 		/// <summary>
-		/// ƒIƒ“ƒfƒ}ƒ“ƒhæ“¾iåƒL[‚Å1Œæ“¾
-		/// Èƒƒ‚ƒŠ‰^—pŒü‚¯Fƒf[ƒ^‚ğ‘SŒ mItems ‚ÉÚ‚¹‚¸A•K—v‚È‚¾‚¯ DB ‚É–â‚¢‡‚í‚¹‚é
-		/// åƒL[ƒtƒB[ƒ‹ƒhiREFLECT_FIELD_IDj‚ª“o˜^‚³‚ê‚Ä‚¢‚È‚¢Œ^‚Å‚Í std::nullopt ‚ğ•Ô‚·
+		/// ã‚ªãƒ³ãƒ‡ãƒãƒ³ãƒ‰å–å¾—ï¼ˆä¸»ã‚­ãƒ¼ã§1ä»¶å–å¾—
+		/// çœãƒ¡ãƒ¢ãƒªé‹ç”¨å‘ã‘ï¼šãƒ‡ãƒ¼ã‚¿ã‚’å…¨ä»¶ mItems ã«è¼‰ã›ãšã€å¿…è¦ãªæ™‚ã ã‘ DB ã«å•ã„åˆã‚ã›ã‚‹
+		/// ä¸»ã‚­ãƒ¼ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ï¼ˆREFLECT_FIELD_IDï¼‰ãŒç™»éŒ²ã•ã‚Œã¦ã„ãªã„å‹ã§ã¯ std::nullopt ã‚’è¿”ã™
 		/// </summary>
 		template<typename T>
 		std::optional<T> FetchById(int id);
 
 		/// <summary>
-		/// ‘SŒ‘‚«‚İ
+		/// å…¨ä»¶æ›¸ãè¾¼ã¿
 		/// </summary>
 		template<typename T>
 		void SaveAll(const std::vector<T>& items);
@@ -121,7 +121,7 @@ namespace data
 		const auto& fields = reflect::TypeDescriptor<T>::Fields();
 		const char* table = reflect::TypeDescriptor<T>::TableName();
 
-		// åƒL[ƒtƒB[ƒ‹ƒh‚ğ’T‚·
+		// ä¸»ã‚­ãƒ¼ãƒ•ã‚£ãƒ¼ãƒ«ãƒ‰ã‚’æ¢ã™
 		int pkCol = -1;
 		for (int i = 0; i < (int)fields.size(); ++i)
 		{
@@ -164,7 +164,7 @@ namespace data
 
 		mDb->exec(std::string("DELETE FROM ") + table + ";");
 
-		// INSERT •¶\’z
+		// INSERT æ–‡æ§‹ç¯‰
 		std::string sql = "INSERT INTO ";
 		sql += table;
 		sql += " (";
@@ -189,7 +189,7 @@ namespace data
 			for (int col = 0; col < (int)fields.size(); ++col)
 			{
 				reflect::FieldValue ptr = fields[col].GetPtr(const_cast<T*>(&item));
-				BindToStatement(stmt, col + 1, ptr);  // SQLiteCpp ‚Í 1-origin
+				BindToStatement(stmt, col + 1, ptr);  // SQLiteCpp ã¯ 1-origin
 			}
 			stmt.exec();
 		}

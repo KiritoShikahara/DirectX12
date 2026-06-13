@@ -1,7 +1,7 @@
 #pragma once
 
-#include"DataReflection.h"
-#include"CsvParser.h"
+#include"../DataReflection.h"
+#include"../Loader/CsvParser.h"
 #include"SqliteManager.h"
 
 #include <string>
