@@ -47,6 +47,12 @@ namespace graphics
         /// </summary>
         void SetLights(const std::vector<LightData>& lights);
 
+
+        D3D12_GPU_DESCRIPTOR_HANDLE GetSceneBufferGpuHandle() const
+        {
+            return mSceneBuffer->GetGpuHandle();
+        }
+
     private:
         /// <summary>
         /// 1エンティティ分のデータをフレームバッファに積む

@@ -9,6 +9,7 @@ namespace graphics
 {
 	class DX12Device;
 	class DX12Renderer;
+	class GDescriptorHeapManager;
 }
 
 namespace ecs
@@ -55,6 +56,12 @@ namespace sys
 		/// <returns>true:成功 false:失敗</returns>
 		bool Finalize();
 	private:
+		/// <summary>
+		/// レンダラの初期化
+		/// </summary>
+		/// <returns></returns>
+		bool InitializeRenderer(graphics::GDescriptorHeapManager& descriptorHeapManager);
+
 		/// <summary>
 		/// デバックUIの初期化
 		/// </summary>
