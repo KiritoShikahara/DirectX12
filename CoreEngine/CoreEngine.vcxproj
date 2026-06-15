@@ -110,7 +110,7 @@
 ;JPH_OBJECT_STREAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)external;$(ProjectDir)src;$(ProjectDir)src\pch;$(ProjectDir)external\JoltPhysics</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)external;$(ProjectDir)src;$(ProjectDir)src\pch;$(ProjectDir)external\JoltPhysics;$(ProjectDir)external\SQLite</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
@@ -132,7 +132,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;JPH_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)external;$(ProjectDir)src;$(ProjectDir)src\pch;$(ProjectDir)external\JoltPhysics</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)external;$(ProjectDir)src;$(ProjectDir)src\pch;$(ProjectDir)external\JoltPhysics;$(ProjectDir)external\SQLite</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
@@ -146,6 +146,18 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\Config\WindowConfig.h" />
+    <ClInclude Include="src\Data\DataStorage\DataReflection.h" />
+    <ClInclude Include="src\Data\Storage\Inspector\DataInspector.h" />
+    <ClInclude Include="src\Data\Storage\Loader\CsvParser.h" />
+    <ClInclude Include="src\Data\Storage\Loader\JsonSerializer.h" />
+    <ClInclude Include="src\Data\Storage\Manager\DataManager.h" />
+    <ClInclude Include="src\Data\Storage\Manager\ConfigManager.h" />
+    <ClInclude Include="src\Data\Storage\Manager\SqliteManager.h" />
+    <ClInclude Include="src\Data\Storage\Reflection.h" />
+    <ClInclude Include="src\Data\Storage\Registry\ConfigRegistry.h" />
+    <ClInclude Include="src\Data\Storage\Registry\DataRegistry.h" />
+    <ClInclude Include="src\Data\Storage\Registry\RegistryBase.h" />
     <ClInclude Include="src\system\Scene\Default\DefaultScene.h" />
     <ClInclude Include="src\system\Scene\Factory\SceneFactory.h" />
     <ClInclude Include="src\system\Scene\Manager\SceneManager.h" />
@@ -241,6 +253,38 @@
     <ClInclude Include="src\graphics\Transition\TransitionRenderer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="external\SQLite\sqlite3.c">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="external\SQLite\SQLiteCpp\src\Backup.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="external\SQLite\SQLiteCpp\src\Column.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="external\SQLite\SQLiteCpp\src\Database.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="external\SQLite\SQLiteCpp\src\Exception.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="external\SQLite\SQLiteCpp\src\Savepoint.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="external\SQLite\SQLiteCpp\src\Statement.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="external\SQLite\SQLiteCpp\src\Transaction.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\system\Scene\Factory\SceneFactory.cpp" />
     <ClCompile Include="src\system\Scene\Manager\SceneManager.cpp" />
     <ClCompile Include="src\graphics\Line\Renderer\PhysicsDebugRenderer.cpp" />
@@ -417,6 +461,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </None>
     <None Include="packages.config" />
+    <None Include="初期化順序.md">
+      <SubType>
+      </SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Assets\Shader\PhysicsDebug\PS_PhysicsDebug.hlsl">

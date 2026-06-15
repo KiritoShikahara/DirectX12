@@ -48,6 +48,9 @@
 #include<system/Scene/Manager/SceneManager.h>
 #include<system/Scene/Factory/SceneFactory.h>
 
+// Config
+#include<Config/WindowConfig.h>
+
 // Component
 #include<ecs/component/transform/TransformComponent.h>
 #include<ecs/component/sprite/SpriteComponent.h>
@@ -239,18 +242,37 @@ namespace sys
 	{
 	}
 
+	EngineContext Engine::LoadBootstrapConfig()
+	{
+		// ウィンドウ
+		data::WindowConfig WindowCfg = LoadWindowConfig(ASSET_PATH("/Engine/BootstrapConfig/WindowConfig.json"));
+		WindowContext wctx;
+		wctx.VirtualWidth = 1920;
+		wctx.VirtualHeight = 1080;
+		data::ApplyWindowConfig(WindowCfg, wctx);
+
+		return EngineContext({ wctx });
+	}
+
 	/// <summary>
 	/// App初期化
 	/// </summary>
 	/// <param name="context">初期化情報</param>
 	/// <returns>true:成功 false:失敗</returns>
-	bool Engine::Initialize(EngineContext context)
+	bool Engine::Initialize()
 	{
 		// Loggerの初期化
 		if (sys::Logger::Get().Initialize() == false)
 		{
 			return false;
 		}
+
+		// AssetsPath
+		SINGLETON_REF(sys::AssetPathManager, AssetManager);
+		AssetManager.Initialize();
+
+		// コンフィグの読み込み
+		auto context = LoadBootstrapConfig();
 
 		// Timeの初期化
 		mTime.Initialize();
@@ -312,10 +334,6 @@ namespace sys
 		{
 			return false;
 		}
-
-		// AssetsPath
-		SINGLETON_REF(sys::AssetPathManager, AssetManager);
-		AssetManager.Initialize();
 
 		// TextureManager
 		SINGLETON_REF(graphics::TextureManager, TextureManager);
@@ -490,16 +508,17 @@ namespace sys
 			sys::PhysicsSystem::BuildPendingBodies(registry);
 			sys::PhysicsSystem::SyncFromTransform(registry);
 
+			// 衝突イベント発火
 			while (mTime.AccumulateFixedStep())
 			{
 				// 物理演算の更新 固定ステップにする。
 				sys::PhysicsSystem::Update(registry, mTime.GetFixedDeltaTime());
 			}
+			// 座標更新、行列更新
 			sys::PhysicsSystem::SyncToTransform(registry);
 
-			// 座標更新、行列更新
 
-			// 衝突イベント発火
+			
 
 			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PostUpdate, registry, dt, rawDt);
 		}

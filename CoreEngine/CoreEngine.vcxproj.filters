@@ -288,6 +288,42 @@
     <ClInclude Include="src\system\Scene\Default\DefaultScene.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\Data\DataStorage\DataReflection.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Data\Storage\Reflection.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Data\Storage\Loader\CsvParser.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Data\Storage\Manager\SqliteManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Data\Storage\Loader\JsonSerializer.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Data\Storage\Manager\DataManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Data\Storage\Manager\ConfigManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Data\Storage\Registry\RegistryBase.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Data\Storage\Registry\DataRegistry.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Data\Storage\Registry\ConfigRegistry.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Data\Storage\Inspector\DataInspector.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Config\WindowConfig.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics\Dx12\Dx12Device.cpp">
@@ -482,12 +518,37 @@
     <ClCompile Include="src\system\Scene\Factory\SceneFactory.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="external\SQLite\SQLiteCpp\src\Transaction.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="external\SQLite\SQLiteCpp\src\Statement.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="external\SQLite\SQLiteCpp\src\Savepoint.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="external\SQLite\SQLiteCpp\src\Exception.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="external\SQLite\SQLiteCpp\src\Database.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="external\SQLite\SQLiteCpp\src\Column.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="external\SQLite\SQLiteCpp\src\Backup.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="external\SQLite\sqlite3.c">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="Assets\Shader\Sprite\SpriteHeader.hlsli" />
     <None Include="Assets\Shader\Model\ModelHeader.hlsli" />
     <None Include="Assets\Shader\Fbx\FbxShader.hlsli" />
+    <None Include="初期化順序.md" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Assets\Shader\Sprite\PS_Sprite.hlsl" />
