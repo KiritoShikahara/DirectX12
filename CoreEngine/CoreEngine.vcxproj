@@ -146,6 +146,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\graphics\Fbx\Pipeline\ShadowPipeline.h" />
     <ClInclude Include="src\graphics\Skybox\Renderer\SkyboxRenderer.h" />
     <ClInclude Include="src\graphics\Skybox\Pipeline\SkyboxPipeline.h" />
     <ClInclude Include="src\Config\WindowConfig.h" />
@@ -288,6 +289,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\graphics\Fbx\Pipeline\ShadowPipeline.cpp" />
     <ClCompile Include="src\graphics\Skybox\Renderer\SkyboxRenderer.cpp" />
     <ClCompile Include="src\graphics\Skybox\Pipeline\SkyboxPipeline.cpp" />
     <ClCompile Include="src\system\Scene\Factory\SceneFactory.cpp" />
@@ -472,6 +474,16 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Assets\Shader\Fbx\VS_Shadow.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
     <FxCompile Include="Assets\Shader\PhysicsDebug\PS_PhysicsDebug.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>

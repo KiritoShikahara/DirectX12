@@ -8,8 +8,10 @@
 #include <Utility/Singleton/Singleton.hpp>
 
 #include <graphics/FBX/Pipeline/FbxPipeline.h>
+#include <graphics/FBX/Pipeline/ShadowPipeline.h>
 #include <graphics/FBX/Data/FbxData.h>
 #include <graphics/StructuredBuffer/StructuredBuffer.h>
+#include <graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeap.h>
 
 namespace graphics
 {
@@ -37,70 +39,88 @@ namespace graphics
         /// <summary>ECSレジストリからFbxComponentを収集して描画登録する</summary>
         void UpdateAndDraw(entt::registry& registry);
 
+        /// <summary>
+        /// Shadow Pass を実行する。
+        /// BeginFrame の後、通常描画パスの前に呼ぶこと。
+        /// CastShadow == true の Directional Light が存在しない場合は何もしない。
+        /// </summary>
+        void DrawShadowPass(ID3D12GraphicsCommandList* cmdList);
+
         /// <summary>蓄積したDrawCallをGPUコマンドとして発行する</summary>
         void End(ID3D12GraphicsCommandList* cmdList);
 
-
         /// <summary>
-        /// 指向性ライトのパラメータを設定する
-        /// ※ Begin() の前に毎フレーム呼ぶこと
+        /// ライトパラメータを設定する。
+        /// Begin() の前に毎フレーム呼ぶこと。
+        /// LightData::CastShadow == 1 かつ Type == Directional の index 0 が Shadow 対象。
         /// </summary>
         void SetLights(const std::vector<LightData>& lights);
-
 
         D3D12_GPU_DESCRIPTOR_HANDLE GetSceneBufferGpuHandle() const
         {
             return mSceneBuffer->GetGpuHandle();
         }
 
+        /// <summary>Shadow Map の SRV GPU ハンドルを返す (デバッグ表示用)</summary>
+        D3D12_GPU_DESCRIPTOR_HANDLE GetShadowMapGpuHandle() const
+        {
+            return mShadowMapSRV.GetGpuHandle();
+        }
+
+        // Shadow Map 解像度
+        static constexpr UINT SHADOW_MAP_SIZE = 2048u;
+
     private:
-        /// <summary>
-        /// 1エンティティ分のデータをフレームバッファに積む
-        /// セクション数分の DrawCall が生成される
-        /// </summary>
+        /// <summary>1エンティティ分のデータをフレームバッファに積む</summary>
         void Submit(
             const FbxResource& resource,
             const DirectX::XMFLOAT4X4& world,
             const std::vector<DirectX::XMFLOAT4X4>* boneMatrices,
             const DirectX::XMFLOAT4& customColor);
 
+        /// <summary>Shadow Map リソース・DSV・SRV を生成する</summary>
+        bool CreateShadowMapResources(DX12Device& device, GDescriptorHeapManager& heapManager);
+
         // ── DrawCall 単位 ────────────────────────────────────────
         struct DrawCall
         {
             const FbxResource* Resource = nullptr;
             uint32_t           SectionIndex = 0;
-            uint32_t           InstanceIndex = 0;  // InstanceBuffer 内インデックス
+            uint32_t           InstanceIndex = 0;
         };
 
         // ── 上限定数 ─────────────────────────────────────────────
         static constexpr uint32_t MAX_FBX_INSTANCES = 512u;
         static constexpr uint32_t MAX_TOTAL_BONES = 32768u;
+        static constexpr uint32_t MAX_LIGHTS = 64u;
 
         // ── GPU オブジェクト ──────────────────────────────────────
-        std::unique_ptr<FbxPipeline>    mPipeline;
-        std::unique_ptr<StructuredBuffer> mInstanceBuffer; // FbxInstanceData[]
-        std::unique_ptr<StructuredBuffer> mBoneBuffer;     // float4x4[]  (全エンティティ分を連結)
-        std::unique_ptr<StructuredBuffer> mSceneBuffer;    // FbxSceneData[1]
+        std::unique_ptr<FbxPipeline>      mPipeline;
+        std::unique_ptr<ShadowPipeline>   mShadowPipeline;
+        std::unique_ptr<StructuredBuffer> mInstanceBuffer;
+        std::unique_ptr<StructuredBuffer> mBoneBuffer;
+        std::unique_ptr<StructuredBuffer> mSceneBuffer;
+        std::unique_ptr<StructuredBuffer> mLightBuffer;
 
-        // ── フレームデータ (Begin でクリア) ──────────────────────
+        // ── Shadow Map リソース ───────────────────────────────────
+        Resource          mShadowMapResource;   // D32_FLOAT テクスチャ
+        Heap              mShadowMapDSVHeap;    // DSV 専用ヒープ (非シェーダービジブル)
+        GDescriptorHeap   mShadowMapSRV;        // GDescriptorHeapManager 管理の SRV スロット
+        GDescriptorHeap   mShadowMapNullSRV;    // Shadow Map なし時のダミー SRV
+
+        // ── フレームデータ ────────────────────────────────────────
         std::vector<FbxInstanceData>      mInstanceData;
         std::vector<DirectX::XMFLOAT4X4> mBoneData;
         std::vector<DrawCall>             mDrawCalls;
-
-        // ── デフォルトテクスチャ (nullptr スロットのフォールバック) ──
-        Texture* mDefaultWhiteTexture = nullptr; // Albedo / Metallic / Roughness / AO 用
-        Texture* mDefaultNormalTexture = nullptr; // Normal マップ用 (RGB=0.5,0.5,1.0)
-        Texture* mDefaultBlackTexture = nullptr; // Emissive 用
-
-        // ── ライトデータ ─────────────────────────────────────────
-        std::unique_ptr<StructuredBuffer> mLightBuffer;   // LightData[] (t9)
         std::vector<LightData>            mLightData;
-        static constexpr uint32_t         MAX_LIGHTS = 64u;
+
+        // ── デフォルトテクスチャ ──────────────────────────────────
+        Texture* mDefaultWhiteTexture = nullptr;
+        Texture* mDefaultNormalTexture = nullptr;
+        Texture* mDefaultBlackTexture = nullptr;
 
         // ── 依存 ─────────────────────────────────────────────────
         GDescriptorHeapManager* mHeapManager = nullptr;
     };
 
-}
-
-
+} // namespace graphics

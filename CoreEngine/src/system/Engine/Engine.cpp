@@ -70,564 +70,412 @@
 #include<graphics/Fbx/Resource/FbxResourceManager.h>
 #include<graphics/Fbx/Resource/FbxResource.h>
 
-
 // define
 #include"EngineDefine.h"
 
 
-// テスト用のSpriteの作成
 void SpriteRenderTest()
 {
-	auto texture = graphics::TextureManager::Get().GetOrLoad("Assets/Test/test.png");
-	auto entity = ecs::EntityManager::Get().CreateEntity();
-	auto& tr = ecs::EntityManager::Get().AddComponent<ecs::Transform>(entity);
-	auto& sprite = ecs::EntityManager::Get().AddComponent<ecs::Sprite>(entity,texture);
+    auto texture = graphics::TextureManager::Get().GetOrLoad("Assets/Test/test.png");
+    auto entity = ecs::EntityManager::Get().CreateEntity();
+    auto& tr = ecs::EntityManager::Get().AddComponent<ecs::Transform>(entity);
+    auto& sprite = ecs::EntityManager::Get().AddComponent<ecs::Sprite>(entity, texture);
 }
 
-// テスト用のリソース読み込み
 void LoadResource()
 {
-	// fbx
-	{
-		auto& manager = graphics::FbxResourceManager::Get();
-		auto res = manager.Load("Assets/Fbx/Faul.fbx.bin");
-		bool ret = manager.LoadAnm("Assets/Fbx/Faul.fbx.bin", "Assets/Fbx/Animation/Attack_A.fbx.anm", "Attack_A");
-		ret = manager.LoadAnm("Assets/Fbx/Faul.fbx.bin", "Assets/Fbx/Animation/Attack_B.fbx.anm", "Attack_B");
-	}
-
-	// audio
-	{
-		auto& ResManager = audio::AudioResourceManager::Get();
-		auto res = ResManager.GetResource("Assets/SE/TestSE.aud");
-	}
-
+    {
+        auto& manager = graphics::FbxResourceManager::Get();
+        auto res = manager.Load("Assets/Fbx/Faul.fbx.bin");
+        bool ret = manager.LoadAnm("Assets/Fbx/Faul.fbx.bin", "Assets/Fbx/Animation/Attack_A.fbx.anm", "Attack_A");
+        ret = manager.LoadAnm("Assets/Fbx/Faul.fbx.bin", "Assets/Fbx/Animation/Attack_B.fbx.anm", "Attack_B");
+    }
+    {
+        auto& ResManager = audio::AudioResourceManager::Get();
+        auto res = ResManager.GetResource("Assets/SE/TestSE.aud");
+    }
 }
 
-// テスト用のFBXモデルの作成
 void Create3DModel()
 {
-	auto& manager = ecs::EntityManager::Get();
-	auto& reg = manager.GetRegistry();
+    auto& manager = ecs::EntityManager::Get();
+    auto& reg = manager.GetRegistry();
 
-	auto res = graphics::FbxResourceManager::Get().Load("Assets/Fbx/Faul.fbx.bin");
+    auto res = graphics::FbxResourceManager::Get().Load("Assets/Fbx/Faul.fbx.bin");
+    float scale = 0.2f;
 
-	float scale = 0.2f;
+    auto entity = manager.CreateEntity();
+    auto& tr = manager.AddComponent<ecs::Transform>(entity);
+    tr.SetScale(scale);
+    tr.SetPosition(0, 10, 0);
 
-	auto entity = manager.CreateEntity();
-	auto& tr = manager.AddComponent<ecs::Transform>(entity);
-	tr.SetScale(scale);
-	tr.SetPosition(0, 10, 0);
+    auto& fbx = manager.AddComponent<ecs::FbxComponent>(entity);
+    fbx.Resource = res;
+    fbx.CustomColor = { 1,1,1,1 };
 
-	auto& fbx = manager.AddComponent<ecs::FbxComponent>(entity);
-	fbx.Resource = res;
-	fbx.CustomColor = { 1,1,1,1 };
+    auto& anim = manager.AddComponent<ecs::FbxAnimComponent>(entity);
+    anim.Play(*fbx.Resource, "Attack_A", true);
 
-	auto& anim = manager.AddComponent<ecs::FbxAnimComponent>(entity);
-	anim.Play(*fbx.Resource, "Attack_A", true);
-
-	reg.emplace<ecs::ColliderComponent>(entity,
-		ecs::ColliderComponent::MakeBox({ 1,3,1 }));
-
-	reg.emplace<ecs::RigidBodyComponent>(entity,
-		ecs::RigidBodyComponent::MakeDynamic());
-
+    reg.emplace<ecs::ColliderComponent>(entity, ecs::ColliderComponent::MakeBox({ 1,3,1 }));
+    reg.emplace<ecs::RigidBodyComponent>(entity, ecs::RigidBodyComponent::MakeDynamic());
 }
 
 void CreateSound()
 {
-	auto& AudioManager = audio::AudioManager::Get();
-	AudioManager.PlaySE("Assets/SE/TestSE.aud");
-	AudioManager.PlayBGM("Assets/SE/TestBGM.aud");
+    auto& AudioManager = audio::AudioManager::Get();
+    AudioManager.PlaySE("Assets/SE/TestSE.aud");
+    AudioManager.PlayBGM("Assets/SE/TestBGM.aud");
 }
 
-// テスト用のカメラ作成
 entt::entity CreateCamera()
 {
-	auto& registry = ecs::EntityManager::Get().GetRegistry();
+    auto& registry = ecs::EntityManager::Get().GetRegistry();
+    entt::entity entity = ecs::EntityManager::Get().CreateEntity();
 
-	entt::entity entity = ecs::EntityManager::Get().CreateEntity();
+    auto& tr = registry.emplace<ecs::Transform>(entity);
+    tr.SetPosition(0.0f, 1.0f, -100.0f);
 
-	auto& tr = registry.emplace<ecs::Transform>(entity);
+    auto& cam = registry.emplace<ecs::CameraComponent>(entity);
+    cam.IsMainCamera = true;
+    cam.Fov = 60.0f;
+    cam.Near = 0.1f;
+    cam.Far = 1000.0f;
+    cam.SetAspectRatioFromWindow(sys::Window::Get());
 
-	tr.SetPosition(0.0f, 1.0f, -100.0f);
-
-	auto& cam = registry.emplace<ecs::CameraComponent>(entity);
-	cam.IsMainCamera = true;
-	cam.Fov = 60.0f;
-	cam.Near = 0.1f;  // 近すぎてクリップするのを防ぐため 0.01f から 0.1f に推奨変更
-	cam.Far = 1000.0f;
-	cam.SetAspectRatioFromWindow(sys::Window::Get());
-
-	return entity;
+    return entity;
 }
 
-// テスト用のライト作成
 void CreateLight()
 {
-	auto& registry = ecs::EntityManager::Get().GetRegistry();
-	entt::entity entity = ecs::EntityManager::Get().CreateEntity();
+    auto& registry = ecs::EntityManager::Get().GetRegistry();
+    entt::entity entity = ecs::EntityManager::Get().CreateEntity();
 
-	// 座標系
-	auto& tr = registry.emplace<ecs::Transform>(entity);
+    registry.emplace<ecs::Transform>(entity);
 
-	// ライト
-	auto& light = registry.emplace<ecs::DirectionalLightComponent>(entity);
+    auto& light = registry.emplace<ecs::DirectionalLightComponent>(entity);
+    light.Direction = { 0.3f, -1.0f, 0.5f }; // 斜め下向き
+    light.Color = { 1.0f,  1.0f, 1.0f };
+    light.Intensity = 1.0f;
+    light.IsActive = true;
 
+    // ── Shadow 設定 ────────────────────────────────────────
+    // CastShadow = true にするだけで Shadow Map が生成される。
+    // ShadowRange / ShadowTarget / ShadowDistance はシーン規模に合わせて調整。
+    light.CastShadow = true;
+    light.ShadowRange = 50.0f;   // 50x50 ユニットのエリアをカバー
+    light.ShadowTarget = { 0.0f, 0.0f, 0.0f }; // シーン中心
+    light.ShadowDistance = 30.0f;   // ライト位置をターゲットから 30 ユニット離す
+    light.ShadowNear = 0.1f;
+    light.ShadowFar = 200.0f;
+    light.ShadowBias = 0.005f;  // アクネが出たら増やす
 }
 
-// テスト用のfieldの作成
 void CreateField()
 {
-	auto& manager = ecs::EntityManager::Get();
-	auto& registry = ecs::EntityManager::Get().GetRegistry();
+    auto& manager = ecs::EntityManager::Get();
+    auto& registry = manager.GetRegistry();
 
-	// Resource取得
-	auto res = graphics::PrimitiveResourceManager::Get().GetResource("Field");
-	float scale = 10;
+    auto res = graphics::PrimitiveResourceManager::Get().GetResource("Field");
+    float scale = 10;
 
-	auto entity = manager.CreateEntity();
-	auto& tr = manager.AddComponent<ecs::Transform>(entity);
-	tr.SetScale(scale);
+    auto entity = manager.CreateEntity();
+    auto& tr = manager.AddComponent<ecs::Transform>(entity);
+    tr.SetScale(scale);
 
-	auto& fbx = manager.AddComponent<ecs::FbxComponent>(entity);
-	fbx.Resource = res;
-	fbx.CustomColor = { 1,0,0,1 };
+    auto& fbx = manager.AddComponent<ecs::FbxComponent>(entity);
+    fbx.Resource = res;
+    fbx.CustomColor = { 1,0,0,1 };
 
-	registry.emplace<ecs::ColliderComponent>(entity,
-		ecs::ColliderComponent::MakeBox({ 50.f, 0.5f, 50.f })); // 幅100 × 高さ1 × 奥行100
-
-	registry.emplace<ecs::RigidBodyComponent>(entity,
-		ecs::RigidBodyComponent::MakeStatic());
-
+    registry.emplace<ecs::ColliderComponent>(entity,
+        ecs::ColliderComponent::MakeBox({ 50.f, 0.5f, 50.f }));
+    registry.emplace<ecs::RigidBodyComponent>(entity,
+        ecs::RigidBodyComponent::MakeStatic());
 }
 
-// テスト用のスカイボックスの作成
 void CreateSkybox()
 {
-	auto& manager = ecs::EntityManager::Get();
-	auto entity = manager.CreateEntity();
-
-	// Resource
-	auto& skybox = manager.AddComponent<ecs::SkyboxComponent>(entity);
-	skybox.TexturePath = "Assets/Skybox/skybox.dds";
-
+    auto& manager = ecs::EntityManager::Get();
+    auto entity = manager.CreateEntity();
+    auto& skybox = manager.AddComponent<ecs::SkyboxComponent>(entity);
+    skybox.TexturePath = "Assets/Skybox/skybox.dds";
 }
 
 void CreateDebugObject()
 {
-	// fbx
-#if	DEBUG_FBX
-	LoadResource();
-	Create3DModel();
-	CreateField();
+#if DEBUG_FBX
+    LoadResource();
+    Create3DModel();
+    CreateField();
 #endif
-
-	// sprite
-#if	DEBUG_SPRITE
-	SpriteRenderTest();
+#if DEBUG_SPRITE
+    SpriteRenderTest();
 #endif
-
-	// camera
-#if	DEBUG_CAMERA
-	CreateCamera();
+#if DEBUG_CAMERA
+    CreateCamera();
 #endif
-
-	// sound
-#if	DEBUG_SOUND
-	CreateSound();
+#if DEBUG_SOUND
+    CreateSound();
 #endif
-
-	// light
-#if	DEBUG_LIGHT
-	CreateLight();
+#if DEBUG_LIGHT
+    CreateLight();
 #endif
-
-	CreateSkybox();
-
+    CreateSkybox();
 }
 
 namespace sys
 {
+    Engine::Engine()
+        : mIsRunning(false)
+        , mIsInitialized(false)
+        , mWindow(nullptr)
+        , mDevice(nullptr)
+        , mImGuiManager(nullptr)
+        , mInputManager(nullptr)
+        , mDX12Renderer(nullptr)
+    {
+    }
 
-	Engine::Engine()
-		: mIsRunning(false)
-		, mIsInitialized(false)
-		, mWindow(nullptr)
-		, mDevice(nullptr)
-		, mImGuiManager(nullptr)
-		, mInputManager(nullptr)
-		, mDX12Renderer(nullptr)
-	{
-	}
+    EngineContext Engine::LoadBootstrapConfig()
+    {
+        data::WindowConfig WindowCfg = LoadWindowConfig(ASSET_PATH("/Engine/BootstrapConfig/WindowConfig.json"));
+        WindowContext wctx;
+        wctx.VirtualWidth = 1920;
+        wctx.VirtualHeight = 1080;
+        data::ApplyWindowConfig(WindowCfg, wctx);
+        return EngineContext({ wctx });
+    }
 
-	EngineContext Engine::LoadBootstrapConfig()
-	{
-		// ウィンドウ
-		data::WindowConfig WindowCfg = LoadWindowConfig(ASSET_PATH("/Engine/BootstrapConfig/WindowConfig.json"));
-		WindowContext wctx;
-		wctx.VirtualWidth = 1920;
-		wctx.VirtualHeight = 1080;
-		data::ApplyWindowConfig(WindowCfg, wctx);
+    bool Engine::Initialize()
+    {
+        if (sys::Logger::Get().Initialize() == false) return false;
 
-		return EngineContext({ wctx });
-	}
+        SINGLETON_REF(sys::AssetPathManager, AssetManager);
+        AssetManager.Initialize();
 
-	/// <summary>
-	/// App初期化
-	/// </summary>
-	/// <param name="context">初期化情報</param>
-	/// <returns>true:成功 false:失敗</returns>
-	bool Engine::Initialize()
-	{
-		// Loggerの初期化
-		if (sys::Logger::Get().Initialize() == false)
-		{
-			return false;
-		}
+        auto context = LoadBootstrapConfig();
+        mTime.Initialize();
 
-		// AssetsPath
-		SINGLETON_REF(sys::AssetPathManager, AssetManager);
-		AssetManager.Initialize();
+        mWindow = &Window::Get();
+        if (mWindow->Initialize(context.WindowContext) == false) return false;
 
-		// コンフィグの読み込み
-		auto context = LoadBootstrapConfig();
+        mDevice = &graphics::DX12Device::Get();
+        if (mDevice->Initialize() == false) return false;
 
-		// Timeの初期化
-		mTime.Initialize();
+        mDX12Renderer = &graphics::DX12Renderer::Get();
+        if (mDX12Renderer->Initialize(
+            mDevice,
+            mWindow->GetHWND(),
+            mWindow->GetWidth(),
+            mWindow->GetHeight()) == false) return false;
 
-		// ウィンドウの初期化
-		mWindow = &Window::Get();
-		if (mWindow->Initialize(context.WindowContext) == false)
-		{
-			return false;
-		}
+        auto& descriptorHeapManager = graphics::GDescriptorHeapManager::Get();
+        if (descriptorHeapManager.Initialize(mDevice->GetDevice()) == false) return false;
 
-		// DX12デバイス初期化
-		mDevice = &graphics::DX12Device::Get();
-		if (mDevice->Initialize() == false)
-		{
-			return false;
-		}
+        mImGuiManager = &sys::ImGuiManager::Get();
+        if (mImGuiManager->Initialize(
+            *mWindow, *mDevice,
+            *mDX12Renderer->GetContext(),
+            descriptorHeapManager) == false) return false;
 
-		// DX12描画管理クラス初期化
-		mDX12Renderer = &graphics::DX12Renderer::Get();
-		if (mDX12Renderer->Initialize(
-			mDevice,
-			mWindow->GetHWND(),
-			mWindow->GetWidth(),
-			mWindow->GetHeight()
-		) == false)
-		{
-			return false;
-		}
+        mEntityManager = &ecs::EntityManager::Get();
+        if (mEntityManager->Initialize() == false) return false;
 
-		// GraphicsDescriptorHeapManagerの初期化
-		auto& descriptorHeapManager = graphics::GDescriptorHeapManager::Get();
-		if (descriptorHeapManager.Initialize(mDevice->GetDevice()) == false)
-		{
-			return false;
-		}
+        mComponentSystemManager = &ecs::ComponentSystemManager::Get();
+        mComponentSystemManager->ClearUserSystems();
 
-		// ImGuiManagerの初期化
-		mImGuiManager = &sys::ImGuiManager::Get();
-		if (mImGuiManager->Initialize(*mWindow, *mDevice, *mDX12Renderer->GetContext(), descriptorHeapManager) == false)
-		{
-			return false;
-		}
+        mInputManager = &sys::InputManager::Get();
+        if (mInputManager->Initialize() == false) return false;
 
-		// EntityManagerの初期化
-		mEntityManager = &ecs::EntityManager::Get();
-		if (mEntityManager->Initialize() == false)
-		{
-			return false;
-		}
+        InitializeRenderer(descriptorHeapManager);
 
-		// ComponentSystemManagerの初期化
-		mComponentSystemManager = &ecs::ComponentSystemManager::Get();
-		mComponentSystemManager->ClearUserSystems();
+        if (sys::CameraSystem::Get().Initialize() == false) return false;
 
-		// 入力管理の初期化
-		mInputManager = &sys::InputManager::Get();
-		if (mInputManager->Initialize() == false)
-		{
-			return false;
-		}
+        SINGLETON_REF(audio::AudioManager, AudioManager);
+        if (AudioManager.Initialize() == false) return false;
+        SINGLETON_REF(audio::AudioDevice, AudioDevice);
+        if (AudioDevice.Initialize(&AudioManager, 48000U) == false) return false;
 
-		// DirectXのGraphics関係のレンダラー
-		InitializeRenderer(descriptorHeapManager);
-
-		// カメラ
-		if (sys::CameraSystem::Get().Initialize() == false)
-		{
-			return false;
-		}
-
-		// Audio
-		SINGLETON_REF(audio::AudioManager, AudioManager);
-		if (AudioManager.Initialize() == false)
-		{
-			return false;
-		}
-		SINGLETON_REF(audio::AudioDevice, AudioDevice);
-		if(AudioDevice.Initialize(&AudioManager, 48000U) == false)
-		{
-			return false;
-		}
-
-		// 物理
-		SINGLETON_REF(sys::PhysicsManager, PhysicsManager);
-		if (PhysicsManager.Initialize(mEntityManager->GetRegistry()) == false)
-		{
-			return false;
-		}
+        SINGLETON_REF(sys::PhysicsManager, PhysicsManager);
+        if (PhysicsManager.Initialize(mEntityManager->GetRegistry()) == false) return false;
 
 #ifdef _DEBUG
-		if (graphics::PhysicsDebugRenderer::Get().Initialize() == false)
-		{
-			return false;
-		}
+        if (graphics::PhysicsDebugRenderer::Get().Initialize() == false) return false;
+#endif
 
-#endif // _DEBUG
+        mSceneManager = &sys::SceneManager::Get();
+        mSceneManager->Initialize(sys::SceneFactory::Get().GetDefaultSceneName());
 
-		// シーン
-		mSceneManager = &sys::SceneManager::Get();
-		mSceneManager->Initialize(sys::SceneFactory::Get().GetDefaultSceneName());
+        CreateDebugObject();
+        InitializeDebugUI();
 
+        mIsRunning = true;
+        mIsInitialized = true;
 
-		// テスト用のインスタンス生成
-		CreateDebugObject();
+        DEBUG_LOG(sys::eLogLevel::Log, "Engine initialized successfully.");
+        return true;
+    }
 
-		InitializeDebugUI();
+    bool Engine::Run()
+    {
+        if (mIsInitialized == false) return false;
 
-		mIsRunning = true;
-		mIsInitialized = true;
+        mWindow->ProcessMessages();
+        if (mWindow->IsQuitRequested())
+        {
+            mIsRunning = false;
+            return false;
+        }
 
-		DEBUG_LOG(sys::eLogLevel::Log, "Engine initialized successfully.");
+        this->Update();
+        this->Render();
+        this->Conclude();
+        return true;
+    }
 
-		return true;
-	}
+    bool Engine::Finalize()
+    {
+        if (mIsInitialized == false) return false;
 
-	/// <summary>
-	/// Appの実行
-	/// </summary>
-	bool Engine::Run()
-	{
-		if (mIsInitialized == false)  return false;
+        if (mDX12Renderer != nullptr)
+            mDX12Renderer->WaitForGPU();
 
-		// OSメッセ処理
-		mWindow->ProcessMessages();
+        mDX12Renderer->Finalize();
+        mDX12Renderer = nullptr;
 
-		if (mWindow->IsQuitRequested())
-		{
-			mIsRunning = false;
-			return false;
-		}
+        mDevice->Finalize();
+        mDevice = nullptr;
 
-		// 更新
-		this->Update();
-
-		// 描画
-		this->Render();
-
-		// フレーム末の処理
-		this->Conclude();
-
-		return true;
-	}
-
-	/// <summary>
-	/// App終了処理
-	/// </summary>
-	/// <returns>true:成功 false:失敗</returns>
-	bool Engine::Finalize()
-	{
-		if (mIsInitialized == false)  return false;
-
-		// GPU完了待ち
-		if (mDX12Renderer != nullptr)
-		{
-			mDX12Renderer->WaitForGPU();
-		}
-
-		// Dx12Rendererの破棄
-		mDX12Renderer->Finalize();
-		mDX12Renderer = nullptr;
-
-		// Dx12Deviceの破棄
-		mDevice->Finalize();
-		mDevice = nullptr;
-
-		// 物理
-		sys::PhysicsManager::Get().Finalize();
+        sys::PhysicsManager::Get().Finalize();
 #ifdef _DEBUG
-		graphics::PhysicsDebugRenderer::Get().Finalize();
-#endif // _DEBUG
+        graphics::PhysicsDebugRenderer::Get().Finalize();
+#endif
 
-		// シーン
-		mSceneManager->PostUpdate();
+        mSceneManager->PostUpdate();
+        sys::Logger::Get().Finalize();
+        return true;
+    }
 
-		// コンソールの終了
-		sys::Logger::Get().Finalize();
+    bool Engine::InitializeRenderer(graphics::GDescriptorHeapManager& descriptorHeapManager)
+    {
+        using namespace graphics;
 
-		return true;
-	}
+        if (SpriteRenderer::Get().Initialize(
+            *mDevice, descriptorHeapManager,
+            graphics::ShaderManager::Get(), *mWindow) == false) return false;
 
-	/// <summary>
-	/// レンダラの初期化
-	/// </summary>
-	/// <returns></returns>
-	bool Engine::InitializeRenderer(graphics::GDescriptorHeapManager& descriptorHeapManager)
-	{
-		using namespace graphics;
+        if (FbxRenderer::Get().Initialize(
+            *mDevice, descriptorHeapManager,
+            graphics::ShaderManager::Get()) == false) return false;
 
-		// sprite
-		if (SpriteRenderer::Get().Initialize(*mDevice, descriptorHeapManager, graphics::ShaderManager::Get(), *mWindow) == false)
-		{
-			return false;
-		}
+        PrimitiveResourceManager::Get().Initialize();
 
-		// fbx
-		if (FbxRenderer::Get().Initialize(*mDevice, descriptorHeapManager, graphics::ShaderManager::Get()) == false)
-		{
-			return false;
-		}
+        if (SkyboxRenderer::Get().Initialize() == false) return false;
 
-		// primitive
-		PrimitiveResourceManager::Get().Initialize();
+        return true;
+    }
 
-		// skybox
-		if (SkyboxRenderer::Get().Initialize() == false)
-		{
-			return false;
-		}
+    void Engine::InitializeDebugUI()
+    {
+        auto& registry = mEntityManager->GetRegistry();
+        sys::LightSystem::DebugUI(registry);
+    }
 
-		return true;
-	}
+    void Engine::Update()
+    {
+        { mTime.Update(); }
 
-	void Engine::InitializeDebugUI()
-	{
-		auto& registry = mEntityManager->GetRegistry();
+        auto& registry = ecs::EntityManager::Get().GetRegistry();
+        auto  dt = mTime.GetDeltaTime();
+        float rawDt = mTime.GetRawDeltaTime();
 
-		// ライト
-		sys::LightSystem::DebugUI(registry);
+        {
+            mSceneManager->Update(rawDt);
 
-	}
+            mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PreUpdate, registry, dt, rawDt);
+            mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::Update, registry, dt, rawDt);
 
-	/// <summary>
-	/// 状態更新
-	/// </summary>
-	void Engine::Update()
-	{
-		// 事前更新
-		{
-			// 時間経過
-			mTime.Update();
-		}
+            sys::PhysicsSystem::BuildPendingBodies(registry);
+            sys::PhysicsSystem::SyncFromTransform(registry);
 
-		// 取得
-		auto& registry = ecs::EntityManager::Get().GetRegistry();
-		auto dt = mTime.GetDeltaTime();
-		float rawDt = mTime.GetRawDeltaTime();
+            while (mTime.AccumulateFixedStep())
+                sys::PhysicsSystem::Update(registry, mTime.GetFixedDeltaTime());
 
-		// メイン更新
-		{
-			mSceneManager->Update(rawDt);
+            sys::PhysicsSystem::SyncToTransform(registry);
 
-			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PreUpdate, registry, dt, rawDt);
+            mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PostUpdate, registry, dt, rawDt);
+        }
 
-			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::Update, registry, dt, rawDt);
+        {
+            graphics::FbxAnimSystem::Update(registry, dt);
+            sys::CameraSystem::Get().Update(registry);
 
-			sys::PhysicsSystem::BuildPendingBodies(registry);
-			sys::PhysicsSystem::SyncFromTransform(registry);
+            // ライト更新 (LightViewProj の計算も含む)
+            sys::LightSystem::Update(registry);
+        }
+    }
 
-			// 衝突イベント発火
-			while (mTime.AccumulateFixedStep())
-			{
-				// 物理演算の更新 固定ステップにする。
-				sys::PhysicsSystem::Update(registry, mTime.GetFixedDeltaTime());
-			}
-			// 座標更新、行列更新
-			sys::PhysicsSystem::SyncToTransform(registry);
+    void Engine::Render()
+    {
+        auto  context = mDX12Renderer->GetContext();
+        auto& registry = mEntityManager->GetRegistry();
+        auto  cmdList = context->GetCommandList();
 
+        // ── Begin ─────────────────────────────────────────────
+        {
+            mDX12Renderer->BeginFrame();
+            graphics::RenderContext::Get().SetFrameIndex(context->GetCurrentFrameIndex());
+            mImGuiManager->NewFrame();
+            mImGuiManager->Update();
+        }
 
-			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PostUpdate, registry, dt, rawDt);
-		}
+        // ── Draw ──────────────────────────────────────────────
+        {
+            SINGLETON_REF(graphics::FbxRenderer, FbxRenderer);
 
-		// 事後更新
-		{
-			// FBXアニメーション時間の更新
-			graphics::FbxAnimSystem::Update(registry, dt);
+            // 1. フレームデータを収集
+            FbxRenderer.Begin();
+            FbxRenderer.UpdateAndDraw(registry);
 
-			// カメラ行列の更新
-			sys::CameraSystem::Get().Update(registry);
+            // 2. Shadow Pass
+            //    RTV を外して Shadow Map (DSV) に深度を書き込む。
+            //    BeginFrame でセットした RTV が上書きされるので、
+            //    直後に RestoreMainRenderTarget で元に戻す。
+            FbxRenderer.DrawShadowPass(cmdList);
 
-			// ライトの更新
-			sys::LightSystem::Update(registry);
+            // 3. メインの RTV / DSV / ビューポートを再セット
+            context->RestoreMainRenderTarget(cmdList);
 
-		}
-	}
+            // 4. 通常描画パス (Shadow Map は SRV として t10 にバインド済み)
+            FbxRenderer.End(cmdList);
 
-	/// <summary>
-	/// 描画
-	/// </summary>
-	void Engine::Render()
-	{
-		auto context = mDX12Renderer->GetContext();
+            // skybox
+            SINGLETON_REF(graphics::SkyboxRenderer, SkyboxRenderer);
+            SkyboxRenderer.Begin();
+            SkyboxRenderer.UpdateAndDraw(registry);
+            SkyboxRenderer.End(cmdList, FbxRenderer.GetSceneBufferGpuHandle());
 
-		auto& registry = mEntityManager->GetRegistry();
-		auto cmdList = context->GetCommandList();
-
-		// Begin
-		{
-			mDX12Renderer->BeginFrame();
-			graphics::RenderContext::Get().SetFrameIndex(context->GetCurrentFrameIndex());
-
-			mImGuiManager->NewFrame();
-			mImGuiManager->Update();
-		}
-
-		// Draw
-		{
-			// 3Dモデル
-			SINGLETON_REF(graphics::FbxRenderer, FbxRenderer);
-			FbxRenderer.Begin();
-			FbxRenderer.UpdateAndDraw(registry);
-			FbxRenderer.End(cmdList);
-
-			// skybox
-			SINGLETON_REF(graphics::SkyboxRenderer, SkyboxRenderer);
-			SkyboxRenderer.Begin();
-			SkyboxRenderer.UpdateAndDraw(registry);
-			SkyboxRenderer.End(cmdList, FbxRenderer.GetSceneBufferGpuHandle());
-
-			// 2DSprite
-			SINGLETON_REF(graphics::SpriteRenderer, spriteRenderer);
-			spriteRenderer.Begin();
-			spriteRenderer.UpdateAndDraw(registry);
-			spriteRenderer.End(cmdList);
+            // 2D Sprite
+            SINGLETON_REF(graphics::SpriteRenderer, spriteRenderer);
+            spriteRenderer.Begin();
+            spriteRenderer.UpdateAndDraw(registry);
+            spriteRenderer.End(cmdList);
 
 #ifdef _DEBUG
+            graphics::PhysicsDebugRenderer::Get().Draw(registry, cmdList);
+#endif
+        }
 
-			graphics::PhysicsDebugRenderer::Get().Draw(registry, cmdList);
-#endif // _DEBUG
+        // ── End ───────────────────────────────────────────────
+        {
+            mImGuiManager->EndFrame();
+            mDX12Renderer->EndFrame();
+        }
+    }
 
-		}
+    void Engine::Conclude()
+    {
+        mInputManager->Update();
+        mSceneManager->PostUpdate();
+    }
 
-		// End
-		{
-
-			mImGuiManager->EndFrame();
-			mDX12Renderer->EndFrame();
-
-		}
-	}
-
-	/// <summary>
-	/// フレーム末の処理
-	/// </summary>
-	void Engine::Conclude()
-	{
-		mInputManager->Update();
-		mSceneManager->PostUpdate();
-	}
-}
+} // namespace sys

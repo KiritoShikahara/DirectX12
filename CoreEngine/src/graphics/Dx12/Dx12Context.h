@@ -11,10 +11,10 @@ namespace graphics
     class DX12Device;
 
     /// <summary>
-    /// DX12�`��R���e�L�X�g�N���X
-    /// �X���b�v�`�F�C�����g�����t���[���`�惋�[�v���Ǘ�����B
-    /// �f�o�C�X�w(DX12Device)�Ɉˑ�����B
-    /// DX12Renderer�ɂ���ď��L�E�Ǘ������B
+    /// DX12描画コンテキストクラス
+    /// スワップチェインを使ったフレーム描画ループを管理する。
+    /// デバイス層(DX12Device)に依存する。
+    /// DX12Rendererによって所有・管理される。
     /// </summary>
     class ENGINE_API DX12Context
     {
@@ -23,64 +23,71 @@ namespace graphics
         virtual ~DX12Context();
 
         /// <summary>
-        /// ������
+        /// 初期化
         /// </summary>
-        /// <param name="pDevice">�������ς݂� DX12Device</param>
-        /// <param name="WindowHandle">�ΏۃE�B���h�E�̃n���h��</param>
-        /// <param name="Width">�X�N���[������</param>
-        /// <param name="Height">�X�N���[���c��</param>
-        /// <returns>true:����</returns>
+        /// <param name="pDevice">初期化済みの DX12Device</param>
+        /// <param name="WindowHandle">対象ウィンドウのハンドル</param>
+        /// <param name="Width">スクリーン横幅</param>
+        /// <param name="Height">スクリーン縦幅</param>
+        /// <returns>true:成功</returns>
         bool Initialize(DX12Device* pDevice, HWND WindowHandle, UINT Width, UINT Height);
 
         /// <summary>
-        /// �I������
+        /// 終了処理
         /// </summary>
-        /// <returns>true:����</returns>
+        /// <returns>true:成功</returns>
         bool Finalize();
 
         /// <summary>
-        /// �t���[���`��̊J�n
-        /// (�o�b�N�o�b�t�@�̃N���A�E�����_�[�^�[�Q�b�g�ݒ�)
+        /// フレーム描画の開始
+        /// (バックバッファのクリア・レンダーターゲット設定)
         /// </summary>
         void BeginRendering();
 
         /// <summary>
-        /// ��ʂ̃t���b�v(�R�}���h���M�EPresent)
+        /// 画面のフリップ(コマンド送信・Present)
         /// </summary>
         void Flip();
 
         /// <summary>
-        /// �SGPU �R�}���h�̊�����ҋ@����
+        /// 全GPU コマンドの完了を待機する
         /// </summary>
         void WaitForGPU();
 
         /// <summary>
-        /// �r���[�|�[�g�ƃV�U�[��`�̐ݒ�
+        /// ビューポートとシザー矩形の設定
         /// </summary>
         void SetViewPort(float Width, float Height, float x = 0.0f, float y = 0.0f);
 
         /// <summary>
-        /// �`��p�R�}���h���X�g�̎擾
+        /// Shadow Pass 後にメインの RTV / DSV を再セットする。
+        /// DrawShadowPass() は OMSetRenderTargets(0, nullptr) で RT を外すため、
+        /// 通常描画パスの前に必ずこれを呼ぶこと。
+        /// </summary>
+        void RestoreMainRenderTarget(ID3D12GraphicsCommandList* cmdList);
+
+        /// <summary>
+        /// 描画用コマンドリストの取得
         /// </summary>
         ID3D12GraphicsCommandList* GetCommandList();
 
         /// <summary>
-        /// ���݃t���[���̃R�}���h�A���P�[�^�[�̎擾
+        /// 現在フレームのコマンドアロケーターの取得
         /// </summary>
         ID3D12CommandAllocator* GetCommandAllocator();
 
         /// <summary>
-        /// �R�}���h�L���[�̎擾
+        /// コマンドキューの取得
         /// </summary>
         ID3D12CommandQueue* GetCommandQueue();
 
         /// <summary>
-        /// ���݃t���[����D3D12MA�A�b�v���[�h�v�[���̎擾
+        /// 現在フレームのD3D12MAアップロードプールの取得
         /// </summary>
         D3D12MA::Pool* GetMAUploadPool();
 
         /// <summary>
-        /// ���݃t���[���̃C���f�b�N�X�̎擾
+        /// 現在フレームのインデックスの取得
         /// </summary>
         UINT GetCurrentFrameIndex() const;
 
@@ -92,54 +99,57 @@ namespace graphics
         bool InitializeFence();
 
         /// <summary>
-        /// �t���[�����Ƃ̃��\�[�X�܂Ƃ�
+        /// フレームごとのリソースまとめ
         /// </summary>
         struct FrameResource
         {
-            /// <summary>�R�}���h���X�g�̋L�^�Ɏg����p�̗̈�B���s��̓��Z�b�g�K�{</summary>
+            /// <summary>コマンドリストの記録に使う専用の領域。実行後はリセット必須</summary>
             CmdAlloc Allocator = nullptr;
-            /// <summary>���ۂɐF���������܂��o�b�N�o�b�t�@�e�N�X�`��</summary>
+            /// <summary>実際に色を書き込まれるバックバッファテクスチャ</summary>
             Resource BackBuffer = nullptr;
-            /// <summary>���̃t���[����GPU�������m�F���邽�߂̃t�F���X�l</summary>
+            /// <summary>このフレームのGPU完了を確認するためのフェンス値</summary>
             UINT64   FenceValue = 0;
-            /// <summary>���̃t���[���p�̃A�b�v���[�h�v�[��</summary>
+            /// <summary>このフレーム用のアップロードプール</summary>
             MAPool   UploadPool = nullptr;
         };
 
-        /// <summary>DX12Device�ւ̎Q��(���C�t�^�C���̊Ǘ��̓T�[�r�X�����s��)</summary>
+        /// <summary>DX12Deviceへの参照(ライフタイムの管理はサービス側が行う)</summary>
         DX12Device* mDeviceService = nullptr;
 
-        /// <summary>�t�����g�E�o�b�N�o�b�t�@�̓���ւ�</summary>
+        /// <summary>フロント・バックバッファの入れ替え</summary>
         SwapChain   mSwapChain;
-        /// <summary>���������R�}���h��GPU�֑���o���L���[</summary>
+        /// <summary>完了したコマンドをGPUへ送り出すキュー</summary>
         CmdQueue    mCmdQueue;
-        /// <summary>GPU�ւ̖��߂��L�^����R�}���h���X�g</summary>
+        /// <summary>GPUへの命令を記録するコマンドリスト</summary>
         CmdList     mCmdList;
 
-        /// <summary>�t���[�����Ƃ̃��\�[�X�z��</summary>
+        /// <summary>フレームごとのリソース配列</summary>
         std::array<FrameResource, graphics::FRAME_COUNT> mFrames;
 
-        /// <summary>�[�x�o�b�t�@���\�[�X(�O��֌W�̔��f�Ɏg��)</summary>
+        /// <summary>深度バッファリソース(前後関係の判断に使う)</summary>
         Resource    mDepthBuffer;
-        /// <summary>RTV�p�f�B�X�N���v�^�q�[�v</summary>
+        /// <summary>RTV用ディスクリプタヒープ</summary>
         Heap        mRtvHeap;
-        /// <summary>DSV�p�f�B�X�N���v�^�q�[�v</summary>
+        /// <summary>DSV用ディスクリプタヒープ</summary>
         Heap        mDsvHeap;
 
-        /// <summary>CPU��GPU�̓����p�t�F���X</summary>
+        /// <summary>CPUとGPUの同期用フェンス</summary>
         Fence       mFence;
 
-        /// <summary>GPU�҂��C�x���g�n���h��</summary>
+        /// <summary>GPU待ちイベントハンドル</summary>
         HANDLE      mWaitForGPUEventHandle = nullptr;
-        /// <summary>����Signal����l</summary>
+        /// <summary>次にSignalする値</summary>
         UINT64      mNextFenceValue = 1;
-        /// <summary>���݃t���[���̃C���f�b�N�X</summary>
+        /// <summary>現在フレームのインデックス</summary>
         UINT        mFrameIndex = 0;
 
-        /// <summary>�w�i�N���A�F</summary>
+        /// <summary>背景クリア色</summary>
         Color       mClearColor;
-        /// <summary>�o�b�N�o�b�t�@�̃t�H�[�}�b�g</summary>
+        /// <summary>バックバッファのフォーマット</summary>
         DXGI_FORMAT mFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+
+        UINT mWidth = 0;
+        UINT mHeight = 0;
     };
 
 } // namespace graphics

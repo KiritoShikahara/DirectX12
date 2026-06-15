@@ -8,7 +8,7 @@
 
 namespace graphics
 {
-	class Texture;
+    class Texture;
 
     /// <summary>
     /// GPU頂点レイアウト
@@ -53,7 +53,7 @@ namespace graphics
         uint32_t            HasEmissive;      //  4
 
         // 色
-        DirectX::XMFLOAT4 CustomColor = {1,1,1,1}; // 16
+        DirectX::XMFLOAT4 CustomColor = { 1,1,1,1 }; // 16
     };
     static_assert(sizeof(FbxInstanceData) == 144);
     static_assert(sizeof(FbxInstanceData) % 16 == 0);
@@ -71,7 +71,9 @@ namespace graphics
 
     /// <summary>
     /// ライトデータ
-    /// 全種類のライトをtypeフィールドで識別して格納
+    /// 全種類のライトをtypeフィールドで識別して格納。
+    /// LightViewProj を追加し、Directional Light の Shadow Map 投影に使用する。
+    /// Point / Spot は現状未使用 (将来拡張用)
     /// </summary>
     struct alignas(16) LightData
     {
@@ -86,10 +88,14 @@ namespace graphics
 
         float             InnerCosine;  //  4  Spot 用 cos(InnerConeRad)
         float             OuterCosine;  //  4  Spot 用 cos(OuterConeRad)
-        float             _pad0;        //  4
-        float             _pad1;        //  4
+        // Shadow Map 投影行列 (CPU側転置済み)
+        // Directional Light のみ有効。Point/Spot は未使用 (将来拡張用)
+        uint32_t          CastShadow;   //  4  1 = Shadow Map あり
+        float             ShadowBias;   //  4  セルフシャドウ除去バイアス (推奨: 0.005)
+
+        DirectX::XMFLOAT4X4 LightViewProj; // 64 bytes (転置済み)
     };
-    static_assert(sizeof(LightData) == 64);
+    static_assert(sizeof(LightData) == 128);
     static_assert(sizeof(LightData) % 16 == 0);
 
     /// <summary>

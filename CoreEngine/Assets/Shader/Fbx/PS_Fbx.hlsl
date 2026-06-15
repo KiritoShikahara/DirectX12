@@ -55,7 +55,7 @@ float4 main(VSOutput input) : SV_TARGET
     }
 
     // ============================================================
-    //  3. Cook-Torrance PBR (マルチライト)
+    //  3. Cook-Torrance PBR (マルチライト + シャドウ)
     // ============================================================
     float3 V = normalize(scene.CameraPosition - input.WorldPos);
     float NdotV = saturate(dot(N, V));
@@ -110,7 +110,17 @@ float4 main(VSOutput input) : SV_TARGET
         float3 diffuse = kD * albedo / PI;
 
         float3 radiance = light.Color * light.Intensity * attenuation;
-        Lo += (diffuse + specular) * radiance * NdotL;
+
+        // ── Shadow ───────────────────────────────────────────
+        // index 0 の Directional Light のみ Shadow Map 参照
+        // (将来的に複数ライト対応する場合はここを拡張)
+        float shadowFactor = 1.0f;
+        if (i == 0 && light.Type == LIGHT_TYPE_DIRECTIONAL && light.CastShadow)
+        {
+            shadowFactor = SampleShadowPCF(input.ShadowPos, light.ShadowBias);
+        }
+
+        Lo += (diffuse + specular) * radiance * NdotL * shadowFactor;
     }
 
     float3 ambient = float3(0.03f, 0.03f, 0.03f) * albedo * ao;

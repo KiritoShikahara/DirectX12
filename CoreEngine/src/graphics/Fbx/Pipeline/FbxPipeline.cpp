@@ -12,11 +12,13 @@ namespace graphics
 
     bool FbxPipeline::CreateRootSignature(ID3D12Device* device)
     {
+        // DescriptorRange (DescriptorTable スロット分)
         CD3DX12_DESCRIPTOR_RANGE1 rangeInstance, rangeBone,
             rangeAlbedo, rangeNormal,
             rangeMetallic, rangeRoughness,
             rangeAO, rangeEmissive,
-            rangeScene, rangeLight;
+            rangeScene, rangeLight,
+            rangeShadowMap;
 
         rangeInstance.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0
         rangeBone.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1); // t1
@@ -28,9 +30,11 @@ namespace graphics
         rangeEmissive.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 7); // t7
         rangeScene.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 8); // t8
         rangeLight.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 9); // t9
+        rangeShadowMap.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 10); // t10
 
-        CD3DX12_ROOT_PARAMETER1 params[11];
-        params[SLOT_INSTANCE_INDEX].InitAsConstants(1, 0, 0, D3D12_SHADER_VISIBILITY_ALL);
+        // params[13]
+        CD3DX12_ROOT_PARAMETER1 params[13];
+        params[SLOT_INSTANCE_INDEX].InitAsConstants(1, 0, 0, D3D12_SHADER_VISIBILITY_ALL);  // b0
         params[SLOT_INSTANCE_BUFFER].InitAsDescriptorTable(1, &rangeInstance, D3D12_SHADER_VISIBILITY_ALL);
         params[SLOT_BONE_BUFFER].InitAsDescriptorTable(1, &rangeBone, D3D12_SHADER_VISIBILITY_VERTEX);
         params[SLOT_ALBEDO_TEX].InitAsDescriptorTable(1, &rangeAlbedo, D3D12_SHADER_VISIBILITY_PIXEL);
@@ -40,14 +44,36 @@ namespace graphics
         params[SLOT_AO_TEX].InitAsDescriptorTable(1, &rangeAO, D3D12_SHADER_VISIBILITY_PIXEL);
         params[SLOT_EMISSIVE_TEX].InitAsDescriptorTable(1, &rangeEmissive, D3D12_SHADER_VISIBILITY_PIXEL);
         params[SLOT_SCENE_BUFFER].InitAsDescriptorTable(1, &rangeScene, D3D12_SHADER_VISIBILITY_ALL);
-        params[SLOT_LIGHT_BUFFER].InitAsDescriptorTable(1, &rangeLight, D3D12_SHADER_VISIBILITY_PIXEL);
+        params[SLOT_LIGHT_BUFFER].InitAsDescriptorTable(1, &rangeLight, D3D12_SHADER_VISIBILITY_ALL);
+        params[SLOT_SHADOW_MAP].InitAsDescriptorTable(1, &rangeShadowMap, D3D12_SHADER_VISIBILITY_PIXEL);
+        params[SLOT_SHADOW_LIGHT_INDEX].InitAsConstants(1, 1, 0, D3D12_SHADER_VISIBILITY_VERTEX); // b1
 
-        CD3DX12_STATIC_SAMPLER_DESC sampler(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR);
+        // Static Sampler x2
+        // s0: 通常テクスチャ用 Linear サンプラー
+        // s1: PCF 用比較サンプラー (COMPARISON_LESS_EQUAL)
+        CD3DX12_STATIC_SAMPLER_DESC samplers[2];
+
+        samplers[0].Init(
+            0, // s0
+            D3D12_FILTER_MIN_MAG_MIP_LINEAR,
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP);
+
+        samplers[1].Init(
+            1, // s1
+            D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT,
+            D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+            D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+            D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+            0.0f,                                    // MipLODBias
+            16,                                      // MaxAnisotropy
+            D3D12_COMPARISON_FUNC_LESS_EQUAL);       // PCF 比較関数
 
         CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC desc;
         desc.Init_1_1(
             _countof(params), params,
-            1, &sampler,
+            _countof(samplers), samplers,
             D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
         Blob sigBlob, errBlob;
@@ -69,7 +95,6 @@ namespace graphics
         }
         mRootSignature->SetName(L"FbxRootSignature");
         return true;
-
     }
 
     // ── PSO ──────────────────────────────────────────────────────

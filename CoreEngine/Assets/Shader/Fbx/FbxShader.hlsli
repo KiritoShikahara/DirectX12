@@ -67,8 +67,10 @@ struct LightData
 
     float InnerCosine; // Spot: cos(InnerConeRad)
     float OuterCosine; // Spot: cos(OuterConeRad)
-    float _pad0;
-    float _pad1;
+    uint CastShadow; // 1 = Shadow Map あり
+    float ShadowBias; // セルフシャドウ除去バイアス
+
+    float4x4 LightViewProj; // CPU側転置済み (Directional のみ有効)
 };
 
 struct FbxSceneData
@@ -89,10 +91,15 @@ Texture2D EmissiveTexture : register(t7);
 StructuredBuffer<FbxSceneData> SceneBuffer : register(t8);
 StructuredBuffer<LightData> LightBuffer : register(t9);
 
+// Shadow Map (t10): Directional Light の深度テクスチャ
+Texture2D<float> ShadowMap : register(t10);
+
 SamplerState LinearSampler : register(s0);
+// PCF 比較サンプラー: ShadowMap.SampleCmpLevelZero() で使用
+SamplerComparisonState ShadowSampler : register(s1);
 
 // ============================================================
-//  頂点入出力 (InstIdx は g_InstanceIndex に統一したので不要)
+//  頂点入出力
 // ============================================================
 struct VSInput
 {
@@ -112,6 +119,7 @@ struct VSOutput
     float3 WorldNormal : TEXCOORD2;
     float3 WorldTangent : TEXCOORD3;
     float3 WorldBitan : TEXCOORD4;
+    float4 ShadowPos : TEXCOORD5; // ライト空間クリップ座標
 };
 
 // ============================================================
@@ -138,4 +146,40 @@ float G_Smith(float NdotV, float NdotL, float roughness)
 float3 F_Schlick(float HdotV, float3 F0)
 {
     return F0 + (1.0f - F0) * pow(saturate(1.0f - HdotV), 5.0f);
+}
+
+// ============================================================
+//  PCF Shadow サンプリング (3x3 カーネル)
+//
+//  shadowPos : ライト空間クリップ座標 (VS で計算済み)
+//  bias      : LightData.ShadowBias
+//  戻り値    : 0.0(完全に影) 〜 1.0(完全に光)
+// ============================================================
+float SampleShadowPCF(float4 shadowPos, float bias)
+{
+    // クリップ → NDC → UV 変換
+    float3 ndc = shadowPos.xyz / shadowPos.w;
+    float2 uv = ndc.xy * float2(0.5f, -0.5f) + 0.5f;
+    float depth = ndc.z - bias;
+
+    // Shadow Map の外側は常に明るい (影なし)
+    if (uv.x < 0.0f || uv.x > 1.0f || uv.y < 0.0f || uv.y > 1.0f || ndc.z > 1.0f)
+        return 1.0f;
+
+    // Shadow Map のテクセルサイズ (2048x2048 固定)
+    const float texelSize = 1.0f / 2048.0f;
+
+    // 3x3 PCF カーネル
+    float shadow = 0.0f;
+    [unroll]
+    for (int y = -1; y <= 1; ++y)
+    {
+        [unroll]
+        for (int x = -1; x <= 1; ++x)
+        {
+            float2 offset = float2(x, y) * texelSize;
+            shadow += ShadowMap.SampleCmpLevelZero(ShadowSampler, uv + offset, depth);
+        }
+    }
+    return shadow / 9.0f;
 }
