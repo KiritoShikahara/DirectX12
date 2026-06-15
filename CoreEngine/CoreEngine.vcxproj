@@ -147,7 +147,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\Data\DataStorage\DataReflection.h" />
-    <ClInclude Include="src\Data\DataStorage\Reflection.h" />
+    <ClInclude Include="src\Data\Storage\Loader\CsvParser.h" />
+    <ClInclude Include="src\Data\Storage\Loader\JsonSerializer.h" />
+    <ClInclude Include="src\Data\Storage\Manager\SqliteManager.h" />
+    <ClInclude Include="src\Data\Storage\Reflection.h" />
     <ClInclude Include="src\system\Scene\Default\DefaultScene.h" />
     <ClInclude Include="src\system\Scene\Factory\SceneFactory.h" />
     <ClInclude Include="src\system\Scene\Manager\SceneManager.h" />
