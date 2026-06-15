@@ -321,6 +321,9 @@
     <ClInclude Include="src\Data\Storage\Inspector\DataInspector.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\Config\WindowConfig.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics\Dx12\Dx12Device.cpp">
@@ -545,6 +548,7 @@
     <None Include="Assets\Shader\Sprite\SpriteHeader.hlsli" />
     <None Include="Assets\Shader\Model\ModelHeader.hlsli" />
     <None Include="Assets\Shader\Fbx\FbxShader.hlsli" />
+    <None Include="初期化順序.md" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Assets\Shader\Sprite\PS_Sprite.hlsl" />

@@ -146,6 +146,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\Config\WindowConfig.h" />
     <ClInclude Include="src\Data\DataStorage\DataReflection.h" />
     <ClInclude Include="src\Data\Storage\Inspector\DataInspector.h" />
     <ClInclude Include="src\Data\Storage\Loader\CsvParser.h" />
@@ -460,6 +461,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </None>
     <None Include="packages.config" />
+    <None Include="初期化順序.md">
+      <SubType>
+      </SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Assets\Shader\PhysicsDebug\PS_PhysicsDebug.hlsl">

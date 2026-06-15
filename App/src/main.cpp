@@ -11,22 +11,21 @@
 
 int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd)
 {
-	// ƒpƒ‰ƒ[ƒ^[‰Šú‰»
+	// ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãƒ¼åˆæœŸåŒ–
 
-	// ƒVƒXƒeƒ€‰Šú‰»
-	sys::EngineContext context;
+	// ã‚·ã‚¹ãƒ†ãƒ åˆæœŸåŒ–
 	auto& engine = sys::Engine::Get();
-	if (engine.Initialize(context) == false)
+	if (engine.Initialize() == false)
 	{
 		return -1;
 	}
 
-	// ƒ‹[ƒv
+	// ãƒ«ãƒ¼ãƒ—
 	while (engine.Run())
 	{
 	}
 
-	// ƒtƒ@ƒCƒiƒ‰ƒCƒY
+	// ãƒ•ã‚¡ã‚¤ãƒŠãƒ©ã‚¤ã‚º
 
 	return 0;
 }

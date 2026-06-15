@@ -34,11 +34,15 @@ namespace sys
 		SINGLETON_ACCESSOR(Engine);
 
 		/// <summary>
+		/// 起動に必要な情報を読み込む
+		/// </summary>
+		EngineContext LoadBootstrapConfig();
+
+		/// <summary>
 		/// App初期化
 		/// </summary>
-		/// <param name="context">初期化情報</param>
 		/// <returns>true:成功 false:失敗</returns>
-		bool Initialize(EngineContext context);
+		bool Initialize();
 
 		/// <summary>
 		/// Appの実行
