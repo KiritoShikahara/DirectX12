@@ -19,6 +19,9 @@
 #include<audio/Manager/AudioManager.h>
 #include<audio/Resource/AudioResourceManager.h>
 
+// Renderer
+#include<graphics/Skybox/Renderer/SkyboxRenderer.h>
+
 // 3D
 #include<graphics/Fbx/Renderer/FbxRenderer.h>
 #include<graphics/Fbx/Animation/FbxAnimSystem.h>
@@ -60,6 +63,7 @@
 #include<ecs/component/Light/LightComponent.h>
 #include<ecs/component/collider/ColliderComponent.h>
 #include<ecs/component/rigidbody/RigidbodyComponent.h>
+#include<ecs/component/skybox/SkyboxComponent.h>
 
 // Resoruce
 #include<graphics/Texture/Texture.h>
@@ -197,6 +201,18 @@ void CreateField()
 
 }
 
+// テスト用のスカイボックスの作成
+void CreateSkybox()
+{
+	auto& manager = ecs::EntityManager::Get();
+	auto entity = manager.CreateEntity();
+
+	// Resource
+	auto& skybox = manager.AddComponent<ecs::SkyboxComponent>(entity);
+	skybox.TexturePath = "Assets/Skybox/skybox.dds";
+
+}
+
 void CreateDebugObject()
 {
 	// fbx
@@ -225,6 +241,8 @@ void CreateDebugObject()
 #if	DEBUG_LIGHT
 	CreateLight();
 #endif
+
+	CreateSkybox();
 
 }
 
@@ -335,26 +353,8 @@ namespace sys
 			return false;
 		}
 
-		// TextureManager
-		SINGLETON_REF(graphics::TextureManager, TextureManager);
-
-		// Renderer
-		SINGLETON_REF(graphics::SpriteRenderer, SpriteRenderer);
-		if(SpriteRenderer.Initialize(*mDevice, descriptorHeapManager, graphics::ShaderManager::Get(), *mWindow) == false)
-		{
-			return false;
-		}
-
-		// Fbx
-		SINGLETON_REF(graphics::FbxRenderer, FbxRenderer);
-		if (FbxRenderer.Initialize(*mDevice, descriptorHeapManager, graphics::ShaderManager::Get()) == false)
-		{
-			return false;
-		}
-
-		// PrimitiveModel
-		SINGLETON_REF(graphics::PrimitiveResourceManager, PrimitiveResourceManager);
-		PrimitiveResourceManager.Initialize();
+		// DirectXのGraphics関係のレンダラー
+		InitializeRenderer(descriptorHeapManager);
 
 		// カメラ
 		if (sys::CameraSystem::Get().Initialize() == false)
@@ -472,6 +472,38 @@ namespace sys
 		return true;
 	}
 
+	/// <summary>
+	/// レンダラの初期化
+	/// </summary>
+	/// <returns></returns>
+	bool Engine::InitializeRenderer(graphics::GDescriptorHeapManager& descriptorHeapManager)
+	{
+		using namespace graphics;
+
+		// sprite
+		if (SpriteRenderer::Get().Initialize(*mDevice, descriptorHeapManager, graphics::ShaderManager::Get(), *mWindow) == false)
+		{
+			return false;
+		}
+
+		// fbx
+		if (FbxRenderer::Get().Initialize(*mDevice, descriptorHeapManager, graphics::ShaderManager::Get()) == false)
+		{
+			return false;
+		}
+
+		// primitive
+		PrimitiveResourceManager::Get().Initialize();
+
+		// skybox
+		if (SkyboxRenderer::Get().Initialize() == false)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 	void Engine::InitializeDebugUI()
 	{
 		auto& registry = mEntityManager->GetRegistry();
@@ -518,8 +550,6 @@ namespace sys
 			sys::PhysicsSystem::SyncToTransform(registry);
 
 
-			
-
 			mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PostUpdate, registry, dt, rawDt);
 		}
 
@@ -563,6 +593,12 @@ namespace sys
 			FbxRenderer.Begin();
 			FbxRenderer.UpdateAndDraw(registry);
 			FbxRenderer.End(cmdList);
+
+			// skybox
+			SINGLETON_REF(graphics::SkyboxRenderer, SkyboxRenderer);
+			SkyboxRenderer.Begin();
+			SkyboxRenderer.UpdateAndDraw(registry);
+			SkyboxRenderer.End(cmdList, FbxRenderer.GetSceneBufferGpuHandle());
 
 			// 2DSprite
 			SINGLETON_REF(graphics::SpriteRenderer, spriteRenderer);

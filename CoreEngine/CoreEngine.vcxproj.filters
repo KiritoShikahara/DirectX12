@@ -573,7 +573,6 @@
     <FxCompile Include="Assets\Shader\PhysicsDebug\VS_PhysicsDebug.hlsl" />
     <FxCompile Include="Assets\Shader\PhysicsDebug\PS_PhysicsDebug.hlsl" />
     <FxCompile Include="Assets\Shader\Skybox\SkyboxVS.hlsl" />
-    <FxCompile Include="Assets\Shader\Skybox\PS_Skybox.hlsl" />
     <FxCompile Include="Assets\Shader\Skybox\SkyboxPS.hlsl" />
   </ItemGroup>
 </Project>
