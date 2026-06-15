@@ -460,8 +460,12 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </None>
+    <None Include="doc\導入ライブラリ.md">
+      <SubType>
+      </SubType>
+    </None>
     <None Include="packages.config" />
-    <None Include="初期化順序.md">
+    <None Include="doc\初期化順序.md">
       <SubType>
       </SubType>
     </None>
