@@ -146,15 +146,8 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\Data\DataStorage\Registry\ConfigRegistry.h" />
-    <ClInclude Include="src\Data\DataStorage\Manager\ConfigManager.h" />
-    <ClInclude Include="src\Data\DataStorage\Loader\CsvParser.h" />
-    <ClInclude Include="src\Data\DataStorage\Manager\DataManager.h" />
     <ClInclude Include="src\Data\DataStorage\DataReflection.h" />
-    <ClInclude Include="src\Data\DataStorage\Registry\DataRegistry.h" />
-    <ClInclude Include="src\Data\DataStorage\Loader\JsonSerializer.h" />
-    <ClInclude Include="src\Data\DataStorage\RegistryBase.h" />
-    <ClInclude Include="src\Data\DataStorage\Manager\SqliteManager.h" />
+    <ClInclude Include="src\Data\DataStorage\Reflection.h" />
     <ClInclude Include="src\system\Scene\Default\DefaultScene.h" />
     <ClInclude Include="src\system\Scene\Factory\SceneFactory.h" />
     <ClInclude Include="src\system\Scene\Manager\SceneManager.h" />
@@ -250,7 +243,6 @@
     <ClInclude Include="src\graphics\Transition\TransitionRenderer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Data\DataStorage\Registry\ConfigRegistry.cpp" />
     <ClCompile Include="external\SQLite\sqlite3.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
@@ -283,9 +275,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\Data\DataStorage\Loader\CsvParser.cpp" />
-    <ClCompile Include="src\Data\DataStorage\Registry\DataRegistry.cpp" />
-    <ClCompile Include="src\Data\DataStorage\Manager\SqliteManager.cpp" />
     <ClCompile Include="src\system\Scene\Factory\SceneFactory.cpp" />
     <ClCompile Include="src\system\Scene\Manager\SceneManager.cpp" />
     <ClCompile Include="src\graphics\Line\Renderer\PhysicsDebugRenderer.cpp" />

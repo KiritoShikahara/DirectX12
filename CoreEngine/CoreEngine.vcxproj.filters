@@ -291,28 +291,7 @@
     <ClInclude Include="src\Data\DataStorage\DataReflection.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="src\Data\DataStorage\Manager\SqliteManager.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Data\DataStorage\Loader\CsvParser.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Data\DataStorage\Loader\JsonSerializer.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Data\DataStorage\Manager\DataManager.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Data\DataStorage\Registry\DataRegistry.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Data\DataStorage\Manager\ConfigManager.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Data\DataStorage\RegistryBase.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Data\DataStorage\Registry\ConfigRegistry.h">
+    <ClInclude Include="src\Data\DataStorage\Reflection.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
@@ -531,18 +510,6 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="external\SQLite\sqlite3.c">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Data\DataStorage\Manager\SqliteManager.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Data\DataStorage\Loader\CsvParser.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Data\DataStorage\Registry\DataRegistry.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Data\DataStorage\Registry\ConfigRegistry.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
