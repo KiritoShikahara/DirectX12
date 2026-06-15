@@ -158,6 +158,7 @@
     <ClInclude Include="src\Data\Storage\Registry\ConfigRegistry.h" />
     <ClInclude Include="src\Data\Storage\Registry\DataRegistry.h" />
     <ClInclude Include="src\Data\Storage\Registry\RegistryBase.h" />
+    <ClInclude Include="src\ecs\component\skybox\SkyboxComponent.h" />
     <ClInclude Include="src\system\Scene\Default\DefaultScene.h" />
     <ClInclude Include="src\system\Scene\Factory\SceneFactory.h" />
     <ClInclude Include="src\system\Scene\Manager\SceneManager.h" />
