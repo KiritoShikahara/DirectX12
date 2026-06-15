@@ -146,6 +146,8 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\graphics\Skybox\Renderer\SkyboxRenderer.h" />
+    <ClInclude Include="src\graphics\Skybox\Pipeline\SkyboxPipeline.h" />
     <ClInclude Include="src\Config\WindowConfig.h" />
     <ClInclude Include="src\Data\DataStorage\DataReflection.h" />
     <ClInclude Include="src\Data\Storage\Inspector\DataInspector.h" />
@@ -286,6 +288,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\graphics\Skybox\Renderer\SkyboxRenderer.cpp" />
+    <ClCompile Include="src\graphics\Skybox\Pipeline\SkyboxPipeline.cpp" />
     <ClCompile Include="src\system\Scene\Factory\SceneFactory.cpp" />
     <ClCompile Include="src\system\Scene\Manager\SceneManager.cpp" />
     <ClCompile Include="src\graphics\Line\Renderer\PhysicsDebugRenderer.cpp" />
@@ -453,10 +457,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
-    <None Include="Assets\Shader\Model\ModelHeader.hlsli">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </None>
     <None Include="Assets\Shader\Sprite\SpriteHeader.hlsli">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
@@ -512,7 +512,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
-    <FxCompile Include="Assets\Shader\Model\PS_Model.hlsl">
+    <FxCompile Include="Assets\Shader\Skybox\SkyboxPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
@@ -522,7 +522,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
-    <FxCompile Include="Assets\Shader\Model\VS_Model.hlsl">
+    <FxCompile Include="Assets\Shader\Skybox\SkyboxVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>

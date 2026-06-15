@@ -327,6 +327,12 @@
     <ClInclude Include="src\ecs\component\skybox\SkyboxComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\Skybox\Pipeline\SkyboxPipeline.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\Skybox\Renderer\SkyboxRenderer.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics\Dx12\Dx12Device.cpp">
@@ -545,11 +551,16 @@
     <ClCompile Include="external\SQLite\sqlite3.c">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\Skybox\Pipeline\SkyboxPipeline.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Skybox\Renderer\SkyboxRenderer.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="Assets\Shader\Sprite\SpriteHeader.hlsli" />
-    <None Include="Assets\Shader\Model\ModelHeader.hlsli" />
     <None Include="Assets\Shader\Fbx\FbxShader.hlsli" />
     <None Include="doc\初期化順序.md" />
     <None Include="doc\導入ライブラリ.md" />
@@ -557,11 +568,12 @@
   <ItemGroup>
     <FxCompile Include="Assets\Shader\Sprite\PS_Sprite.hlsl" />
     <FxCompile Include="Assets\Shader\Sprite\VS_Sprite.hlsl" />
-    <FxCompile Include="Assets\Shader\Model\PS_Model.hlsl" />
-    <FxCompile Include="Assets\Shader\Model\VS_Model.hlsl" />
     <FxCompile Include="Assets\Shader\Fbx\PS_Fbx.hlsl" />
     <FxCompile Include="Assets\Shader\Fbx\VS_Fbx.hlsl" />
     <FxCompile Include="Assets\Shader\PhysicsDebug\VS_PhysicsDebug.hlsl" />
     <FxCompile Include="Assets\Shader\PhysicsDebug\PS_PhysicsDebug.hlsl" />
+    <FxCompile Include="Assets\Shader\Skybox\SkyboxVS.hlsl" />
+    <FxCompile Include="Assets\Shader\Skybox\PS_Skybox.hlsl" />
+    <FxCompile Include="Assets\Shader\Skybox\SkyboxPS.hlsl" />
   </ItemGroup>
 </Project>
