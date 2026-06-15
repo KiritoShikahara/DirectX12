@@ -333,6 +333,9 @@
     <ClInclude Include="src\graphics\Skybox\Renderer\SkyboxRenderer.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\Fbx\Pipeline\ShadowPipeline.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics\Dx12\Dx12Device.cpp">
@@ -557,6 +560,9 @@
     <ClCompile Include="src\graphics\Skybox\Renderer\SkyboxRenderer.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\Fbx\Pipeline\ShadowPipeline.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -574,5 +580,6 @@
     <FxCompile Include="Assets\Shader\PhysicsDebug\PS_PhysicsDebug.hlsl" />
     <FxCompile Include="Assets\Shader\Skybox\SkyboxVS.hlsl" />
     <FxCompile Include="Assets\Shader\Skybox\SkyboxPS.hlsl" />
+    <FxCompile Include="Assets\Shader\Fbx\VS_Shadow.hlsl" />
   </ItemGroup>
 </Project>

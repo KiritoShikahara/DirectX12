@@ -26,6 +26,8 @@ namespace graphics
     {
         if (pDevice == nullptr) return false;
         mDeviceService = pDevice;
+        mWidth = Width;
+        mHeight = Height;
 
         if (!InitializeCommandObjects())  return false;
         if (!InitializeSwapChain(WindowHandle, Width, Height)) return false;
@@ -58,7 +60,7 @@ namespace graphics
         mDsvHeap.Reset();
 
         mCmdList.Reset();
-        mSwapChain.Reset();  // CommandQueue ÇÊÇËå„Ç…âï˙
+        mSwapChain.Reset();  // CommandQueue „Çà„ÇäÂæå„Å´Ëß£Êîæ
         mCmdQueue.Reset();
 
         mFence.Reset();
@@ -68,21 +70,21 @@ namespace graphics
 
     void DX12Context::BeginRendering()
     {
-        // éüÇ…ï`âÊÇ∑ÇÈÉoÉbÉNÉoÉbÉtÉ@ÇÃÉCÉìÉfÉbÉNÉXÇéÊìæ
+        // Ê¨°„Å´ÊèèÁîª„Åô„Çã„Éê„ÉÉ„ÇØ„Éê„ÉÉ„Éï„Ç°„ÅÆ„Ç§„É≥„Éá„ÉÉ„ÇØ„Çπ„ÇíÂèñÂæó
         mFrameIndex = mSwapChain->GetCurrentBackBufferIndex();
 
-        // Ç±ÇÃÉtÉåÅ[ÉÄÇÃGPUèàóùÇ™èIóπÇµÇƒÇ¢Ç»ÇØÇÍÇŒë“ã@(ÉXÉgÅ[Éãñhé~)
+        // „Åì„ÅÆ„Éï„É¨„Éº„É†„ÅÆGPUÂá¶ÁêÜ„ÅåÁµÇ‰∫Ü„Åó„Å¶„ÅÑ„Å™„Åë„Çå„Å∞ÂæÖÊ©ü(„Çπ„Éà„Éº„É´Èò≤Ê≠¢)
         if (mFence->GetCompletedValue() < mFrames[mFrameIndex].FenceValue)
         {
             mFence->SetEventOnCompletion(mFrames[mFrameIndex].FenceValue, mWaitForGPUEventHandle);
             WaitForSingleObject(mWaitForGPUEventHandle, INFINITE);
         }
 
-        // ÉRÉ}ÉìÉhãLò^ÇÃäJén
+        // „Ç≥„Éû„É≥„ÉâË®òÈå≤„ÅÆÈñãÂßã
         mFrames[mFrameIndex].Allocator->Reset();
         mCmdList->Reset(mFrames[mFrameIndex].Allocator.Get(), nullptr);
 
-        // ÉoÉbÉNÉoÉbÉtÉ@Ç PRESENT Å® RENDER_TARGET Ç÷ëJà⁄
+        // „Éê„ÉÉ„ÇØ„Éê„ÉÉ„Éï„Ç°„Çí PRESENT ‚Üí RENDER_TARGET „Å∏ÈÅ∑Áßª
         D3D12_RESOURCE_BARRIER barrier = {};
         barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
         barrier.Transition.pResource = mFrames[mFrameIndex].BackBuffer.Get();
@@ -91,7 +93,7 @@ namespace graphics
         barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
         mCmdList->ResourceBarrier(1, &barrier);
 
-        // ÉåÉìÉ_Å[É^Å[ÉQÉbÉgÇÃê›íË
+        // „É¨„É≥„ÉÄ„Éº„Çø„Éº„Ç≤„ÉÉ„Éà„ÅÆË®≠ÂÆö
         const UINT rtvIncSize = mDeviceService->GetDevice()
             ->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
@@ -101,14 +103,14 @@ namespace graphics
         D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
         mCmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
-        // ÉåÉìÉ_Å[É^Å[ÉQÉbÉgÇ∆ê[ìxÉoÉbÉtÉ@ÇÉNÉäÉA
+        // „É¨„É≥„ÉÄ„Éº„Çø„Éº„Ç≤„ÉÉ„Éà„Å®Ê∑±Â∫¶„Éê„ÉÉ„Éï„Ç°„Çí„ÇØ„É™„Ç¢
         mCmdList->ClearRenderTargetView(rtvHandle, mClearColor.GetRawPointer(), 0, nullptr);
         mCmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
     }
 
     void DX12Context::Flip()
     {
-        // ÉoÉbÉNÉoÉbÉtÉ@Ç RENDER_TARGET Å® PRESENT Ç÷ëJà⁄
+        // „Éê„ÉÉ„ÇØ„Éê„ÉÉ„Éï„Ç°„Çí RENDER_TARGET ‚Üí PRESENT „Å∏ÈÅ∑Áßª
         D3D12_RESOURCE_BARRIER barrier = {};
         barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
         barrier.Transition.pResource = mFrames[mFrameIndex].BackBuffer.Get();
@@ -117,15 +119,15 @@ namespace graphics
         barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
         mCmdList->ResourceBarrier(1, &barrier);
 
-        // ÉRÉ}ÉìÉhÉäÉXÉgÇämíËÇµÇƒGPUÇ÷ëóêM
+        // „Ç≥„Éû„É≥„Éâ„É™„Çπ„Éà„ÇíÁ¢∫ÂÆö„Åó„Å¶GPU„Å∏ÈÄÅ‰ø°
         mCmdList->Close();
         ID3D12CommandList* ppCommandLists[] = { mCmdList.Get() };
         mCmdQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
-        // âÊñ ÇÃêÿÇËë÷Ç¶
+        // ÁîªÈù¢„ÅÆÂàá„ÇäÊõø„Åà
         mSwapChain->Present(1, 0);
 
-        // Ç±ÇÃÉtÉåÅ[ÉÄÇÃäÆóπÉtÉFÉìÉXílÇãLò^
+        // „Åì„ÅÆ„Éï„É¨„Éº„É†„ÅÆÂÆå‰∫Ü„Éï„Çß„É≥„ÇπÂÄ§„ÇíË®òÈå≤
         mNextFenceValue++;
         mFrames[mFrameIndex].FenceValue = mNextFenceValue;
         mCmdQueue->Signal(mFence.Get(), mNextFenceValue);
@@ -154,6 +156,29 @@ namespace graphics
         mCmdList->RSSetScissorRects(1, &scissor);
     }
 
+    void DX12Context::RestoreMainRenderTarget(ID3D12GraphicsCommandList* cmdList)
+    {
+        const UINT rtvIncSize = mDeviceService->GetDevice()
+            ->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = mRtvHeap->GetCPUDescriptorHandleForHeapStart();
+        rtvHandle.ptr += mFrameIndex * rtvIncSize;
+
+        D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
+
+        cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+
+        // „Éì„É•„Éº„Éù„Éº„Éà„Å®„Ç∑„Ç∂„Éº„ÇÇÂÖÉ„Å´Êàª„Åô
+        D3D12_VIEWPORT vp = { 0.f, 0.f,
+            static_cast<float>(mWidth), static_cast<float>(mHeight),
+            0.f, 1.f };
+        D3D12_RECT scissor = { 0, 0,
+            static_cast<LONG>(mWidth), static_cast<LONG>(mHeight) };
+
+        cmdList->RSSetViewports(1, &vp);
+        cmdList->RSSetScissorRects(1, &scissor);
+    }
+
     ID3D12GraphicsCommandList* DX12Context::GetCommandList()
     {
         return mCmdList.Get();
@@ -180,7 +205,7 @@ namespace graphics
     }
 
     // -----------------------------------------------------------------------
-    // Private èâä˙âª
+    // Private ÂàùÊúüÂåñ
     // -----------------------------------------------------------------------
 
     bool DX12Context::InitializeCommandObjects()
@@ -188,7 +213,7 @@ namespace graphics
         ID3D12Device* device = mDeviceService->GetDevice();
         HRESULT hr = S_OK;
 
-        // ÉRÉ}ÉìÉhÉLÉÖÅ[ÇÃçÏê¨
+        // „Ç≥„Éû„É≥„Éâ„Ç≠„É•„Éº„ÅÆ‰ΩúÊàê
         D3D12_COMMAND_QUEUE_DESC queueDesc = {};
         queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
         queueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
@@ -198,11 +223,11 @@ namespace graphics
         hr = device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&mCmdQueue));
         if (FAILED(hr))
         {
-            // TODO: ÉçÉOèoóÕ
+            // TODO: „É≠„Ç∞Âá∫Âäõ
             return false;
         }
 
-        // ÉtÉåÅ[ÉÄÇ≤Ç∆ÇÃÉRÉ}ÉìÉhÉAÉçÉPÅ[É^Å[Ç∆ÉAÉbÉvÉçÅ[ÉhÉvÅ[ÉãÇçÏê¨
+        // „Éï„É¨„Éº„É†„Åî„Å®„ÅÆ„Ç≥„Éû„É≥„Éâ„Ç¢„É≠„Ç±„Éº„Çø„Éº„Å®„Ç¢„ÉÉ„Éó„É≠„Éº„Éâ„Éó„Éº„É´„Çí‰ΩúÊàê
         D3D12MA::Allocator* maAllocator = mDeviceService->GetMAAllocator();
         for (int i = 0; i < FRAME_COUNT; i++)
         {
@@ -210,7 +235,7 @@ namespace graphics
                 D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mFrames[i].Allocator));
             if (FAILED(hr))
             {
-                // TODO: ÉçÉOèoóÕ
+                // TODO: „É≠„Ç∞Âá∫Âäõ
                 return false;
             }
 
@@ -221,19 +246,19 @@ namespace graphics
             hr = maAllocator->CreatePool(&poolDesc, &mFrames[i].UploadPool);
             if (FAILED(hr))
             {
-                // TODO: ÉçÉOèoóÕ
+                // TODO: „É≠„Ç∞Âá∫Âäõ
                 return false;
             }
         }
 
-        // ÉRÉ}ÉìÉhÉäÉXÉgÇÃçÏê¨(ç≈èâÇÕ Close èÛë‘)
+        // „Ç≥„Éû„É≥„Éâ„É™„Çπ„Éà„ÅÆ‰ΩúÊàê(ÊúÄÂàù„ÅØ Close Áä∂ÊÖã)
         hr = device->CreateCommandList(
             0, D3D12_COMMAND_LIST_TYPE_DIRECT,
             mFrames[0].Allocator.Get(), nullptr,
             IID_PPV_ARGS(&mCmdList));
         if (FAILED(hr))
         {
-            // TODO: ÉçÉOèoóÕ
+            // TODO: „É≠„Ç∞Âá∫Âäõ
             return false;
         }
         mCmdList->Close();
@@ -248,7 +273,7 @@ namespace graphics
         scDesc.Height = Height;
         scDesc.Format = mFormat;
         scDesc.Stereo = FALSE;
-        scDesc.SampleDesc.Count = 1;   // É}ÉãÉ`ÉTÉìÉvÉãOFF
+        scDesc.SampleDesc.Count = 1;   // „Éû„É´„ÉÅ„Çµ„É≥„Éó„É´OFF
         scDesc.SampleDesc.Quality = 0;
         scDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
         scDesc.BufferCount = FRAME_COUNT;
@@ -262,7 +287,7 @@ namespace graphics
             mCmdQueue.Get(), WindowHandle, &scDesc, nullptr, nullptr, &swapChain1);
         if (FAILED(hr))
         {
-            // TODO: ÉçÉOèoóÕ
+            // TODO: „É≠„Ç∞Âá∫Âäõ
             return false;
         }
 
@@ -285,7 +310,7 @@ namespace graphics
         HRESULT hr = device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&mRtvHeap));
         if (FAILED(hr))
         {
-            // TODO: ÉçÉOèoóÕ
+            // TODO: „É≠„Ç∞Âá∫Âäõ
             return false;
         }
 
@@ -297,7 +322,7 @@ namespace graphics
             hr = mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mFrames[i].BackBuffer));
             if (FAILED(hr))
             {
-                // TODO: ÉçÉOèoóÕ
+                // TODO: „É≠„Ç∞Âá∫Âäõ
                 return false;
             }
             device->CreateRenderTargetView(mFrames[i].BackBuffer.Get(), nullptr, rtvHandle);
@@ -320,7 +345,7 @@ namespace graphics
         HRESULT hr = device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&mDsvHeap));
         if (FAILED(hr))
         {
-            // TODO: ÉçÉOèoóÕ
+            // TODO: „É≠„Ç∞Âá∫Âäõ
             return false;
         }
 
@@ -349,7 +374,7 @@ namespace graphics
             &clearValue, IID_PPV_ARGS(&mDepthBuffer));
         if (FAILED(hr))
         {
-            // TODO: ÉçÉOèoóÕ
+            // TODO: „É≠„Ç∞Âá∫Âäõ
             return false;
         }
 
@@ -365,7 +390,7 @@ namespace graphics
             0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence));
         if (FAILED(hr))
         {
-            // TODO: ÉçÉOèoóÕ
+            // TODO: „É≠„Ç∞Âá∫Âäõ
             return false;
         }
 
