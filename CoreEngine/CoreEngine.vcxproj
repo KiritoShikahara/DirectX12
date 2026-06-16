@@ -146,6 +146,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\ecs\component\Text\TextComponent.h" />
     <ClInclude Include="src\graphics\Fbx\Pipeline\ShadowPipeline.h" />
     <ClInclude Include="src\graphics\Skybox\Renderer\SkyboxRenderer.h" />
     <ClInclude Include="src\graphics\Skybox\Pipeline\SkyboxPipeline.h" />
