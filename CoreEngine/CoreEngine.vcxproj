@@ -256,6 +256,9 @@
     <ClInclude Include="src\graphics\StructuredBuffer\StructuredBuffer.h" />
     <ClInclude Include="src\graphics\Texture\TextureManager.h" />
     <ClInclude Include="src\graphics\Transition\TransitionRenderer.h" />
+    <ClInclude Include="src\graphics\Text\Pipeline\TextPipeline.h" />
+    <ClInclude Include="src\graphics\Text\Atlas\TextAtlas.h" />
+    <ClInclude Include="src\graphics\Text\Renderer\TextRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="external\SQLite\sqlite3.c">
@@ -454,6 +457,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\graphics\Transition\TransitionRenderer.cpp" />
+    <ClCompile Include="src\graphics\Text\Pipeline\TextPipeline.cpp" />
+    <ClCompile Include="src\graphics\Text\Atlas\TextAtlas.cpp" />
+    <ClCompile Include="src\graphics\Text\Renderer\TextRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Shader\Fbx\FbxShader.hlsli">
@@ -564,6 +570,26 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Assets\Shader\Text\PS_Text.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="Assets\Shader\Text\VS_Text.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

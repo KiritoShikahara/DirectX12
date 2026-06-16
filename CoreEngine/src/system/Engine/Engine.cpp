@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "Engine.h"
 
 #include<system/Window/Window.h>
@@ -21,6 +21,7 @@
 
 // Renderer
 #include<graphics/Skybox/Renderer/SkyboxRenderer.h>
+#include<graphics/Text/Renderer/TextRenderer.h>
 
 // 3D
 #include<graphics/Fbx/Renderer/FbxRenderer.h>
@@ -64,6 +65,7 @@
 #include<ecs/component/collider/ColliderComponent.h>
 #include<ecs/component/rigidbody/RigidbodyComponent.h>
 #include<ecs/component/skybox/SkyboxComponent.h>
+#include<ecs/component/Text/TextComponent.h>
 
 // Resoruce
 #include<graphics/Texture/Texture.h>
@@ -192,6 +194,18 @@ void CreateField()
         ecs::RigidBodyComponent::MakeStatic());
 }
 
+void CreateText()
+{
+    auto& manager = ecs::EntityManager::Get();
+    auto entity = manager.CreateEntity();
+    auto& text = manager.AddComponent<ecs::TextComponent>(entity);
+    text.Text = L"日本語テスト";
+    text.Size = 64;
+    text.Layer  = 0;
+    text.X = 200;
+    text.Y = 200;
+}
+
 void CreateSkybox()
 {
     auto& manager = ecs::EntityManager::Get();
@@ -219,6 +233,10 @@ void CreateDebugObject()
 #if DEBUG_LIGHT
     CreateLight();
 #endif
+#if DEBUG_TEXT
+    CreateText();
+#endif
+
     CreateSkybox();
 }
 
@@ -339,6 +357,10 @@ namespace sys
         if (mDX12Renderer != nullptr)
             mDX12Renderer->WaitForGPU();
 
+        // Resource
+        graphics::TextRenderer::Get().Finalize();
+
+
         mDX12Renderer->Finalize();
         mDX12Renderer = nullptr;
 
@@ -349,7 +371,6 @@ namespace sys
 #ifdef _DEBUG
         graphics::PhysicsDebugRenderer::Get().Finalize();
 #endif
-
         mSceneManager->PostUpdate();
         sys::Logger::Get().Finalize();
         return true;
@@ -370,6 +391,12 @@ namespace sys
         PrimitiveResourceManager::Get().Initialize();
 
         if (SkyboxRenderer::Get().Initialize() == false) return false;
+
+        if (TextRenderer::Get().Initialize(
+            *mDevice, descriptorHeapManager, graphics::ShaderManager::Get()) == false)
+        {
+            return false;
+        }
 
         return true;
     }
@@ -459,6 +486,12 @@ namespace sys
             spriteRenderer.Begin();
             spriteRenderer.UpdateAndDraw(registry);
             spriteRenderer.End(cmdList);
+
+            // テキスト
+            SINGLETON_REF(graphics::TextRenderer, TextRenderer);
+            TextRenderer.Begin();
+            TextRenderer.UpdateAndDraw(registry);
+            TextRenderer.Flush(cmdList);
 
 #ifdef _DEBUG
             graphics::PhysicsDebugRenderer::Get().Draw(registry, cmdList);
