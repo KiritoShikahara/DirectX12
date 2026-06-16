@@ -339,6 +339,15 @@
     <ClInclude Include="src\ecs\component\Text\TextComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\graphics\Text\Pipeline\TextPipeline.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\Text\Atlas\TextAtlas.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\Text\Renderer\TextRenderer.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics\Dx12\Dx12Device.cpp">
@@ -566,6 +575,15 @@
     <ClCompile Include="src\graphics\Fbx\Pipeline\ShadowPipeline.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\Text\Pipeline\TextPipeline.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Text\Atlas\TextAtlas.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Text\Renderer\TextRenderer.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -584,5 +602,7 @@
     <FxCompile Include="Assets\Shader\Skybox\SkyboxVS.hlsl" />
     <FxCompile Include="Assets\Shader\Skybox\SkyboxPS.hlsl" />
     <FxCompile Include="Assets\Shader\Fbx\VS_Shadow.hlsl" />
+    <FxCompile Include="Assets\Shader\Text\VS_Text.hlsl" />
+    <FxCompile Include="Assets\Shader\Text\PS_Text.hlsl" />
   </ItemGroup>
 </Project>
