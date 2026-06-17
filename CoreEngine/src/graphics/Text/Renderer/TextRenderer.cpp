@@ -8,7 +8,6 @@
 #include <ecs/component/text/TextComponent.h>
 #include<system/Window/Window.h>
 #include<system/AssetPath/AssetPathManager.h>
-
 #include <d3dx12.h>
 #include <algorithm>
 

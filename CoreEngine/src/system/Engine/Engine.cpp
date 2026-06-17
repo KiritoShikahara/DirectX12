@@ -22,6 +22,7 @@
 // Renderer
 #include<graphics/Skybox/Renderer/SkyboxRenderer.h>
 #include<graphics/Text/Renderer/TextRenderer.h>
+#include<graphics/Effect/Manager/EffectManager.h>
 
 // 3D
 #include<graphics/Fbx/Renderer/FbxRenderer.h>
@@ -66,6 +67,7 @@
 #include<ecs/component/rigidbody/RigidbodyComponent.h>
 #include<ecs/component/skybox/SkyboxComponent.h>
 #include<ecs/component/Text/TextComponent.h>
+#include<ecs/component/Effect/EffectComponent.h>
 
 // Resoruce
 #include<graphics/Texture/Texture.h>
@@ -214,6 +216,20 @@ void CreateSkybox()
     skybox.TexturePath = "Assets/Skybox/skybox.dds";
 }
 
+void CreateEffect()
+{
+    auto& manager = ecs::EntityManager::Get();
+    auto entity = manager.CreateEntity();
+    auto& transform = manager.AddComponent<ecs::Transform>(entity);
+    transform.SetScale(10);
+    transform.SetPosition(10, 10, 0);
+
+    auto& effect = manager.AddComponent<ecs::EffectComponent>(entity);
+    effect.Asset = graphics::EffekseerManager::Get().GetEffect("Assets/Effect/Light3.efk");
+    effect.IsLoop = true;
+    effect.Effect.Play(effect.Asset, effect.Offset);
+}
+
 void CreateDebugObject()
 {
 #if DEBUG_FBX
@@ -236,7 +252,9 @@ void CreateDebugObject()
 #if DEBUG_TEXT
     CreateText();
 #endif
-
+#if DEBUG_EFFECT
+    CreateEffect();
+#endif
     CreateSkybox();
 }
 
@@ -360,6 +378,7 @@ namespace sys
         // Resource
         graphics::TextRenderer::Get().Finalize();
 
+        // Renderer
 
         mDX12Renderer->Finalize();
         mDX12Renderer = nullptr;
@@ -394,6 +413,11 @@ namespace sys
 
         if (TextRenderer::Get().Initialize(
             *mDevice, descriptorHeapManager, graphics::ShaderManager::Get()) == false)
+        {
+            return false;
+        }
+
+        if (EffekseerManager::Get().Initialize(*mDevice, *graphics::DX12Renderer::Get().GetContext()) == false)
         {
             return false;
         }
@@ -438,6 +462,8 @@ namespace sys
 
             // ライト更新 (LightViewProj の計算も含む)
             sys::LightSystem::Update(registry);
+
+            graphics::EffekseerManager::Get().Update(registry, dt);
         }
     }
 
@@ -474,6 +500,9 @@ namespace sys
 
             // 4. 通常描画パス (Shadow Map は SRV として t10 にバインド済み)
             FbxRenderer.End(cmdList);
+
+            // effect
+            graphics::EffekseerManager::Get().Draw(registry,cmdList);
 
             // skybox
             SINGLETON_REF(graphics::SkyboxRenderer, SkyboxRenderer);

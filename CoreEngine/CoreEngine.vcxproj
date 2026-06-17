@@ -110,7 +110,7 @@
 ;JPH_OBJECT_STREAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)external;$(ProjectDir)src;$(ProjectDir)src\pch;$(ProjectDir)external\JoltPhysics;$(ProjectDir)external\SQLite;$(ProjectDir)external\Effekseer\src\Effekseer</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)external;$(ProjectDir)src;$(ProjectDir)src\pch;$(ProjectDir)external\JoltPhysics;$(ProjectDir)external\SQLite;$(ProjectDir)external\Effekseer\src\Effekseer;$(ProjectDir)external\Effekseer\src</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
@@ -132,7 +132,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;JPH_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(ProjectDir)external;$(ProjectDir)src;$(ProjectDir)src\pch;$(ProjectDir)external\JoltPhysics;$(ProjectDir)external\SQLite;$(ProjectDir)external\Effekseer\src\Effekseer</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)external;$(ProjectDir)src;$(ProjectDir)src\pch;$(ProjectDir)external\JoltPhysics;$(ProjectDir)external\SQLite;$(ProjectDir)external\Effekseer\src\Effekseer;$(ProjectDir)external\Effekseer\src</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
@@ -146,6 +146,9 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\graphics\Effect\Manager\EffectManager.h" />
+    <ClInclude Include="src\graphics\Effect\Object\EffectObject.h" />
+    <ClInclude Include="src\ecs\component\Effect\EffectComponent.h" />
     <ClInclude Include="src\ecs\component\Text\TextComponent.h" />
     <ClInclude Include="src\graphics\Fbx\Pipeline\ShadowPipeline.h" />
     <ClInclude Include="src\graphics\Skybox\Renderer\SkyboxRenderer.h" />
@@ -261,6 +264,8 @@
     <ClInclude Include="src\graphics\Text\Renderer\TextRenderer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\graphics\Effect\Manager\EffectManager.cpp" />
+    <ClCompile Include="src\graphics\Effect\Object\EffectObject.cpp" />
     <ClCompile Include="external\SQLite\sqlite3.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
