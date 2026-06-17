@@ -22,6 +22,9 @@ namespace graphics
         /// <summary>パイプラインを初期化する</summary>
         bool Initialize();
 
+        /// <summary>リソース解放</summary>
+        void Finalize();
+
         /// <summary>フレーム先頭処理 (現状は予約)</summary>
         void Begin();
 

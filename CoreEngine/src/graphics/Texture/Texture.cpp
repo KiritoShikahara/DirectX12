@@ -31,15 +31,15 @@ namespace graphics
 			return false;
 		}
 
-		//	Šg’£q
+		//	æ‹¡å¼µå­
 		const fs::path ext = FilePath.extension();
-		//	ƒtƒ@ƒCƒ‹ƒpƒX
+		//	ãƒ•ã‚¡ã‚¤ãƒ«ãƒ‘ã‚¹
 		std::wstring path = FilePath.wstring();
 		HRESULT hr = S_FALSE;
-		//	ƒeƒNƒXƒ`ƒƒ‚Ìƒƒ^ƒf[ƒ^
+		//	ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®ãƒ¡ã‚¿ãƒ‡ãƒ¼ã‚¿
 		DirectX::TexMetadata metaData = {};
 		DirectX::ScratchImage scratchImage = {};
-		//	‘å•¶šA¬•¶š‚ğ–³‹‚µ‚Ä”»’è‚ğ‚·‚éB
+		//	å¤§æ–‡å­—ã€å°æ–‡å­—ã‚’ç„¡è¦–ã—ã¦åˆ¤å®šã‚’ã™ã‚‹ã€‚
 		if (_wcsicmp(ext.c_str(), L".dds") == 0)
 		{
 			hr = DirectXTex::LoadFromDDSFile(
@@ -83,7 +83,7 @@ namespace graphics
 		auto allocator = DX12Device.GetMAAllocator();
 		auto& heapManager = graphics::GDescriptorHeapManager::Get();
 
-		// GPUƒŠƒ\[ƒX‚Ìì¬
+		// GPUãƒªã‚½ãƒ¼ã‚¹ã®ä½œæˆ
 		D3D12_RESOURCE_DESC resDesc = {};
 		resDesc.Dimension = static_cast<D3D12_RESOURCE_DIMENSION>(metaData.dimension);
 		resDesc.Format = metaData.format;
@@ -98,11 +98,11 @@ namespace graphics
 		D3D12MA::ALLOCATION_DESC allocDesc = {};
 		allocDesc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
 
-		/// ƒŠƒ\[ƒXì¬
+		/// ãƒªã‚½ãƒ¼ã‚¹ä½œæˆ
 		hr = allocator->CreateResource(
 			&allocDesc,
 			&resDesc,
-			D3D12_RESOURCE_STATE_COPY_DEST,   // ƒAƒbƒvƒ[ƒh‘O‚Í“]‘—æó‘Ô
+			D3D12_RESOURCE_STATE_COPY_DEST,   // ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰å‰ã¯è»¢é€å…ˆçŠ¶æ…‹
 			nullptr,
 			&mAllocation,
 			IID_PPV_ARGS(&mResource));
@@ -113,7 +113,7 @@ namespace graphics
 			return false;
 		}
 
-		// ƒTƒuƒŠƒ\[ƒXƒf[ƒ^‚Ì\’z
+		// ã‚µãƒ–ãƒªã‚½ãƒ¼ã‚¹ãƒ‡ãƒ¼ã‚¿ã®æ§‹ç¯‰
 		const UINT numSubresources =
 			static_cast<UINT>(metaData.mipLevels * metaData.arraySize);
 
@@ -129,14 +129,14 @@ namespace graphics
 			subresources[i].SlicePitch = static_cast<LONG_PTR>(img->slicePitch);
 		}
 
-		// VRAM‚Ö‚ÌƒAƒbƒvƒ[ƒh
+		// VRAMã¸ã®ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰
 		if (!DX12Device.UploadTextureData(mResource.Get(), subresources))
 		{
 			DEBUG_LOG(sys::eLogLevel::Error, "Texture: Failed to upload texture data to GPU: {}", FilePath.string());
 			return false;
 		}
 
-		// SRV‚Ìì¬
+		// SRVã®ä½œæˆ
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Format = metaData.format;
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
@@ -151,7 +151,7 @@ namespace graphics
 			srvDesc.Texture2D.MipLevels = static_cast<UINT>(metaData.mipLevels);
 		}
 
-		// GDescriptorHeapInfo‚ÉSRV‚ğŠ„‚è“–‚Ä‚é
+		// GDescriptorHeapInfoã«SRVã‚’å‰²ã‚Šå½“ã¦ã‚‹
 		if (!mSrvHeap.Create(heapManager, 1))
 		{
 			DEBUG_LOG(sys::eLogLevel::Error,
@@ -161,7 +161,7 @@ namespace graphics
 
 		device->CreateShaderResourceView(mResource.Get(), &srvDesc, mSrvHeap.GetCpuHandle());
 
-		// ƒTƒCƒY•Û‘¶
+		// ã‚µã‚¤ã‚ºä¿å­˜
 		mWidth = static_cast<float>(metaData.width);
 		mHeight = static_cast<float>(metaData.height);
 
@@ -169,11 +169,11 @@ namespace graphics
 	}
 
 	/// <summary>
-	/// ƒŠƒ\[ƒX‚Ì‰ğ•ú
+	/// ãƒªã‚½ãƒ¼ã‚¹ã®è§£æ”¾
 	/// </summary>
 	void Texture::Release()
 	{
-		mSrvHeap = GDescriptorHeap{};
+		mSrvHeap.Release();
 
 		mAllocation.Reset();
 		mResource.Reset();
@@ -183,7 +183,7 @@ namespace graphics
 	}
 
 	/// <summary>
-	/// Š„‚è“–‚Ä‚ç‚ê‚½ƒCƒ“ƒfƒbƒNƒX
+	/// å‰²ã‚Šå½“ã¦ã‚‰ã‚ŒãŸã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹
 	/// </summary>
 	/// <returns></returns>
 	uint32_t Texture::GetDescriptorIndex() const
@@ -192,7 +192,7 @@ namespace graphics
 	}
 
 	/// <summary>
-	/// Š„‚è“–‚Ä‚ç‚ê‚½Gpuƒnƒ“ƒhƒ‹‚Ìæ“¾
+	/// å‰²ã‚Šå½“ã¦ã‚‰ã‚ŒãŸGpuãƒãƒ³ãƒ‰ãƒ«ã®å–å¾—
 	/// </summary>
 	/// <returns></returns>
 	D3D12_GPU_DESCRIPTOR_HANDLE Texture::GetGpuHandle()const
@@ -201,7 +201,7 @@ namespace graphics
 	}
 
 	/// <summary>
-	/// ƒeƒNƒXƒ`ƒƒ‚Ì•
+	/// ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®å¹…
 	/// </summary>
 	/// <returns></returns>
 	float Texture::GetWidth()const
@@ -210,7 +210,7 @@ namespace graphics
 	}
 
 	/// <summary>
-	/// ƒeƒNƒXƒ`ƒƒ‚Ì‚‚³
+	/// ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®é«˜ã•
 	/// </summary>
 	/// <returns></returns>
 	float Texture::GetHeight()const
@@ -219,7 +219,7 @@ namespace graphics
 	}
 
 	/// <summary>
-	/// ƒŠƒ\[ƒX‚Ìæ“¾
+	/// ãƒªã‚½ãƒ¼ã‚¹ã®å–å¾—
 	/// </summary>
 	/// <returns></returns>
 	ID3D12Resource* Texture::GetResource()const

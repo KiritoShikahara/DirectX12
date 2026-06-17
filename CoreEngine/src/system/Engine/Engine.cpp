@@ -222,7 +222,7 @@ void CreateEffect()
     auto entity = manager.CreateEntity();
     auto& transform = manager.AddComponent<ecs::Transform>(entity);
     transform.SetScale(10);
-    transform.SetPosition(10, 10, 0);
+    transform.SetPosition(100, 100, 0);
 
     auto& effect = manager.AddComponent<ecs::EffectComponent>(entity);
     effect.Asset = graphics::EffekseerManager::Get().GetEffect("Assets/Effect/Light3.efk");
@@ -286,63 +286,26 @@ namespace sys
         if (sys::Logger::Get().Initialize() == false) return false;
 
         SINGLETON_REF(sys::AssetPathManager, AssetManager);
-        AssetManager.Initialize();
-
-        auto context = LoadBootstrapConfig();
+        sys::AssetPathManager::Get().Initialize();
         mTime.Initialize();
 
-        mWindow = &Window::Get();
-        if (mWindow->Initialize(context.WindowContext) == false) return false;
-
-        mDevice = &graphics::DX12Device::Get();
-        if (mDevice->Initialize() == false) return false;
-
-        mDX12Renderer = &graphics::DX12Renderer::Get();
-        if (mDX12Renderer->Initialize(
-            mDevice,
-            mWindow->GetHWND(),
-            mWindow->GetWidth(),
-            mWindow->GetHeight()) == false) return false;
-
+        // コア部分の初期化（Window Dx12など）
+        if (this->InitializeCore() == false) return false;
         auto& descriptorHeapManager = graphics::GDescriptorHeapManager::Get();
-        if (descriptorHeapManager.Initialize(mDevice->GetDevice()) == false) return false;
 
-        mImGuiManager = &sys::ImGuiManager::Get();
-        if (mImGuiManager->Initialize(
-            *mWindow, *mDevice,
-            *mDX12Renderer->GetContext(),
-            descriptorHeapManager) == false) return false;
+        // 各種レンダラー
+        this->InitializeRenderer(descriptorHeapManager);
 
-        mEntityManager = &ecs::EntityManager::Get();
-        if (mEntityManager->Initialize() == false) return false;
+        // 各種システム
+        if (InitializeSystem() == false) return false;
 
-        mComponentSystemManager = &ecs::ComponentSystemManager::Get();
-        mComponentSystemManager->ClearUserSystems();
+        // オーディオ
+        if (InitializeAudio() == false) return false;
 
-        mInputManager = &sys::InputManager::Get();
-        if (mInputManager->Initialize() == false) return false;
-
-        InitializeRenderer(descriptorHeapManager);
-
-        if (sys::CameraSystem::Get().Initialize() == false) return false;
-
-        SINGLETON_REF(audio::AudioManager, AudioManager);
-        if (AudioManager.Initialize() == false) return false;
-        SINGLETON_REF(audio::AudioDevice, AudioDevice);
-        if (AudioDevice.Initialize(&AudioManager, 48000U) == false) return false;
-
-        SINGLETON_REF(sys::PhysicsManager, PhysicsManager);
-        if (PhysicsManager.Initialize(mEntityManager->GetRegistry()) == false) return false;
-
-#ifdef _DEBUG
-        if (graphics::PhysicsDebugRenderer::Get().Initialize() == false) return false;
-#endif
-
-        mSceneManager = &sys::SceneManager::Get();
-        mSceneManager->Initialize(sys::SceneFactory::Get().GetDefaultSceneName());
+        // デバック用UI
+        this->InitializeDebugUI();
 
         CreateDebugObject();
-        InitializeDebugUI();
 
         mIsRunning = true;
         mIsInitialized = true;
@@ -370,28 +333,84 @@ namespace sys
 
     bool Engine::Finalize()
     {
+        using namespace graphics;
+
         if (mIsInitialized == false) return false;
 
         if (mDX12Renderer != nullptr)
             mDX12Renderer->WaitForGPU();
 
-        // Resource
-        graphics::TextRenderer::Get().Finalize();
+        FbxRenderer::Get().Finalize();
+        SkyboxRenderer::Get().Finalize(); // ★ここに追加
+        PrimitiveResourceManager::Get().Finalize();
+        EffekseerManager::Get().Finalize();
+        TextRenderer::Get().Finalize();
+        SpriteRenderer::Get().Finalize();
 
-        // Renderer
+#ifdef _DEBUG
+        graphics::PhysicsDebugRenderer::Get().Finalize();
+#endif
 
+        // 2. リソースマネージャーのクリア（ここで Texture 等のディスクリプタが解放される）
+        FbxResourceManager::Get().Clear();
+        TextureManager::Get().Clear();
+
+        // 3. UIの終了
+        ImGuiManager::Get().Finalize();
+
+        // 4. 物理エンジンなどの終了
+        sys::PhysicsManager::Get().Finalize();
+
+        // 5. 基盤（ヒープマネージャ）の終了（すべてが解放された後に呼ぶ）
+        graphics::GDescriptorHeapManager::Get().Finalize();
+
+        // 6. DX12 デバイス/レンダラーの破棄
         mDX12Renderer->Finalize();
         mDX12Renderer = nullptr;
 
         mDevice->Finalize();
         mDevice = nullptr;
 
-        sys::PhysicsManager::Get().Finalize();
-#ifdef _DEBUG
-        graphics::PhysicsDebugRenderer::Get().Finalize();
-#endif
-        mSceneManager->PostUpdate();
         sys::Logger::Get().Finalize();
+        return true;
+    }
+
+    /// <summary>
+    /// コア部分の初期化
+    /// </summary>
+    /// <returns></returns>
+    bool Engine::InitializeCore()
+    {
+        // 初期化用データ
+        auto context = LoadBootstrapConfig();
+
+        // ウィンドウ
+        mWindow = &Window::Get();
+        if (mWindow->Initialize(context.WindowContext) == false) return false;
+
+        // デバイス
+        mDevice = &graphics::DX12Device::Get();
+        if (mDevice->Initialize() == false) return false;
+
+        // レンダラー
+        mDX12Renderer = &graphics::DX12Renderer::Get();
+        if (mDX12Renderer->Initialize(
+            mDevice,
+            mWindow->GetHWND(),
+            mWindow->GetWidth(),
+            mWindow->GetHeight()) == false) return false;
+
+        // ディスクリプタヒープ
+        auto& descriptorHeapManager = graphics::GDescriptorHeapManager::Get();
+        if (descriptorHeapManager.Initialize(mDevice->GetDevice()) == false) return false;
+
+        // ImGui
+        mImGuiManager = &sys::ImGuiManager::Get();
+        if (mImGuiManager->Initialize(
+            *mWindow, *mDevice,
+            *mDX12Renderer->GetContext(),
+            descriptorHeapManager) == false) return false;
+
         return true;
     }
 
@@ -421,6 +440,54 @@ namespace sys
         {
             return false;
         }
+
+        return true;
+    }
+
+    /// <summary>
+    /// 各種システムの初期化
+    /// </summary>
+    /// <returns></returns>
+    bool Engine::InitializeSystem()
+    {
+        // 入力
+        mInputManager = &sys::InputManager::Get();
+        if (mInputManager->Initialize() == false) return false;
+
+        // エンティティ
+        mEntityManager = &ecs::EntityManager::Get();
+        if (mEntityManager->Initialize() == false) return false;
+
+        // コンポーネント
+        mComponentSystemManager = &ecs::ComponentSystemManager::Get();
+        mComponentSystemManager->ClearUserSystems();
+
+        // カメラ
+        if (sys::CameraSystem::Get().Initialize() == false) return false;
+
+        // 物理
+        SINGLETON_REF(sys::PhysicsManager, PhysicsManager);
+        if (PhysicsManager.Initialize(mEntityManager->GetRegistry()) == false) return false;
+#ifdef _DEBUG
+        if (graphics::PhysicsDebugRenderer::Get().Initialize() == false) return false;
+#endif
+
+        // シーン
+        mSceneManager = &sys::SceneManager::Get();
+        mSceneManager->Initialize(sys::SceneFactory::Get().GetDefaultSceneName());
+
+        return true;
+    }
+
+    /// <summary>
+    /// 音関係の初期化
+    /// </summary>
+    /// <returns></returns>
+    bool Engine::InitializeAudio()
+    {
+        SINGLETON_REF(audio::AudioManager, AudioManager);
+        if (AudioManager.Initialize() == false) return false;
+        if (audio::AudioDevice::Get().Initialize(&AudioManager, 48000U) == false) return false;
 
         return true;
     }
@@ -473,7 +540,7 @@ namespace sys
         auto& registry = mEntityManager->GetRegistry();
         auto  cmdList = context->GetCommandList();
 
-        // ── Begin ─────────────────────────────────────────────
+        // Begin
         {
             mDX12Renderer->BeginFrame();
             graphics::RenderContext::Get().SetFrameIndex(context->GetCurrentFrameIndex());
@@ -481,34 +548,32 @@ namespace sys
             mImGuiManager->Update();
         }
 
-        // ── Draw ──────────────────────────────────────────────
+        // Draw
         {
             SINGLETON_REF(graphics::FbxRenderer, FbxRenderer);
 
-            // 1. フレームデータを収集
+            // フレームデータ取得
             FbxRenderer.Begin();
             FbxRenderer.UpdateAndDraw(registry);
 
-            // 2. Shadow Pass
             //    RTV を外して Shadow Map (DSV) に深度を書き込む。
-            //    BeginFrame でセットした RTV が上書きされるので、
-            //    直後に RestoreMainRenderTarget で元に戻す。
             FbxRenderer.DrawShadowPass(cmdList);
 
-            // 3. メインの RTV / DSV / ビューポートを再セット
+            // メインのRTV/DSV ビューポートを再セット
             context->RestoreMainRenderTarget(cmdList);
 
-            // 4. 通常描画パス (Shadow Map は SRV として t10 にバインド済み)
+            // 通常描画パス (Shadow Map は SRV として t10 にバインド済み)
             FbxRenderer.End(cmdList);
 
-            // effect
-            graphics::EffekseerManager::Get().Draw(registry,cmdList);
 
             // skybox
             SINGLETON_REF(graphics::SkyboxRenderer, SkyboxRenderer);
             SkyboxRenderer.Begin();
             SkyboxRenderer.UpdateAndDraw(registry);
             SkyboxRenderer.End(cmdList, FbxRenderer.GetSceneBufferGpuHandle());
+
+            // effect
+            graphics::EffekseerManager::Get().Draw(registry, cmdList);
 
             // 2D Sprite
             SINGLETON_REF(graphics::SpriteRenderer, spriteRenderer);
@@ -527,7 +592,7 @@ namespace sys
 #endif
         }
 
-        // ── End ───────────────────────────────────────────────
+        // End
         {
             mImGuiManager->EndFrame();
             mDX12Renderer->EndFrame();

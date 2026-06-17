@@ -36,10 +36,6 @@ namespace graphics
         bool Initialize(graphics::DX12Device& device, graphics::DX12Context& context);
         void Finalize();
 
-        // -----------------------------------------------------------------------
-        //  フレーム API
-        // -----------------------------------------------------------------------
-
         /// <summary>
         /// ECS から EffectComponent を収集して更新する。
         /// Engine::Update() 内で呼ぶ。
@@ -55,20 +51,13 @@ namespace graphics
         /// </summary>
         void Draw(entt::registry& registry, ID3D12GraphicsCommandList* cmdList);
 
-        // -----------------------------------------------------------------------
-        //  アセット管理
-        // -----------------------------------------------------------------------
-
         /// <summary>
         /// エフェクトファイルをロード（キャッシュあり）。
         /// EffectComponent::Asset に渡す。
         /// </summary>
         Effekseer::EffectRef GetEffect(const std::filesystem::path& filePath);
 
-        // -----------------------------------------------------------------------
-        //  手動再生 API（コードから直接再生したい場合）
-        // -----------------------------------------------------------------------
-
+        // 手動再生
         Effekseer::Handle Play(
             Effekseer::EffectRef     effect,
             const DirectX::XMFLOAT3& position,
@@ -77,11 +66,8 @@ namespace graphics
         void Stop(Effekseer::Handle handle);
         void StopAll();
 
-        // -----------------------------------------------------------------------
-        //  内部アクセス（EffectObject から使用）
-        // -----------------------------------------------------------------------
+        // 内部アクセス
         Effekseer::ManagerRef GetManager() { return mManager; }
-
         bool IsInitialized() const { return mIsInitialized; }
 
     private:

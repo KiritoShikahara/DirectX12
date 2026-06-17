@@ -5,11 +5,11 @@
 namespace graphics
 {
 	/// <summary>
-	/// ‰Šú‰»B
-	/// ServiceLocator ‚ğg‚í‚¸ƒfƒoƒCƒX‚ğ’¼Úó‚¯æ‚éB
+	/// åˆæœŸåŒ–ã€‚
+	/// ServiceLocator ã‚’ä½¿ã‚ãšãƒ‡ãƒã‚¤ã‚¹ã‚’ç›´æ¥å—ã‘å–ã‚‹ã€‚
 	/// </summary>
-	/// <param name="device">‰Šú‰»Ï‚İ‚Ì D3D12 ƒfƒoƒCƒX</param>
-	/// <returns>true:¬Œ÷</returns>
+	/// <param name="device">åˆæœŸåŒ–æ¸ˆã¿ã® D3D12 ãƒ‡ãƒã‚¤ã‚¹</param>
+	/// <returns>true:æˆåŠŸ</returns>
 	bool GDescriptorHeapManager::Initialize(ID3D12Device* device)
 	{
 		if (device == nullptr)
@@ -17,7 +17,7 @@ namespace graphics
 			return false;
 		}
 
-		// ƒq[ƒv‚Ìì¬
+		// ãƒ’ãƒ¼ãƒ—ã®ä½œæˆ
 		D3D12_DESCRIPTOR_HEAP_DESC desc = {};
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 		desc.NumDescriptors = MAX_DESCRIPTOR;
@@ -31,7 +31,7 @@ namespace graphics
 			return false;
 		}
 
-		// ƒnƒ“ƒhƒ‹ƒe[ƒuƒ‹‚Ì–‘OŒvZ
+		// ãƒãƒ³ãƒ‰ãƒ«ãƒ†ãƒ¼ãƒ–ãƒ«ã®äº‹å‰è¨ˆç®—
 		mDescriptorSize = device->GetDescriptorHandleIncrementSize(
 			D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
@@ -50,13 +50,34 @@ namespace graphics
 		return true;
 	}
 
+	void GDescriptorHeapManager::Finalize()
+	{
+		bool leaked = false;
+		for (int i = 0; i < MAX_DESCRIPTOR; ++i)
+		{
+			if (mIsUse[i])
+			{
+				DEBUG_LOG(sys::eLogLevel::Error, "Descriptor leak detected at index: {}", i);
+				leaked = true;
+			}
+		}
+
+		if (leaked)
+		{
+			DEBUG_LOG(sys::eLogLevel::Error, "Some descriptors were not freed!");
+		}
+
+		// å¿…è¦ã§ã‚ã‚Œã°ã“ã“ã§ mHeap ã‚‚æ˜ç¤ºçš„ã« Release ã™ã‚‹å‡¦ç†ã‚’å…¥ã‚Œã‚‹
+		mHeap.Reset();
+	}
+
 	/// <summary>
-	/// ˜A‘±‚µ‚½ Size ƒXƒƒbƒg‚ğŠm•Û‚µ‚Ä•Ô‚·B
-	/// ¸”s‚Í IsValid() == false ‚Ì Info ‚ğ•Ô‚·B
+	/// é€£ç¶šã—ãŸ Size ã‚¹ãƒ­ãƒƒãƒˆã‚’ç¢ºä¿ã—ã¦è¿”ã™ã€‚
+	/// å¤±æ•—æ™‚ã¯ IsValid() == false ã® Info ã‚’è¿”ã™ã€‚
 	/// </summary>
 	GDescriptorHeapInfo graphics::GDescriptorHeapManager::Issuance(uint32_t Size)
 	{
-		// Size == 0 ‚ÍŒÄ‚Ño‚µ‘¤‚ÌƒoƒO
+		// Size == 0 ã¯å‘¼ã³å‡ºã—å´ã®ãƒã‚°
 		if (Size == 0 || static_cast<int>(Size) > MAX_DESCRIPTOR)
 		{
 			DEBUG_LOG(sys::eLogLevel::Error,
@@ -65,19 +86,19 @@ namespace graphics
 			return { -1, 0 };
 		}
 
-		// Next-Fit ‚ÅƒtƒŠ[‚È˜A‘±ƒXƒƒbƒg‚ğ’T‚·
+		// Next-Fit ã§ãƒ•ãƒªãƒ¼ãªé€£ç¶šã‚¹ãƒ­ãƒƒãƒˆã‚’æ¢ã™
 		for (int count = 0; count < MAX_DESCRIPTOR; )
 		{
 			const int current = (mSearchOffset + count) % MAX_DESCRIPTOR;
 
-			// ƒq[ƒv––”ö‚ğ‚Ü‚½‚®Šm•Û‚Í•s‰Âi˜A‘±«‚ª•ÛØ‚³‚ê‚È‚¢‚½‚ßj
+			// ãƒ’ãƒ¼ãƒ—æœ«å°¾ã‚’ã¾ãŸãç¢ºä¿ã¯ä¸å¯ï¼ˆé€£ç¶šæ€§ãŒä¿è¨¼ã•ã‚Œãªã„ãŸã‚ï¼‰
 			if (current + static_cast<int>(Size) > MAX_DESCRIPTOR)
 			{
-				count += (MAX_DESCRIPTOR - current); // æ“ª‚Éƒ‰ƒbƒv
+				count += (MAX_DESCRIPTOR - current); // å…ˆé ­ã«ãƒ©ãƒƒãƒ—
 				continue;
 			}
 
-			// —v‹ƒTƒCƒY•ª‚Ì˜A‘±‹ó‚«‚ğŠm”F
+			// è¦æ±‚ã‚µã‚¤ã‚ºåˆ†ã®é€£ç¶šç©ºãã‚’ç¢ºèª
 			int conflictAt = -1;
 			for (uint32_t s = 0; s < Size; ++s)
 			{
@@ -90,13 +111,13 @@ namespace graphics
 
 			if (conflictAt < 0)
 			{
-				// Šm•Û¬Œ÷
+				// ç¢ºä¿æˆåŠŸ
 				for (uint32_t i = 0; i < Size; ++i) mIsUse[current + i] = true;
 				mSearchOffset = (current + static_cast<int>(Size)) % MAX_DESCRIPTOR;
 				return { current, static_cast<int>(Size) };
 			}
 
-			// Õ“ËƒXƒƒbƒg‚ÌŸ‚©‚çÄ’Tõ
+			// è¡çªã‚¹ãƒ­ãƒƒãƒˆã®æ¬¡ã‹ã‚‰å†æ¢ç´¢
 			count += (conflictAt + 1);
 		}
 
@@ -107,25 +128,25 @@ namespace graphics
 	}
 
 	/// <summary>
-	/// Šm•Û‚µ‚½ƒXƒƒbƒg‚ğ•Ô‹p‚·‚éB
-	/// •Ô‹pŒã‚Í Info ‚ª–³Œø‰»‚³‚ê‚éB
+	/// ç¢ºä¿ã—ãŸã‚¹ãƒ­ãƒƒãƒˆã‚’è¿”å´ã™ã‚‹ã€‚
+	/// è¿”å´å¾Œã¯ Info ãŒç„¡åŠ¹åŒ–ã•ã‚Œã‚‹ã€‚
 	/// </summary>
 	void GDescriptorHeapManager::Discard(GDescriptorHeapInfo& Info)
 	{
 		if (!Info.IsValid()) return;
 
-		// ”ÍˆÍŠO‚Ö‚Ì‘‚«‚İ‚ğ–h‚®
+		// ç¯„å›²å¤–ã¸ã®æ›¸ãè¾¼ã¿ã‚’é˜²ã
 		const int end = std::min(Info.Index + Info.Size, MAX_DESCRIPTOR);
 		for (int i = Info.Index; i < end; ++i)
 		{
 			mIsUse[i] = false;
 		}
 
-		// •Ô‹pŒã‚Í–³Œø‰»‚·‚é
+		// è¿”å´å¾Œã¯ç„¡åŠ¹åŒ–ã™ã‚‹
 		Info = {};
 	}
 
-	/// <summary>CPU ƒnƒ“ƒhƒ‹‚Ìæ“¾</summary>
+	/// <summary>CPU ãƒãƒ³ãƒ‰ãƒ«ã®å–å¾—</summary>
 	D3D12_CPU_DESCRIPTOR_HANDLE GDescriptorHeapManager::GetCpuHandle(const GDescriptorHeapInfo& info) const
 	{
 		if (!info.IsValid() || info.Index >= MAX_DESCRIPTOR)
@@ -135,7 +156,7 @@ namespace graphics
 		return mHandles[info.Index].cpu;
 	}
 
-	/// <summary>GPU ƒnƒ“ƒhƒ‹‚Ìæ“¾</summary>
+	/// <summary>GPU ãƒãƒ³ãƒ‰ãƒ«ã®å–å¾—</summary>
 	D3D12_GPU_DESCRIPTOR_HANDLE GDescriptorHeapManager::GetGpuHandle(const GDescriptorHeapInfo& info) const
 	{
 		if (!info.IsValid() || info.Index >= MAX_DESCRIPTOR)
@@ -145,7 +166,7 @@ namespace graphics
 		return mHandles[info.Index].gpu;
 	}
 
-	/// <summary>ƒlƒCƒeƒBƒu‚Ìƒq[ƒvƒ|ƒCƒ“ƒ^æ“¾iƒRƒ}ƒ“ƒhƒŠƒXƒg‚Ö‚ÌƒZƒbƒg—pj</summary>
+	/// <summary>ãƒã‚¤ãƒ†ã‚£ãƒ–ã®ãƒ’ãƒ¼ãƒ—ãƒã‚¤ãƒ³ã‚¿å–å¾—ï¼ˆã‚³ãƒãƒ³ãƒ‰ãƒªã‚¹ãƒˆã¸ã®ã‚»ãƒƒãƒˆç”¨ï¼‰</summary>
 	ID3D12DescriptorHeap* GDescriptorHeapManager::GetNativeHeap() const
 	{
 		return mHeap.Get();

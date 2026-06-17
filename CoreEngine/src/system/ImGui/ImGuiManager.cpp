@@ -98,6 +98,8 @@ namespace sys
 			ImGui::DestroyContext(mContext);
 			mContext = nullptr;
 		}
+		mFontHeap.Release();
+
 		mRendererContext = nullptr;
 		mHeapManager = nullptr;
 		mIsInitialized = false;

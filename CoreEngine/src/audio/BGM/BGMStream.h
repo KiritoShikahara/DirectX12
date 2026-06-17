@@ -13,47 +13,40 @@
 namespace audio
 {
     /// <summary>
-    /// BGM ƒXƒgƒŠ[ƒ~ƒ“ƒOÄ¶ƒNƒ‰ƒX
+    /// BGM ã‚¹ãƒˆãƒªãƒ¼ãƒŸãƒ³ã‚°å†ç”Ÿã‚¯ãƒ©ã‚¹
     /// </summary>
     class BGMStream
     {
     public:
-        /// <summary>ƒŠƒ“ƒOƒoƒbƒtƒ@‚ÌƒtƒŒ[ƒ€”i2‚Ì—İæ„§j</summary>
+        /// <summary>ãƒªãƒ³ã‚°ãƒãƒƒãƒ•ã‚¡ã®ãƒ•ãƒ¬ãƒ¼ãƒ æ•°ï¼ˆ2ã®ç´¯ä¹—æ¨å¥¨ï¼‰</summary>
         static constexpr size_t kRingBufferFrames = 8192;
 
         explicit BGMStream(std::string filePath);
         ~BGMStream();
 
-        // ƒRƒs[Eƒ€[ƒu‹Ö~ijthread ‚Æ atomic ‚ğ‚Â‚½‚ßj
+        // ã‚³ãƒ”ãƒ¼ãƒ»ãƒ ãƒ¼ãƒ–ç¦æ­¢ï¼ˆjthread ã¨ atomic ã‚’æŒã¤ãŸã‚ï¼‰
         BGMStream(const BGMStream&) = delete;
         BGMStream& operator=(const BGMStream&) = delete;
         BGMStream(BGMStream&&) = delete;
         BGMStream& operator=(BGMStream&&) = delete;
 
-        // ---------------------------------------------------------------
-        // ‰Šú‰» / Ä¶§Œä
-        // ---------------------------------------------------------------
-
         /// <summary>
-        /// ƒtƒ@ƒCƒ‹‚ğŠJ‚¢‚Äƒwƒbƒ_[‚ğ“Ç‚İ‚ŞB
-        /// Play() ‚Ì‘O‚É•K‚¸ŒÄ‚Ô‚±‚ÆB
+        /// ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã„ã¦ãƒ˜ãƒƒãƒ€ãƒ¼ã‚’èª­ã¿è¾¼ã‚€ã€‚
+        /// Play() ã®å‰ã«å¿…ãšå‘¼ã¶ã“ã¨ã€‚
         /// </summary>
-        /// <returns>¬Œ÷ true</returns>
+        /// <returns>æˆåŠŸæ™‚ true</returns>
         bool Open();
 
-        /// <summary>Ä¶ŠJniƒ[ƒ_[ƒXƒŒƒbƒh‚ğ‹N“®‚·‚éj</summary>
+        /// <summary>å†ç”Ÿé–‹å§‹ï¼ˆãƒ­ãƒ¼ãƒ€ãƒ¼ã‚¹ãƒ¬ãƒƒãƒ‰ã‚’èµ·å‹•ã™ã‚‹ï¼‰</summary>
         void Play();
 
-        /// <summary>Ä¶ˆÊ’u‚ğæ“ª‚É–ß‚µ‚Ä’â~Bƒ[ƒ_[ƒXƒŒƒbƒh‚ğˆÀ‘S‚ÉI—¹‚³‚¹‚é</summary>
+        /// <summary>å†ç”Ÿä½ç½®ã‚’å…ˆé ­ã«æˆ»ã—ã¦åœæ­¢ã€‚ãƒ­ãƒ¼ãƒ€ãƒ¼ã‚¹ãƒ¬ãƒƒãƒ‰ã‚’å®‰å…¨ã«çµ‚äº†ã•ã›ã‚‹</summary>
         void Stop();
 
-        /// <summary>Ä¶ˆÊ’u‚ğˆÛ‚µ‚½‚Ü‚Üˆê’â~</summary>
+        /// <summary>å†ç”Ÿä½ç½®ã‚’ç¶­æŒã—ãŸã¾ã¾ä¸€æ™‚åœæ­¢</summary>
         void Pause() noexcept { mPlaying.store(false, std::memory_order_relaxed); }
 
-        // ---------------------------------------------------------------
-        // ƒpƒ‰ƒ[ƒ^iƒXƒŒƒbƒhƒZ[ƒtj
-        // ---------------------------------------------------------------
-
+        // å†ç”Ÿãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãƒ¼
         [[nodiscard]] bool  IsPlaying() const noexcept { return mPlaying.load(std::memory_order_relaxed); }
         [[nodiscard]] float Volume()    const noexcept { return mVolume.load(std::memory_order_relaxed); }
         [[nodiscard]] bool  IsLoop()    const noexcept { return mLoop.load(std::memory_order_relaxed); }
@@ -62,64 +55,64 @@ namespace audio
         void SetLoop(bool  l)   noexcept { mLoop.store(l, std::memory_order_relaxed); }
 
         /// <summary>
-        /// ƒŠƒ“ƒOƒoƒbƒtƒ@‚©‚ç PCM ‚ğ“Ç‚İo‚µ‚Ä output ‚Ö‰ÁZƒ~ƒbƒNƒX‚·‚éB
+        /// ãƒªãƒ³ã‚°ãƒãƒƒãƒ•ã‚¡ã‹ã‚‰ PCM ã‚’èª­ã¿å‡ºã—ã¦ output ã¸åŠ ç®—ãƒŸãƒƒã‚¯ã‚¹ã™ã‚‹ã€‚
         /// </summary>
-        /// <param name="output">o—Íƒoƒbƒtƒ@iƒCƒ“ƒ^[ƒŠ[ƒuŒ`®j</param>
-        /// <param name="framesRequested">—v‹ƒtƒŒ[ƒ€”</param>
-        /// <param name="outputChannels">o—Íƒ`ƒƒƒ“ƒlƒ‹”</param>
-        /// <param name="masterVolume">ƒ}ƒXƒ^[‰¹—Ê</param>
-        /// <param name="bgmVolume">BGMƒJƒeƒSƒŠ‰¹—Ê</param>
+        /// <param name="output">å‡ºåŠ›ãƒãƒƒãƒ•ã‚¡ï¼ˆã‚¤ãƒ³ã‚¿ãƒ¼ãƒªãƒ¼ãƒ–å½¢å¼ï¼‰</param>
+        /// <param name="framesRequested">è¦æ±‚ãƒ•ãƒ¬ãƒ¼ãƒ æ•°</param>
+        /// <param name="outputChannels">å‡ºåŠ›ãƒãƒ£ãƒ³ãƒãƒ«æ•°</param>
+        /// <param name="masterVolume">ãƒã‚¹ã‚¿ãƒ¼éŸ³é‡</param>
+        /// <param name="bgmVolume">BGMã‚«ãƒ†ã‚´ãƒªéŸ³é‡</param>
         void ApplyAndMix(int16_t* output,
             size_t   framesRequested,
             uint16_t outputChannels,
             float    masterVolume,
             float    bgmVolume);
 
-        // ƒƒ^î•ñ
+        // ãƒ¡ã‚¿æƒ…å ±
         [[nodiscard]] uint32_t SampleRate() const noexcept { return mHeader.SampleRate; }
         [[nodiscard]] uint16_t Channels()   const noexcept { return mHeader.Channels; }
 
     private:
-        // ƒ[ƒ_[ƒXƒŒƒbƒh
+        // ãƒ­ãƒ¼ãƒ€ãƒ¼ã‚¹ãƒ¬ãƒƒãƒ‰
 
-        /// <summary>jthread ‚ÌƒGƒ“ƒgƒŠƒ|ƒCƒ“ƒgBstop_token ‚ÅˆÀ‘S‚ÉI—¹‚·‚é</summary>
+        /// <summary>jthread ã®ã‚¨ãƒ³ãƒˆãƒªãƒã‚¤ãƒ³ãƒˆã€‚stop_token ã§å®‰å…¨ã«çµ‚äº†ã™ã‚‹</summary>
         void LoaderThread(std::stop_token stopToken);
 
-        /// <summary>ƒŠƒ“ƒOƒoƒbƒtƒ@‚Ö‘‚«‚İ‰Â”\‚ÈƒtƒŒ[ƒ€”‚ğ•Ô‚·iƒ[ƒ_[‘¤‚©‚çŒÄ‚Ôj</summary>
+        /// <summary>ãƒªãƒ³ã‚°ãƒãƒƒãƒ•ã‚¡ã¸æ›¸ãè¾¼ã¿å¯èƒ½ãªãƒ•ãƒ¬ãƒ¼ãƒ æ•°ã‚’è¿”ã™ï¼ˆãƒ­ãƒ¼ãƒ€ãƒ¼å´ã‹ã‚‰å‘¼ã¶ï¼‰</summary>
         [[nodiscard]] size_t WritableFrames() const noexcept;
 
-        /// <summary>ƒŠƒ“ƒOƒoƒbƒtƒ@‚©‚ç“Ç‚İo‚µ‰Â”\‚ÈƒtƒŒ[ƒ€”‚ğ•Ô‚·iƒR[ƒ‹ƒoƒbƒN‘¤‚©‚çŒÄ‚Ôj</summary>
+        /// <summary>ãƒªãƒ³ã‚°ãƒãƒƒãƒ•ã‚¡ã‹ã‚‰èª­ã¿å‡ºã—å¯èƒ½ãªãƒ•ãƒ¬ãƒ¼ãƒ æ•°ã‚’è¿”ã™ï¼ˆã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯å´ã‹ã‚‰å‘¼ã¶ï¼‰</summary>
         [[nodiscard]] size_t ReadableFrames() const noexcept;
 
-        // ƒƒ“ƒo•Ï”
+        // ãƒ¡ãƒ³ãƒå¤‰æ•°
         const std::string mFilePath;
         std::ifstream     mFileStream;
         AudioHeader       mHeader = {};
 
-        // ƒŠƒ“ƒOƒoƒbƒtƒ@
-        // ƒTƒCƒY = kRingBufferFrames * ChannelsiOpenŒã‚ÉŠm’èj
+        // ãƒªãƒ³ã‚°ãƒãƒƒãƒ•ã‚¡
+        // ã‚µã‚¤ã‚º = kRingBufferFrames * Channelsï¼ˆOpenå¾Œã«ç¢ºå®šï¼‰
         std::vector<int16_t>  mRingBuffer;
-        size_t                mRingCapFrames = 0; // ƒŠƒ“ƒOƒoƒbƒtƒ@‚ÌƒtƒŒ[ƒ€—e—Ê
+        size_t                mRingCapFrames = 0; // ãƒªãƒ³ã‚°ãƒãƒƒãƒ•ã‚¡ã®ãƒ•ãƒ¬ãƒ¼ãƒ å®¹é‡
 
-        // write: ƒ[ƒ_[ƒXƒŒƒbƒh‚Ì‚İ‘‚­  read: ƒR[ƒ‹ƒoƒbƒN‚Ì‚İ‘‚­
-        std::atomic<size_t>   mWritePos{ 0 }; // ’PˆÊ: ƒtƒŒ[ƒ€
-        std::atomic<size_t>   mReadPos{ 0 }; // ’PˆÊ: ƒtƒŒ[ƒ€
+        // write: ãƒ­ãƒ¼ãƒ€ãƒ¼ã‚¹ãƒ¬ãƒƒãƒ‰ã®ã¿æ›¸ã  read: ã‚³ãƒ¼ãƒ«ãƒãƒƒã‚¯ã®ã¿æ›¸ã
+        std::atomic<size_t>   mWritePos{ 0 }; // å˜ä½: ãƒ•ãƒ¬ãƒ¼ãƒ 
+        std::atomic<size_t>   mReadPos{ 0 }; // å˜ä½: ãƒ•ãƒ¬ãƒ¼ãƒ 
 
-        // ƒ[ƒ_[ƒXƒŒƒbƒh§Œä
+        // ãƒ­ãƒ¼ãƒ€ãƒ¼ã‚¹ãƒ¬ãƒƒãƒ‰åˆ¶å¾¡
         std::jthread            mLoaderThread;
         std::condition_variable mLoaderCV;
-        std::mutex              mLoaderCVMtx; // CV ê—piƒtƒ@ƒCƒ‹‚â PCM ‚Ö‚ÌƒAƒNƒZƒX‚Í•ÊŠÇ—j
+        std::mutex              mLoaderCVMtx; // CV å°‚ç”¨ï¼ˆãƒ•ã‚¡ã‚¤ãƒ«ã‚„ PCM ã¸ã®ã‚¢ã‚¯ã‚»ã‚¹ã¯åˆ¥ç®¡ç†ï¼‰
 
-        // ---- ƒtƒ@ƒCƒ‹ƒV[ƒN•ÛŒì ----
-        // ƒ[ƒ_[ƒXƒŒƒbƒh‚Æ Stop() ‚ª“¯‚ÉƒV[ƒN‚µ‚È‚¢‚æ‚¤ç‚éŒy—Ê mutex
+        // ãƒ•ã‚¡ã‚¤ãƒ«ã‚·ãƒ¼ã‚¯ä¿è­·
+        // ãƒ­ãƒ¼ãƒ€ãƒ¼ã‚¹ãƒ¬ãƒƒãƒ‰ã¨ Stop() ãŒåŒæ™‚ã«ã‚·ãƒ¼ã‚¯ã—ãªã„ã‚ˆã†å®ˆã‚‹è»½é‡ mutex
         std::mutex mFileMtx;
 
-        // ó‘Ôƒtƒ‰ƒO
+        // çŠ¶æ…‹ãƒ•ãƒ©ã‚°
         std::atomic<bool>  mPlaying{ false };
         std::atomic<bool>  mLoop{ true };
         std::atomic<float> mVolume{ 1.0f };
 
-        // ƒtƒ@ƒCƒ‹æ“ª‚©‚çPCMƒf[ƒ^‚ªn‚Ü‚éƒIƒtƒZƒbƒgi= sizeof(AudioHeader)j
+        // ãƒ•ã‚¡ã‚¤ãƒ«å…ˆé ­ã‹ã‚‰PCMãƒ‡ãƒ¼ã‚¿ãŒå§‹ã¾ã‚‹ã‚ªãƒ•ã‚»ãƒƒãƒˆï¼ˆ= sizeof(AudioHeader)ï¼‰
         static constexpr std::streamoff kPcmOffset = static_cast<std::streamoff>(sizeof(AudioHeader));
     };
 

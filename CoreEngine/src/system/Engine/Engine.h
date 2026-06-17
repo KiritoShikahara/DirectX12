@@ -57,10 +57,28 @@ namespace sys
 		bool Finalize();
 	private:
 		/// <summary>
+		/// コア部分の初期化
+		/// </summary>
+		/// <returns></returns>
+		bool InitializeCore();
+
+		/// <summary>
 		/// レンダラの初期化
 		/// </summary>
 		/// <returns></returns>
 		bool InitializeRenderer(graphics::GDescriptorHeapManager& descriptorHeapManager);
+
+		/// <summary>
+		/// 各種システムの初期化
+		/// </summary>
+		/// <returns></returns>
+		bool InitializeSystem();
+
+		/// <summary>
+		/// 音関係の初期化
+		/// </summary>
+		/// <returns></returns>
+		bool InitializeAudio();
 
 		/// <summary>
 		/// デバックUIの初期化

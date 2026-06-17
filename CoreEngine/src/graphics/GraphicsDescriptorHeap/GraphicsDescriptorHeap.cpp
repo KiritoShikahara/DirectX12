@@ -4,6 +4,39 @@
 
 namespace graphics
 {
+	/// <summary>
+	/// ムーブコンストラクタ（所有権の移譲）
+	/// </summary>
+	GDescriptorHeap::GDescriptorHeap(GDescriptorHeap&& other) noexcept
+		: mHeapInfo(other.mHeapInfo)
+		, mManager(other.mManager)
+	{
+		// 移動元のオブジェクトを安全な状態（未確保）にクリアする
+		other.mHeapInfo = {};
+		other.mManager = nullptr;
+	}
+
+	/// <summary>
+	/// ムーブ代入演算子（既存リソースの自動解放と所有権移譲）
+	/// </summary>
+	GDescriptorHeap& GDescriptorHeap::operator=(GDescriptorHeap&& other) noexcept
+	{
+		if (this != &other)
+		{
+			// 自分が既にデスクリプタを保持しているなら、安全に解放する
+			Release();
+
+			// 移動元から情報をコピー
+			mHeapInfo = other.mHeapInfo;
+			mManager = other.mManager;
+
+			// 移動元のオブジェクトをクリアして、二重解放を防ぐ
+			other.mHeapInfo = {};
+			other.mManager = nullptr;
+		}
+		return *this;
+	}
+
 	GDescriptorHeap::~GDescriptorHeap()
 	{
 		Release();
@@ -11,7 +44,7 @@ namespace graphics
 
 	bool GDescriptorHeap::Create(GDescriptorHeapManager& manager, uint32_t size)
 	{
-		// ���Ɋm�ۍς݂Ȃ��x������Ă���Ċm�ۂ���
+		// 既に確保済みなら一度解放してから再確保する
 		if (mHeapInfo.IsValid())
 		{
 			Release();
@@ -25,7 +58,7 @@ namespace graphics
 			return false;
 		}
 
-		// �m�ۂ����������Ƃ����� Manager ��ێ�����
+		// 確保が成功したときだけ Manager を保持する
 		mManager = &manager;
 		return true;
 	}
@@ -36,7 +69,7 @@ namespace graphics
 		{
 			mManager->Discard(mHeapInfo);
 		}
-		// Discard() ���� mHeapInfo �̓��Z�b�g����邪�A�����I�� Manager ���N���A����
+		// Discard() 内で mHeapInfo はリセットされるが、明示的に Manager もクリアする
 		mManager = nullptr;
 	}
 
