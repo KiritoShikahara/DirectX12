@@ -73,7 +73,7 @@ namespace graphics
 
         // 注: mCameraBuffer は独自定数バッファクラスのデストラクタで安全に解放されます。
         // もし明示的な解放関数（Release 等）を実装されている場合はここで呼び出してください。
-
+        mCameraBuffer.reset();
         mVertexBuffer.reset();
         mPipeline.reset();
         mHeapManager = nullptr;

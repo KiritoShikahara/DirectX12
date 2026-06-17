@@ -36,51 +36,54 @@ namespace graphics
 		SINGLETON_ACCESSOR(SpriteRenderer);
 
 		/// <summary>
-		/// ‰Šú‰»BˆË‘¶‚·‚éƒIƒuƒWƒFƒNƒg‚ğ‚·‚×‚Äˆø”‚Åó‚¯æ‚éB
+		/// åˆæœŸåŒ–ã€‚ä¾å­˜ã™ã‚‹ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ã™ã¹ã¦å¼•æ•°ã§å—ã‘å–ã‚‹ã€‚
 		/// </summary>
-		/// <param name="device">GPU ƒfƒoƒCƒXiƒoƒbƒtƒ@ì¬EPSO ì¬j</param>
-		/// <param name="heapManager">ƒfƒBƒXƒNƒŠƒvƒ^ƒq[ƒv‚Ì‹Ÿ‹‹Œ³</param>
-		/// <param name="shaderManager">ƒVƒF[ƒ_[‚ÌƒRƒ“ƒpƒCƒ‹EƒLƒƒƒbƒVƒ…ŠÇ—</param>
-		/// <param name="window">‰¼‘z‰ğ‘œ“x‚Ìæ“¾Œ³</param>
-		/// <returns>true:¬Œ÷</returns>
+		/// <param name="device">GPU ãƒ‡ãƒã‚¤ã‚¹ï¼ˆãƒãƒƒãƒ•ã‚¡ä½œæˆãƒ»PSO ä½œæˆï¼‰</param>
+		/// <param name="heapManager">ãƒ‡ã‚£ã‚¹ã‚¯ãƒªãƒ—ã‚¿ãƒ’ãƒ¼ãƒ—ã®ä¾›çµ¦å…ƒ</param>
+		/// <param name="shaderManager">ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã®ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ãƒ»ã‚­ãƒ£ãƒƒã‚·ãƒ¥ç®¡ç†</param>
+		/// <param name="window">ä»®æƒ³è§£åƒåº¦ã®å–å¾—å…ƒ</param>
+		/// <returns>true:æˆåŠŸ</returns>
 		bool Initialize(
 			DX12Device& device,
 			GDescriptorHeapManager& heapManager,
 			ShaderManager& shaderManager,
 			sys::Window& window);
 
-		/// <summary>‘OƒtƒŒ[ƒ€‚Ì•`‰æƒf[ƒ^‚ğƒNƒŠƒA‚·‚éB</summary>
+		/// <summary>ãƒªã‚½ãƒ¼ã‚¹è§£æ”¾</summary>
+		void Finalize();
+
+		/// <summary>å‰ãƒ•ãƒ¬ãƒ¼ãƒ ã®æç”»ãƒ‡ãƒ¼ã‚¿ã‚’ã‚¯ãƒªã‚¢ã™ã‚‹ã€‚</summary>
 		void Begin();
 
 		/// <summary>
-		/// ƒXƒvƒ‰ƒCƒg1Œ‚ğ•`‰æ—\–ñ‚·‚éB
-		/// “¯ˆêƒeƒNƒXƒ`ƒƒ‚ª˜A‘±‚·‚éê‡‚Í©“®ƒoƒbƒ`‰»‚³‚ê‚éB
+		/// ã‚¹ãƒ—ãƒ©ã‚¤ãƒˆ1ä»¶ã‚’æç”»äºˆç´„ã™ã‚‹ã€‚
+		/// åŒä¸€ãƒ†ã‚¯ã‚¹ãƒãƒ£ãŒé€£ç¶šã™ã‚‹å ´åˆã¯è‡ªå‹•ãƒãƒƒãƒåŒ–ã•ã‚Œã‚‹ã€‚
 		/// </summary>
 		void Draw(const SpriteShaderData& data, D3D12_GPU_DESCRIPTOR_HANDLE textureHandle);
 
 		/// <summary>
-		/// —\–ñÏ‚İƒf[ƒ^‚ğ GPU ƒRƒ}ƒ“ƒh‚Æ‚µ‚Ä”­s‚·‚éB
-		/// DX12Renderer::Flip() ‚æ‚è‘O‚ÉŒÄ‚Ô‚±‚ÆB
+		/// äºˆç´„æ¸ˆã¿ãƒ‡ãƒ¼ã‚¿ã‚’ GPU ã‚³ãƒãƒ³ãƒ‰ã¨ã—ã¦ç™ºè¡Œã™ã‚‹ã€‚
+		/// DX12Renderer::Flip() ã‚ˆã‚Šå‰ã«å‘¼ã¶ã“ã¨ã€‚
 		/// </summary>
 		void End(ID3D12GraphicsCommandList* cmdList);
 
 		/// <summary>
-		/// ECS ƒŒƒWƒXƒgƒŠ‚©‚ç Transform + Sprite ‚ğ‚ÂƒGƒ“ƒeƒBƒeƒB‚ğûW‚µA
-		/// ƒŒƒCƒ„[‡‚Éƒ\[ƒg‚µ‚Ä Draw() ‚ğ”­s‚·‚éB
+		/// ECS ãƒ¬ã‚¸ã‚¹ãƒˆãƒªã‹ã‚‰ Transform + Sprite ã‚’æŒã¤ã‚¨ãƒ³ãƒ†ã‚£ãƒ†ã‚£ã‚’åé›†ã—ã€
+		/// ãƒ¬ã‚¤ãƒ¤ãƒ¼é †ã«ã‚½ãƒ¼ãƒˆã—ã¦ Draw() ã‚’ç™ºè¡Œã™ã‚‹ã€‚
 		/// </summary>
 		void UpdateAndDraw(entt::registry& registry);
 	private:
 		/// <summary>
-		/// Transform ‚Æ Sprite ‚©‚çƒVƒF[ƒ_[‚É“n‚·ƒf[ƒ^‚ğŒvZ‚·‚éB
+		/// Transform ã¨ Sprite ã‹ã‚‰ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã«æ¸¡ã™ãƒ‡ãƒ¼ã‚¿ã‚’è¨ˆç®—ã™ã‚‹ã€‚
 		/// </summary>
 		SpriteShaderData CalculateShaderData(
 			const ecs::Transform& tr,
 			const ecs::Sprite& sp) const;
 
-		// ƒXƒvƒ‰ƒCƒg•`‰æ—\–ñÅ‘å”
+		// ã‚¹ãƒ—ãƒ©ã‚¤ãƒˆæç”»äºˆç´„æœ€å¤§æ•°
 		static constexpr uint32_t MAX_SPRITE_COUNT = 4096;
 
-		//@ƒoƒbƒ`’PˆÊ‚Ìƒhƒ[ƒR[ƒ‹—pƒf[ƒ^
+		//ã€€ãƒãƒƒãƒå˜ä½ã®ãƒ‰ãƒ­ãƒ¼ã‚³ãƒ¼ãƒ«ç”¨ãƒ‡ãƒ¼ã‚¿
 		struct DrawCall
 		{
 			D3D12_GPU_DESCRIPTOR_HANDLE textureHandle = {};
@@ -88,16 +91,16 @@ namespace graphics
 			uint32_t                    startIndex = 0;
 		};
 
-		// GPU ƒIƒuƒWƒFƒNƒg
+		// GPU ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
 		std::unique_ptr<SpritePipeline>    mPipeline;
 		std::unique_ptr<StructuredBuffer>  mInstanceBuffer;
 		std::unique_ptr<VertexBuffer>      mVB;
 
-		// ƒtƒŒ[ƒ€ƒf[ƒ^
+		// ãƒ•ãƒ¬ãƒ¼ãƒ ãƒ‡ãƒ¼ã‚¿
 		std::vector<SpriteShaderData>      mReservedData;
 		std::vector<DrawCall>              mDrawCalls;
 
-		// ˆË‘¶ƒIƒuƒWƒFƒNƒg
+		// ä¾å­˜ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆ
 		GDescriptorHeapManager* mHeapManager = nullptr;
 		sys::Window* mWindow = nullptr;
 

@@ -95,6 +95,24 @@ namespace graphics
         return true;
     }
 
+    void FbxRenderer::Finalize()
+    {
+        mShadowMapSRV.Release();
+        mShadowMapNullSRV.Release();
+        mInstanceBuffer.reset();
+        mBoneBuffer.reset();
+        mSceneBuffer.reset();
+        mLightBuffer.reset();
+
+        mShadowMapResource.Reset();
+        mShadowMapDSVHeap.Reset();
+        mShadowMapSRV.Release();
+        mShadowMapNullSRV.Release();
+
+        mPipeline.reset();
+        mShadowPipeline.reset();
+    }
+
     // ============================================================
     //  Shadow Map リソース生成
     // ============================================================

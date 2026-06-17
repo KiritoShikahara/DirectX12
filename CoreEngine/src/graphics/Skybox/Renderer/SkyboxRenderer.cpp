@@ -24,7 +24,23 @@ namespace graphics
 		return true;
 	}
 
-	void SkyboxRenderer::Begin()
+    void SkyboxRenderer::Finalize()
+    {
+        // パイプライン（ComPtr/UniquePtr）のリセット
+        if (mPipeline)
+        {
+            // 必要に応じて SkyboxPipeline 側にもリセット処理を追加
+            mPipeline.reset();
+        }
+
+        // Texture などの参照もクリア
+        mTexA = nullptr;
+        mTexB = nullptr;
+
+        DEBUG_LOG(sys::eLogLevel::Log, "SkyboxRenderer: Finalized.");
+    }
+
+    void SkyboxRenderer::Begin()
 	{
 		mTexA = nullptr;
 		mTexB = nullptr;

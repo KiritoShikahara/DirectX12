@@ -17,50 +17,50 @@ namespace graphics
 		~GDescriptorHeap();
 
 
-		// “ñd‰ğ•ú‚ğ–h‚®‚½‚ßƒRƒs[‹Ö~
+		// äºŒé‡è§£æ”¾ã‚’é˜²ããŸã‚ã‚³ãƒ”ãƒ¼ç¦æ­¢
 		GDescriptorHeap(const GDescriptorHeap&) = delete;
 		GDescriptorHeap& operator=(const GDescriptorHeap&) = delete;
 
-		// ƒ€[ƒu‚Í‹–‰ÂiŠ—LŒ ‚ÌˆÚ÷j
-		GDescriptorHeap(GDescriptorHeap&&) noexcept = default;
-		GDescriptorHeap& operator=(GDescriptorHeap&&) noexcept = default;
+		// ãƒ ãƒ¼ãƒ–ã¯è¨±å¯ï¼ˆæ‰€æœ‰æ¨©ã®ç§»è­²ï¼‰
+		GDescriptorHeap(GDescriptorHeap&& other) noexcept;
+		GDescriptorHeap& operator=(GDescriptorHeap&& other) noexcept;
 
 		/// <summary>
-		/// ƒXƒƒbƒg‚ÌŠm•ÛB
-		/// Manager ‚ÌQÆ‚ğ“à•”‚É•Û‚·‚é‚½‚ßAˆÈ~‚Ìƒƒ\ƒbƒhŒÄ‚Ño‚µ‚Éˆø”‚Í•s—vB
-		/// Šù‚ÉŠm•ÛÏ‚İ‚Ìê‡‚Íˆê“x‰ğ•ú‚µ‚Ä‚©‚çÄŠm•Û‚·‚éB
+		/// ã‚¹ãƒ­ãƒƒãƒˆã®ç¢ºä¿ã€‚
+		/// Manager ã®å‚ç…§ã‚’å†…éƒ¨ã«ä¿æŒã™ã‚‹ãŸã‚ã€ä»¥é™ã®ãƒ¡ã‚½ãƒƒãƒ‰å‘¼ã³å‡ºã—ã«å¼•æ•°ã¯ä¸è¦ã€‚
+		/// æ—¢ã«ç¢ºä¿æ¸ˆã¿ã®å ´åˆã¯ä¸€åº¦è§£æ”¾ã—ã¦ã‹ã‚‰å†ç¢ºä¿ã™ã‚‹ã€‚
 		/// </summary>
-		/// <param name="manager">ƒXƒƒbƒg‚ğŠÇ—‚·‚éƒ}ƒl[ƒWƒƒ[</param>
-		/// <param name="size">Šm•Û‚·‚éƒXƒƒbƒg”</param>
-		/// <returns>true:¬Œ÷</returns>
+		/// <param name="manager">ã‚¹ãƒ­ãƒƒãƒˆã‚’ç®¡ç†ã™ã‚‹ãƒãƒãƒ¼ã‚¸ãƒ£ãƒ¼</param>
+		/// <param name="size">ç¢ºä¿ã™ã‚‹ã‚¹ãƒ­ãƒƒãƒˆæ•°</param>
+		/// <returns>true:æˆåŠŸ</returns>
 		bool Create(GDescriptorHeapManager& manager, uint32_t size = 1);
 
 		/// <summary>
-		/// ƒXƒƒbƒg‚Ì–¾¦“I‚È‰ğ•úBƒfƒXƒgƒ‰ƒNƒ^‚Å‚àŒÄ‚Î‚ê‚éB
+		/// ã‚¹ãƒ­ãƒƒãƒˆã®æ˜ç¤ºçš„ãªè§£æ”¾ã€‚ãƒ‡ã‚¹ãƒˆãƒ©ã‚¯ã‚¿ã§ã‚‚å‘¼ã°ã‚Œã‚‹ã€‚
 		/// </summary>
 		void Release();
 
-		/// <summary>CPU ƒnƒ“ƒhƒ‹‚Ìæ“¾</summary>
+		/// <summary>CPU ãƒãƒ³ãƒ‰ãƒ«ã®å–å¾—</summary>
 		D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandle() const;
 
-		/// <summary>GPU ƒnƒ“ƒhƒ‹‚Ìæ“¾</summary>
+		/// <summary>GPU ãƒãƒ³ãƒ‰ãƒ«ã®å–å¾—</summary>
 		D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandle() const;
 
-		/// <summary>—LŒø‚ÈƒXƒƒbƒg‚ğ•Û‚µ‚Ä‚¢‚é‚©</summary>
+		/// <summary>æœ‰åŠ¹ãªã‚¹ãƒ­ãƒƒãƒˆã‚’ä¿æŒã—ã¦ã„ã‚‹ã‹</summary>
 		bool IsValid() const;
 
-		/// <summary>Š„‚è“–‚Ä‚ç‚ê‚½ƒXƒƒbƒg‚ÌƒCƒ“ƒfƒbƒNƒX</summary>
+		/// <summary>å‰²ã‚Šå½“ã¦ã‚‰ã‚ŒãŸã‚¹ãƒ­ãƒƒãƒˆã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹</summary>
 		int GetIndex()const;
 
 	private:
 		/// <summary>
-		/// ƒXƒƒbƒgî•ñBIndex == -1 ‚Ì‚Æ‚«–¢Šm•ÛB
+		/// ã‚¹ãƒ­ãƒƒãƒˆæƒ…å ±ã€‚Index == -1 ã®ã¨ãæœªç¢ºä¿ã€‚
 		/// </summary>
 		GDescriptorHeapInfo  mHeapInfo;
 
 		/// <summary>
-		/// Šm•ÛŒ³‚Ìƒ}ƒl[ƒWƒƒ[B‰ğ•ú‚Ég—p‚·‚éB
-		/// GDescriptorHeap ‚æ‚è Manager ‚Ì•û‚ª’·¶‚«‚·‚é‘O’ñiEngine ŠÇ—jB
+		/// ç¢ºä¿å…ƒã®ãƒãƒãƒ¼ã‚¸ãƒ£ãƒ¼ã€‚è§£æ”¾æ™‚ã«ä½¿ç”¨ã™ã‚‹ã€‚
+		/// GDescriptorHeap ã‚ˆã‚Š Manager ã®æ–¹ãŒé•·ç”Ÿãã™ã‚‹å‰æï¼ˆEngine ç®¡ç†ï¼‰ã€‚
 		/// </summary>
 		GDescriptorHeapManager* mManager = nullptr;
 

@@ -1,7 +1,7 @@
 #include"pch.h"
 #include "SpriteRenderer.h"
 
-// ƒOƒ‰ƒtƒBƒbƒNƒXŠÖ˜A
+// ã‚°ãƒ©ãƒ•ã‚£ãƒƒã‚¯ã‚¹é–¢é€£
 #include<graphics/Dx12/Dx12Device.h>
 #include<graphics/Dx12/Dx12Renderer.h>
 #include<graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeapManager.h>
@@ -9,7 +9,7 @@
 #include<system/Window/Window.h>
 #include<graphics/Texture/Texture.h>
 
-// ƒRƒ“ƒ|[ƒlƒ“ƒg
+// ã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆ
 #include<ecs/component/sprite/SpriteComponent.h>
 #include<ecs/component/transform/TransformComponent.h>
 
@@ -17,13 +17,13 @@ namespace graphics
 {
 
 	/// <summary>
-	/// ‰Šú‰»BˆË‘¶‚·‚éƒIƒuƒWƒFƒNƒg‚ğ‚·‚×‚Äˆø”‚Åó‚¯æ‚éB
+	/// åˆæœŸåŒ–ã€‚ä¾å­˜ã™ã‚‹ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã‚’ã™ã¹ã¦å¼•æ•°ã§å—ã‘å–ã‚‹ã€‚
 	/// </summary>
-	/// <param name="device">GPU ƒfƒoƒCƒXiƒoƒbƒtƒ@ì¬EPSO ì¬j</param>
-	/// <param name="heapManager">ƒfƒBƒXƒNƒŠƒvƒ^ƒq[ƒv‚Ì‹Ÿ‹‹Œ³</param>
-	/// <param name="shaderManager">ƒVƒF[ƒ_[‚ÌƒRƒ“ƒpƒCƒ‹EƒLƒƒƒbƒVƒ…ŠÇ—</param>
-	/// <param name="window">‰¼‘z‰ğ‘œ“x‚Ìæ“¾Œ³</param>
-	/// <returns>true:¬Œ÷</returns>
+	/// <param name="device">GPU ãƒ‡ãƒã‚¤ã‚¹ï¼ˆãƒãƒƒãƒ•ã‚¡ä½œæˆãƒ»PSO ä½œæˆï¼‰</param>
+	/// <param name="heapManager">ãƒ‡ã‚£ã‚¹ã‚¯ãƒªãƒ—ã‚¿ãƒ’ãƒ¼ãƒ—ã®ä¾›çµ¦å…ƒ</param>
+	/// <param name="shaderManager">ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã®ã‚³ãƒ³ãƒ‘ã‚¤ãƒ«ãƒ»ã‚­ãƒ£ãƒƒã‚·ãƒ¥ç®¡ç†</param>
+	/// <param name="window">ä»®æƒ³è§£åƒåº¦ã®å–å¾—å…ƒ</param>
+	/// <returns>true:æˆåŠŸ</returns>
 	bool SpriteRenderer::Initialize(
 		DX12Device& device,
 		GDescriptorHeapManager& heapManager,
@@ -38,7 +38,7 @@ namespace graphics
 			return false;
 		}
 
-		// ƒCƒ“ƒXƒ^ƒ“ƒXƒf[ƒ^“]‘——p
+		// ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ãƒ‡ãƒ¼ã‚¿è»¢é€ç”¨
 		mInstanceBuffer = std::make_unique<StructuredBuffer>();
 		if (!mInstanceBuffer->Create(sizeof(SpriteShaderData), MAX_SPRITE_COUNT))
 		{
@@ -46,12 +46,12 @@ namespace graphics
 			return false;
 		}
 
-		// ƒXƒvƒ‰ƒCƒg‹¤’Ê’PˆÊlŠpŒ`
+		// ã‚¹ãƒ—ãƒ©ã‚¤ãƒˆå…±é€šå˜ä½å››è§’å½¢
 		SpriteVertex vertices[] = {
-			{ { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } }, // ¶ã
-			{ { 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } }, // ‰Eã
-			{ { 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f } }, // ¶‰º
-			{ { 1.0f, 1.0f, 0.0f }, { 1.0f, 1.0f } }, // ‰E‰º
+			{ { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f } }, // å·¦ä¸Š
+			{ { 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f } }, // å³ä¸Š
+			{ { 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f } }, // å·¦ä¸‹
+			{ { 1.0f, 1.0f, 0.0f }, { 1.0f, 1.0f } }, // å³ä¸‹
 		};
 
 		mVB = std::make_unique<VertexBuffer>();
@@ -62,20 +62,31 @@ namespace graphics
 		}
 		mVB->Update(vertices, sizeof(vertices));
 
-		// ˆË‘¶ƒIƒuƒWƒFƒNƒg‚Ì•Û‘¶
+		// ä¾å­˜ã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆã®ä¿å­˜
 		mHeapManager = &heapManager;
 		mWindow = &window;
 
-		// •`‰æ—\–ñ‚Ì–‘OŠm•Û
+		// æç”»äºˆç´„ã®äº‹å‰ç¢ºä¿
 		mReservedData.reserve(MAX_SPRITE_COUNT);
-		mDrawCalls.reserve(256);	// “K“–‚È”‚Å—\–ñ
+		mDrawCalls.reserve(256);	// é©å½“ãªæ•°ã§äºˆç´„
 
 		DEBUG_LOG(sys::eLogLevel::Log, "SpriteRenderer: Initialized successfully.");
 
 		return true;
 	}
 
-	/// <summary>‘OƒtƒŒ[ƒ€‚Ì•`‰æƒf[ƒ^‚ğƒNƒŠƒA‚·‚éB</summary>
+	void SpriteRenderer::Finalize()
+	{
+		mInstanceBuffer.reset();
+		mPipeline.reset();
+		mVB.reset();
+		mReservedData.clear();
+		mDrawCalls.clear();
+		mHeapManager = nullptr;
+		mWindow = nullptr;
+	}
+
+	/// <summary>å‰ãƒ•ãƒ¬ãƒ¼ãƒ ã®æç”»ãƒ‡ãƒ¼ã‚¿ã‚’ã‚¯ãƒªã‚¢ã™ã‚‹ã€‚</summary>
 	void SpriteRenderer::Begin()
 	{
 		mReservedData.clear();
@@ -83,14 +94,14 @@ namespace graphics
 	}
 
 	/// <summary>
-	/// ƒXƒvƒ‰ƒCƒg1Œ‚ğ•`‰æ—\–ñ‚·‚éB
-	/// “¯ˆêƒeƒNƒXƒ`ƒƒ‚ª˜A‘±‚·‚éê‡‚Í©“®ƒoƒbƒ`‰»‚³‚ê‚éB
+	/// ã‚¹ãƒ—ãƒ©ã‚¤ãƒˆ1ä»¶ã‚’æç”»äºˆç´„ã™ã‚‹ã€‚
+	/// åŒä¸€ãƒ†ã‚¯ã‚¹ãƒãƒ£ãŒé€£ç¶šã™ã‚‹å ´åˆã¯è‡ªå‹•ãƒãƒƒãƒåŒ–ã•ã‚Œã‚‹ã€‚
 	/// </summary>
 	void SpriteRenderer::Draw(const SpriteShaderData& data, D3D12_GPU_DESCRIPTOR_HANDLE textureHandle)
 	{
 		if (mReservedData.size() >= MAX_SPRITE_COUNT) return;
 
-		// “¯‚¶ƒeƒNƒXƒ`ƒƒƒnƒ“ƒhƒ‹‚ª˜A‘±‚·‚é‚È‚çƒoƒbƒ`‚É‚Ü‚Æ‚ß‚é
+		// åŒã˜ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒãƒ³ãƒ‰ãƒ«ãŒé€£ç¶šã™ã‚‹ãªã‚‰ãƒãƒƒãƒã«ã¾ã¨ã‚ã‚‹
 		if (!mDrawCalls.empty() &&
 			mDrawCalls.back().textureHandle.ptr == textureHandle.ptr)
 		{
@@ -109,34 +120,34 @@ namespace graphics
 	}
 
 	/// <summary>
-	/// —\–ñÏ‚İƒf[ƒ^‚ğ GPU ƒRƒ}ƒ“ƒh‚Æ‚µ‚Ä”­s‚·‚éB
-	/// DX12Renderer::Flip() ‚æ‚è‘O‚ÉŒÄ‚Ô‚±‚ÆB
+	/// äºˆç´„æ¸ˆã¿ãƒ‡ãƒ¼ã‚¿ã‚’ GPU ã‚³ãƒãƒ³ãƒ‰ã¨ã—ã¦ç™ºè¡Œã™ã‚‹ã€‚
+	/// DX12Renderer::Flip() ã‚ˆã‚Šå‰ã«å‘¼ã¶ã“ã¨ã€‚
 	/// </summary>
 	void SpriteRenderer::End(ID3D12GraphicsCommandList* cmdList)
 	{
 		if (mReservedData.empty()) return;
 
-		// StructuredBuffer ‚É‘SƒCƒ“ƒXƒ^ƒ“ƒXƒf[ƒ^‚ğˆêŠ‡“]‘—
+		// StructuredBuffer ã«å…¨ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ãƒ‡ãƒ¼ã‚¿ã‚’ä¸€æ‹¬è»¢é€
 		mInstanceBuffer->Update(
 			mReservedData.data(),
 			sizeof(SpriteShaderData) * mReservedData.size());
 
-		// PSO / RootSignature ‚ÌƒZƒbƒg
+		// PSO / RootSignature ã®ã‚»ãƒƒãƒˆ
 		cmdList->SetPipelineState(mPipeline->GetPipelineState());
 		cmdList->SetGraphicsRootSignature(mPipeline->GetRootSignature());
 
-		// SRV ƒq[ƒv‚ÌƒZƒbƒgiSetDescriptorHeaps ‚Í Flip ‘O‚ÌÅŒãŒÄ‚Ño‚µ‚ª—LŒøj
+		// SRV ãƒ’ãƒ¼ãƒ—ã®ã‚»ãƒƒãƒˆï¼ˆSetDescriptorHeaps ã¯ Flip å‰ã®æœ€å¾Œå‘¼ã³å‡ºã—ãŒæœ‰åŠ¹ï¼‰
 		ID3D12DescriptorHeap* heaps[] = { mHeapManager->GetNativeHeap() };
 		cmdList->SetDescriptorHeaps(_countof(heaps), heaps);
 
-		// ’¸“_ƒoƒbƒtƒ@‚Æƒgƒ|ƒƒW[‚ÌƒZƒbƒg
+		// é ‚ç‚¹ãƒãƒƒãƒ•ã‚¡ã¨ãƒˆãƒãƒ­ã‚¸ãƒ¼ã®ã‚»ãƒƒãƒˆ
 		mVB->Set(cmdList, 0);
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-		// [t0] StructuredBufferi‘SƒXƒvƒ‰ƒCƒg‚Ì’è”ƒf[ƒ^j
+		// [t0] StructuredBufferï¼ˆå…¨ã‚¹ãƒ—ãƒ©ã‚¤ãƒˆã®å®šæ•°ãƒ‡ãƒ¼ã‚¿ï¼‰
 		cmdList->SetGraphicsRootDescriptorTable(0, mInstanceBuffer->GetGpuHandle());
 
-		// ƒoƒbƒ`‚²‚Æ‚É [t1] ƒeƒNƒXƒ`ƒƒ‚ğ·‚µ‘Ö‚¦‚Ä DrawInstanced ‚ğ”­s‚·‚é
+		// ãƒãƒƒãƒã”ã¨ã« [t1] ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚’å·®ã—æ›¿ãˆã¦ DrawInstanced ã‚’ç™ºè¡Œã™ã‚‹
 		for (const auto& call : mDrawCalls)
 		{
 			cmdList->SetGraphicsRootDescriptorTable(1, call.textureHandle);
@@ -145,12 +156,12 @@ namespace graphics
 	}
 
 	/// <summary>
-	/// ECS ƒŒƒWƒXƒgƒŠ‚©‚ç Transform + Sprite ‚ğ‚ÂƒGƒ“ƒeƒBƒeƒB‚ğûW‚µA
-	/// ƒŒƒCƒ„[‡‚Éƒ\[ƒg‚µ‚Ä Draw() ‚ğ”­s‚·‚éB
+	/// ECS ãƒ¬ã‚¸ã‚¹ãƒˆãƒªã‹ã‚‰ Transform + Sprite ã‚’æŒã¤ã‚¨ãƒ³ãƒ†ã‚£ãƒ†ã‚£ã‚’åé›†ã—ã€
+	/// ãƒ¬ã‚¤ãƒ¤ãƒ¼é †ã«ã‚½ãƒ¼ãƒˆã—ã¦ Draw() ã‚’ç™ºè¡Œã™ã‚‹ã€‚
 	/// </summary>
 	void SpriteRenderer::UpdateAndDraw(entt::registry& registry)
 	{
-		// Transform + Sprite ‚ğ‚ÂƒGƒ“ƒeƒBƒeƒB‚ğûW
+		// Transform + Sprite ã‚’æŒã¤ã‚¨ãƒ³ãƒ†ã‚£ãƒ†ã‚£ã‚’åé›†
 		auto view = registry.view<ecs::Transform, ecs::Sprite>();
 
 		struct RenderItem
@@ -168,14 +179,14 @@ namespace graphics
 				items.push_back({ &tr, &sp });
 			});
 
-		// Layer ¸‡‚Åƒ\[ƒgi’l‚ª¬‚³‚¢‚Ù‚Çè‘OŒã‚©‚ç•`‚­j
+		// Layer æ˜‡é †ã§ã‚½ãƒ¼ãƒˆï¼ˆå€¤ãŒå°ã•ã„ã»ã©æ‰‹å‰ï¼å¾Œã‹ã‚‰æãï¼‰
 		std::sort(items.begin(), items.end(),
 			[](const RenderItem& a, const RenderItem& b)
 			{
 				return a.sprite->Layer < b.sprite->Layer;
 			});
 
-		// ƒ\[ƒgÏ‚İ‡‚Å Draw ‚ğ”­siƒoƒbƒ`‰»‚Ì‚½‚ßƒeƒNƒXƒ`ƒƒ‡‚ªd—vj
+		// ã‚½ãƒ¼ãƒˆæ¸ˆã¿é †ã§ Draw ã‚’ç™ºè¡Œï¼ˆãƒãƒƒãƒåŒ–ã®ãŸã‚ãƒ†ã‚¯ã‚¹ãƒãƒ£é †ãŒé‡è¦ï¼‰
 		for (const auto& item : items)
 		{
 			const SpriteShaderData shaderData =
@@ -185,35 +196,35 @@ namespace graphics
 	}
 
 	/// <summary>
-	/// Transform ‚Æ Sprite ‚©‚çƒVƒF[ƒ_[‚É“n‚·ƒf[ƒ^‚ğŒvZ‚·‚éB
+	/// Transform ã¨ Sprite ã‹ã‚‰ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã«æ¸¡ã™ãƒ‡ãƒ¼ã‚¿ã‚’è¨ˆç®—ã™ã‚‹ã€‚
 	/// </summary>
 	SpriteShaderData SpriteRenderer::CalculateShaderData(const ecs::Transform& tr, const ecs::Sprite& sp) const
 	{
 		using namespace DirectX;
 
-		// ‰¼‘z‰ğ‘œ“xi–ˆƒtƒŒ[ƒ€æ“¾‚¹‚¸ Window QÆ‚Åæ“¾j
+		// ä»®æƒ³è§£åƒåº¦ï¼ˆæ¯ãƒ•ãƒ¬ãƒ¼ãƒ å–å¾—ã›ãš Window å‚ç…§ã§å–å¾—ï¼‰
 		const float vWidth = static_cast<float>(mWindow->GetVirtualWidth());
 		const float vHeight = static_cast<float>(mWindow->GetVirtualHeight());
 
-		// •`‰æƒTƒCƒY‚ÌŒˆ’èiSize ‚ª 0 ‚Ì‚Æ‚«‚ÍƒeƒNƒXƒ`ƒƒ‚ÌÀƒTƒCƒY‚ğg—pj
+		// æç”»ã‚µã‚¤ã‚ºã®æ±ºå®šï¼ˆSize ãŒ 0 ã®ã¨ãã¯ãƒ†ã‚¯ã‚¹ãƒãƒ£ã®å®Ÿã‚µã‚¤ã‚ºã‚’ä½¿ç”¨ï¼‰
 		const float baseW = (sp.Size.x > 0.0f) ? sp.Size.x : sp.Texture->GetWidth();
 		const float baseH = (sp.Size.y > 0.0f) ? sp.Size.y : sp.Texture->GetHeight();
 		const float w = baseW * sp.DrawScale.x;
 		const float h = baseH * sp.DrawScale.y;
 
-		// “‡ Transform ‚©‚ç 2D ˆÊ’uE‰ñ“]‚ğæ“¾
+		// çµ±åˆ Transform ã‹ã‚‰ 2D ä½ç½®ãƒ»å›è»¢ã‚’å–å¾—
 		const XMFLOAT2 pos2D = tr.Get2DPosition();
 		const float    rotRad = tr.Get2DRotation();
 
-		// ƒ[ƒ‹ƒhs—ñ‚Ì‡¬:
-		//   PivotiŠî€“_ƒIƒtƒZƒbƒgj ¨ Scale + Flip ¨ Rotation(Z) ¨ Translation
+		// ãƒ¯ãƒ¼ãƒ«ãƒ‰è¡Œåˆ—ã®åˆæˆ:
+		//   Pivotï¼ˆåŸºæº–ç‚¹ã‚ªãƒ•ã‚»ãƒƒãƒˆï¼‰ â†’ Scale + Flip â†’ Rotation(Z) â†’ Translation
 		const XMMATRIX mPivot = XMMatrixTranslation(-sp.Pivot.x, -sp.Pivot.y, 0.0f);
 		const XMMATRIX mScale = XMMatrixScaling(w * sp.Flip.x, h * sp.Flip.y, 1.0f);
 		const XMMATRIX mRot = XMMatrixRotationZ(rotRad);
 		const XMMATRIX mTrans = XMMatrixTranslation(pos2D.x, pos2D.y, 0.0f);
 		const XMMATRIX world = mPivot * mScale * mRot * mTrans;
 
-		// ³Ë‰eiY ²Fã0A‰ºHeightj
+		// æ­£å°„å½±ï¼ˆY è»¸ï¼šä¸Šï¼0ã€ä¸‹ï¼Heightï¼‰
 		const XMMATRIX proj = XMMatrixOrthographicOffCenterLH(
 			0.0f, vWidth, vHeight, 0.0f, 0.0f, 1.0f);
 

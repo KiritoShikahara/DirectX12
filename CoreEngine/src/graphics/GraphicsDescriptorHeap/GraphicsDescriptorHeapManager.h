@@ -16,59 +16,64 @@ namespace graphics
 	public:
 		SINGLETON_ACCESSOR(GDescriptorHeapManager);
 
-		/// <summary>�Ǘ�����X���b�g�̍ő吔</summary>
+		/// <summary>管理するスロットの最大数</summary>
 		static constexpr int MAX_DESCRIPTOR = 512;
 
 		/// <summary>
-		/// �������B
-		/// ServiceLocator ���g�킸�f�o�C�X�𒼐ڎ󂯎��B
+		/// 初期化。
+		/// ServiceLocator を使わずデバイスを直接受け取る。
 		/// </summary>
-		/// <param name="device">�������ς݂� D3D12 �f�o�C�X</param>
-		/// <returns>true:����</returns>
+		/// <param name="device">初期化済みの D3D12 デバイス</param>
+		/// <returns>true:成功</returns>
 		bool Initialize(ID3D12Device* device);
 
 		/// <summary>
-		/// �A������ Size �X���b�g���m�ۂ��ĕԂ��B
-		/// ���s���� IsValid() == false �� Info ��Ԃ��B
+		/// 終了処理
+		/// </summary>
+		void Finalize();
+
+		/// <summary>
+		/// 連続した Size スロットを確保して返す。
+		/// 失敗時は IsValid() == false の Info を返す。
 		/// </summary>
 		[[nodiscard]] GDescriptorHeapInfo Issuance(uint32_t Size);
 
 		/// <summary>
-		/// �m�ۂ����X���b�g��ԋp����B
-		/// �ԋp��� Info �������������B
+		/// 確保したスロットを返却する。
+		/// 返却後は Info が無効化される。
 		/// </summary>
 		void Discard(GDescriptorHeapInfo& Info);
 
-		/// <summary>CPU �n���h���̎擾</summary>
+		/// <summary>CPU ハンドルの取得</summary>
 		D3D12_CPU_DESCRIPTOR_HANDLE GetCpuHandle(const GDescriptorHeapInfo& info) const;
 
-		/// <summary>GPU �n���h���̎擾</summary>
+		/// <summary>GPU ハンドルの取得</summary>
 		D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandle(const GDescriptorHeapInfo& info) const;
 
-		/// <summary>�l�C�e�B�u�̃q�[�v�|�C���^�擾�i�R�}���h���X�g�ւ̃Z�b�g�p�j</summary>
+		/// <summary>ネイティブのヒープポインタ取得（コマンドリストへのセット用）</summary>
 		ID3D12DescriptorHeap* GetNativeHeap() const;
 
 	private:
-		/// <summary>���O�v�Z�ς݂̃n���h���y�A</summary>
+		/// <summary>事前計算済みのハンドルペア</summary>
 		struct HandleInfo
 		{
 			D3D12_CPU_DESCRIPTOR_HANDLE cpu = {};
 			D3D12_GPU_DESCRIPTOR_HANDLE gpu = {};
 		};
 
-		/// <summary>CBV/SRV/UAV �q�[�v�{��</summary>
+		/// <summary>CBV/SRV/UAV ヒープ本体</summary>
 		Heap mHeap;
 
-		/// <summary>�S�X���b�g�̃n���h���e�[�u���i���������Ɉꊇ�v�Z�j</summary>
+		/// <summary>全スロットのハンドルテーブル（初期化時に一括計算）</summary>
 		std::array<HandleInfo, MAX_DESCRIPTOR>  mHandles = {};
 
-		/// <summary>�g�p���t���O�Btrue = �g�p��</summary>
+		/// <summary>使用中フラグ。true = 使用中</summary>
 		std::array<bool, MAX_DESCRIPTOR> mIsUse = {};
 
-		/// <summary>�f�B�X�N���v�^1���̃o�C�g�T�C�Y</summary>
+		/// <summary>ディスクリプタ1個分のバイトサイズ</summary>
 		uint32_t mDescriptorSize = 0;
 
-		/// <summary>���̋󂫌������n�߂�I�t�Z�b�g�iNext-Fit�j</summary>
+		/// <summary>次の空き検索を始めるオフセット（Next-Fit）</summary>
 		int mSearchOffset = 0;
 	};
 }

@@ -33,6 +33,10 @@ namespace graphics
             GDescriptorHeapManager& heapManager,
             ShaderManager& shaderManager);
 
+
+        /// <summary>Resourceの開放</summary>
+        void Finalize();
+
         /// <summary>フレーム先頭でフレームデータをクリアする</summary>
         void Begin();
 
