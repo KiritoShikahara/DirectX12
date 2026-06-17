@@ -9,6 +9,7 @@
 #define DEBUG_SPRITE 0
 #define DEBUG_SOUND 0
 #define DEBUG_TEXT 1
+#define DEBUG_EFFECT 1
 
 #else
 
@@ -18,5 +19,6 @@
 #define DEBUG_CAMERA 0
 #define DEBUG_SOUND 0
 #define DEBUG_TEXT 0
+#define DEBUG_EFFECT 0
 
 #endif // _DEBUG
