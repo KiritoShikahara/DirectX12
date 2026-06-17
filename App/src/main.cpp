@@ -5,13 +5,14 @@
 #include <crtdbg.h>
 #endif // _DEBUG
 
-#include<stdexcept>
 #include<system/Engine/Engine.h>
-#include<system/Engine/EngineContext.h>
+
+
+#include<Test/Scene/TestScene.h>
+
 
 int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd)
 {
-	// パラメーター初期化
 
 	// システム初期化
 	auto& engine = sys::Engine::Get();
