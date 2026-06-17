@@ -11,49 +11,49 @@ namespace ecs
 
 	struct CameraComponent
 	{
-        /// <summary>‚’¼‹–ìŠpi“xj</summary>
+        /// <summary>å‚ç›´è¦–é‡è§’ï¼ˆåº¦ï¼‰</summary>
         float Fov = 60.f;
 
-        /// <summary>ƒjƒAƒNƒŠƒbƒv–Ê</summary>
+        /// <summary>ãƒ‹ã‚¢ã‚¯ãƒªãƒƒãƒ—é¢</summary>
         float Near = 0.1f;
 
-        /// <summary>ƒtƒ@[ƒNƒŠƒbƒv–Ê</summary>
+        /// <summary>ãƒ•ã‚¡ãƒ¼ã‚¯ãƒªãƒƒãƒ—é¢</summary>
         float Far = 1000.f;
 
-        /// <summary>ƒAƒXƒyƒNƒg”äi• / ‚‚³j</summary>
+        /// <summary>ã‚¢ã‚¹ãƒšã‚¯ãƒˆæ¯”ï¼ˆå¹… / é«˜ã•ï¼‰</summary>
         float AspectRatio = 16.f / 9.f;
 
-        /// <summary>‚±‚ÌƒJƒƒ‰‚ğƒƒCƒ“ƒJƒƒ‰‚Æ‚µ‚Äg—p‚·‚é‚©</summary>
+        /// <summary>ã“ã®ã‚«ãƒ¡ãƒ©ã‚’ãƒ¡ã‚¤ãƒ³ã‚«ãƒ¡ãƒ©ã¨ã—ã¦ä½¿ç”¨ã™ã‚‹ã‹</summary>
         bool IsMainCamera = false;
 
         /*
-        * ŒvZÏ‚İ‚Ìs—ñ
+        * è¨ˆç®—æ¸ˆã¿ã®è¡Œåˆ—
         */
         DirectX::XMFLOAT4X4 ViewMatrix = {};
         DirectX::XMFLOAT4X4 ProjectionMatrix = {};
         DirectX::XMFLOAT4X4 ViewProjectionMatrix = {};
 
-        /// <summary>ƒJƒƒ‰ƒ[ƒ‹ƒhÀ•WiƒVƒF[ƒ_‚Ö“n‚·—pj</summary>
+        /// <summary>ã‚«ãƒ¡ãƒ©ãƒ¯ãƒ¼ãƒ«ãƒ‰åº§æ¨™ï¼ˆã‚·ã‚§ãƒ¼ãƒ€ã¸æ¸¡ã™ç”¨ï¼‰</summary>
         DirectX::XMFLOAT3   Position = {};
 
         /*
-        * ‘€ìAPI
+        * æ“ä½œAPI
         */
 
         /// <summary>
-        /// Window ‚Ìƒo[ƒ`ƒƒƒ‹‰ğ‘œ“x‚©‚çƒAƒXƒyƒNƒg”ä‚ğİ’è‚·‚éƒwƒ‹ƒp[B
-        /// Initialize Œã‚Éˆê“xŒÄ‚Ô‚©AƒŠƒTƒCƒY‚ÉŒÄ‚ÔB
+        /// Window ã®ãƒãƒ¼ãƒãƒ£ãƒ«è§£åƒåº¦ã‹ã‚‰ã‚¢ã‚¹ãƒšã‚¯ãƒˆæ¯”ã‚’è¨­å®šã™ã‚‹ãƒ˜ãƒ«ãƒ‘ãƒ¼ã€‚
+        /// Initialize å¾Œã«ä¸€åº¦å‘¼ã¶ã‹ã€ãƒªã‚µã‚¤ã‚ºæ™‚ã«å‘¼ã¶ã€‚
         /// </summary>
         void SetAspectRatioFromWindow(const sys::Window& window);
 
         /// <summary>
-        /// Transform ‚ÌˆÊ’uEp¨‚©‚ç View / Projection / VP s—ñ‚ğÄŒvZB
-        /// FbxRenderer::UpdateAndDraw() “à‚Å©“®“I‚ÉŒÄ‚Î‚ê‚éB
+        /// Transform ã®ä½ç½®ãƒ»å§¿å‹¢ã‹ã‚‰ View / Projection / VP è¡Œåˆ—ã‚’å†è¨ˆç®—ã€‚
+        /// FbxRenderer::UpdateAndDraw() å†…ã§è‡ªå‹•çš„ã«å‘¼ã°ã‚Œã‚‹ã€‚
         /// </summary>
         void UpdateMatrices(const Transform& transform);
 
         /*
-        * s—ñƒAƒNƒZƒT
+        * è¡Œåˆ—ã‚¢ã‚¯ã‚»ã‚µ
         */ 
         DirectX::XMMATRIX GetViewMatrix()           const;
         DirectX::XMMATRIX GetProjectionMatrix()     const;
