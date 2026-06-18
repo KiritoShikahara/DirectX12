@@ -20,10 +20,12 @@ namespace graphics
 #pragma pack(push, 1)
     struct SpriteShaderData
     {
-        DirectX::XMFLOAT4X4 WVP = {};                    // ワールド × 正射影（転置済み）
-        Color               Color = graphics::Color::White; // 乗算カラー (R,G,B,A)
-        float               Intensity = 1.0f;                   // 輝度倍率
-        float               _pad[3] = {};                     // 16byte アライメント用パディング
+        DirectX::XMFLOAT4X4 WVP = {};
+        Color               Color = graphics::Color::White;
+        float               Intensity = 1.0f;
+        float               FillAmount = 1.0f;
+        int                 FillType = 0;
+        float               _pad[1] = {};
     };
 #pragma pack(pop)
     static_assert(sizeof(SpriteShaderData) == 96, "SpriteShaderData size mismatch");

@@ -1,10 +1,8 @@
-#include"SpriteHeader.hlsli"
+#include "ShapeHeader.hlsli"
 
 VSOutput main(VSInput input, uint instanceID : SV_InstanceID)
 {
-    // SV_InstanceID は DrawInstanced の StartInstanceLocation が加算済みのため
-    // そのままバッファのインデックスとして使える
-    SpriteShaderData data = gInstanceData[instanceID];
+    ShapeShaderData data = gInstanceData[instanceID];
 
     VSOutput output;
     output.Position = mul(float4(input.Position, 1.0f), data.WVP);
@@ -12,6 +10,7 @@ VSOutput main(VSInput input, uint instanceID : SV_InstanceID)
     output.Color = data.Color;
     output.Intensity = data.Intensity;
     output.FillAmount = data.FillAmount;
+    output.ShapeType = data.ShapeType;
     output.FillType = data.FillType;
 
     return output;

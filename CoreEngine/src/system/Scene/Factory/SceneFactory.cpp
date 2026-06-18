@@ -49,7 +49,7 @@ namespace sys
 		return mCreators.count(name) > 0;
 	}
 
-	void SceneFactory::SetNextSceneName(const std::string& name)
+	void SceneFactory::SetDefaultSceneName(const std::string& name)
 	{
 		mDefaultSceneName = name;
 	}

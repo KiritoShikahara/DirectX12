@@ -23,6 +23,7 @@
 #include<graphics/Skybox/Renderer/SkyboxRenderer.h>
 #include<graphics/Text/Renderer/TextRenderer.h>
 #include<graphics/Effect/Manager/EffectManager.h>
+#include<graphics/Shape/Renderer/ShapeRenderer.h>
 
 // 3D
 #include<graphics/Fbx/Renderer/FbxRenderer.h>
@@ -296,16 +297,20 @@ namespace sys
         // 各種レンダラー
         this->InitializeRenderer(descriptorHeapManager);
 
-        // 各種システム
-        if (InitializeSystem() == false) return false;
-
         // オーディオ
         if (InitializeAudio() == false) return false;
 
+        // 各種システム
+        if (InitializeSystem() == false) return false;
+
+        // シーン生成
+        mSceneManager = &sys::SceneManager::Get();
+        mSceneManager->Initialize(sys::SceneFactory::Get().GetDefaultSceneName());
+        //CreateDebugObject();
+
+
         // デバック用UI
         this->InitializeDebugUI();
-
-        CreateDebugObject();
 
         mIsRunning = true;
         mIsInitialized = true;
@@ -341,11 +346,12 @@ namespace sys
             mDX12Renderer->WaitForGPU();
 
         FbxRenderer::Get().Finalize();
-        SkyboxRenderer::Get().Finalize(); // ★ここに追加
+        SkyboxRenderer::Get().Finalize();
         PrimitiveResourceManager::Get().Finalize();
         EffekseerManager::Get().Finalize();
         TextRenderer::Get().Finalize();
         SpriteRenderer::Get().Finalize();
+        ShapeRenderer::Get().Finalize();
 
 #ifdef _DEBUG
         graphics::PhysicsDebugRenderer::Get().Finalize();
@@ -422,6 +428,10 @@ namespace sys
             *mDevice, descriptorHeapManager,
             graphics::ShaderManager::Get(), *mWindow) == false) return false;
 
+        if (ShapeRenderer::Get().Initialize(
+            *mDevice, descriptorHeapManager,
+            graphics::ShaderManager::Get(), *mWindow) == false) return false;
+
         if (FbxRenderer::Get().Initialize(
             *mDevice, descriptorHeapManager,
             graphics::ShaderManager::Get()) == false) return false;
@@ -471,10 +481,9 @@ namespace sys
 #ifdef _DEBUG
         if (graphics::PhysicsDebugRenderer::Get().Initialize() == false) return false;
 #endif
-
-        // シーン
-        mSceneManager = &sys::SceneManager::Get();
-        mSceneManager->Initialize(sys::SceneFactory::Get().GetDefaultSceneName());
+        //// シーン生成
+        //mSceneManager = &sys::SceneManager::Get();
+        //mSceneManager->Initialize(sys::SceneFactory::Get().GetDefaultSceneName());
 
         return true;
     }
@@ -580,6 +589,12 @@ namespace sys
             spriteRenderer.Begin();
             spriteRenderer.UpdateAndDraw(registry);
             spriteRenderer.End(cmdList);
+
+            // Shape
+            SINGLETON_REF(graphics::ShapeRenderer, ShapeRenderer);
+            ShapeRenderer.Begin();
+            ShapeRenderer.UpdateAndDraw(registry);
+            ShapeRenderer.End(cmdList);
 
             // テキスト
             SINGLETON_REF(graphics::TextRenderer, TextRenderer);

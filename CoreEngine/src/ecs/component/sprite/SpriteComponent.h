@@ -21,57 +21,74 @@ namespace ecs
 		System = 5000,
 	};
 
+	enum class ENGINE_API FillType : int
+	{
+		Horizontal = 0, // 左から右
+		Radial = 1,	// 時計回り
+	};
+
 	/// <summary>
-	/// �X�v���C�g�`��ɕK�v�ȃp�����[�^���܂Ƃ߂��R���|�[�l���g�B
+	/// スプライト描画に必要なパラメータをまとめたコンポーネント。
 	/// </summary>
 	struct ENGINE_API Sprite
 	{
-		/// <summary>��Z�J���[</summary>
+		/// <summary>乗算カラー</summary>
 		graphics::Color Color = graphics::Color::White;
 
 		/// <summary>
-		/// ��_�i�s�{�b�g�j�B
-		/// {0,0} = ����, {0.5,0.5} = ����, {1,1} = �E��
+		/// 基準点（ピボット）。
+		/// {0,0} = 左上, {0.5,0.5} = 中央, {1,1} = 右下
 		/// </summary>
 		DirectX::XMFLOAT2     Pivot = { 0.0f, 0.0f };
 
 		/// <summary>
-		/// �`��T�C�Y�i�s�N�Z���j�B
-		/// {0,0} �̂Ƃ��̓e�N�X�`���̎��T�C�Y���g�p����B
+		/// 描画サイズ（ピクセル）。
+		/// {0,0} のときはテクスチャの実サイズを使用する。
 		/// </summary>
 		DirectX::XMFLOAT2     Size = { 0.0f, 0.0f };
 
-		/// <summary>Size �ɑ΂���ǉ��{��</summary>
+		/// <summary>Size に対する追加倍率</summary>
 		DirectX::XMFLOAT2     DrawScale = { 1.0f, 1.0f };
 
 		/// <summary>
-		/// ���]�t���O�B
-		/// X=-1 �Ő������], Y=-1 �Ő������]�B
+		/// 反転フラグ。
+		/// X=-1 で水平反転, Y=-1 で垂直反転。
 		/// </summary>
 		DirectX::XMFLOAT2     Flip = { 1.0f, 1.0f };
 
-		/// <summary>���x�i�P�x�{���j</summary>
+		/// <summary>光度（輝度倍率）</summary>
 		float                 Intensity = 1.0f;
 
 		/// <summary>
-		/// �`�揇�B�l���������قǎ�O�B
-		/// SetLayer() �� RenderLayer �x�[�X�Őݒ肷�邱�Ƃ𐄏��B
+		/// 0.0:非表示 0.5:半分 1.0:全体
+		/// </summary>
+		float                 FillAmount = 1.0f;
+
+		/// <summary>
+		/// Horizontal:右から削れてく 
+		/// Radial: 時計回りに削れてく
+		/// </summary>
+		FillType              FType = FillType::Horizontal;
+
+		/// <summary>
+		/// 描画順。値が小さいほど手前。
+		/// SetLayer() で RenderLayer ベースで設定することを推奨。
 		/// </summary>
 		int Layer = static_cast<int>(SpriteLayer::Character);
 
-		/// <summary>�e�N�X�`�����\�[�X�i�񏊗L�j</summary>
+		/// <summary>テクスチャリソース（非所有）</summary>
 		graphics::Texture* Texture = nullptr;
 
-		/// <summary>�\���t���O</summary>
+		/// <summary>表示フラグ</summary>
 		bool                  IsVisible = true;
 
 		/// <summary>
-		/// �R���X�g���N�^�B�e�N�X�`���̎��T�C�Y���擾�������̂ƈˑ�����
+		/// コンストラクタ。テクスチャの実サイズを取得したいのと依存注入
 		/// </summary>
 		explicit Sprite(graphics::Texture* texture);
 
 		/// <summary>
-		/// ���C���[�ݒ�p�̃w���p�[
+		/// レイヤー設定用のヘルパー
 		/// </summary>
 		/// <param name="base"></param>
 		/// <param name="offset"></param>

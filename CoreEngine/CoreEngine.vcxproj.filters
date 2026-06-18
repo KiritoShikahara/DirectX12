@@ -357,6 +357,15 @@
     <ClInclude Include="src\graphics\Effect\Manager\EffectManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\ecs\component\Shape\ShapeComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\Shape\Pipeline\ShapePipeline.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\Shape\Renderer\ShapeRenderer.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics\Dx12\Dx12Device.cpp">
@@ -599,6 +608,12 @@
     <ClCompile Include="src\graphics\Effect\Manager\EffectManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\Shape\Pipeline\ShapePipeline.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Shape\Renderer\ShapeRenderer.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -606,6 +621,7 @@
     <None Include="Assets\Shader\Fbx\FbxShader.hlsli" />
     <None Include="doc\初期化順序.md" />
     <None Include="doc\導入ライブラリ.md" />
+    <None Include="Assets\Shader\Shape\ShapeHeader.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Assets\Shader\Sprite\PS_Sprite.hlsl" />
@@ -619,5 +635,7 @@
     <FxCompile Include="Assets\Shader\Fbx\VS_Shadow.hlsl" />
     <FxCompile Include="Assets\Shader\Text\VS_Text.hlsl" />
     <FxCompile Include="Assets\Shader\Text\PS_Text.hlsl" />
+    <FxCompile Include="Assets\Shader\Shape\VS_Shape.hlsl" />
+    <FxCompile Include="Assets\Shader\Shape\PS_Shape.hlsl" />
   </ItemGroup>
 </Project>
