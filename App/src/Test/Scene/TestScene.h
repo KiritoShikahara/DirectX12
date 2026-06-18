@@ -41,6 +41,9 @@ namespace scene
 		// スカイボックス
 		void CreateSkybox();
 
+		// Shape
+		void CreateShape();
+
 	};
 }
 

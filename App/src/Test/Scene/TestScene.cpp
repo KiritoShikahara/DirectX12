@@ -12,6 +12,7 @@
 #include<ecs/component/skybox/SkyboxComponent.h>
 #include<ecs/component/Text/TextComponent.h>
 #include<ecs/component/Effect/EffectComponent.h>
+#include<ecs/component/Shape/ShapeComponent.h>
 
 // リソース
 #include<graphics/Texture/TextureManager.h>
@@ -41,6 +42,7 @@ namespace scene
 		CreateText();
 		CreateEffect();
 		CreateSkybox();
+		CreateShape();
 	}
 
 	void TestScene::Finalize()
@@ -187,6 +189,46 @@ namespace scene
 		auto entity = manager.CreateEntity();
 		auto& skybox = manager.AddComponent<ecs::SkyboxComponent>(entity);
 		skybox.TexturePath = "Assets/Skybox/skybox.dds";
+	}
+
+	void TestScene::CreateShape()
+	{
+		auto& manager = ecs::EntityManager::Get();
+		{
+			auto entity = manager.CreateEntity();
+			auto& transform = manager.AddComponent<ecs::Transform>(entity);
+			transform.Set2DPosition(200, 200);
+
+			auto& shape = manager.AddComponent<ecs::Shape>(entity);
+			shape.Size = { 200,100 };
+			shape.Type = ecs::ShapeType::Rect;
+			shape.Color = graphics::Color::Red;
+		}
+
+		{
+			auto entity = manager.CreateEntity();
+			auto& transform = manager.AddComponent<ecs::Transform>(entity);
+			transform.Set2DPosition(400, 200);
+
+			auto& shape = manager.AddComponent<ecs::Shape>(entity);
+			shape.Size = { 50,50};
+			shape.Type = ecs::ShapeType::Circle;
+			shape.Color = graphics::Color::Blue;
+			shape.FType = ecs::FillType::Radial;
+			shape.FillAmount = 1.0;
+		}
+
+		{
+			auto entity = manager.CreateEntity();
+			auto& transform = manager.AddComponent<ecs::Transform>(entity);
+			transform.Set2DPosition(700, 200);
+
+			auto& shape = manager.AddComponent<ecs::Shape>(entity);
+			shape.Size = { 200,200 };
+			shape.Type = ecs::ShapeType::Triangle;
+			shape.Color = graphics::Color::Green;
+		}
+
 	}
 
 	REGISTER_SCENE_AS(TestScene, "Test");

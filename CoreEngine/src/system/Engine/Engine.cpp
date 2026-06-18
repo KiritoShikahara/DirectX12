@@ -23,6 +23,7 @@
 #include<graphics/Skybox/Renderer/SkyboxRenderer.h>
 #include<graphics/Text/Renderer/TextRenderer.h>
 #include<graphics/Effect/Manager/EffectManager.h>
+#include<graphics/Shape/Renderer/ShapeRenderer.h>
 
 // 3D
 #include<graphics/Fbx/Renderer/FbxRenderer.h>
@@ -345,11 +346,12 @@ namespace sys
             mDX12Renderer->WaitForGPU();
 
         FbxRenderer::Get().Finalize();
-        SkyboxRenderer::Get().Finalize(); // ★ここに追加
+        SkyboxRenderer::Get().Finalize();
         PrimitiveResourceManager::Get().Finalize();
         EffekseerManager::Get().Finalize();
         TextRenderer::Get().Finalize();
         SpriteRenderer::Get().Finalize();
+        ShapeRenderer::Get().Finalize();
 
 #ifdef _DEBUG
         graphics::PhysicsDebugRenderer::Get().Finalize();
@@ -423,6 +425,10 @@ namespace sys
         using namespace graphics;
 
         if (SpriteRenderer::Get().Initialize(
+            *mDevice, descriptorHeapManager,
+            graphics::ShaderManager::Get(), *mWindow) == false) return false;
+
+        if (ShapeRenderer::Get().Initialize(
             *mDevice, descriptorHeapManager,
             graphics::ShaderManager::Get(), *mWindow) == false) return false;
 
@@ -583,6 +589,12 @@ namespace sys
             spriteRenderer.Begin();
             spriteRenderer.UpdateAndDraw(registry);
             spriteRenderer.End(cmdList);
+
+            // Shape
+            SINGLETON_REF(graphics::ShapeRenderer, ShapeRenderer);
+            ShapeRenderer.Begin();
+            ShapeRenderer.UpdateAndDraw(registry);
+            ShapeRenderer.End(cmdList);
 
             // テキスト
             SINGLETON_REF(graphics::TextRenderer, TextRenderer);
