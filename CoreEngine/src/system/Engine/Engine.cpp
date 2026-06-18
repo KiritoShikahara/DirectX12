@@ -296,16 +296,20 @@ namespace sys
         // 各種レンダラー
         this->InitializeRenderer(descriptorHeapManager);
 
-        // 各種システム
-        if (InitializeSystem() == false) return false;
-
         // オーディオ
         if (InitializeAudio() == false) return false;
 
+        // 各種システム
+        if (InitializeSystem() == false) return false;
+
+        // シーン生成
+        mSceneManager = &sys::SceneManager::Get();
+        mSceneManager->Initialize(sys::SceneFactory::Get().GetDefaultSceneName());
+        //CreateDebugObject();
+
+
         // デバック用UI
         this->InitializeDebugUI();
-
-        CreateDebugObject();
 
         mIsRunning = true;
         mIsInitialized = true;
@@ -471,10 +475,9 @@ namespace sys
 #ifdef _DEBUG
         if (graphics::PhysicsDebugRenderer::Get().Initialize() == false) return false;
 #endif
-
-        // シーン
-        mSceneManager = &sys::SceneManager::Get();
-        mSceneManager->Initialize(sys::SceneFactory::Get().GetDefaultSceneName());
+        //// シーン生成
+        //mSceneManager = &sys::SceneManager::Get();
+        //mSceneManager->Initialize(sys::SceneFactory::Get().GetDefaultSceneName());
 
         return true;
     }

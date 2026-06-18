@@ -9,10 +9,12 @@
 
 
 #include<Test/Scene/TestScene.h>
-
+#include<system/Scene/Factory/SceneFactory.h>
 
 int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd)
 {
+
+	sys::SceneFactory::Get().SetDefaultSceneName("Test");
 
 	// システム初期化
 	auto& engine = sys::Engine::Get();

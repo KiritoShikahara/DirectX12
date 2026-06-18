@@ -21,6 +21,7 @@
 #include<audio/Manager/AudioManager.h>
 #include<graphics/Effect/Manager/EffectManager.h>
 #include<graphics/Texture/Texture.h>
+#include<audio/Resource/AudioResourceManager.h>
 
 // システム
 #include<system/Window/Window.h>
@@ -30,12 +31,13 @@ namespace scene
 {
 	void TestScene::Initialize()
 	{
-		CreateSprite();
+		LoadResource();
 		CreateFbx();
-		CreateSound();
-		CreateCamera();
-		CreateLight();
 		CreateField();
+		CreateSprite();
+		CreateCamera();
+		CreateSound();
+		CreateLight();
 		CreateText();
 		CreateEffect();
 		CreateSkybox();
@@ -46,6 +48,20 @@ namespace scene
 
 	}
 
+
+	void TestScene::LoadResource()
+	{
+		{
+			auto& manager = graphics::FbxResourceManager::Get();
+			auto res = manager.Load("Assets/Fbx/Faul.fbx.bin");
+			bool ret = manager.LoadAnm("Assets/Fbx/Faul.fbx.bin", "Assets/Fbx/Animation/Attack_A.fbx.anm", "Attack_A");
+			ret = manager.LoadAnm("Assets/Fbx/Faul.fbx.bin", "Assets/Fbx/Animation/Attack_B.fbx.anm", "Attack_B");
+		}
+		{
+			auto& ResManager = audio::AudioResourceManager::Get();
+			auto res = ResManager.GetResource("Assets/SE/TestSE.aud");
+		}
+	}
 
 	void TestScene::CreateSprite()
 	{
@@ -144,7 +160,7 @@ namespace scene
 		auto& manager = ecs::EntityManager::Get();
 		auto entity = manager.CreateEntity();
 		auto& text = manager.AddComponent<ecs::TextComponent>(entity);
-		text.Text = L"";
+		text.Text = L"Japan";
 		text.Size = 64;
 		text.Layer = 0;
 		text.X = 200;

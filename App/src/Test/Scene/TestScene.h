@@ -11,6 +11,8 @@ namespace scene
 		virtual void Finalize()override;
 
 	private:
+		// リソース読み込み
+		void LoadResource();
 
 		// 画像
 		void CreateSprite();

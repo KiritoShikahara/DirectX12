@@ -6,9 +6,9 @@
 #define DEBUG_FBX 1
 #define DEBUG_CAMERA 1
 #define DEBUG_LIGHT 1
-#define DEBUG_SPRITE 0
-#define DEBUG_SOUND 0
-#define DEBUG_TEXT 0
+#define DEBUG_SPRITE 1
+#define DEBUG_SOUND 1
+#define DEBUG_TEXT 1
 #define DEBUG_EFFECT 1
 
 #else

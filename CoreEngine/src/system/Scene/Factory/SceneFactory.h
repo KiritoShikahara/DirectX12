@@ -43,7 +43,7 @@ namespace sys
         bool IsRegistered(const std::string& name) const;
 
         /// <summary>app起動時のdefaultのシーン名をセットする</summary>
-        void SetNextSceneName(const std::string& name);
+        void SetDefaultSceneName(const std::string& name);
 
         /// <summary>app起動時のdefaultのシーン名を取得</summary>
         const std::string& GetDefaultSceneName();
