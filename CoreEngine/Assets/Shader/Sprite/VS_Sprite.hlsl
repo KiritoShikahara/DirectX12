@@ -11,6 +11,8 @@ VSOutput main(VSInput input, uint instanceID : SV_InstanceID)
     output.TexCoord = input.TexCoord;
     output.Color = data.Color;
     output.Intensity = data.Intensity;
+    output.FillAmount = data.FillAmount;
+    output.FillType = data.FillType;
 
     return output;
 }

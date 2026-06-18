@@ -232,6 +232,8 @@ namespace graphics
 		XMStoreFloat4x4(&data.WVP, XMMatrixTranspose(world * proj));
 		data.Color = sp.Color;
 		data.Intensity = sp.Intensity;
+		data.FillAmount = sp.FillAmount;
+		data.FillType = static_cast<int>(sp.FType);
 
 		return data;
 	}

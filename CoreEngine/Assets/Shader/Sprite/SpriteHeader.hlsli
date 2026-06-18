@@ -3,7 +3,9 @@ struct SpriteShaderData
     float4x4 WVP;
     float4 Color;
     float Intensity;
-    float3 _pad;
+    float FillAmount;
+    int FillType;
+    float _pad;
 };
 
 StructuredBuffer<SpriteShaderData> gInstanceData : register(t0);
@@ -20,5 +22,7 @@ struct VSOutput
     float2 TexCoord : TEXCOORD;
     float4 Color : COLOR;
     float Intensity : INTENSITY;
+    float FillAmount : FILLAMOUNT;
+    int FillType : FILLTYPE;
 };
 

@@ -69,6 +69,8 @@ namespace scene
 		auto entity = ecs::EntityManager::Get().CreateEntity();
 		auto& tr = ecs::EntityManager::Get().AddComponent<ecs::Transform>(entity);
 		auto& sprite = ecs::EntityManager::Get().AddComponent<ecs::Sprite>(entity, texture);
+		sprite.FillAmount = 1.f;
+		sprite.Color = { 1,1,1,0.5 };
 	}
 	void TestScene::CreateFbx()
 	{
