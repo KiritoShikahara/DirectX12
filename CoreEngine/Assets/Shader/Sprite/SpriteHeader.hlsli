@@ -5,7 +5,8 @@ struct SpriteShaderData
     float Intensity;
     float FillAmount;
     int FillType;
-    float _pad;
+    float2 UVScale;
+    float2 UVOffset;
 };
 
 StructuredBuffer<SpriteShaderData> gInstanceData : register(t0);
@@ -25,4 +26,3 @@ struct VSOutput
     float FillAmount : FILLAMOUNT;
     int FillType : FILLTYPE;
 };
-

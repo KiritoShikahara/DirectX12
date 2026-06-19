@@ -25,10 +25,11 @@ namespace graphics
         float               Intensity = 1.0f;
         float               FillAmount = 1.0f;
         int                 FillType = 0;
-        float               _pad[1] = {};
+        DirectX::XMFLOAT2   UVScale = { 1.0f, 1.0f };
+        DirectX::XMFLOAT2   UVOffset = { 0.0f, 0.0f };
     };
 #pragma pack(pop)
-    static_assert(sizeof(SpriteShaderData) == 96, "SpriteShaderData size mismatch");
+    static_assert(sizeof(SpriteShaderData) == 108, "SpriteShaderData size mismatch");
 
     /// <summary>
     /// FBXの頂点構造体

@@ -146,6 +146,8 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\graphics\Sprite\Animation\SpriteAnimationSystem.h" />
+    <ClInclude Include="src\ecs\component\sprite\SpriteAnimationComponent.h" />
     <ClInclude Include="src\graphics\Shape\Renderer\ShapeRenderer.h" />
     <ClInclude Include="src\graphics\Shape\Pipeline\ShapePipeline.h" />
     <ClInclude Include="src\ecs\component\Shape\ShapeComponent.h" />
@@ -267,6 +269,7 @@
     <ClInclude Include="src\graphics\Text\Renderer\TextRenderer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\graphics\Sprite\Animation\SpriteAnimationSystem.cpp" />
     <ClCompile Include="src\graphics\Shape\Renderer\ShapeRenderer.cpp" />
     <ClCompile Include="src\graphics\Shape\Pipeline\ShapePipeline.cpp" />
     <ClCompile Include="src\graphics\Effect\Manager\EffectManager.cpp" />

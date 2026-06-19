@@ -32,7 +32,7 @@ namespace graphics
 	{
 		// pipeline
 		mPipeline = std::make_unique<SpritePipeline>();
-		if(!mPipeline->Create(device,shaderManager))
+		if (!mPipeline->Create(device, shaderManager))
 		{
 			DEBUG_LOG(sys::eLogLevel::Error, "SpriteRenderer: Failed to create pipeline.");
 			return false;
@@ -234,6 +234,8 @@ namespace graphics
 		data.Intensity = sp.Intensity;
 		data.FillAmount = sp.FillAmount;
 		data.FillType = static_cast<int>(sp.FType);
+		data.UVScale = sp.UVScale;
+		data.UVOffset = sp.UVOffset;
 
 		return data;
 	}

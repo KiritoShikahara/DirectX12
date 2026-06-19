@@ -56,6 +56,20 @@ namespace ecs
 		/// </summary>
 		DirectX::XMFLOAT2     Flip = { 1.0f, 1.0f };
 
+		/// <summary>
+		/// テクスチャUV切り出し範囲のスケール（テクスチャ全体に対する比率）。
+		/// {1,1} で全体表示。スプライトシートの1コマの大きさに相当。
+		/// 例: 横4列・縦2行のシートなら {0.25f, 0.5f}。
+		/// </summary>
+		DirectX::XMFLOAT2     UVScale = { 1.0f, 1.0f };
+
+		/// <summary>
+		/// テクスチャUV切り出し範囲のオフセット（テクスチャ全体に対する比率、左上原点）。
+		/// UVScale と組み合わせてスプライトシート上の特定コマを指す。
+		/// 通常は SpriteAnimationComponent / アニメ用システムが書き換える。
+		/// </summary>
+		DirectX::XMFLOAT2     UVOffset = { 0.0f, 0.0f };
+
 		/// <summary>光度（輝度倍率）</summary>
 		float                 Intensity = 1.0f;
 
@@ -94,6 +108,20 @@ namespace ecs
 		/// <param name="offset"></param>
 		void SetLayer(SpriteLayer base, int offset = 0);
 
+		/// <summary>
+		/// スプライトシートの行列数を指定して、UVScale を一括設定するヘルパー。
+		/// 例: 横4列・縦2行のシートなら SetSheetGrid(4, 2) を1回呼ぶ。
+		/// </summary>
+		/// <param name="columns">シートの列数</param>
+		/// <param name="rows">シートの行数</param>
+		void SetSheetGrid(int columns, int rows);
 
+		/// <summary>
+		/// 0始まりのフレーム番号から UVOffset を計算して設定するヘルパー。
+		/// SetSheetGrid() で columns を設定済みであることが前提。
+		/// </summary>
+		/// <param name="frameIndex">0始まりのコマ番号（左上から右へ、行ごとに進む）</param>
+		/// <param name="columns">シートの列数（UVScale.x の逆数）</param>
+		void SetFrame(int frameIndex, int columns);
 	};
 }
