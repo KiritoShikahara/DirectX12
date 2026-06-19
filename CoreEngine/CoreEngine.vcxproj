@@ -146,6 +146,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\ecs\system\collision\SpriteCollsion.h" />
     <ClInclude Include="src\graphics\Sprite\Animation\SpriteAnimationSystem.h" />
     <ClInclude Include="src\ecs\component\sprite\SpriteAnimationComponent.h" />
     <ClInclude Include="src\graphics\Shape\Renderer\ShapeRenderer.h" />
@@ -269,6 +270,7 @@
     <ClInclude Include="src\graphics\Text\Renderer\TextRenderer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\ecs\system\collision\SpriteCollsion.cpp" />
     <ClCompile Include="src\graphics\Sprite\Animation\SpriteAnimationSystem.cpp" />
     <ClCompile Include="src\graphics\Shape\Renderer\ShapeRenderer.cpp" />
     <ClCompile Include="src\graphics\Shape\Pipeline\ShapePipeline.cpp" />

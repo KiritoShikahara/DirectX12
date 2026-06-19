@@ -3,6 +3,7 @@
 
 #include"../Factory/SceneFactory.h"
 #include<graphics/Transition/TransitionRenderer.h>
+#include<ecs/entity/EntityManager.h>
 
 namespace sys
 {
@@ -143,6 +144,9 @@ namespace sys
 	void SceneManager::ApplyPendingScene()
 	{
 		if (!mPendingSceneFactory) return;
+
+		// エンティティの破棄
+		::ecs::EntityManager::Get().ClearLocalEntities();
 
 		// 旧シーン終了
 		if (mCurrentScene)
