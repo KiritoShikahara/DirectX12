@@ -2,9 +2,11 @@
 
 VSOutput main(VSInput input, uint instanceID : SV_InstanceID)
 {
-    // SV_InstanceID は DrawInstanced の StartInstanceLocation が加算済みのため
-    // そのままバッファのインデックスとして使える
-    SpriteShaderData data = gInstanceData[instanceID];
+    // SV_InstanceID は DrawInstanced の StartInstanceLocation を加算済みの値を返すはずの
+    // 仕様だが、GPU/ドライバ依存で StartInstanceLocation が反映されないケースがあるため、
+    // 常に 0 始まりの相対値として扱い、CPU から渡された InstanceOffset を明示的に加算する。
+    uint index = InstanceOffset + instanceID;
+    SpriteShaderData data = gInstanceData[index];
 
     VSOutput output;
     output.Position = mul(float4(input.Position, 1.0f), data.WVP);

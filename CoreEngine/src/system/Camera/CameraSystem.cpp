@@ -72,11 +72,11 @@ namespace sys
                     }
                 });
 
-        if (!mHasMainCamera)
-        {
-            DEBUG_LOG(sys::eLogLevel::Warning,
-                "CameraSystem: No main camera found.");
-        }
+        //if (!mHasMainCamera)
+        //{
+        //    DEBUG_LOG(sys::eLogLevel::Warning,
+        //        "CameraSystem: No main camera found.");
+        //}
     }
 
     void CameraSystem::UpdateMatrices(entt::registry& registry)

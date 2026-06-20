@@ -5,11 +5,20 @@ struct SpriteShaderData
     float Intensity;
     float FillAmount;
     int FillType;
-    float2 UVScale;
-    float2 UVOffset;
+    float _pad0; // C++側 SpriteShaderData::_pad0 とオフセットを揃えるための明示パディング
+    float2 UVScale; // offset 96
+    float2 UVOffset; // offset 104
 };
 
 StructuredBuffer<SpriteShaderData> gInstanceData : register(t0);
+
+// インスタンスデータの先頭オフセット。
+// SV_InstanceID の StartInstanceLocation 加算がGPU依存で信頼できないため、
+// CPU 側から DrawInstanced ごとに明示的に渡し、VS 側で手動加算する。
+cbuffer InstanceOffsetBuffer : register(b0)
+{
+    uint InstanceOffset;
+};
 
 struct VSInput
 {

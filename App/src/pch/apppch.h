@@ -34,6 +34,7 @@
 #include<system/AssetPath/AssetPathManager.h>
 #include<system/Logger/Logger.h>
 #include<system/Scene/Factory/SceneFactory.h>
+#include<system/Window/Window.h>
 
 // 汎用
 #include<Utility/Singleton/Singleton.hpp>

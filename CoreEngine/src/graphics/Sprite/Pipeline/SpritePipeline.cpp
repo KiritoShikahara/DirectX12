@@ -9,7 +9,7 @@ namespace graphics
 {
 	D3D12_DEPTH_STENCIL_DESC SpritePipeline::MakeDepthStencilDesc()
 	{
-		// 2D �X�v���C�g�͐[�x�e�X�g�E�������݂Ƃ��ɕs�v
+		// 2D スプライトは深度テスト・書き込みともに不要
 		D3D12_DEPTH_STENCIL_DESC desc = {};
 		desc.DepthEnable = FALSE;
 		desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
@@ -26,7 +26,7 @@ namespace graphics
 	}
 	D3D12_BLEND_DESC SpritePipeline::MakeBlendDesc()
 	{
-		// �A���t�@�u�����h�i�ʏ퍇���j
+		// アルファブレンド（通常合成）
 		D3D12_BLEND_DESC desc = {};
 		desc.AlphaToCoverageEnable = FALSE;
 		desc.IndependentBlendEnable = FALSE;
@@ -48,7 +48,7 @@ namespace graphics
 	}
 	D3D12_RASTERIZER_DESC SpritePipeline::MakeRasterizerDesc()
 	{
-		// ���ʕ`��iFlip �ɂ�锽�]�ɑΉ��j�E�[�x�o�C�A�X�Ȃ�
+		// 両面描画（Flip による反転に対応）・深度バイアスなし
 		D3D12_RASTERIZER_DESC desc = {};
 		desc.FillMode = D3D12_FILL_MODE_SOLID;
 		desc.CullMode = D3D12_CULL_MODE_NONE;
@@ -86,9 +86,15 @@ namespace graphics
 		CD3DX12_DESCRIPTOR_RANGE1 rangeTex;
 		rangeTex.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);    // t1
 
-		CD3DX12_ROOT_PARAMETER1 rootParams[2];
+		// rootParams[2]: インスタンスデータの先頭オフセットを渡す 32bit 定数 (b0)。
+		// SV_InstanceID は DrawInstanced の StartInstanceLocation を加算済みの値を返す
+		// はずの仕様だが、GPU/ドライバ依存でこれが反映されないケースがあるため、
+		// StartInstanceLocation には常に 0 を渡し、このオフセットを明示的にシェーダーへ渡して
+		// VS 側で手動加算する方式に統一する。
+		CD3DX12_ROOT_PARAMETER1 rootParams[3];
 		rootParams[0].InitAsDescriptorTable(1, &rangeBuffer, D3D12_SHADER_VISIBILITY_ALL);
 		rootParams[1].InitAsDescriptorTable(1, &rangeTex, D3D12_SHADER_VISIBILITY_ALL);
+		rootParams[2].InitAsConstants(1, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX); // b0, space0, 1個のuint
 
 		CD3DX12_STATIC_SAMPLER_DESC sampler(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR);
 
@@ -114,7 +120,7 @@ namespace graphics
 			signatureBlob->GetBufferSize(),
 			IID_PPV_ARGS(&mRootSignature));
 
-		if(FAILED(hr))
+		if (FAILED(hr))
 		{
 			DEBUG_LOG(sys::eLogLevel::Fatal, "Failed to create root signature");
 			return false;
@@ -137,14 +143,14 @@ namespace graphics
 			return false;
 		}
 
-		// ���_���C�A�E�g
+		// 頂点レイアウト
 		D3D12_INPUT_ELEMENT_DESC inputLayout[] =
 		{
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
 
-		// PSO�\�z
+		// PSO構築
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 		psoDesc.pRootSignature = mRootSignature.Get();
 		psoDesc.VS = CD3DX12_SHADER_BYTECODE(VS.Get());
@@ -162,7 +168,7 @@ namespace graphics
 		const HRESULT hr = device->CreateGraphicsPipelineState(
 			&psoDesc, IID_PPV_ARGS(&mPipelineState));
 
-		if(FAILED(hr))
+		if (FAILED(hr))
 		{
 			DEBUG_LOG(sys::eLogLevel::Fatal, "Failed to create graphics pipeline state for sprite pipeline");
 			return false;
@@ -174,11 +180,11 @@ namespace graphics
 	}
 
 	/// <summary>
-	/// ���[�g�V�O�l�`���� PSO ���쐬����B
+	/// ルートシグネチャと PSO を作成する。
 	/// </summary>
-	/// <param name="device">GPU �f�o�C�X</param>
-	/// <param name="shaderManager">�V�F�[�_�[�̃R���p�C���E�L���b�V���Ǘ�</param>
-	/// <returns>true:����</returns>
+	/// <param name="device">GPU デバイス</param>
+	/// <param name="shaderManager">シェーダーのコンパイル・キャッシュ管理</param>
+	/// <returns>true:成功</returns>
 	bool SpritePipeline::Create(DX12Device& device, ShaderManager& shaderManager)
 	{
 		ID3D12Device* d3dDevice = device.GetDevice();
