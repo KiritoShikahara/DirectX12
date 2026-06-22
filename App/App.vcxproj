@@ -173,6 +173,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\macros.h" />
     <ClInclude Include="src\Scene\Menu\MenuScene.h" />
     <ClInclude Include="src\system\GlowAnimation\SpriteGlowSystem.h" />
     <ClInclude Include="src\system\GlowAnimation\GlowAnimationComp.h" />
