@@ -11,6 +11,7 @@ void sys::TitleInputSystem::Update(entt::registry& registry, float deltaTime, fl
 	if (input.IsActionPressed("Select") == true)
 	{
 		::sys::SceneManager::Get().ChangeSceneWithTransition<::scene::MenuScene>();
+		PLAY_SE("Assets/Sound/SE/SE_Select.aud",false,1,false);
 	}
 
 	// 終了なら SE + 確認画面

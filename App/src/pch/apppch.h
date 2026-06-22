@@ -29,6 +29,7 @@
 
 // オーディオ
 #include<audio/Resource/AudioResourceManager.h>
+#include<audio/Manager/AudioManager.h>
 
 // システム
 #include<system/AssetPath/AssetPathManager.h>

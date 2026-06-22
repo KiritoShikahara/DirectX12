@@ -23,6 +23,7 @@ namespace scene
 	void TitleScene::Finalize()
 	{
 		::ecs::ComponentSystemManager::Get().ClearUserSystems();
+		::audio::AudioManager::Get().ClearSceneSounds();
 	}
 
 	void TitleScene::CreateCompSystem()
@@ -62,6 +63,9 @@ namespace scene
 		glow.BaseIntensity = 5;
 		glow.Frequency = 0.7;
 		glow.PhaseOffset = 0.0f;
+
+		// 音楽
+		PLAY_BGM("Assets/Sound/BGM/BGM_Title.aud");
 
 	}
 
