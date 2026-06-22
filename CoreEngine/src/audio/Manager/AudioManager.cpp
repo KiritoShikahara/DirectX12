@@ -33,7 +33,7 @@ namespace audio
 		bgm->Play();
 
 		std::lock_guard lock(mMtx);
-		mActiveBgm = std::move(bgm); // ŒÃ‚¢BGM‚Í‚±‚±‚ÅŽ©“®ˆÀ‘S”jŠü‚³‚ê‚Ü‚·
+		mActiveBgm = std::move(bgm); // å¤ã„BGMã¯ã“ã“ã§è‡ªå‹•å®‰å…¨ç ´æ£„ã•ã‚Œã¾ã™
 		DEBUG_LOG(sys::eLogLevel::Log, "Playing BGM: ", filePath);
 	}
 
@@ -87,6 +87,7 @@ namespace audio
 	void AudioManager::ClearSceneSounds()
 	{
 		std::lock_guard lock(mMtx);
+		this->StopBGM();
 		std::erase_if(mSoundEffects, [](const SoundEffect& s) { return !s.IsPersistent(); });
 	}
 
@@ -105,13 +106,13 @@ namespace audio
 		const float bgmVol = mBgmVolume.load();
 		const float seVol = mSeVolume.load();
 
-		// BGM ‚Ìƒ~ƒLƒVƒ“ƒO
+		// BGM ã®ãƒŸã‚­ã‚·ãƒ³ã‚°
 		if (mActiveBgm && mActiveBgm->IsPlaying())
 		{
 			mActiveBgm->ApplyAndMix(output, framesRequested, channels, master, bgmVol);
 		}
 
-		// SE‚Ìƒ~ƒLƒVƒ“ƒO‚Æƒ‰ƒCƒtƒTƒCƒNƒ‹ŠÇ—
+		// SEã®ãƒŸã‚­ã‚·ãƒ³ã‚°ã¨ãƒ©ã‚¤ãƒ•ã‚µã‚¤ã‚¯ãƒ«ç®¡ç†
 		for (auto it = mSoundEffects.begin(); it != mSoundEffects.end(); )
 		{
 			if (!it->IsPlaying())

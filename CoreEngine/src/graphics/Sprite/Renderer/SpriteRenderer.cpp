@@ -147,11 +147,17 @@ namespace graphics
 		// [t0] StructuredBuffer（全スプライトの定数データ）
 		cmdList->SetGraphicsRootDescriptorTable(0, mInstanceBuffer->GetGpuHandle());
 
-		// バッチごとに [t1] テクスチャを差し替えて DrawInstanced を発行する
+		// バッチごとに [t1] テクスチャを差し替え、[b0] にインスタンス先頭オフセットをセットして
+		// DrawInstanced を発行する。
+		// 注意: SV_InstanceID の StartInstanceLocation 加算は GPU/ドライバ依存で信頼できないため、
+		// StartInstanceLocation には常に 0 を渡し、代わりに Root32BitConstant でオフセットを渡して
+		// VS 側 (InstanceOffset + SV_InstanceID) で手動加算する。
 		for (const auto& call : mDrawCalls)
 		{
 			cmdList->SetGraphicsRootDescriptorTable(1, call.textureHandle);
-			cmdList->DrawInstanced(4, call.instanceCount, 0, call.startIndex);
+			cmdList->SetGraphicsRoot32BitConstant(
+				SpritePipeline::INSTANCE_OFFSET_ROOT_PARAM_INDEX, call.startIndex, 0);
+			cmdList->DrawInstanced(4, call.instanceCount, 0, 0);
 		}
 	}
 

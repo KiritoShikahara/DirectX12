@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include<System/Input/Keyboard/KeyBoard.h>
 #include<system/Input/Mouse/Mouse.h>
@@ -25,13 +26,16 @@ namespace sys
 
 
 		/// <summary>
-		/// アクションバインディング定義 
+		/// アクションバインディング定義。
+		/// 1つのアクションに対して、各デバイスで複数のコードを割り当てられる。
+		/// （例: Keys = {Up, W} のように、上矢印と W のどちらでも判定が通る）
+		/// 判定は配列内・デバイス間ともに OR。
 		/// </summary>
 		struct ActionBinding
 		{
-			eKeyCode     key = eKeyCode::Count;     // Count = 未割り当て
-			ePadButton   pad = ePadButton::Count;   // Count = 未割り当て
-			eMouseButton mouse = eMouseButton::Count; // Count = 未割り当て
+			std::vector<eKeyCode>     Keys;
+			std::vector<ePadButton>   Pads;
+			std::vector<eMouseButton> Mouses;
 		};
 
 		/// <summary>
@@ -75,7 +79,7 @@ namespace sys
 		/// アクション名とデバイスコードの組を登録する
 		/// 同名のアクションは上書きされる
 		/// </summary>
-		void AddAction(const std::string& actionName, const struct ActionBinding& bind);
+		void AddAction(const std::string& actionName, const ActionBinding& bind);
 
 		[[nodiscard]] bool IsActionPressed(const std::string& actionName) const;
 		[[nodiscard]] bool IsActionHeld(const std::string& actionName) const;

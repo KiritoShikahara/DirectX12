@@ -16,20 +16,26 @@ namespace graphics
     /// <summary>
     /// スプライト1件分のシェーダー定数データ。
     /// SpriteRenderer から StructuredBuffer 経由でシェーダーへ渡す。
+    ///
+    /// 重要: #pragma pack は使用しない。
+    /// HLSL の StructuredBuffer 要素は暗黙的に「1メンバーが16バイト境界を跨がない」
+    /// パッキングルールが適用されるため、C++ 側もそれに明示的に合わせる必要がある。
+    /// (#pragma pack(1) で詰めると、HLSL 側が自動挿入するパディングと食い違い、
+    ///  要素ごとにオフセットがずれて隣の要素のデータを読んでしまう)
     /// </summary>
-#pragma pack(push, 1)
     struct SpriteShaderData
     {
-        DirectX::XMFLOAT4X4 WVP = {};
-        Color               Color = graphics::Color::White;
-        float               Intensity = 1.0f;
-        float               FillAmount = 1.0f;
-        int                 FillType = 0;
-        DirectX::XMFLOAT2   UVScale = { 1.0f, 1.0f };
-        DirectX::XMFLOAT2   UVOffset = { 0.0f, 0.0f };
+        DirectX::XMFLOAT4X4 WVP = {};                        // 64 bytes (offset   0)
+        Color               Color = graphics::Color::White; // 16 bytes (offset  64)
+        float               Intensity = 1.0f;                //  4 bytes (offset  80)
+        float               FillAmount = 1.0f;                //  4 bytes (offset  84)
+        int                 FillType = 0;                    //  4 bytes (offset  88)
+        float               _pad0 = 0.0f;                     //  4 bytes (offset  92) HLSL側の16バイト境界揃えに合わせる明示パディング
+        DirectX::XMFLOAT2   UVScale = { 1.0f, 1.0f };         //  8 bytes (offset  96)
+        DirectX::XMFLOAT2   UVOffset = { 0.0f, 0.0f };        //  8 bytes (offset 104)
     };
-#pragma pack(pop)
-    static_assert(sizeof(SpriteShaderData) == 108, "SpriteShaderData size mismatch");
+    static_assert(sizeof(SpriteShaderData) == 112, "SpriteShaderData size mismatch");
+    static_assert(offsetof(SpriteShaderData, UVScale) == 96, "UVScale must start on a 16-byte boundary to match HLSL packing");
 
     /// <summary>
     /// FBXの頂点構造体

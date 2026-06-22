@@ -372,6 +372,9 @@
     <ClInclude Include="src\graphics\Sprite\Animation\SpriteAnimationSystem.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\ecs\system\collision\SpriteCollsion.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics\Dx12\Dx12Device.cpp">
@@ -623,6 +626,9 @@
     <ClCompile Include="src\graphics\Sprite\Animation\SpriteAnimationSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\ecs\system\collision\SpriteCollsion.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -646,5 +652,7 @@
     <FxCompile Include="Assets\Shader\Text\PS_Text.hlsl" />
     <FxCompile Include="Assets\Shader\Shape\VS_Shape.hlsl" />
     <FxCompile Include="Assets\Shader\Shape\PS_Shape.hlsl" />
+    <FxCompile Include="Assets\Shader\Transition\PS_Transition.hlsl" />
+    <FxCompile Include="Assets\Shader\Transition\VS_Transition.hlsl" />
   </ItemGroup>
 </Project>

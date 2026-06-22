@@ -23,18 +23,18 @@ namespace audio
 		SINGLETON_ACCESSOR(AudioManager);
 
 		/// <summary>
-		/// ‰Šú‰»
+		/// åˆæœŸåŒ–
 		/// </summary>
-		/// <returns>true:¬Œ÷ false:¸”s</returns>
+		/// <returns>true:æˆåŠŸ false:å¤±æ•—</returns>
 		bool Initialize();
 
-		// BGM§Œä
+		// BGMåˆ¶å¾¡
 		void PlayBGM(const std::string& filePath, bool loop = true, float volume = 1.0f);
 		void StopBGM();
 		void PauseBGM();
 		void ResumeBGM();
 
-		// SE§Œä
+		// SEåˆ¶å¾¡
 		void PlaySE(const std::string& filePath,
 			bool  loop = false,
 			float volume = 1.0f,
@@ -42,7 +42,7 @@ namespace audio
 
 		void ClearSceneSounds();
 
-		// ƒ{ƒŠƒ…[ƒ€ƒpƒX§Œä
+		// ãƒœãƒªãƒ¥ãƒ¼ãƒ ãƒ‘ã‚¹åˆ¶å¾¡
 		void SetMasterVolume(float volume) noexcept { mMasterVolume.store(volume); }
 		void SetBgmVolume(float volume)    noexcept { mBgmVolume.store(volume); }
 		void SetSeVolume(float volume)     noexcept { mSeVolume.store(volume); }
@@ -60,7 +60,7 @@ namespace audio
 
 		AudioResourceManager* mResources = nullptr;
 		std::vector<SoundEffect> mSoundEffects;
-		std::unique_ptr<BGMStream> mActiveBgm = nullptr; // ’PˆêƒAƒNƒeƒBƒuBGMƒXƒƒbƒg
+		std::unique_ptr<BGMStream> mActiveBgm = nullptr; // å˜ä¸€ã‚¢ã‚¯ãƒ†ã‚£ãƒ–BGMã‚¹ãƒ­ãƒƒãƒˆ
 		std::recursive_mutex mMtx;
 
 		std::atomic<float> mMasterVolume{ 1.0f };
@@ -69,4 +69,15 @@ namespace audio
 	};
 }
 
+#define PLAY_BGM(filePath, ...) ::audio::AudioManager::Get().PlayBGM((filePath), ##__VA_ARGS__)
 
+// BGMåœæ­¢ãƒ»ä¸€æ™‚åœæ­¢ãƒ»å†é–‹
+#define STOP_BGM()   ::audio::AudioManager::Get().StopBGM()
+#define PAUSE_BGM()  ::audio::AudioManager::Get().PauseBGM()
+#define RESUME_BGM() ::audio::AudioManager::Get().ResumeBGM()
+
+// SEå†ç”Ÿ
+#define PLAY_SE(filePath, ...)  ::audio::AudioManager::Get().PlaySE((filePath), ##__VA_ARGS__)
+
+// ã‚·ãƒ¼ãƒ³åˆ‡ã‚Šæ›¿ãˆæ™‚ãªã©ã®SEä¸€æ‹¬ã‚¯ãƒªã‚¢
+#define CLEAR_SE()   ::audio::AudioManager::Get().ClearSceneSounds()

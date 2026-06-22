@@ -14,23 +14,26 @@ namespace sys
         // ----------------------------------------------------------------
         //  デフォルトのアクションマッピング
         //  将来的には外部ファイルから読み込む想定
+        //
+        //  各デバイスは vector なので、波カッコの中に複数コードを並べれば良い。
+        //  例: Keys = {Up, W} で上矢印とWどちらでも判定が通る。
         // ----------------------------------------------------------------
-        AddAction("Sprint", { eKeyCode::LShift,  ePadButton::L1 });
-        AddAction("Select", { eKeyCode::Space,   ePadButton::A,    eMouseButton::Left });
-        AddAction("Cancel", { eKeyCode::Escape,  ePadButton::B });
-        AddAction("Attack", { eKeyCode::Count,   ePadButton::R2,   eMouseButton::Left });
-        AddAction("Interact", { eKeyCode::F,       ePadButton::X });
-        AddAction("MoveRight", { eKeyCode::D,       ePadButton::DPadRight });
-        AddAction("MoveLeft", { eKeyCode::A,       ePadButton::DPadLeft });
-        AddAction("Skill1", { eKeyCode::Q,       ePadButton::L1 });
-        AddAction("Skill2", { eKeyCode::E,       ePadButton::R1 });
-        AddAction("Option", { eKeyCode::Escape,  ePadButton::Menu });
+        AddAction("Sprint", { { eKeyCode::LShift }, { ePadButton::L1 }, {} });
+        AddAction("Select", { { eKeyCode::Space }, { ePadButton::A }, { eMouseButton::Left } });
+        AddAction("Cancel", { { eKeyCode::Escape }, { ePadButton::B }, {} });
+        AddAction("Attack", { {}, { ePadButton::R2 }, { eMouseButton::Left } });
+        AddAction("Interact", { { eKeyCode::F }, { ePadButton::X }, {} });
+        AddAction("MoveRight", { { eKeyCode::D }, { ePadButton::DPadRight }, {} });
+        AddAction("MoveLeft", { { eKeyCode::A }, { ePadButton::DPadLeft }, {} });
+        AddAction("Skill1", { { eKeyCode::Q }, { ePadButton::L1 }, {} });
+        AddAction("Skill2", { { eKeyCode::E }, { ePadButton::R1 }, {} });
+        AddAction("Option", { { eKeyCode::Escape }, { ePadButton::Menu }, {} });
 
         /*
         * ImGuiに登録
         */
 #ifdef ENABLE_INPUT_DEBUG_SHOW
-        sys::ImGuiManager::Get().AddDebugUI([this]() 
+        sys::ImGuiManager::Get().AddDebugUI([this]()
             {
                 mPadManager->ImGuiUpdate();
             });
@@ -45,7 +48,7 @@ namespace sys
 
 
 
-		mIsInitialized = true;
+        mIsInitialized = true;
 
         return true;
     }
@@ -144,9 +147,20 @@ namespace sys
         if (it == mActionMaps.end()) return false;
 
         const auto& bind = it->second;
-        return mKeyboard->IsPressed(bind.key)
-            || mPadManager->IsPressed(bind.pad)
-            || mMouse->IsPressed(bind.mouse);
+
+        for (const auto key : bind.Keys)
+        {
+            if (mKeyboard->IsPressed(key)) return true;
+        }
+        for (const auto pad : bind.Pads)
+        {
+            if (mPadManager->IsPressed(pad)) return true;
+        }
+        for (const auto mouse : bind.Mouses)
+        {
+            if (mMouse->IsPressed(mouse)) return true;
+        }
+        return false;
     }
 
     bool InputManager::IsActionHeld(const std::string& actionName) const
@@ -155,9 +169,20 @@ namespace sys
         if (it == mActionMaps.end()) return false;
 
         const auto& bind = it->second;
-        return mKeyboard->IsHeld(bind.key)
-            || mPadManager->IsHeld(bind.pad)
-            || mMouse->IsHeld(bind.mouse);
+
+        for (const auto key : bind.Keys)
+        {
+            if (mKeyboard->IsHeld(key)) return true;
+        }
+        for (const auto pad : bind.Pads)
+        {
+            if (mPadManager->IsHeld(pad)) return true;
+        }
+        for (const auto mouse : bind.Mouses)
+        {
+            if (mMouse->IsHeld(mouse)) return true;
+        }
+        return false;
     }
 
     bool InputManager::IsActionReleased(const std::string& actionName) const
@@ -166,8 +191,19 @@ namespace sys
         if (it == mActionMaps.end()) return false;
 
         const auto& bind = it->second;
-        return mKeyboard->IsReleased(bind.key)
-            || mPadManager->IsReleased(bind.pad)
-            || mMouse->IsReleased(bind.mouse);
+
+        for (const auto key : bind.Keys)
+        {
+            if (mKeyboard->IsReleased(key)) return true;
+        }
+        for (const auto pad : bind.Pads)
+        {
+            if (mPadManager->IsReleased(pad)) return true;
+        }
+        for (const auto mouse : bind.Mouses)
+        {
+            if (mMouse->IsReleased(mouse)) return true;
+        }
+        return false;
     }
 }
