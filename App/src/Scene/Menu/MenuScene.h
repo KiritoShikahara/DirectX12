@@ -10,6 +10,13 @@ namespace scene
 		virtual void Initialize()override;
 		virtual void Finalize()override;
 	private:
+		// リソース
+
+		// データ
+
+		// 背景
+		void CreateBG();
+
 
 	};
 }

@@ -6,6 +6,8 @@
 #include<system/GlowAnimation/SpriteGlowSystem.h>
 #include<system/TitleInputSystem/TitleInputSystem.h>
 
+#include"../macros.h"
+
 namespace scene
 {
 	void TitleScene::Initialize()
@@ -121,6 +123,6 @@ namespace scene
 
 	}
 
-	REGISTER_SCENE_AS(TitleScene, "Title");
+	REGISTER_SCENE_AS(TitleScene, TITLE_SCENE_NAME);
 }
 
