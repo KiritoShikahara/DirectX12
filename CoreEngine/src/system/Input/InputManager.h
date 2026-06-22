@@ -7,6 +7,8 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
+#include <initializer_list>
 
 #include<System/Input/Keyboard/KeyBoard.h>
 #include<system/Input/Mouse/Mouse.h>
@@ -25,13 +27,44 @@ namespace sys
 
 
 		/// <summary>
-		/// アクションバインディング定義 
+		/// アクションバインディング定義。
+		/// 1つのアクションに対して、各デバイスで複数のコードを割り当てられる。
+		/// （例: Key = {Up, W} のように、上矢印と W のどちらでも判定が通る）
+		/// 判定は各デバイス内で OR、デバイス間でも OR。
 		/// </summary>
 		struct ActionBinding
 		{
-			eKeyCode     key = eKeyCode::Count;     // Count = 未割り当て
-			ePadButton   pad = ePadButton::Count;   // Count = 未割り当て
-			eMouseButton mouse = eMouseButton::Count; // Count = 未割り当て
+			std::vector<eKeyCode>     Keys;
+			std::vector<ePadButton>   Pads;
+			std::vector<eMouseButton> Mouses;
+
+			ActionBinding() = default;
+
+			/// <summary>
+			/// 旧形式 { eKeyCode, ePadButton, eMouseButton } との互換用コンストラクタ。
+			/// 各デバイス1コードのみ割り当てたい場合に簡潔に書ける。
+			/// eKeyCode::Count / ePadButton::Count / eMouseButton::Count は「未割り当て」として無視する。
+			/// </summary>
+			ActionBinding(eKeyCode key, ePadButton pad = ePadButton::Count, eMouseButton mouse = eMouseButton::Count)
+			{
+				if (key != eKeyCode::Count)     Keys.push_back(key);
+				if (pad != ePadButton::Count)   Pads.push_back(pad);
+				if (mouse != eMouseButton::Count) Mouses.push_back(mouse);
+			}
+
+			/// <summary>
+			/// 複数コードを直接指定するコンストラクタ。
+			/// 例: ActionBinding({eKeyCode::Up, eKeyCode::W}, {ePadButton::DPadUp})
+			/// </summary>
+			ActionBinding(
+				std::initializer_list<eKeyCode> keys,
+				std::initializer_list<ePadButton> pads = {},
+				std::initializer_list<eMouseButton> mouses = {})
+				: Keys(keys.begin(), keys.end())
+				, Pads(pads.begin(), pads.end())
+				, Mouses(mouses.begin(), mouses.end())
+			{
+			}
 		};
 
 		/// <summary>
@@ -75,7 +108,25 @@ namespace sys
 		/// アクション名とデバイスコードの組を登録する
 		/// 同名のアクションは上書きされる
 		/// </summary>
-		void AddAction(const std::string& actionName, const struct ActionBinding& bind);
+		void AddAction(const std::string& actionName, const ActionBinding& bind);
+
+		/// <summary>
+		/// 既存のアクションに対して、キーコードを1つ追加する。
+		/// アクションが未登録の場合は何もしない。
+		/// </summary>
+		void AddKeyToAction(const std::string& actionName, eKeyCode key);
+
+		/// <summary>
+		/// 既存のアクションに対して、パッドボタンを1つ追加する。
+		/// アクションが未登録の場合は何もしない。
+		/// </summary>
+		void AddPadToAction(const std::string& actionName, ePadButton pad);
+
+		/// <summary>
+		/// 既存のアクションに対して、マウスボタンを1つ追加する。
+		/// アクションが未登録の場合は何もしない。
+		/// </summary>
+		void AddMouseToAction(const std::string& actionName, eMouseButton mouse);
 
 		[[nodiscard]] bool IsActionPressed(const std::string& actionName) const;
 		[[nodiscard]] bool IsActionHeld(const std::string& actionName) const;

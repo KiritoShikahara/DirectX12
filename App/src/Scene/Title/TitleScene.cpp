@@ -62,11 +62,12 @@ namespace scene
 	void TitleScene::CreateLogo()
 	{
 		auto& manager = ::ecs::EntityManager::Get();
+		auto& window = ::sys::Window::Get();
 		auto entity = manager.CreateEntity();
 		auto texture = ::graphics::TextureManager::Get().GetOrLoad("Assets/Texture/Title/TX_Logo.png");
 
 		auto& trans = manager.AddComponent<::ecs::Transform>(entity);
-		trans.Set2DPosition(sys::Window::Get().GetVirtualWidth() / 2, sys::Window::Get().GetVirtualHeight() / 2);
+		trans.Set2DPosition(window.GetVirtualWidth() / 2, window.GetVirtualHeight() / 5 * 2);
 
 		float scale = 0.8f;
 		auto& sprite = manager.AddComponent<::ecs::Sprite>(entity, texture);
@@ -79,13 +80,14 @@ namespace scene
 		auto& glow = manager.AddComponent<::ecs::GlowAnimation>(entity);
 		glow.Amplitude = 1.0;
 		glow.BaseIntensity =2;
-		glow.Frequency = 0.5;
-		glow.PhaseOffset = 0.0;
+		glow.Frequency = 0.7;
+		glow.PhaseOffset = 0.1;
 
 	}
 
 	void TitleScene::CreatePromptText()
 	{
+
 	}
 
 	REGISTER_SCENE_AS(TitleScene, "Title");
