@@ -652,5 +652,7 @@
     <FxCompile Include="Assets\Shader\Text\PS_Text.hlsl" />
     <FxCompile Include="Assets\Shader\Shape\VS_Shape.hlsl" />
     <FxCompile Include="Assets\Shader\Shape\PS_Shape.hlsl" />
+    <FxCompile Include="Assets\Shader\Transition\PS_Transition.hlsl" />
+    <FxCompile Include="Assets\Shader\Transition\VS_Transition.hlsl" />
   </ItemGroup>
 </Project>

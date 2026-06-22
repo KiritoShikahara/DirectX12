@@ -35,6 +35,8 @@
 #include<system/Logger/Logger.h>
 #include<system/Scene/Factory/SceneFactory.h>
 #include<system/Window/Window.h>
+#include<system/Input/InputManager.h>
+#include<system/Scene/Manager/SceneManager.h>
 
 // 汎用
 #include<Utility/Singleton/Singleton.hpp>

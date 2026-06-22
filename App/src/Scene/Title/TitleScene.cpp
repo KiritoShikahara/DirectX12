@@ -4,6 +4,7 @@
 
 #include<system/GlowAnimation/GlowAnimationComp.h>
 #include<system/GlowAnimation/SpriteGlowSystem.h>
+#include<system/TitleInputSystem/TitleInputSystem.h>
 
 namespace scene
 {
@@ -15,6 +16,8 @@ namespace scene
 		CreateBackground();
 		CreateLogo();
 		CreatePromptText();
+
+		DEBUG_LOG(::sys::eLogLevel::Log, "Title Scene.");
 	}
 
 	void TitleScene::Finalize()
@@ -28,6 +31,9 @@ namespace scene
 
 		// 背景点滅
 		manager.AddUserSystem<::ecs::SpriteGlowSystem>(::ecs::eUpdatePhase::PostUpdate);
+
+		// 入力
+		manager.AddUserSystem<::sys::TitleInputSystem>(::ecs::eUpdatePhase::PostUpdate);
 	}
 
 	void TitleScene::LoadResource()
@@ -87,6 +93,27 @@ namespace scene
 
 	void TitleScene::CreatePromptText()
 	{
+		auto& manager = ::ecs::EntityManager::Get();
+		auto& window = ::sys::Window::Get();
+		auto entity = manager.CreateEntity();
+		auto texture = ::graphics::TextureManager::Get().GetOrLoad("Assets/Texture/Title/TX_Prompt.png");
+
+		auto& trans = manager.AddComponent<::ecs::Transform>(entity);
+		trans.Set2DPosition(window.GetVirtualWidth() / 2, window.GetVirtualHeight() / 5 * 4);
+
+		float scale = 0.6f;
+		auto& sprite = manager.AddComponent<::ecs::Sprite>(entity, texture);
+		sprite.Size = { 1920,1080 };
+		sprite.DrawScale = { scale ,scale };
+		sprite.Intensity = 1.0f;
+		sprite.Pivot = { 0.5,0.5 };
+		sprite.SetLayer(::ecs::SpriteLayer::Character);
+
+		auto& glow = manager.AddComponent<::ecs::GlowAnimation>(entity);
+		glow.Amplitude = 0.5;
+		glow.BaseIntensity = 1.2;
+		glow.Frequency = 1.5;
+		glow.PhaseOffset = 0;
 
 	}
 

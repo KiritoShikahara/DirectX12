@@ -27,6 +27,7 @@
 #include<graphics/Fbx/Renderer/FbxRenderer.h>
 #include<graphics/Sprite/Renderer/SpriteRenderer.h>
 #include<graphics/Line/Renderer/PhysicsDebugRenderer.h>
+#include<graphics/Transition/TransitionRenderer.h>
 
 // Resource
 #include<graphics/PrimitiveModel/Resource/PrimitiveResourceManager.h>
@@ -141,6 +142,7 @@ namespace sys
         TextRenderer::Get().Finalize();
         SpriteRenderer::Get().Finalize();
         ShapeRenderer::Get().Finalize();
+        TransitionRenderer::Get().Finalize();
 
 #ifdef _DEBUG
         graphics::PhysicsDebugRenderer::Get().Finalize();
@@ -240,6 +242,12 @@ namespace sys
             return false;
         }
 
+        if (TransitionRenderer::Get().Initialize() == false)
+        {
+            return false;
+        }
+
+
         return true;
     }
 
@@ -305,10 +313,14 @@ namespace sys
         float rawDt = mTime.GetRawDeltaTime();
 
         {
-            mSceneManager->Update(rawDt);
-
             mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PreUpdate, registry, dt, rawDt);
             mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::Update, registry, dt, rawDt);
+
+            // シーン切り替えリクエスト（ChangeSceneWithTransition 等）は上記の Update フェーズ内、
+            // 例えば TitleInputSystem::Update で発行される。
+            // そのため SceneManager::Update（フェード進行）は各システムの実行後に呼び、
+            // 同フレーム中にリクエストされたトランジションを 1フレーム遅延なく開始できるようにする。
+            mSceneManager->Update(rawDt);
 
             sys::PhysicsSystem::BuildPendingBodies(registry);
             sys::PhysicsSystem::SyncFromTransform(registry);
@@ -394,6 +406,10 @@ namespace sys
 #ifdef _DEBUG
             graphics::PhysicsDebugRenderer::Get().Draw(registry, cmdList);
 #endif
+
+            // シーントランジション（フェードイン/アウト）のフルスクリーンオーバーレイ。
+            // すべてのシーン描画コマンドの後、EndFrame() より前に発行する必要がある。
+            mSceneManager->DrawTransition(cmdList);
         }
 
         // End
