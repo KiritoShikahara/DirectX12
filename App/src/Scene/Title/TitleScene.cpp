@@ -65,7 +65,7 @@ namespace scene
 		glow.PhaseOffset = 0.0f;
 
 		// 音楽
-		PLAY_BGM("Assets/Sound/BGM/BGM_Title.aud");
+		PLAY_BGM("Assets/Sound/BGM/BGM_Title.aud", true, 0.7);
 
 	}
 
