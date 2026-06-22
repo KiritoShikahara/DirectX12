@@ -13,6 +13,7 @@ namespace scene
 		// リソース
 
 		// データ
+		void LoadData();
 
 		// 背景
 		void CreateBG();

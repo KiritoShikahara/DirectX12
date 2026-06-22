@@ -19,7 +19,7 @@ namespace sys
         ImGui.AddDebugUI([this, &reg]()
             {
                 this->ImGuiUpdate(reg);
-            });
+            },"Camera");
 
 #endif // _DEBUG
 

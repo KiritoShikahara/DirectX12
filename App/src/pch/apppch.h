@@ -38,6 +38,13 @@
 #include<system/Window/Window.h>
 #include<system/Input/InputManager.h>
 #include<system/Scene/Manager/SceneManager.h>
+#include<ImGui/imgui.h>
+#include<system/ImGui/ImGuiManager.h>
+
+// データ
+#include<Data/Storage/Registry/DataRegistry.h>
+#include<Data/Storage/Registry/ConfigRegistry.h>
+#include<Data/Storage/Inspector/DataInspector.h>
 
 // 汎用
 #include<Utility/Singleton/Singleton.hpp>

@@ -36,12 +36,12 @@ namespace sys
         sys::ImGuiManager::Get().AddDebugUI([this]()
             {
                 mPadManager->ImGuiUpdate();
-            });
+            },"Pad");
 
         sys::ImGuiManager::Get().AddDebugUI([this]()
             {
                 mKeyboard->ImGuiUpdate();
-            });
+            },"Keyboard");
 
 
 #endif // ENABLE_INPUT_DEBUG_SHOW

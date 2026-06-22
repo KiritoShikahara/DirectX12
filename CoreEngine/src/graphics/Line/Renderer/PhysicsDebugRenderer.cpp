@@ -60,7 +60,7 @@ namespace graphics
         }
 
         // ImGui ウィンドウ登録
-        sys::ImGuiManager::Get().AddDebugUI([this]() { ImGuiWindow(); });
+        sys::ImGuiManager::Get().AddDebugUI([this]() { ImGuiWindow(); },"Physics");
 
         mIsInitialized = true;
         DEBUG_LOG(sys::eLogLevel::Log, "PhysicsDebugRenderer: Initialized.");

@@ -3,6 +3,9 @@
 #include<Utility/Singleton/Singleton.hpp>
 #include<graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeap.h>
 #include<vector>
+#include<string>
+#include<functional>
+#include<unordered_map>
 
 
 namespace graphics
@@ -26,66 +29,91 @@ namespace sys
 		SINGLETON_ACCESSOR(ImGuiManager);
 
 		/// <summary>
-		/// ImGui������
+		/// ImGui初期化
 		/// </summary>
-		/// <returns>true:���� false:���s</returns>
+		/// <returns>true:成功 false:失敗</returns>
 		bool Initialize(
-			sys::Window&window,
+			sys::Window& window,
 			graphics::DX12Device& device,
 			graphics::DX12Context& context,
 			graphics::GDescriptorHeapManager& descriptorHeapManager
 		);
 
 		/// <summary>
-		/// �I������
+		/// 終了処理
 		/// </summary>
 		void Finalize();
 
-		/// <summary>�t���[���J�n�BBeginRendering �̒���ɌĂԁB</summary>
+		/// <summary>フレーム開始。BeginRendering の直後に呼ぶ。</summary>
 		void NewFrame();
 
 		/// <summary>
-		/// �o�^���ꂽ UI �֐������ɌĂяo���B
-		/// NewFrame() �� EndFrame() �̊ԂɌĂԂ��ƁB
+		/// 登録された UI 関数を順に呼び出す。
+		/// NewFrame() と EndFrame() の間に呼ぶこと。
 		/// </summary>
 		void Update();
 
 		/// <summary>
-		/// �`��f�[�^�̊m��� ImGui �R�}���h�̔��s�B
-		/// Flip() �̒��O�ɌĂԁB
+		/// 描画データの確定と ImGui コマンドの発行。
+		/// Flip() の直前に呼ぶ。
 		/// </summary>
 		void EndFrame();
 
 		/// <summary>
-		/// �f�o�b�O UI �`��֐���o�^����B
-		/// �o�^�����֐��� Update() ���Ŗ��t���[���Ă΂��B
+		/// デバッグ UI 描画関数を登録する。
+		/// 登録した関数は Update() 内で毎フレーム呼ばれる。
+		/// 同じ key で再登録すると、既存の登録を上書きする。
 		/// </summary>
-		void AddDebugUI(std::function<void()> guiFunc);
-	private:
-		/// <summary>�o�^�ς݂̃f�o�b�O UI �`��֐����X�g</summary>
-		std::vector<std::function<void()>> mDebugUIFunctions;
+		/// <param name="guiFunc">毎フレーム呼ばれる描画関数</param>
+		/// <param name="key">登録を識別するキー（RemoveDebugUI で使用）</param>
+		void AddDebugUI(std::function<void()> guiFunc, const std::string& key);
 
 		/// <summary>
-		/// �t�H���g�p�f�B�X�N���v�^�X���b�g
+		/// key に対応するデバッグ UI 描画関数の登録を解除する。
+		/// 該当する key が無い場合は何もしない（安全に呼べる）。
+		/// シーンの Finalize() など、UI が不要になったタイミングで呼ぶこと。
+		/// </summary>
+		/// <param name="key">AddDebugUI で指定したキー</param>
+		void RemoveDebugUI(const std::string& key);
+
+		/// <summary>
+		/// key が現在登録されているかを確認する。
+		/// </summary>
+		bool HasDebugUI(const std::string& key) const;
+
+		/// <summary>
+		/// 登録されている全てのデバッグ UI を解除する。
+		/// </summary>
+		void ClearDebugUI();
+
+	private:
+		/// <summary>
+		/// 登録済みのデバッグ UI 描画関数。
+		/// key で個別に削除できるよう unordered_map で管理する。
+		/// 呼び出し順は不定になるため、表示順序に依存する UI は
+		/// 呼び出し側でソートキーを key に含めるなどして調整すること。
+		/// </summary>
+		std::unordered_map<std::string, std::function<void()>> mDebugUIFunctions;
+
+		/// <summary>
+		/// フォント用ディスクリプタスロット
 		/// </summary>
 		graphics::GDescriptorHeap          mFontHeap;
 
 		/// <summary>
-		/// EndFrame() �Ŗ��t���[���g���R�}���h���X�g�̋������B
-		/// ���C�t�^�C���� Engine �����ۏ؂���O��Ń|�C���^�ێ��B
+		/// EndFrame() で毎フレーム使うコマンドリストの借用元。
+		/// ライフタイムは Engine 側が保証する前提でポインタ保持。
 		/// </summary>
 		graphics::DX12Context* mRendererContext = nullptr;
 
 		/// <summary>
-		/// EndFrame() �� SetDescriptorHeaps �ɓn���l�C�e�B�u�q�[�v�̋������B
+		/// EndFrame() の SetDescriptorHeaps に渡すネイティブヒープの借用元。
 		/// </summary>
 		graphics::GDescriptorHeapManager* mHeapManager = nullptr;
 
-		/// <summary>ImGui �R���e�L�X�g</summary>
+		/// <summary>ImGui コンテキスト</summary>
 		ImGuiContext* mContext = nullptr;
 
 		bool                                mIsInitialized = false;
 	};
 }
-
-
