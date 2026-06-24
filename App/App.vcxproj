@@ -145,6 +145,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\system\MenuController\MenuControllerSystem.cpp" />
     <ClCompile Include="src\Scene\Menu\MenuScene.cpp" />
     <ClCompile Include="src\system\GlowAnimation\SpriteGlowSystem.cpp" />
     <ClCompile Include="src\main.cpp">
@@ -173,6 +174,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\system\MenuController\MenuControllerSystem.h" />
     <ClInclude Include="src\Data\Menu\MenuSpellsData.h" />
     <ClInclude Include="src\macros.h" />
     <ClInclude Include="src\Scene\Menu\MenuScene.h" />
@@ -181,6 +183,7 @@
     <ClInclude Include="src\pch\apppch.h" />
     <ClInclude Include="src\Scene\Title\TitleScene.h" />
     <ClInclude Include="src\Scene\Test\TestScene.h" />
+    <ClInclude Include="src\system\MenuController\MenuControllerComp.h" />
     <ClInclude Include="src\system\TitleInputSystem\TitleInputSystem.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -3,13 +3,25 @@
 #include"../macros.h"
 
 #include<Data/Menu/MenuSpellsData.h>
+#include<system/MenuController/MenuControllerComp.h>
+#include<system/MenuController/MenuControllerSystem.h>
 
 namespace scene
 {
 	void MenuScene::Initialize()
 	{
+		// システム
+		CreateUserSystem();
+
+		// データ
 		LoadData();
+
+		// 背景
 		CreateBG();
+
+		// スペル
+		CreateSpells();
+
 		DEBUG_LOG(::sys::eLogLevel::Log, "Menu Scene.");
 	}
 
@@ -23,6 +35,7 @@ namespace scene
 		::sys::ImGuiManager::Get().RemoveDebugUI("MenuScene_SpellMenuData");
 #endif
 	}
+
 
 	void MenuScene::LoadData()
 	{
@@ -49,8 +62,15 @@ namespace scene
 				sSpellInspector.Draw("Spell Menu Data");
 			}, "MenuScene_SpellMenuData");
 #endif
+	}
 
-		auto data = dataReg.GetManager<::data::SpellMenuData>().GetAll();
+	void MenuScene::CreateUserSystem()
+	{
+		auto& manager = ::ecs::ComponentSystemManager::Get();
+
+		manager.AddUserSystem<::ecs::MenuInputSystem>(::ecs::eUpdatePhase::PreUpdate);
+		manager.AddUserSystem<::ecs::MenuPagingSystem>(::ecs::eUpdatePhase::Update);
+		manager.AddUserSystem<::ecs::MenuSlideSystem>(::ecs::eUpdatePhase::Update);
 	}
 
 	void MenuScene::CreateBG()
@@ -68,6 +88,60 @@ namespace scene
 
 		// 音楽
 	}
+
+	void MenuScene::CreateSpells()
+	{
+		// 必要パラメ
+		auto& manager = ::ecs::EntityManager::Get();
+		auto& texManager = ::graphics::TextureManager::Get();
+
+		// データ
+		const auto& datas = ::data::DataRegistry::Get().GetManager<::data::SpellMenuData>().GetAll();
+
+		// 状態管理コンポーネント
+		auto ent_MenuController = manager.CreateEntity();
+		auto& MenuControllerComp = manager.AddComponent<::ecs::MenuControllerComp>(ent_MenuController);
+		MenuControllerComp.WindowWidth = static_cast<float>(::sys::Window::Get().GetVirtualWidth());
+
+		// 読み込み成功したページ数
+		uint32_t pageIndex = 0;
+
+		// エンティティ達
+		for (auto& data : datas)
+		{
+			if (data.TexPath.empty()) continue;
+
+			// リソース
+			auto texRes = texManager.GetOrLoad(data.TexPath);
+			if (!texRes) continue;
+
+			auto entity = manager.CreateEntity();
+			auto& transform = manager.AddComponent<::ecs::Transform>(entity);
+			auto& sprite = manager.AddComponent<::ecs::Sprite>(entity, texRes);
+
+			auto& SpellID = manager.AddComponent<::ecs::SpellMenuDataComp>(entity);
+			SpellID.SpellID = data.ID;
+			SpellID.PageIndex = pageIndex;
+
+			auto& slide = manager.AddComponent<::ecs::MenuSlideComp>(entity);
+
+			// 初期座標
+			const float restX = static_cast<float>(pageIndex) * MenuControllerComp.WindowWidth;
+			transform.Set2DPosition(restX, 0.0f);
+			slide.TargetX = restX;
+
+			if (pageIndex == 0)
+			{
+				MenuControllerComp.ActiveSpellID = data.ID;
+			}
+
+			++pageIndex;
+		}
+
+		MenuControllerComp.TotalPages = pageIndex;
+	}
+
+
 
 	REGISTER_SCENE_AS(MenuScene, MENU_SCENE_NAME);
 
