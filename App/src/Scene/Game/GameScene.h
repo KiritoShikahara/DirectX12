@@ -35,7 +35,7 @@ namespace scene
 		/// <summary>
 		/// 選択されたスペルのID
 		/// </summary>
-		uint32_t mSpellID = 0;
+		uint32_t mSpellID = 1001;
 	};
 }
 
