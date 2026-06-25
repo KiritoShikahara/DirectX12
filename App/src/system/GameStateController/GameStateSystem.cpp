@@ -30,9 +30,31 @@ namespace ecs
 			break;
 
 		case eGameState::InGame:
-			break;
+			// パーク選択のリクエスト
+			if (controller.PerkSelectRequested == true)
+			{
+				// 状態変更
+				controller.GameState = eGameState::PerkSelect;
 
+				// UI生成
+
+
+				break;
+			}
+
+
+
+			break;
 		case eGameState::PerkSelect:
+			// ゲーム中への遷移リクエスト
+			if (controller.InGameRequested == true)
+			{
+				// 状態変更
+				controller.GameState = eGameState::InGame;
+
+				// UIの削除
+			}
+
 			break;
 
 		case eGameState::Result:

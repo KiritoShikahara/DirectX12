@@ -18,6 +18,9 @@ namespace ecs
 	/// </summary>
 	struct GameStateComponent
 	{
-		eGameState GameState = eGameState::PreStart;
+		eGameState GameState = eGameState::PreStart; // 今の状態
+
+		bool PerkSelectRequested = false; // パーク選択への遷移リクエスト
+		bool InGameRequested = false; // ゲーム状態への遷移リクエスト
 	};
 }
