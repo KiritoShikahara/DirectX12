@@ -103,11 +103,11 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;JPH_PROFILE_ENABLED
+      <PreprocessorDefinitions>NOMINMAX;_DEBUG;_CONSOLE;JPH_PROFILE_ENABLED
 ;JPH_DEBUG_RENDERER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)CoreEngine;$(SolutionDir)CoreEngine\src;$(SolutionDir)CoreEngine\external;$(PrijectDir)src;$(SolutionDir)CoreEngine\external\JoltPhysics;$(SolutionDir)CoreEngine\external\Effekseer\src;$(SolutionDir)CoreEngine\external\Effekseer\src\Effekseer;$(PrijectDir)src/pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)CoreEngine;$(SolutionDir)CoreEngine\src;$(SolutionDir)CoreEngine\external;$(PrijectDir)src;$(SolutionDir)CoreEngine\external\JoltPhysics;$(SolutionDir)CoreEngine\external\Effekseer\src;$(SolutionDir)CoreEngine\external\Effekseer\src\Effekseer;$(PrijectDir)src/pch;$(SolutionDir)CoreEngine\external\SQLite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>apppch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -127,10 +127,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;JPH_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;NDEBUG;_CONSOLE;JPH_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)CoreEngine;$(SolutionDir)CoreEngine\src;$(SolutionDir)CoreEngine\external;$(PrijectDir)src;$(SolutionDir)CoreEngine\external\JoltPhysics;$(SolutionDir)CoreEngine\external\Effekseer\src;$(SolutionDir)CoreEngine\external\Effekseer\src\Effekseer;$(PrijectDir)src/pch;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)CoreEngine;$(SolutionDir)CoreEngine\src;$(SolutionDir)CoreEngine\external;$(PrijectDir)src;$(SolutionDir)CoreEngine\external\JoltPhysics;$(SolutionDir)CoreEngine\external\Effekseer\src;$(SolutionDir)CoreEngine\external\Effekseer\src\Effekseer;$(PrijectDir)src/pch;$(SolutionDir)CoreEngine\external\SQLite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>apppch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -145,6 +145,10 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Scene\Game\Factory\GameSceneFactory.cpp" />
+    <ClCompile Include="src\system\GameStateController\GameStateSystem.cpp" />
+    <ClCompile Include="src\Scene\Game\GameScene.cpp" />
+    <ClCompile Include="src\system\MenuController\MenuControllerSystem.cpp" />
     <ClCompile Include="src\Scene\Menu\MenuScene.cpp" />
     <ClCompile Include="src\system\GlowAnimation\SpriteGlowSystem.cpp" />
     <ClCompile Include="src\main.cpp">
@@ -173,6 +177,12 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Scene\Game\Factory\GameSceneFactory.h" />
+    <ClInclude Include="src\system\GameStateController\GameStateSystem.h" />
+    <ClInclude Include="src\Scene\Game\GameScene.h" />
+    <ClInclude Include="src\system\GameStateController\GameStateComponent.h" />
+    <ClInclude Include="src\system\MenuController\MenuControllerSystem.h" />
+    <ClInclude Include="src\Data\Menu\MenuSpellsData.h" />
     <ClInclude Include="src\macros.h" />
     <ClInclude Include="src\Scene\Menu\MenuScene.h" />
     <ClInclude Include="src\system\GlowAnimation\SpriteGlowSystem.h" />
@@ -180,6 +190,7 @@
     <ClInclude Include="src\pch\apppch.h" />
     <ClInclude Include="src\Scene\Title\TitleScene.h" />
     <ClInclude Include="src\Scene\Test\TestScene.h" />
+    <ClInclude Include="src\system\MenuController\MenuControllerComp.h" />
     <ClInclude Include="src\system\TitleInputSystem\TitleInputSystem.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -104,6 +104,8 @@ namespace sys
 		mHeapManager = nullptr;
 		mIsInitialized = false;
 
+		ClearDebugUI();
+
 		DEBUG_LOG(sys::eLogLevel::Log, "ImGuiManager finalized.");
 	}
 
@@ -124,9 +126,20 @@ namespace sys
 	void ImGuiManager::Update()
 	{
 #if defined(_DEBUG) || DEV_TOOL_ENABLED
-		for (auto& func : mDebugUIFunctions)
+		// RemoveDebugUI が Update() 中のコールバック内から呼ばれる可能性があるため
+		// （例：UI 自身の「閉じる」ボタンが RemoveDebugUI を呼ぶケース）、
+		// イテレート用に keys をコピーしてから回す。
+		// 実行中に mDebugUIFunctions が変更されても安全。
+		std::vector<std::string> keys;
+		keys.reserve(mDebugUIFunctions.size());
+		for (const auto& [key, func] : mDebugUIFunctions)
+			keys.push_back(key);
+
+		for (const auto& key : keys)
 		{
-			func();
+			auto it = mDebugUIFunctions.find(key);
+			if (it != mDebugUIFunctions.end())
+				it->second();
 		}
 #endif
 	}
@@ -163,11 +176,45 @@ namespace sys
 	/// <summary>
 	/// デバッグ UI 描画関数を登録する。
 	/// 登録した関数は Update() 内で毎フレーム呼ばれる。
+	/// 同じ key で再登録すると、既存の登録を上書きする
+	/// （シーン再入場時に多重登録されることを防ぐ）。
 	/// </summary>
-	void ImGuiManager::AddDebugUI(std::function<void()> guiFunc)
+	void ImGuiManager::AddDebugUI(std::function<void()> guiFunc, const std::string& key)
 	{
 #if defined(_DEBUG) || DEV_TOOL_ENABLED
-		mDebugUIFunctions.push_back(std::move(guiFunc));
+		mDebugUIFunctions[key] = std::move(guiFunc);
+#endif
+	}
+
+	/// <summary>
+	/// key に対応するデバッグ UI 描画関数の登録を解除する。
+	/// </summary>
+	void ImGuiManager::RemoveDebugUI(const std::string& key)
+	{
+#if defined(_DEBUG) || DEV_TOOL_ENABLED
+		mDebugUIFunctions.erase(key);
+#endif
+	}
+
+	/// <summary>
+	/// key が現在登録されているかを確認する。
+	/// </summary>
+	bool ImGuiManager::HasDebugUI(const std::string& key) const
+	{
+#if defined(_DEBUG) || DEV_TOOL_ENABLED
+		return mDebugUIFunctions.count(key) > 0;
+#else
+		return false;
+#endif
+	}
+
+	/// <summary>
+	/// 登録されている全てのデバッグ UI を解除する。
+	/// </summary>
+	void ImGuiManager::ClearDebugUI()
+	{
+#if defined(_DEBUG) || DEV_TOOL_ENABLED
+		mDebugUIFunctions.clear();
 #endif
 	}
 }

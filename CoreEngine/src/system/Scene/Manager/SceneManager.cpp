@@ -40,6 +40,7 @@ namespace sys
 			if (mFadeAlpha <= 0.0f)
 			{
 				mFadeAlpha = 0.0f;
+				mTransitionJustFinished = true;
 				mTransitionState = eTransitionState::Idle;
 			}
 			break;
@@ -58,6 +59,11 @@ namespace sys
 	/// </summary>
 	void SceneManager::PostUpdate()
 	{
+		if (mTransitionJustFinished)
+		{
+			mTransitionJustFinished = false;
+		}
+
 		// トランジションなし：即切り替え
 		if (!mUseTransition && mPendingSceneFactory)
 		{
@@ -136,6 +142,11 @@ namespace sys
 		mFadeColorB = b;
 		mFadeAlpha = 0.0f;
 		mTransitionState = eTransitionState::FadeOut;
+	}
+
+	bool SceneManager::IsTransitionFinished()
+	{
+		return mTransitionJustFinished;
 	}
 
 	/// <summary>

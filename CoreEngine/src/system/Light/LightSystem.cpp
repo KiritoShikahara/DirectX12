@@ -224,7 +224,7 @@ namespace sys
                     });
 
                 ImGui::End();
-            });
+            }, "Light");
 #endif
     }
 

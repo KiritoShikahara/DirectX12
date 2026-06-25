@@ -14,7 +14,7 @@ namespace data
     class CsvDeserializeVisitor final : public IFieldVisitor
     {
     public:
-        explicit CsvDeserializeVisitor(const std::string& value) : mValue(value) {}
+        explicit CsvDeserializeVisitor(std::string value) : mValue(std::move(value)) {}
 
         void OnInt(const std::string&, int& v, eFieldFlag) override { v = mValue.empty() ? 0 : std::stoi(mValue); }
         void OnFloat(const std::string&, float& v, eFieldFlag) override { v = mValue.empty() ? 0.f : std::stof(mValue); }
@@ -22,7 +22,7 @@ namespace data
         void OnString(const std::string&, std::string& v, eFieldFlag) override { v = mValue; }
 
     private:
-        const std::string& mValue;
+        std::string mValue;   // 値で保持（一時オブジェクトのダングリング参照を防ぐ）
     };
 
     /// <summary>
@@ -76,6 +76,17 @@ namespace data
             std::vector<T> result;
             std::string line;
             if (!std::getline(file, line)) return result;
+
+            // UTF-8 BOM (EF BB BF) を除去
+            // Excel で「CSV UTF-8（コンマ区切り）」として保存すると先頭に付与される。
+            // 除去しないとヘッダー1列目の名前マッチングが必ず失敗する。
+            if (line.size() >= 3 &&
+                static_cast<unsigned char>(line[0]) == 0xEF &&
+                static_cast<unsigned char>(line[1]) == 0xBB &&
+                static_cast<unsigned char>(line[2]) == 0xBF)
+            {
+                line.erase(0, 3);
+            }
 
             // ヘッダー名 → フィールドインデックス
             std::vector<std::string> headers = SplitCsv(line);

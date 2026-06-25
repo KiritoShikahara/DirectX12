@@ -49,6 +49,9 @@
 #include<system/Scene/Manager/SceneManager.h>
 #include<system/Scene/Factory/SceneFactory.h>
 
+// data
+#include<Data/Storage/Registry/DataRegistry.h>
+
 // Config
 #include<Config/WindowConfig.h>
 
@@ -278,9 +281,13 @@ namespace sys
 #ifdef _DEBUG
         if (graphics::PhysicsDebugRenderer::Get().Initialize() == false) return false;
 #endif
+        // データベース初期化
+        ::data::DataRegistry::Get().Init("Assets/Bin/DB/db.db");
+
         // シーン生成
         mSceneManager = &sys::SceneManager::Get();
         mSceneManager->Initialize(sys::SceneFactory::Get().GetDefaultSceneName());
+
 
         return true;
     }

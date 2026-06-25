@@ -59,6 +59,13 @@ namespace ecs
         void Set2DPosition(float x, float y);
         void Set2DRotation(float radians);
         void Set2DScale(DirectX::XMFLOAT2 v);
+        
+        // ==============================================================
+        //  個別 セッター
+        // ==============================================================
+        void SetXPosition(float x);
+        void SetYPosition(float y);
+        void SetZPosition(float z);
 
         // ==============================================================
         //  操作メソッド

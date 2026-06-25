@@ -1,6 +1,7 @@
 #pragma once
 
 #include<system/Scene/IScene.h>
+#include<entt/entt.hpp>
 
 namespace scene
 {
@@ -10,13 +11,17 @@ namespace scene
 		virtual void Initialize()override;
 		virtual void Finalize()override;
 	private:
-		// リソース
-
 		// データ
+		void LoadData();
+
+		// システムの追加
+		void CreateUserSystem();
 
 		// 背景
 		void CreateBG();
 
+		// スペルの作成
+		void CreateSpells();
 
 	};
 }

@@ -23,6 +23,12 @@ namespace sys
 		FadeIn,     // 次シーンをフェードイン中
 	};
 
+	struct FadeOptions
+	{
+		float Speed = 1.0f;
+		float R = 0.0f, G = 0.0f, B = 0.0f;
+	};
+
 	// Scene以外から呼ばれたくないので。
 	template<typename T>
 	concept TScene = std::derived_from<T, IScene>;
@@ -97,6 +103,9 @@ namespace sys
 			float r = 0.0f, float g = 0.0f, float b = 0.0f,
 			Args&&... args);
 
+		template<TScene T, typename... Args>
+		void ChangeSceneWithTransition(FadeOptions option, Args&&... args);
+
 		/// <summary>
 		/// フェードトランジションつきでシーンを切り替える（名前指定）。
 		/// SceneFactory に未登録の場合は DefaultScene に切り替わる。
@@ -105,6 +114,12 @@ namespace sys
 			const std::string& sceneName,
 			float fadeSpeed = 1.0f,
 			float r = 0.0f, float g = 0.0f, float b = 0.0f);
+
+		/// <summary>
+		/// トランジションの終了判定
+		/// </summary>
+		/// <returns>true:終了</returns>
+		[[nodiscard]] bool IsTransitionFinished();
 	private:
 		/// <summary>
 		/// シーン切り替え
@@ -145,6 +160,7 @@ namespace sys
 		float mFadeColorB = 0.0f;
 
 		bool mUseTransition = false; // 今回の切り替えにトランジションを使うか
+		bool mTransitionJustFinished = false; // トランジション完了した瞬間かどうか
 	};
 
 	template<TScene T, typename ...Args>
@@ -188,7 +204,25 @@ namespace sys
 		mTransitionState = eTransitionState::FadeOut;
 	}
 
+	template<TScene T, typename ...Args>
+	inline void SceneManager::ChangeSceneWithTransition(FadeOptions option, Args && ...args)
+	{
+		// すでにトランジション中なら無視
+		if (mTransitionState != eTransitionState::Idle) return;
 
+		mPendingSceneFactory = [args = std::make_tuple(std::forward<Args>(args)...)]() mutable
+			{
+				return std::apply(
+					[](auto&&... a) { return std::make_unique<T>(std::forward<decltype(a)>(a)...); },
+					std::move(args));
+			};
+
+		mUseTransition = true;
+		mFadeSpeed = (option.Speed> 0.0f) ? option.Speed : 1.0f;
+		mFadeColorR = option.R;
+		mFadeColorG = option.G;
+		mFadeColorB = option.B;
+		mFadeAlpha = 0.0f;
+		mTransitionState = eTransitionState::FadeOut;
+	}
 }
-
-
