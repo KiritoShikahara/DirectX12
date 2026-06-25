@@ -2,6 +2,10 @@
 #include "MenuControllerSystem.h"
 
 #include"MenuControllerComp.h"
+#include<Scene/Title/TitleScene.h>
+#include<Scene/Game/GameScene.h>
+
+#include"../macros.h"
 
 namespace ecs
 {
@@ -29,11 +33,13 @@ namespace ecs
 		}
 
 		auto& controller = controllerView.get<MenuControllerComp>(controllerView.front());
-		registry.view<SpellMenuDataComp,MenuSlideComp>().each(
-			[&controller](const SpellMenuDataComp& spellData,MenuSlideComp& slide)
+		const float centerX = controller.WindowWidth * 0.5f;
+
+		registry.view<SpellMenuDataComp, MenuSlideComp>().each(
+			[&controller, centerX](const SpellMenuDataComp& spellData, MenuSlideComp& slide)
 			{
 				const float diff = static_cast<float>(spellData.PageIndex) - static_cast<float>(controller.CurrentlySelectedIdx);
-				slide.TargetX = diff * controller.WindowWidth;
+				slide.TargetX = centerX + diff * controller.WindowWidth;
 
 				if (spellData.PageIndex == controller.CurrentlySelectedIdx)
 				{
@@ -68,6 +74,35 @@ namespace ecs
 		else if (pressedLeft)
 		{
 			controller.CurrentlySelectedIdx = (controller.CurrentlySelectedIdx + controller.TotalPages - 1) % controller.TotalPages;
+		}
+	}
+
+
+	void MenuSelectInputSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
+	{
+		auto& input = ::sys::InputManager::Get();
+
+		// セレクトならゲーム
+		if (input.IsActionPressed("Select") == true)
+		{
+			auto controllerView = registry.view<MenuControllerComp>();
+			if (controllerView.begin() == controllerView.end())
+			{
+				return;
+			}
+			auto& controller = controllerView.get<MenuControllerComp>(controllerView.front());
+
+			::sys::SceneManager::Get().ChangeSceneWithTransition<::scene::GameScene>(::sys::FadeOptions{},controller.ActiveSpellID);
+			PLAY_SE("Assets/Sound/SE/SE_Select.aud", false, 1, false);
+			return;
+		}
+
+		// 戻るならタイトル
+		if (input.IsActionPressed("Cancel") == true)
+		{
+			::sys::SceneManager::Get().ChangeSceneWithTransition<::scene::TitleScene>();
+			PLAY_SE("Assets/Sound/SE/SE_Select.aud", false, 1, false);
+			return;
 		}
 	}
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include<system/Scene/IScene.h>
+#include<entt/entt.hpp>
 
 namespace scene
 {

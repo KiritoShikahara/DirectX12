@@ -145,6 +145,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Scene\Game\GameScene.cpp" />
     <ClCompile Include="src\system\MenuController\MenuControllerSystem.cpp" />
     <ClCompile Include="src\Scene\Menu\MenuScene.cpp" />
     <ClCompile Include="src\system\GlowAnimation\SpriteGlowSystem.cpp" />
@@ -174,6 +175,8 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Scene\Game\GameScene.h" />
+    <ClInclude Include="src\system\GameStateController\GameStateComponent.h" />
     <ClInclude Include="src\system\MenuController\MenuControllerSystem.h" />
     <ClInclude Include="src\Data\Menu\MenuSpellsData.h" />
     <ClInclude Include="src\macros.h" />

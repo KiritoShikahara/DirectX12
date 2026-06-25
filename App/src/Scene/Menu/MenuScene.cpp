@@ -71,6 +71,7 @@ namespace scene
 		manager.AddUserSystem<::ecs::MenuInputSystem>(::ecs::eUpdatePhase::PreUpdate);
 		manager.AddUserSystem<::ecs::MenuPagingSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::MenuSlideSystem>(::ecs::eUpdatePhase::Update);
+		manager.AddUserSystem<::ecs::MenuSelectInputSystem>(::ecs::eUpdatePhase::PostUpdate);
 	}
 
 	void MenuScene::CreateBG()
@@ -87,6 +88,7 @@ namespace scene
 		sprite.SetLayer(::ecs::SpriteLayer::Background);
 
 		// 音楽
+		PLAY_BGM("Assets/Sound/BGM/BGM_Title.aud", true, 0.7);
 	}
 
 	void MenuScene::CreateSpells()
@@ -105,6 +107,8 @@ namespace scene
 
 		// 読み込み成功したページ数
 		uint32_t pageIndex = 0;
+		float Height = ::sys::Window::Get().GetVirtualHeight() / 2;
+		float scale = 0.7f;
 
 		// エンティティ達
 		for (auto& data : datas)
@@ -118,6 +122,8 @@ namespace scene
 			auto entity = manager.CreateEntity();
 			auto& transform = manager.AddComponent<::ecs::Transform>(entity);
 			auto& sprite = manager.AddComponent<::ecs::Sprite>(entity, texRes);
+			sprite.Pivot = { 0.5,0.5 };
+			sprite.DrawScale = { scale,scale };
 
 			auto& SpellID = manager.AddComponent<::ecs::SpellMenuDataComp>(entity);
 			SpellID.SpellID = data.ID;
@@ -127,7 +133,7 @@ namespace scene
 
 			// 初期座標
 			const float restX = static_cast<float>(pageIndex) * MenuControllerComp.WindowWidth;
-			transform.Set2DPosition(restX, 0.0f);
+			transform.Set2DPosition(restX, Height);
 			slide.TargetX = restX;
 
 			if (pageIndex == 0)

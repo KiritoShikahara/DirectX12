@@ -37,6 +37,14 @@ namespace ecs
 		void Update(entt::registry& registry, float deltaTime, float rawDeltaTime) override;
 	};
 
+	/// <summary>
+	/// メニュー画面の入力からの画面遷移管理
+	/// </summary>
+	class MenuSelectInputSystem : public IUserSystem
+	{
+	public:
+		void Update(entt::registry& registry, float deltaTime, float rawDeltaTime) override;
+	};
 }
 	 
 
