@@ -30,6 +30,9 @@ namespace ecs
 		// カメラ
 		static void CreateCamera();
 
+		// ディレクションライト
+		static void CreateDirLight();
+
 		// 開始時のエフェクト生成
 		static void CreateStartEffect();
 	};

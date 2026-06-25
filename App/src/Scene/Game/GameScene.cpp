@@ -31,12 +31,32 @@ namespace scene
 		auto id = mSpellID;
 	}
 
+	void GameScene::LoadResource()
+	{
+		auto& manager = ::graphics::FbxResourceManager::Get();
+
+		// Field
+		manager.Load("Assets/Fbx/Field/Field.fbx.bin");
+
+		// Player
+		auto playerPath = "Assets/Fbx/Faul/Faul.fbx.bin";
+		manager.Load(playerPath);
+		/// アニメーション
+
+		// Enemy
+		
+		// Texture
+
+	}
+
 	void GameScene::CreateEntitys()
 	{
 		// BGM
 		::ecs::GameSceneFactory::CreateBGM();
 		// 状態
 		::ecs::GameSceneFactory::CreateStateObject();
+		// ディレクションライト
+		::ecs::GameSceneFactory::CreateDirLight();
 		// 地面
 		::ecs::GameSceneFactory::CreateGround();
 		// プレイヤー

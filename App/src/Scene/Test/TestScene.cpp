@@ -55,9 +55,9 @@ namespace scene
 	{
 		{
 			auto& manager = graphics::FbxResourceManager::Get();
-			auto res = manager.Load("Assets/Fbx/Faul.fbx.bin");
-			bool ret = manager.LoadAnm("Assets/Fbx/Faul.fbx.bin", "Assets/Fbx/Animation/Attack_A.fbx.anm", "Attack_A");
-			ret = manager.LoadAnm("Assets/Fbx/Faul.fbx.bin", "Assets/Fbx/Animation/Attack_B.fbx.anm", "Attack_B");
+			auto res = manager.Load("Assets/Fbx/Faul/Faul.fbx.bin");
+			bool ret = manager.LoadAnm("Assets/Fbx/Faul/Faul.fbx.bin", "Assets/Fbx/Faul/Animation/Attack_A.fbx.anm", "Attack_A");
+			ret = manager.LoadAnm("Assets/Fbx/Faul/Faul.fbx.bin", "Assets/Fbx/Faul/Animation/Attack_B.fbx.anm", "Attack_B");
 		}
 		{
 			auto& ResManager = audio::AudioResourceManager::Get();
@@ -79,7 +79,7 @@ namespace scene
 		auto& manager = ecs::EntityManager::Get();
 		auto& reg = manager.GetRegistry();
 
-		auto res = graphics::FbxResourceManager::Get().Load("Assets/Fbx/Faul.fbx.bin");
+		auto res = graphics::FbxResourceManager::Get().Load("Assets/Fbx/Faul/Faul.fbx.bin");
 		float scale = 0.2f;
 
 		auto entity = manager.CreateEntity();
@@ -95,7 +95,7 @@ namespace scene
 		anim.Play(*fbx.Resource, "Attack_A", true);
 
 		reg.emplace<ecs::ColliderComponent>(entity, ecs::ColliderComponent::MakeBox({ 1,3,1 }));
-		reg.emplace<ecs::RigidBodyComponent>(entity, ecs::RigidBodyComponent::MakeDynamic());
+		reg.emplace<ecs::RigidBodyComponent>(entity, ecs::RigidBodyComponent::MakeKinematic());
 	}
 	void TestScene::CreateSound()
 	{

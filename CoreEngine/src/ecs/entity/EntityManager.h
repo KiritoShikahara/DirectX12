@@ -10,7 +10,7 @@ namespace ecs
 {
 
 	/// <summary>
-	/// ƒGƒ“ƒeƒBƒeƒBŠÇ—ƒNƒ‰ƒX
+	/// ã‚¨ãƒ³ãƒ†ã‚£ãƒ†ã‚£ç®¡ç†ã‚¯ãƒ©ã‚¹
 	/// </summary>
 	class EntityManager : public utility::Singleton<EntityManager>
 	{
@@ -19,41 +19,41 @@ namespace ecs
 		SINGLETON_ACCESSOR(EntityManager);
 
 		/// <summary>
-		/// ‰Šú‰»
+		/// åˆæœŸåŒ–
 		/// </summary>
-		/// <returns>true:¬Œ÷ false:¸”s</returns>
+		/// <returns>true:æˆåŠŸ false:å¤±æ•—</returns>
 		bool Initialize();
 
 		/// <summary>
-		/// ’Êí‚ÌƒGƒ“ƒeƒBƒeƒBì¬
+		/// é€šå¸¸ã®ã‚¨ãƒ³ãƒ†ã‚£ãƒ†ã‚£ä½œæˆ
 		/// </summary>
 		/// <returns></returns>
 		[[nodiscard]] entt::entity CreateEntity();
 
 		/// <summary>
-		/// ‰i‘±iƒV[ƒ“‚ğ‚Ü‚½‚®j‚Ìì¬
+		/// æ°¸ç¶šï¼ˆã‚·ãƒ¼ãƒ³ã‚’ã¾ãŸãï¼‰ã®ä½œæˆ
 		/// </summary>
 		/// <returns></returns>
 		[[nodiscard]] entt::entity CreatePersistentEntity();
 
 		/// <summary>
-		/// ƒGƒ“ƒeƒBƒeƒB‚Ì’x‰„íœ
+		/// ã‚¨ãƒ³ãƒ†ã‚£ãƒ†ã‚£ã®é…å»¶å‰Šé™¤
 		/// </summary>
 		/// <param name="entity"></param>
 		void DestroyDeferred(entt::entity entity);
 
 		/// <summary>
-		/// ó‘ÔXViíœ‚È‚Çj
+		/// çŠ¶æ…‹æ›´æ–°ï¼ˆå‰Šé™¤ãªã©ï¼‰
 		/// </summary>
 		void Update();
 
 		/// <summary>
-		/// LocalƒGƒ“ƒeƒBƒeƒB‚Ìíœ
+		/// Localã‚¨ãƒ³ãƒ†ã‚£ãƒ†ã‚£ã®å‰Šé™¤
 		/// </summary>
 		void ClearLocalEntities();
 
 		/// <summary>
-		/// ‘S‚Ä‚Ìíœ
+		/// å…¨ã¦ã®å‰Šé™¤
 		/// </summary>
 		void AllClear();
 
@@ -73,18 +73,23 @@ namespace ecs
 		}
 
 		/// <summary>
-		/// Registry‚Ö‚ÌƒAƒNƒZƒX
+		/// Registryã¸ã®ã‚¢ã‚¯ã‚»ã‚¹
 		/// </summary>
 		[[nodiscard]] entt::registry& GetRegistry();
 
 	private:
 		/// <summary>
-		/// ‘S‚Ä‚ÌŠÇ—‚ÌƒŒƒWƒXƒgƒŠ
+		/// å…¨ã¦ã®ç®¡ç†ã®ãƒ¬ã‚¸ã‚¹ãƒˆãƒª
 		/// </summary>
 		entt::registry mRegistry;
 		/// <summary>
-		/// íœ—\’è‚ÌƒGƒ“ƒeƒBƒeƒBƒŠƒXƒg
+		/// å‰Šé™¤äºˆå®šã®ã‚¨ãƒ³ãƒ†ã‚£ãƒ†ã‚£ãƒªã‚¹ãƒˆ
 		/// </summary>
 		std::vector<entt::entity> mDestroyQueue;
 	};
 }
+
+#define ENTITY_MANAGER ::ecs::EntityManager::Get()
+#define CREATE_ENTITY ENTITY_MANAGER.CreateEntity();
+#define CREATE_LOCAL_ENTITY ENTITY_MANAGER.CreatePersistentEntity();
+#define ADD_COMPONENT(CLASS) ENTITY_MANAGER.AddComponent<CLASS>();
