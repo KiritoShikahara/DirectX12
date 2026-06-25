@@ -4,7 +4,9 @@
 
 #include<Data/Menu/MenuSpellsData.h>
 #include<system/MenuController/MenuControllerComp.h>
+#include<system/GlowAnimation/GlowAnimationComp.h>
 #include<system/MenuController/MenuControllerSystem.h>
+#include<system/GlowAnimation/SpriteGlowSystem.h>
 
 namespace scene
 {
@@ -71,6 +73,7 @@ namespace scene
 		manager.AddUserSystem<::ecs::MenuInputSystem>(::ecs::eUpdatePhase::PreUpdate);
 		manager.AddUserSystem<::ecs::MenuPagingSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::MenuSlideSystem>(::ecs::eUpdatePhase::Update);
+		manager.AddUserSystem<::ecs::SpriteGlowSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::ecs::MenuSelectInputSystem>(::ecs::eUpdatePhase::PostUpdate);
 	}
 
@@ -86,6 +89,13 @@ namespace scene
 		sprite.Size = { 1920,1080 };
 		sprite.Intensity = 1.0f;
 		sprite.SetLayer(::ecs::SpriteLayer::Background);
+
+
+		auto& glow = manager.AddComponent<::ecs::GlowAnimation>(entity);
+		glow.Amplitude = 0.5;
+		glow.BaseIntensity = 1.2;
+		glow.Frequency = 1.5;
+		glow.PhaseOffset = 0;
 
 		// 音楽
 		PLAY_BGM("Assets/Sound/BGM/BGM_Title.aud", true, 0.7);
