@@ -16,21 +16,8 @@ namespace scene
 		// データ読み込み
 		void LoadData();
 
-		// 背景音
-		void CreateBGM();
-
-		// 状態管理
-		void CreateStateObject();
-
-		// 地面
-		void CreateGround();
-
-		// プレイヤー
-		void CreatePlayer();
-
-		// カメラ
-		void CreateCamera();
-
+		// エンティティの生成
+		void CreateEntitys();
 	private:
 		/// <summary>
 		/// 選択されたスペルのID

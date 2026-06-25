@@ -114,6 +114,12 @@ namespace sys
 			const std::string& sceneName,
 			float fadeSpeed = 1.0f,
 			float r = 0.0f, float g = 0.0f, float b = 0.0f);
+
+		/// <summary>
+		/// トランジションの終了判定
+		/// </summary>
+		/// <returns>true:終了</returns>
+		[[nodiscard]] bool IsTransitionFinished();
 	private:
 		/// <summary>
 		/// シーン切り替え
@@ -154,6 +160,7 @@ namespace sys
 		float mFadeColorB = 0.0f;
 
 		bool mUseTransition = false; // 今回の切り替えにトランジションを使うか
+		bool mTransitionJustFinished = false; // トランジション完了した瞬間かどうか
 	};
 
 	template<TScene T, typename ...Args>

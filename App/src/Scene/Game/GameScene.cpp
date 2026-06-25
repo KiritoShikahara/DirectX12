@@ -2,6 +2,7 @@
 #include "GameScene.h"
 
 #include"../macros.h"
+#include"Factory/GameSceneFactory.h"
 
 namespace scene
 {
@@ -14,16 +15,9 @@ namespace scene
 	{
 		// データ
 		LoadData();
-		// BGM
-		CreateBGM();
-		// 状態
-		CreateStateObject();
-		// 地面
-		CreateGround();
-		// プレイヤー
-		CreatePlayer();
-		// カメラ
-		CreateCamera();
+
+		// エンティティ生成
+		CreateEntitys();
 
 		DEBUG_LOG(::sys::eLogLevel::Log, "Game Scene.");
 	}
@@ -37,26 +31,20 @@ namespace scene
 		auto id = mSpellID;
 	}
 
-	void GameScene::CreateBGM()
+	void GameScene::CreateEntitys()
 	{
-
+		// BGM
+		::ecs::GameSceneFactory::CreateBGM();
+		// 状態
+		::ecs::GameSceneFactory::CreateStateObject();
+		// 地面
+		::ecs::GameSceneFactory::CreateGround();
+		// プレイヤー
+		::ecs::GameSceneFactory::CreatePlayer(::ecs::CreatePlayerContext{ mSpellID });
+		// カメラ
+		::ecs::GameSceneFactory::CreateCamera();
 	}
-	void GameScene::CreateStateObject()
-	{
 
-	}
-	void GameScene::CreateGround()
-	{
-
-	}
-	void GameScene::CreatePlayer()
-	{
-
-	}
-	void GameScene::CreateCamera()
-	{
-
-	}
 
 	REGISTER_SCENE_AS(GameScene, GAME_SCENE_NAME);
 
