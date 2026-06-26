@@ -24,6 +24,11 @@ namespace graphics
 	}
 	bool Texture::Create(const std::filesystem::path& FilePath)
 	{
+		if (FilePath.empty() || FilePath.string().find_first_not_of(" \t\r\n") == std::string::npos)
+		{
+			DEBUG_LOG(sys::eLogLevel::Error, "Texture: FilePath is empty or invalid.");
+			return false;
+		}
 
 		if (fs::exists(FilePath) == false || fs::is_regular_file(FilePath) == false)
 		{

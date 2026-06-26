@@ -631,12 +631,12 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="Assets\Shader\Sprite\SpriteHeader.hlsli" />
     <None Include="Assets\Shader\Fbx\FbxShader.hlsli" />
     <None Include="doc\初期化順序.md" />
     <None Include="doc\導入ライブラリ.md" />
     <None Include="Assets\Shader\Shape\ShapeHeader.hlsli" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Assets\Shader\Sprite\PS_Sprite.hlsl" />

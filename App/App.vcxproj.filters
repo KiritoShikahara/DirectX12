@@ -50,9 +50,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="src\Scene\Test\TestScene.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -98,5 +95,8 @@
     <ClInclude Include="src\Scene\Game\Factory\GameSceneFactory.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>
