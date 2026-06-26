@@ -90,6 +90,9 @@ namespace ecs
 }
 
 #define ENTITY_MANAGER ::ecs::EntityManager::Get()
+#define ENTT_REGISTRY ENTITY_MANAGER.GetRegistry();
+
 #define CREATE_ENTITY ENTITY_MANAGER.CreateEntity();
 #define CREATE_LOCAL_ENTITY ENTITY_MANAGER.CreatePersistentEntity();
 #define ADD_COMPONENT(CLASS) ENTITY_MANAGER.AddComponent<CLASS>();
+

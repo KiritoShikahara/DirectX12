@@ -19,6 +19,9 @@ namespace scene
 		// リソース読み込み
 		void LoadResource();
 
+		// システムの登録
+		void CreateUserSystem();
+
 		// エンティティの生成
 		void CreateEntitys();
 	private:

@@ -4,6 +4,8 @@
 #include"../macros.h"
 #include"Factory/GameSceneFactory.h"
 
+#include<system/CameraFollow/CameraPlayerFollowSystem.h>
+
 namespace scene
 {
 	GameScene::GameScene(uint32_t SpellID)
@@ -15,6 +17,12 @@ namespace scene
 	{
 		// データ
 		LoadData();
+
+		// システム
+		CreateUserSystem();
+
+		// リソース
+		LoadResource();
 
 		// エンティティ生成
 		CreateEntitys();
@@ -47,6 +55,12 @@ namespace scene
 		
 		// Texture
 
+	}
+
+	void GameScene::CreateUserSystem()
+	{
+		auto& manager = ::ecs::ComponentSystemManager::Get();
+		manager.AddUserSystem<::ecs::CameraPlayerFollowSystem>(::ecs::eUpdatePhase::PostUpdate);
 	}
 
 	void GameScene::CreateEntitys()

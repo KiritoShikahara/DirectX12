@@ -146,6 +146,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Scene\Game\Factory\GameSceneFactory.cpp" />
+    <ClCompile Include="src\system\CameraFollow\CameraPlayerFollowSystem.cpp" />
     <ClCompile Include="src\system\GameStateController\GameStateSystem.cpp" />
     <ClCompile Include="src\Scene\Game\GameScene.cpp" />
     <ClCompile Include="src\system\MenuController\MenuControllerSystem.cpp" />
@@ -175,6 +176,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Scene\Game\Factory\GameSceneFactory.h" />
+    <ClInclude Include="src\system\CameraFollow\CameraFollowOffsetComponent.h" />
+    <ClInclude Include="src\system\CameraFollow\CameraPlayerFollowSystem.h" />
     <ClInclude Include="src\system\GameStateController\GameStateSystem.h" />
     <ClInclude Include="src\Scene\Game\GameScene.h" />
     <ClInclude Include="src\system\GameStateController\GameStateComponent.h" />
@@ -189,6 +192,7 @@
     <ClInclude Include="src\Scene\Test\TestScene.h" />
     <ClInclude Include="src\system\MenuController\MenuControllerComp.h" />
     <ClInclude Include="src\system\TitleInputSystem\TitleInputSystem.h" />
+    <ClInclude Include="src\Tag\EntityTag.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

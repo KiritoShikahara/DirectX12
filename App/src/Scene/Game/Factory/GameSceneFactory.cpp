@@ -2,7 +2,8 @@
 #include "GameSceneFactory.h"
 
 #include<system/GameStateController/GameStateComponent.h>
-
+#include<system/CameraFollow/CameraFollowOffsetComponent.h>
+#include<Tag/EntityTag.h>
 
 namespace ecs
 {
@@ -40,6 +41,7 @@ namespace ecs
 	{
 		// 管理
 		auto& manager = ENTITY_MANAGER;
+		auto& registry = ENTT_REGISTRY;
 		auto player_res = ::graphics::FbxResourceManager::Get().Load("Assets/Fbx/Faul/Faul.fbx.bin");
 
 		// プレイヤーの生成
@@ -55,6 +57,8 @@ namespace ecs
 		manager.AddComponent<ecs::ColliderComponent>(player, ecs::ColliderComponent::MakeBox({ 1,3,1 }));
 		manager.AddComponent<ecs::RigidBodyComponent>(player, ecs::RigidBodyComponent::MakeKinematic());
 
+		registry.emplace<::ecs::PlayerTag>(player);
+
 		// 初期武器の生成
 		auto weapon = manager.CreateEntity();
 	}
@@ -68,10 +72,14 @@ namespace ecs
 
 		auto& cam = manager.AddComponent<::ecs::CameraComponent>(entity);
 		cam.IsMainCamera = true;
-		cam.Fov = 60.0f;
+		cam.Fov = 120.0f;
 		cam.Near = 0.1f;
 		cam.Far = 1000.0f;
 		cam.SetAspectRatioFromWindow(sys::Window::Get());
+
+		auto& follow = manager.AddComponent<::ecs::CameraFollowOffsetComponent>(entity);
+		follow.Offset = { 0.f, 12.f, -6.f };
+
 	}
 
 	void GameSceneFactory::CreateDirLight()
