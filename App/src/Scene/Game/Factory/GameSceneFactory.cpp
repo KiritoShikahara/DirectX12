@@ -78,7 +78,8 @@ namespace ecs
 		cam.SetAspectRatioFromWindow(sys::Window::Get());
 
 		auto& follow = manager.AddComponent<::ecs::CameraFollowOffsetComponent>(entity);
-		follow.Offset = { 0.f, 12.f, -6.f };
+		follow.Offset = { 0.f, 72.f, -38.f };
+		follow.LookAtOffset = { 0.f, -24.f, 0.f };
 
 	}
 
