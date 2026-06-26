@@ -13,6 +13,12 @@ namespace ecs
 
 namespace sys
 {
+    /// <summary>レイ（始点 + 正規化方向）</summary>
+    struct ENGINE_API Ray
+    {
+        DirectX::XMFLOAT3 Origin = { 0.f, 0.f, 0.f };
+        DirectX::XMFLOAT3 Direction = { 0.f, 0.f, 1.f };
+    };
 
     /// <summary>
     /// カメラのシステム
@@ -47,6 +53,23 @@ namespace sys
 
         /// <summary>カメラをImGuiから操作できるようにする。</summary>
         void ImGuiUpdate(entt::registry& registry);
+
+        /// <summary>
+        /// スクリーン座標（Window の仮想解像度基準、左上原点）からワールド空間のレイを生成する。
+        /// メインカメラが存在しない場合は無効なレイ（Origin=0, Direction=(0,0,1)）を返す。
+        /// </summary>
+        Ray ScreenPointToRay(entt::registry& registry, const DirectX::XMFLOAT2& screenPos) const;
+
+        /// <summary>
+        /// スクリーン座標から、カメラ位置を起点に distance だけレイ方向へ進んだワールド座標を取得する。
+        /// </summary>
+        DirectX::XMFLOAT3 ScreenPointToWorld(entt::registry& registry, const DirectX::XMFLOAT2& screenPos, float distance) const;
+
+        /// <summary>
+        /// スクリーン座標から、ワールド空間の Y = planeY 平面とレイの交点を求める。
+        /// </summary>
+        /// <returns>true:交差した（outWorldPos に結果を格納） false:平行・後方などで交差しない</returns>
+        bool ScreenPointToWorldOnPlaneY(entt::registry& registry, const DirectX::XMFLOAT2& screenPos, float planeY, DirectX::XMFLOAT3& outWorldPos) const;
 
     private:
         void SearchMainCamera(entt::registry& registry);

@@ -5,6 +5,7 @@
 
 #include<ecs/entity/EntityManager.h>
 #include<Editor/Parameter/EditorParameter.h>
+#include<system/Window/Window.h>
 
 namespace sys
 {
@@ -220,6 +221,92 @@ namespace sys
 
         ImGui::End();
 #endif // _DEBUG
+    }
+
+    Ray CameraSystem::ScreenPointToRay(entt::registry& registry, const DirectX::XMFLOAT2& screenPos) const
+    {
+        using namespace DirectX;
+
+        Ray ray;
+
+        if (!mHasMainCamera || !registry.valid(mMainCameraEntity))
+        {
+            return ray;
+        }
+
+        const auto* cam = registry.try_get<ecs::CameraComponent>(mMainCameraEntity);
+        const auto* tr = registry.try_get<ecs::Transform>(mMainCameraEntity);
+        if (!cam || !tr)
+        {
+            return ray;
+        }
+
+        const float viewportWidth = static_cast<float>(::sys::Window::Get().GetVirtualWidth());
+        const float viewportHeight = static_cast<float>(::sys::Window::Get().GetVirtualHeight());
+
+        const XMMATRIX view = cam->GetViewMatrix();
+        const XMMATRIX proj = cam->GetProjectionMatrix();
+        const XMMATRIX world = XMMatrixIdentity();
+
+        const XMVECTOR nearPoint = XMVector3Unproject(
+            XMVectorSet(screenPos.x, screenPos.y, 0.f, 0.f),
+            0.f, 0.f, viewportWidth, viewportHeight, 0.f, 1.f,
+            proj, view, world);
+
+        const XMVECTOR farPoint = XMVector3Unproject(
+            XMVectorSet(screenPos.x, screenPos.y, 1.f, 0.f),
+            0.f, 0.f, viewportWidth, viewportHeight, 0.f, 1.f,
+            proj, view, world);
+
+        XMVECTOR direction = XMVectorSubtract(farPoint, nearPoint);
+        if (XMVectorGetX(XMVector3LengthSq(direction)) < 1e-8f)
+        {
+            return ray;
+        }
+        direction = XMVector3Normalize(direction);
+
+        XMStoreFloat3(&ray.Origin, XMLoadFloat3(&tr->GetPosition()));
+        XMStoreFloat3(&ray.Direction, direction);
+
+        return ray;
+    }
+
+    DirectX::XMFLOAT3 CameraSystem::ScreenPointToWorld(entt::registry& registry, const DirectX::XMFLOAT2& screenPos, float distance) const
+    {
+        using namespace DirectX;
+
+        const Ray ray = ScreenPointToRay(registry, screenPos);
+
+        const XMVECTOR origin = XMLoadFloat3(&ray.Origin);
+        const XMVECTOR dir = XMLoadFloat3(&ray.Direction);
+
+        XMFLOAT3 result;
+        XMStoreFloat3(&result, XMVectorAdd(origin, XMVectorScale(dir, distance)));
+        return result;
+    }
+
+    bool CameraSystem::ScreenPointToWorldOnPlaneY(entt::registry& registry, const DirectX::XMFLOAT2& screenPos, float planeY, DirectX::XMFLOAT3& outWorldPos) const
+    {
+        const Ray ray = ScreenPointToRay(registry, screenPos);
+
+        // 方向のY成分が0に近い = 平面と平行で交差しない
+        if (fabsf(ray.Direction.y) < 1e-6f)
+        {
+            return false;
+        }
+
+        const float t = (planeY - ray.Origin.y) / ray.Direction.y;
+        if (t < 0.f)
+        {
+            // 平面がカメラの後方にある
+            return false;
+        }
+
+        outWorldPos.x = ray.Origin.x + ray.Direction.x * t;
+        outWorldPos.y = planeY;
+        outWorldPos.z = ray.Origin.z + ray.Direction.z * t;
+
+        return true;
     }
 
 }

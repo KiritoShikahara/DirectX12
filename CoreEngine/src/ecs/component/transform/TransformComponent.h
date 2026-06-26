@@ -100,6 +100,25 @@ namespace ecs
         DirectX::XMVECTOR GetLeft()    const;
 
         // ==============================================================
+        //  ターゲット操作
+        // ==============================================================
+
+        /// <summary>指定座標の方向を向くように回転を設定する</summary>
+        void LookAt(DirectX::FXMVECTOR targetPosition);
+        void LookAt(const DirectX::XMFLOAT3& targetPosition);
+        void LookAt(float x, float y, float z);
+
+        /// <summary>指定座標の方向を向くが、Y軸方向の傾き（ピッチ）は変化させない</summary>
+        void LookAtHorizontal(DirectX::FXMVECTOR targetPosition);
+        void LookAtHorizontal(const DirectX::XMFLOAT3& targetPosition);
+        void LookAtHorizontal(float x, float y, float z);
+
+        /// <summary>指定座標へ向かう正規化済みの移動方向ベクトルを取得する</summary>
+        DirectX::XMVECTOR GetDirectionTo(DirectX::FXMVECTOR targetPosition) const;
+        DirectX::XMVECTOR GetDirectionTo(const DirectX::XMFLOAT3& targetPosition) const;
+        DirectX::XMVECTOR GetDirectionTo(float x, float y, float z) const;
+
+        // ==============================================================
         //  ワールド行列
         // ==============================================================
 

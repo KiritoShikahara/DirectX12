@@ -184,6 +184,91 @@ namespace ecs
     }
     DirectX::XMVECTOR Transform::GetLeft() const { return DirectX::XMVectorNegate(GetRight()); }
 
+
+    // ==============================================================
+    //  ターゲット操作
+    // ==============================================================
+
+    void Transform::LookAt(DirectX::FXMVECTOR targetPosition)
+    {
+        using namespace DirectX;
+
+        XMVECTOR pos = XMLoadFloat3(&mPosition);
+        XMVECTOR dir = XMVectorSubtract(targetPosition, pos);
+
+        if (XMVectorGetX(XMVector3LengthSq(dir)) < 1e-8f)
+        {
+            return;
+        }
+        dir = XMVector3Normalize(dir);
+
+        XMVECTOR up = XMVectorSet(0.f, 1.f, 0.f, 0.f);
+        if (fabsf(XMVectorGetY(dir)) > 0.9999f)
+        {
+            up = XMVectorSet(0.f, 0.f, 1.f, 0.f);
+        }
+
+        XMMATRIX viewMat = XMMatrixLookToLH(XMVectorZero(), dir, up);
+        XMMATRIX worldRot = XMMatrixTranspose(viewMat);
+
+        SetRotation(XMQuaternionRotationMatrix(worldRot));
+    }
+
+    void Transform::LookAt(const DirectX::XMFLOAT3& targetPosition)
+    {
+        LookAt(DirectX::XMLoadFloat3(&targetPosition));
+    }
+
+    void Transform::LookAt(float x, float y, float z)
+    {
+        LookAt(DirectX::XMVectorSet(x, y, z, 0.f));
+    }
+
+    void Transform::LookAtHorizontal(DirectX::FXMVECTOR targetPosition)
+    {
+        using namespace DirectX;
+
+        XMFLOAT3 target;
+        XMStoreFloat3(&target, targetPosition);
+        target.y = mPosition.y;
+
+        LookAt(XMLoadFloat3(&target));
+    }
+
+    void Transform::LookAtHorizontal(const DirectX::XMFLOAT3& targetPosition)
+    {
+        LookAtHorizontal(DirectX::XMLoadFloat3(&targetPosition));
+    }
+
+    void Transform::LookAtHorizontal(float x, float y, float z)
+    {
+        LookAtHorizontal(DirectX::XMVectorSet(x, y, z, 0.f));
+    }
+
+    DirectX::XMVECTOR Transform::GetDirectionTo(DirectX::FXMVECTOR targetPosition) const
+    {
+        using namespace DirectX;
+
+        XMVECTOR pos = XMLoadFloat3(&mPosition);
+        XMVECTOR diff = XMVectorSubtract(targetPosition, pos);
+
+        if (XMVectorGetX(XMVector3LengthSq(diff)) < 1e-8f)
+        {
+            return XMVectorZero();
+        }
+        return XMVector3Normalize(diff);
+    }
+
+    DirectX::XMVECTOR Transform::GetDirectionTo(const DirectX::XMFLOAT3& targetPosition) const
+    {
+        return GetDirectionTo(DirectX::XMLoadFloat3(&targetPosition));
+    }
+
+    DirectX::XMVECTOR Transform::GetDirectionTo(float x, float y, float z) const
+    {
+        return GetDirectionTo(DirectX::XMVectorSet(x, y, z, 0.f));
+    }
+
     // ==============================================================
     //  ワールド行列
     // ==============================================================
