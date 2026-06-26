@@ -184,6 +184,9 @@ namespace sys
         // 初期化用データ
         auto context = LoadBootstrapConfig();
 
+        // COMの初期化
+        CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+
         // ウィンドウ
         mWindow = &Window::Get();
         if (mWindow->Initialize(context.WindowContext) == false) return false;
