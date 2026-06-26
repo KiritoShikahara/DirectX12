@@ -48,9 +48,6 @@ namespace sys
 
 
 #endif // ENABLE_INPUT_DEBUG_SHOW
-
-
-
         mIsInitialized = true;
 
         return true;
