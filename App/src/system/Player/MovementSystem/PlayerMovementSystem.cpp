@@ -25,8 +25,8 @@ namespace ecs
 				const DirectX::XMFLOAT3 horizontalVelocity =
 					ComputeHorizontalVelocity(movement, deltaTime);
 
-				rb.MoveVelocity.x += horizontalVelocity.x;
-				rb.MoveVelocity.z += horizontalVelocity.z;
+				rb.MoveVelocity.x = horizontalVelocity.x;
+				rb.MoveVelocity.z = horizontalVelocity.z;
 				rb.HasMoveRequest = true;
 			});
 	}
@@ -36,21 +36,22 @@ namespace ecs
 		using namespace DirectX;
 
 		const XMVECTOR input = XMLoadFloat3(&movement.MoveInput);
-		const float inputLenSq = XMVectorGetX(XMVector3LengthSq(input));
-		const bool hasInput = inputLenSq > 0.f;
+		const float inputLen = XMVectorGetX(XMVector3Length(input));
+		const bool hasInput = inputLen > 0.f;
 
 		const XMVECTOR dir = hasInput ? XMVector3Normalize(input) : XMVectorZero();
+		const float inputScale = std::min(inputLen, 1.0f);
 
 		if (!movement.UseAcceleration)
 		{
-			movement.CurrentSpeed = hasInput ? movement.MaxSpeed : 0.f;
+			movement.CurrentSpeed = hasInput ? movement.MaxSpeed * inputScale : 0.f;
 
 			XMFLOAT3 immediateResult;
 			XMStoreFloat3(&immediateResult, dir * movement.CurrentSpeed);
 			return immediateResult;
 		}
 
-		const float targetSpeed = hasInput ? movement.MaxSpeed : 0.f;
+		const float targetSpeed = hasInput ? movement.MaxSpeed * inputScale : 0.f;
 		const float rate = hasInput ? movement.Acceleration : movement.Deceleration;
 
 		const float diff = targetSpeed - movement.CurrentSpeed;

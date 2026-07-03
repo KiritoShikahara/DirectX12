@@ -7,7 +7,7 @@ namespace ecs
 {
     struct ENGINE_API PlayerMovementComponent
     {
-        float MaxSpeed = 5.0f; // Å‘å‘¬“x
+        float MaxSpeed = 50.0f; // Å‘å‘¬“x
         float Acceleration = 100.0f; // ‰Á‘¬“x
         float Deceleration = 20.0f; // Œ¸Š—Ê
 
