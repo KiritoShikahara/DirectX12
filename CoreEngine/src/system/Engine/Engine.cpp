@@ -335,6 +335,8 @@ namespace sys
             sys::PhysicsSystem::BuildPendingBodies(registry);
             sys::PhysicsSystem::SyncFromTransform(registry);
 
+			::sys::PhysicsSystem::ApplyMoveVelocity(registry, mTime.GetFixedDeltaTime());
+
             while (mTime.AccumulateFixedStep())
                 sys::PhysicsSystem::Update(registry, mTime.GetFixedDeltaTime());
 

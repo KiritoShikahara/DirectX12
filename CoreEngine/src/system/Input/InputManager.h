@@ -81,6 +81,7 @@ namespace sys
 		/// </summary>
 		void AddAction(const std::string& actionName, const ActionBinding& bind);
 
+		// 入力判定
 		[[nodiscard]] bool IsActionPressed(const std::string& actionName) const;
 		[[nodiscard]] bool IsActionHeld(const std::string& actionName) const;
 		[[nodiscard]] bool IsActionReleased(const std::string& actionName) const;
@@ -96,7 +97,7 @@ namespace sys
 	};
 }
 
-#define INPUT_MANAGER sys::InputManager::Get()
-#define INPUT_PAD sys::InputManager::Get().GetPadManager()
-#define INPUT_MOUSE sys::InputManager::Get().GetMouse()
-#define INPUT_KEYBOARD sys::InputManager::Get().GetKeyboard()
+#define INPUT_MANAGER ::sys::InputManager::Get()
+#define INPUT_PAD ::sys::InputManager::Get().GetPadManager()
+#define INPUT_MOUSE ::sys::InputManager::Get().GetMouse()
+#define INPUT_KEYBOARD ::sys::InputManager::Get().GetKeyboard()

@@ -93,7 +93,7 @@ namespace ecs
 		auto& light = manager.AddComponent<ecs::DirectionalLightComponent>(entity);
 		light.Direction = { 0.3f, -1.0f, 0.5f };
 		light.Color = { 1.0f,  1.0f, 1.0f };
-		light.Intensity = 1.0f;
+		light.Intensity = 7.5f;
 		light.IsActive = true;
 		light.CastShadow = true;
 		light.ShadowRange = 50.0f;

@@ -146,6 +146,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\ecs\component\PlayerController\PlayerController.h" />
     <ClInclude Include="src\ecs\system\collision\SpriteCollsion.h" />
     <ClInclude Include="src\graphics\Sprite\Animation\SpriteAnimationSystem.h" />
     <ClInclude Include="src\ecs\component\sprite\SpriteAnimationComponent.h" />

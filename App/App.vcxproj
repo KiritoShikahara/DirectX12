@@ -145,6 +145,8 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\system\Player\MovementSystem\PlayerMovementSystem.cpp" />
+    <ClCompile Include="src\system\Player\InputSystem\PlayerInputSystem.cpp" />
     <ClCompile Include="src\Scene\Game\Factory\GameSceneFactory.cpp" />
     <ClCompile Include="src\system\CameraFollow\CameraPlayerFollowSystem.cpp" />
     <ClCompile Include="src\system\GameStateController\GameStateSystem.cpp" />
@@ -175,6 +177,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\system\Player\MovementSystem\PlayerMovementSystem.h" />
+    <ClInclude Include="src\system\Player\InputSystem\PlayerInputSystem.h" />
     <ClInclude Include="src\Scene\Game\Factory\GameSceneFactory.h" />
     <ClInclude Include="src\system\CameraFollow\CameraFollowOffsetComponent.h" />
     <ClInclude Include="src\system\CameraFollow\CameraPlayerFollowSystem.h" />
@@ -191,6 +195,8 @@
     <ClInclude Include="src\Scene\Title\TitleScene.h" />
     <ClInclude Include="src\Scene\Test\TestScene.h" />
     <ClInclude Include="src\system\MenuController\MenuControllerComp.h" />
+    <ClInclude Include="src\system\Player\MovementSystem\PlayerMovementComponent.h" />
+    <ClInclude Include="src\system\Player\State\PlayerStateComponent.h" />
     <ClInclude Include="src\system\TitleInputSystem\TitleInputSystem.h" />
     <ClInclude Include="src\Tag\EntityTag.h" />
   </ItemGroup>

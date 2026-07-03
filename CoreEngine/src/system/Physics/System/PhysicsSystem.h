@@ -21,6 +21,14 @@ namespace sys
         static void BuildPendingBodies(entt::registry& registry);
 
         /// <summary>
+        /// RigidBodyComponent::MoveVelocity / HasMoveRequest を Jolt に反映する。
+        /// Update() より前（SyncFromTransform の後）に呼ぶこと。
+        /// Dynamic は SetLinearVelocity、Kinematic は MoveKinematic で移動させる。
+        /// 適用後 HasMoveRequest は false にリセットされる。
+        /// </summary>
+        static void ApplyMoveVelocity(entt::registry& registry, float fixedDeltaTime);
+
+        /// <summary>
         /// Jolt のシミュレーションを 1 ステップ進める。
         /// FixedUpdate フェーズで呼ぶこと（固定タイムステップ推奨）。
         /// </summary>

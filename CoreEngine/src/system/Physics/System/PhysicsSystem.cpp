@@ -180,6 +180,45 @@ namespace sys
     }
 
     /// <summary>
+    /// RigidBodyComponent::MoveVelocity / HasMoveRequest を Jolt に反映する。
+    /// Update() より前（SyncFromTransform の後）に呼ぶこと。
+    /// Dynamic は SetLinearVelocity、Kinematic は MoveKinematic で移動させる。
+    /// 適用後 HasMoveRequest は false にリセットされる。
+    /// </summary>
+    void PhysicsSystem::ApplyMoveVelocity(entt::registry& registry, float fixedDeltaTime)
+    {
+        auto& bodyInterface = PhysicsManager::Get().GetBodyInterface();
+
+        registry.view<ecs::RigidBodyComponent>().each(
+            [&](ecs::RigidBodyComponent& rb)
+            {
+                if (!rb.IsBodyCreated)          return;
+                if (!rb.HasMoveRequest)         return;
+                if (rb.MotionType == ecs::eMotionType::Static) return;
+
+                const JPH::Vec3 velocity = ToJolt(rb.MoveVelocity);
+
+                if (rb.MotionType == ecs::eMotionType::Kinematic)
+                {
+                    // 現在位置・回転から目標位置を算出して MoveKinematic
+                    JPH::Vec3 pos;
+                    JPH::Quat rot;
+                    bodyInterface.GetPositionAndRotation(rb.BodyID, pos, rot);
+
+                    const JPH::Vec3 targetPos = pos + velocity * fixedDeltaTime;
+                    bodyInterface.MoveKinematic(rb.BodyID, targetPos, rot, fixedDeltaTime);
+                }
+                else // Dynamic
+                {
+                    bodyInterface.SetLinearVelocity(rb.BodyID, velocity);
+                    bodyInterface.ActivateBody(rb.BodyID);
+                }
+
+                rb.HasMoveRequest = false;
+            });
+    }
+
+    /// <summary>
     /// Jolt のシミュレーションを 1 ステップ進める。
     /// FixedUpdate フェーズで呼ぶこと（固定タイムステップ推奨）。
     /// </summary>

@@ -4,6 +4,7 @@
 #include<Jolt/Physics/Body/BodyID.h>
 #include<Jolt/Physics/Body/MotionType.h>
 #include<Utility/Export/Export.h>
+#include<DirectXMath.h>
 
 namespace ecs
 {
@@ -39,6 +40,14 @@ namespace ecs
 
         // 状態
         bool IsBodyCreated = false;
+
+        // 入力等から加算された移動速度（m/s）。
+        // PhysicsSystem::ApplyMoveVelocity() が消費して Jolt に反映する。
+        DirectX::XMFLOAT3 MoveVelocity = { 0.0f, 0.0f, 0.0f };
+
+        // true の間、MoveVelocity を毎フレーム Jolt に適用する。
+        // 外部システムが移動量を積んだフレームで true にする。
+        bool HasMoveRequest = false;
 
         // ファクトリ
         static RigidBodyComponent MakeDynamic(float mass = 1.0f, float friction = 0.5f)
