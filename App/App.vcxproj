@@ -145,6 +145,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\system\Player\State\PlayerStateSystem.cpp" />
     <ClCompile Include="src\system\Player\MovementSystem\PlayerMovementSystem.cpp" />
     <ClCompile Include="src\system\Player\InputSystem\PlayerInputSystem.cpp" />
     <ClCompile Include="src\Scene\Game\Factory\GameSceneFactory.cpp" />
@@ -177,6 +178,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\system\Player\State\PlayerStateSystem.h" />
     <ClInclude Include="src\system\Player\MovementSystem\PlayerMovementSystem.h" />
     <ClInclude Include="src\system\Player\InputSystem\PlayerInputSystem.h" />
     <ClInclude Include="src\Scene\Game\Factory\GameSceneFactory.h" />
