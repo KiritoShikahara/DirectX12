@@ -310,6 +310,8 @@ namespace sys
     {
         registry.clear<ecs::CollisionEnterEvent>();
         registry.clear<ecs::SensorEnterEvent>();
+
+
     }
 
     /// <summary>
@@ -333,6 +335,16 @@ namespace sys
                     rb.IsBodyCreated = false;
                     rb.BodyID = JPH::BodyID();
                 }
+            });
+    }
+
+    void PhysicsSystem::ClearMoveVelocity(entt::registry& registry)
+    {
+        registry.view<ecs::RigidBodyComponent>().each(
+            [&](ecs::RigidBodyComponent& rb)
+            {
+                rb.MoveVelocity.x = 0.f;
+                rb.MoveVelocity.z = 0.f;
             });
     }
 

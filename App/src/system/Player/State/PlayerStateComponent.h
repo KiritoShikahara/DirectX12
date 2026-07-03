@@ -54,6 +54,15 @@ namespace ecs
 			return std::find(list.begin(), list.end(), next) != list.end();
 		}
 
+		void AddTransitionMap(ePlayerState from, ePlayerState to)
+		{
+			auto& list = StateTransitionMap[from];
+			if (std::find(list.begin(), list.end(), to) == list.end())
+			{
+				list.push_back(to);
+			}
+		}
+
 		/// <summary>
 		/// リクエストを追加する
 		/// </summary>

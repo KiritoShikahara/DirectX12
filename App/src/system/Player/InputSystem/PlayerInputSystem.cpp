@@ -9,14 +9,15 @@ namespace ecs
 {
 	void PlayerInputSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
-		// “ü—Í‚ÌŽæ“¾
 		const auto& moveAxis = INPUT_MANAGER.GetMoveAxis();
-		// “ü—Í‚ª‚ ‚é‚©‚Ç‚¤‚©
 		const bool hasInput = (moveAxis.x != 0.f || moveAxis.y != 0.f);
 
-		if (hasInput == false) return;
+		if (hasInput == false)
+		{
+			return;
+		}
 
-		registry.view<ecs::PlayerMovementComponent, ecs::PlayerTag>().each(
+		registry.view<ecs::PlayerMovementComponent, ecs::PlayerStateComponent, ecs::PlayerTag>().each(
 			[&](ecs::PlayerMovementComponent& movement, ecs::PlayerStateComponent& state)
 			{
 				movement.MoveInput = { moveAxis.x, 0.f, moveAxis.y };

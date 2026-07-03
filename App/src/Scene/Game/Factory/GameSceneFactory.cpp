@@ -5,6 +5,11 @@
 #include<system/CameraFollow/CameraFollowOffsetComponent.h>
 #include<Tag/EntityTag.h>
 
+// プレイヤー
+#include<system/Player/State/PlayerStateComponent.h>
+#include<system/Player/MovementSystem/PlayerMovementComponent.h>
+#include<system/Player/InputSystem/PlayerInputSystem.h>
+
 namespace ecs
 {
 	void GameSceneFactory::CreateBGM()
@@ -56,6 +61,12 @@ namespace ecs
 
 		manager.AddComponent<ecs::ColliderComponent>(player, ecs::ColliderComponent::MakeBox({ 1,3,1 }));
 		manager.AddComponent<ecs::RigidBodyComponent>(player, ecs::RigidBodyComponent::MakeKinematic());
+
+		auto& state = manager.AddComponent<::ecs::PlayerStateComponent>(player);
+		state.AddTransitionMap(::ecs::ePlayerState::Idle, ::ecs::ePlayerState::Move);
+		state.AddTransitionMap(::ecs::ePlayerState::Move, ::ecs::ePlayerState::Idle);
+
+		manager.AddComponent<::ecs::PlayerMovementComponent>(player);
 
 		registry.emplace<::ecs::PlayerTag>(player);
 

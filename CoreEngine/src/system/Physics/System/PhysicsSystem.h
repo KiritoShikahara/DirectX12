@@ -60,6 +60,12 @@ namespace sys
         /// </summary>
         static void DestroyPendingBodies(entt::registry& registry);
 
+        /// <summary>
+        /// RigidBodyComponent::MoveVelocity の X/Z を毎フレーム末にクリアする。
+        /// PostUpdate フェーズで呼ぶこと。
+        /// </summary>
+        static void ClearMoveVelocity(entt::registry& registry);
+
     private:
         /// <summary>
         /// eColliderShape と ColliderComponent のパラメータから

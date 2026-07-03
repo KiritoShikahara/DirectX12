@@ -5,6 +5,9 @@
 #include"Factory/GameSceneFactory.h"
 
 #include<system/CameraFollow/CameraPlayerFollowSystem.h>
+#include<system/Player/State/PlayerStateSystem.h>
+#include<system/Player/InputSystem/PlayerInputSystem.h>
+#include<system/Player/MovementSystem/PlayerMovementSystem.h>
 
 namespace scene
 {
@@ -61,6 +64,9 @@ namespace scene
 	{
 		auto& manager = ::ecs::ComponentSystemManager::Get();
 		manager.AddUserSystem<::ecs::CameraPlayerFollowSystem>(::ecs::eUpdatePhase::PostUpdate);
+		manager.AddUserSystem<::ecs::PlayerInputSystem>(::ecs::eUpdatePhase::PreUpdate);
+		manager.AddUserSystem<::ecs::PlayerStateSystem>(::ecs::eUpdatePhase::Update);
+		manager.AddUserSystem<::ecs::PlayerMovementSystem>(::ecs::eUpdatePhase::Update);
 	}
 
 	void GameScene::CreateEntitys()

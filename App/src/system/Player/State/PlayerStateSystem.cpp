@@ -16,7 +16,11 @@ namespace ecs
 
 	void PlayerStateSystem::ResolveRequests(ecs::PlayerStateComponent& state)
 	{
-		if (state.Requests.empty()) return;
+		if (state.Requests.empty())
+		{
+			state.CurrentState = ePlayerState::Idle;
+			return;
+		};
 
 		// リクエストの優先度に基づいてソート
 		std::sort(state.Requests.begin(), state.Requests.end(),

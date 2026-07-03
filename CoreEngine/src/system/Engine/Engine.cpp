@@ -435,6 +435,7 @@ namespace sys
     {
         mInputManager->Update();
         mSceneManager->PostUpdate();
+        ::sys::PhysicsSystem::ClearMoveVelocity(mEntityManager->GetRegistry());
     }
 
 } // namespace sys
