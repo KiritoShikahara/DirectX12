@@ -9,6 +9,8 @@
 #include<system/Player/State/PlayerStateComponent.h>
 #include<system/Player/MovementSystem/PlayerMovementComponent.h>
 #include<system/Player/InputSystem/PlayerInputSystem.h>
+#include<system/RotateToMove/RotateToMoveComponent.h>
+#include<system/MoveDirection/MoveDirectionComponent.h>
 
 namespace ecs
 {
@@ -42,6 +44,7 @@ namespace ecs
 		fbx.Resource = res;
 	}
 
+	// プレイヤー
 	void GameSceneFactory::CreatePlayer(const CreatePlayerContext& Context)
 	{
 		// 管理
@@ -52,21 +55,32 @@ namespace ecs
 		// プレイヤーの生成
 		auto p_scale = 0.2f;
 		auto player = manager.CreateEntity();
+
+		// 座標系
 		auto& tr = manager.AddComponent<ecs::Transform>(player);
 		tr.SetScale(p_scale);
 		tr.SetPosition(0, 0.1, 0);
 
+		// モデル
 		auto& fbx = manager.AddComponent<ecs::FbxComponent>(player);
 		fbx.Resource = player_res;
 
+		// 入力
 		manager.AddComponent<ecs::ColliderComponent>(player, ecs::ColliderComponent::MakeBox({ 1,3,1 }));
 		manager.AddComponent<ecs::RigidBodyComponent>(player, ecs::RigidBodyComponent::MakeKinematic());
 
+		// 状態
 		auto& state = manager.AddComponent<::ecs::PlayerStateComponent>(player);
 		state.AddTransitionMap(::ecs::ePlayerState::Idle, ::ecs::ePlayerState::Move);
 		state.AddTransitionMap(::ecs::ePlayerState::Move, ::ecs::ePlayerState::Idle);
 
+		// 移動
 		manager.AddComponent<::ecs::PlayerMovementComponent>(player);
+
+		// 回転
+		auto& rotate = manager.AddComponent<::ecs::RotateToMoveComponent>(player);
+		rotate.InstantRotate = false;
+		manager.AddComponent<::ecs::MoveDirectionComponent>(player);
 
 		registry.emplace<::ecs::PlayerTag>(player);
 

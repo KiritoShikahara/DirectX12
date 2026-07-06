@@ -127,6 +127,8 @@ namespace graphics
         /// mUploadAllocator / mUploadCmdList への同時アクセスを防ぐ
 		/// </summary>
 		std::mutex mUploadMutex;
+
+		bool mDebugLayerEnabled = false;
 	};
 }
 

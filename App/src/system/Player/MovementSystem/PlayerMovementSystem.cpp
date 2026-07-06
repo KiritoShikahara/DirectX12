@@ -3,13 +3,14 @@
 
 #include"PlayerMovementComponent.h"
 #include"../State/PlayerStateComponent.h"
+#include<system/MoveDirection/MoveDirectionComponent.h>
 
 namespace ecs
 {
 	void PlayerMovementSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
-		registry.view<ecs::PlayerMovementComponent, ecs::PlayerStateComponent, ecs::RigidBodyComponent>().each(
-			[&](ecs::PlayerMovementComponent& movement, ecs::PlayerStateComponent& state, ecs::RigidBodyComponent& rb)
+		registry.view<ecs::PlayerMovementComponent, ecs::PlayerStateComponent, ecs::RigidBodyComponent, ecs::MoveDirectionComponent>().each(
+			[&](ecs::PlayerMovementComponent& movement, ecs::PlayerStateComponent& state, ecs::RigidBodyComponent& rb, ecs::MoveDirectionComponent& moveDir)
 			{
 				if (state.CurrentState != ecs::ePlayerState::Move)
 				{
@@ -19,6 +20,8 @@ namespace ecs
 					rb.MoveVelocity.x = 0.f;
 					rb.MoveVelocity.z = 0.f;
 					rb.HasMoveRequest = true;
+
+					moveDir.IsMoving = false;
 					return;
 				}
 
@@ -28,6 +31,16 @@ namespace ecs
 				rb.MoveVelocity.x = horizontalVelocity.x;
 				rb.MoveVelocity.z = horizontalVelocity.z;
 				rb.HasMoveRequest = true;
+
+				using namespace DirectX;
+				const XMVECTOR vel = XMVectorSet(horizontalVelocity.x, 0.f, horizontalVelocity.z, 0.f);
+				const bool isMoving = XMVectorGetX(XMVector3LengthSq(vel)) > 0.0001f;
+
+				moveDir.IsMoving = isMoving;
+				if (isMoving)
+				{
+					XMStoreFloat3(&moveDir.Direction, XMVector3Normalize(vel));
+				}
 			});
 	}
 

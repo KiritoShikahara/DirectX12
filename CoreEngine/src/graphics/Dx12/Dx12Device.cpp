@@ -232,7 +232,6 @@ namespace graphics
 	/// </summary>
 	void DX12Device::DebugLayerOn()
 	{
-		// Debug5のインターフェースで起動
 		Debug5 debugLayer = nullptr;
 
 		HRESULT hr = D3D12GetDebugInterface(IID_PPV_ARGS(&debugLayer));
@@ -240,9 +239,8 @@ namespace graphics
 		{
 			debugLayer->EnableDebugLayer();
 			debugLayer->SetEnableAutoName(TRUE);
-			// TODO:ログ出力
+			mDebugLayerEnabled = true;
 		}
-		//	D3D12GetDebugInterfaceで失敗する可能性があるらしいので一応復旧処理も入れておきます。
 		else
 		{
 			ComPtr<ID3D12Debug> debugBasic;
@@ -250,7 +248,12 @@ namespace graphics
 			if (SUCCEEDED(hr))
 			{
 				debugBasic->EnableDebugLayer();
-				// TODO:ログ出力
+				mDebugLayerEnabled = true;
+			}
+			else
+			{
+				// グラフィックスツール未インストールなどで失敗。デバッグ機能なしで続行。
+				DEBUG_LOG(sys::eLogLevel::Warning, "DebugLayer unavailable. Continuing without it.");
 			}
 		}
 	}
@@ -260,12 +263,23 @@ namespace graphics
 	/// </summary>
 	bool DX12Device::InitializeFactory()
 	{
-
 		UINT factoryFlags = 0;
-#if defined(_DEBUG) || ECSE_DEV_TOOL_ENABLED
-		factoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
-#endif
-		const HRESULT hr = CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&mFactory));
+
+		// デバッグレイヤーが実際に有効化できた場合のみDXGIデバッグも要求する
+		if (mDebugLayerEnabled)
+		{
+			factoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
+		}
+
+		HRESULT hr = CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&mFactory));
+		if (FAILED(hr) && (factoryFlags & DXGI_CREATE_FACTORY_DEBUG))
+		{
+			// DXGIDebug.dllが無い等で失敗した場合、フラグ無しでリトライ
+			DEBUG_LOG(sys::eLogLevel::Warning, "DXGIDebug unavailable. Retrying without debug flag.");
+			factoryFlags &= ~DXGI_CREATE_FACTORY_DEBUG;
+			hr = CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&mFactory));
+		}
+
 		if (FAILED(hr))
 		{
 			// TODO:ログ出力

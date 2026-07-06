@@ -145,6 +145,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\system\RotateToMove\RotateToMoveSystem.cpp" />
     <ClCompile Include="src\system\Player\State\PlayerStateSystem.cpp" />
     <ClCompile Include="src\system\Player\MovementSystem\PlayerMovementSystem.cpp" />
     <ClCompile Include="src\system\Player\InputSystem\PlayerInputSystem.cpp" />
@@ -178,6 +179,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\system\MoveDirection\MoveDirectionComponent.h" />
+    <ClInclude Include="src\system\RotateToMove\RotateToMoveSystem.h" />
     <ClInclude Include="src\system\Player\State\PlayerStateSystem.h" />
     <ClInclude Include="src\system\Player\MovementSystem\PlayerMovementSystem.h" />
     <ClInclude Include="src\system\Player\InputSystem\PlayerInputSystem.h" />
@@ -199,6 +202,7 @@
     <ClInclude Include="src\system\MenuController\MenuControllerComp.h" />
     <ClInclude Include="src\system\Player\MovementSystem\PlayerMovementComponent.h" />
     <ClInclude Include="src\system\Player\State\PlayerStateComponent.h" />
+    <ClInclude Include="src\system\RotateToMove\RotateToMoveComponent.h" />
     <ClInclude Include="src\system\TitleInputSystem\TitleInputSystem.h" />
     <ClInclude Include="src\Tag\EntityTag.h" />
   </ItemGroup>

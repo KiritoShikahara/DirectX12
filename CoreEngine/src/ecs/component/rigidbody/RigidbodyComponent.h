@@ -41,6 +41,10 @@ namespace ecs
         // 状態
         bool IsBodyCreated = false;
 
+        // true: SyncToTransform で Jolt の回転を Transform に反映する
+        // false: 位置のみ同期し、回転は他システム（見た目用の回転制御等）に委ねる
+        bool SyncRotation = false;
+
         // 入力等から加算された移動速度（m/s）。
         // PhysicsSystem::ApplyMoveVelocity() が消費して Jolt に反映する。
         DirectX::XMFLOAT3 MoveVelocity = { 0.0f, 0.0f, 0.0f };

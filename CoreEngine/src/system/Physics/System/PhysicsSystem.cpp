@@ -252,7 +252,6 @@ namespace sys
         registry.view<ecs::RigidBodyComponent, ecs::Transform>().each(
             [&](ecs::RigidBodyComponent& rb, ecs::Transform& transform)
             {
-                // 未生成・Static は書き戻し不要
                 if (!rb.IsBodyCreated)                              return;
                 if (rb.MotionType == ecs::eMotionType::Static)      return;
 
@@ -261,9 +260,11 @@ namespace sys
                 bodyInterface.GetPositionAndRotation(rb.BodyID, pos, rot);
 
                 transform.SetPosition(FromJolt(pos));
-                transform.SetRotation(FromJoltQuat(rot));
-                // ※ ここでは MarkDirty() が呼ばれるが、TransformDirtyTag は付けない
-                //   （Jolt → Transform の同期なので再度 SyncFromTransform に回す必要はない）
+
+                if (rb.SyncRotation)
+                {
+                    transform.SetRotation(FromJoltQuat(rot));
+                }
             });
     }
 
