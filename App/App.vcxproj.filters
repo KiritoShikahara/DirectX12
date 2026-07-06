@@ -146,6 +146,9 @@
     <ClInclude Include="src\system\Player\Weapon\Inventory\WeaponInventoryComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\system\Player\Status\PlayerStatusComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

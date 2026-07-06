@@ -180,6 +180,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\system\MoveDirection\MoveDirectionComponent.h" />
+    <ClInclude Include="src\system\Player\Status\PlayerStatusComponent.h" />
     <ClInclude Include="src\system\Player\Weapon\Inventory\WeaponInventoryComponent.h" />
     <ClInclude Include="src\system\RotateToMove\RotateToMoveSystem.h" />
     <ClInclude Include="src\system\Player\State\PlayerStateSystem.h" />
