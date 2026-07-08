@@ -167,6 +167,9 @@
     <ClInclude Include="src\system\Player\UI\PlayerHpBarSystem.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\system\Player\UI\FillAmountLerp.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

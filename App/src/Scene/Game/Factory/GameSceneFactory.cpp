@@ -11,6 +11,7 @@
 #include<system/RotateToMove/RotateToMoveComponent.h>
 #include<system/MoveDirection/MoveDirectionComponent.h>
 #include<system/Player/Status/PlayerStatusComponent.h>
+#include<system/Player/UI/FillAmountLerp.h>
 
 // 敵
 #include<system/Enemy/Move/EnemyChaseComponent.h>
@@ -99,7 +100,9 @@ namespace ecs
 
 		// ステータス
 		auto& status = manager.AddComponent<::ecs::PlayerStatusComponent>(player);
-		status.CurrentHp = 100;
+
+		auto& fill = manager.AddComponent<::ecs::FillAmountLerp>(player);
+		fill.Speed = 0.5f;
 
 		registry.emplace<::ecs::PlayerTag>(player);
 
