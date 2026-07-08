@@ -181,6 +181,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\system\Enemy\Status\EnemyStatusComponent.h" />
     <ClInclude Include="src\system\Player\UI\FillAmountLerp.h" />
     <ClInclude Include="src\system\Player\UI\PlayerHpBarSystem.h" />
     <ClInclude Include="src\system\Enemy\Move\EnemyChaseSystem.h" />

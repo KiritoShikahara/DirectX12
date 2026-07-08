@@ -170,6 +170,9 @@
     <ClInclude Include="src\system\Player\UI\FillAmountLerp.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\system\Enemy\Status\EnemyStatusComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
