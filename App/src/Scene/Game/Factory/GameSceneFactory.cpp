@@ -203,10 +203,10 @@ namespace ecs
 	{
 		auto& manager = ENTITY_MANAGER;
 		auto& registry = ENTT_REGISTRY;
-		float scale = 0.7;
+		float scale = 0.6;
 		// 座標
-		float offcet = 220;
-		float pos_y = 850;
+		float offcet = 190;
+		float pos_y = 900;
 
 		// ベースの作成
 		{
