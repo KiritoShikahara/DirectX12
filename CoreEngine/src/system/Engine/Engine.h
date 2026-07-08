@@ -25,6 +25,7 @@ namespace sys
 	class ImGuiManager;
 	class InputManager;
 	class SceneManager;
+	class TimeManager;
 
 	class ENGINE_API Engine : public utility::Singleton<Engine>
 	{
@@ -115,7 +116,7 @@ namespace sys
 		/// <summary>
 		/// 時間管理
 		/// </summary>
-		sys::Time mTime;
+		::sys::TimeManager* mTimeManager;
 
 		/// <summary>
 		/// ウィンドウ管理クラス

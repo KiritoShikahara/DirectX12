@@ -9,6 +9,8 @@
 #include<system/Player/InputSystem/PlayerInputSystem.h>
 #include<system/Player/MovementSystem/PlayerMovementSystem.h>
 #include<system/RotateToMove/RotateToMoveSystem.h>
+#include<scene/Game/State/GameStateSystem.h>
+#include<system/Enemy/Move/EnemyChaseSystem.h>
 
 namespace scene
 {
@@ -19,6 +21,7 @@ namespace scene
 
 	void GameScene::Initialize()
 	{
+
 		// データ
 		LoadData();
 
@@ -67,16 +70,18 @@ namespace scene
 		manager.AddUserSystem<::ecs::PlayerInputSystem>(::ecs::eUpdatePhase::PreUpdate);
 		manager.AddUserSystem<::ecs::PlayerStateSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::PlayerMovementSystem>(::ecs::eUpdatePhase::Update);
+		manager.AddUserSystem<::ecs::EnemyChaseSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::RotateToMoveSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::ecs::CameraPlayerFollowSystem>(::ecs::eUpdatePhase::PostUpdate);
+		manager.AddUserSystem<::sys::GameStateSystem>(::ecs::eUpdatePhase::PostUpdate);
 	}
 
 	void GameScene::CreateEntitys()
 	{
+		// 状態
+		::ecs::GameSceneFactory::CreateStateController();
 		// BGM
 		::ecs::GameSceneFactory::CreateBGM();
-		// 状態
-		::ecs::GameSceneFactory::CreateStateObject();
 		// ディレクションライト
 		::ecs::GameSceneFactory::CreateDirLight();
 		// 地面
@@ -85,6 +90,9 @@ namespace scene
 		::ecs::GameSceneFactory::CreatePlayer(::ecs::CreatePlayerContext{ mSpellID });
 		// カメラ
 		::ecs::GameSceneFactory::CreateCamera();
+
+		// 敵
+		::ecs::GameSceneFactory::CreateEnemy();
 	}
 
 

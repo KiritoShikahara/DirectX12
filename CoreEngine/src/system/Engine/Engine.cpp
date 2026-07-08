@@ -40,6 +40,7 @@
 #include<system/Light/LightSystem.h>
 #include<ecs/entity/EntityManager.h>
 #include<ecs/system/manager/ComponentSystemManager.h>
+#include<system/Time/TimeManager.h>
 
 // Physics
 #include<system/Physics/System/PhysicsSystem.h>
@@ -87,7 +88,10 @@ namespace sys
 
         SINGLETON_REF(sys::AssetPathManager, AssetManager);
         sys::AssetPathManager::Get().Initialize();
-        mTime.Initialize();
+
+        mTimeManager = &::sys::TimeManager::Get();
+
+        mTimeManager->Initialize();
 
         // コア部分の初期化（Window Dx12など）
         if (this->InitializeCore() == false) return false;
@@ -183,9 +187,6 @@ namespace sys
     {
         // 初期化用データ
         auto context = LoadBootstrapConfig();
-
-        // COMの初期化
-        CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
         // ウィンドウ
         mWindow = &Window::Get();
@@ -316,11 +317,12 @@ namespace sys
 
     void Engine::Update()
     {
-        { mTime.Update(); }
+        auto& time = GetTime();
+        time.Update();
 
         auto& registry = ecs::EntityManager::Get().GetRegistry();
-        auto  dt = mTime.GetDeltaTime();
-        float rawDt = mTime.GetRawDeltaTime();
+        auto  dt = time.GetDeltaTime();
+        float rawDt = time.GetRawDeltaTime();
 
         {
             mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PreUpdate, registry, dt, rawDt);
@@ -335,10 +337,10 @@ namespace sys
             sys::PhysicsSystem::BuildPendingBodies(registry);
             sys::PhysicsSystem::SyncFromTransform(registry);
 
-			::sys::PhysicsSystem::ApplyMoveVelocity(registry, mTime.GetFixedDeltaTime());
+			::sys::PhysicsSystem::ApplyMoveVelocity(registry, time.GetFixedDeltaTime());
 
-            while (mTime.AccumulateFixedStep())
-                sys::PhysicsSystem::Update(registry, mTime.GetFixedDeltaTime());
+            while (time.AccumulateFixedStep())
+                sys::PhysicsSystem::Update(registry, time.GetFixedDeltaTime());
 
             sys::PhysicsSystem::SyncToTransform(registry);
 

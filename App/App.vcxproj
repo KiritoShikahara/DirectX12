@@ -145,13 +145,14 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\system\Enemy\Move\EnemyChaseSystem.cpp" />
+    <ClCompile Include="src\Scene\Game\State\GameStateSystem.cpp" />
     <ClCompile Include="src\system\RotateToMove\RotateToMoveSystem.cpp" />
     <ClCompile Include="src\system\Player\State\PlayerStateSystem.cpp" />
     <ClCompile Include="src\system\Player\MovementSystem\PlayerMovementSystem.cpp" />
     <ClCompile Include="src\system\Player\InputSystem\PlayerInputSystem.cpp" />
     <ClCompile Include="src\Scene\Game\Factory\GameSceneFactory.cpp" />
     <ClCompile Include="src\system\CameraFollow\CameraPlayerFollowSystem.cpp" />
-    <ClCompile Include="src\system\GameStateController\GameStateSystem.cpp" />
     <ClCompile Include="src\Scene\Game\GameScene.cpp" />
     <ClCompile Include="src\system\MenuController\MenuControllerSystem.cpp" />
     <ClCompile Include="src\Scene\Menu\MenuScene.cpp" />
@@ -179,7 +180,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Scene\Game\GameState.h" />
+    <ClInclude Include="src\system\Enemy\Move\EnemyChaseSystem.h" />
+    <ClInclude Include="src\Scene\Game\State\GameStateSystem.h" />
+    <ClInclude Include="src\Scene\Game\State\GameState.h" />
+    <ClInclude Include="src\system\Enemy\Move\EnemyChaseComponent.h" />
     <ClInclude Include="src\system\MoveDirection\MoveDirectionComponent.h" />
     <ClInclude Include="src\system\Player\Status\PlayerStatusComponent.h" />
     <ClInclude Include="src\system\Player\Weapon\Inventory\WeaponInventoryComponent.h" />
@@ -190,9 +194,7 @@
     <ClInclude Include="src\Scene\Game\Factory\GameSceneFactory.h" />
     <ClInclude Include="src\system\CameraFollow\CameraFollowOffsetComponent.h" />
     <ClInclude Include="src\system\CameraFollow\CameraPlayerFollowSystem.h" />
-    <ClInclude Include="src\system\GameStateController\GameStateSystem.h" />
     <ClInclude Include="src\Scene\Game\GameScene.h" />
-    <ClInclude Include="src\system\GameStateController\GameStateComponent.h" />
     <ClInclude Include="src\system\MenuController\MenuControllerSystem.h" />
     <ClInclude Include="src\Data\Menu\MenuSpellsData.h" />
     <ClInclude Include="src\macros.h" />

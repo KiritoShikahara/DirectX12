@@ -256,6 +256,7 @@
     <ClInclude Include="src\pch\pch.h" />
     <ClInclude Include="src\system\Engine\EngineContext.h" />
     <ClInclude Include="src\system\Scene\IScene.h" />
+    <ClInclude Include="src\system\Time\TimeManager.h" />
     <ClInclude Include="src\system\Window\WindowContext.h" />
     <ClInclude Include="src\Utility\config\DebugConfig.h" />
     <ClInclude Include="src\Utility\Export\Export.h" />

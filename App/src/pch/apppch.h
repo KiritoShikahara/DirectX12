@@ -40,6 +40,7 @@
 #include<system/Scene/Manager/SceneManager.h>
 #include<ImGui/imgui.h>
 #include<system/ImGui/ImGuiManager.h>
+#include<system/Time/TimeManager.h>
 
 // データ
 #include<Data/Storage/Registry/DataRegistry.h>

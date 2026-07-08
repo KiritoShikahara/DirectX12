@@ -144,6 +144,8 @@ namespace sys
                 settings.mFriction = rb.Friction;
                 settings.mRestitution = rb.Restitution;
                 settings.mIsSensor = isSensor;
+                settings.mGravityFactor = rb.GravityFactor;
+                settings.mLinearDamping = rb.LinearDamping;
 
                 // Dynamic の場合は質量を設定
                 if (rb.MotionType == ecs::eMotionType::Dynamic)

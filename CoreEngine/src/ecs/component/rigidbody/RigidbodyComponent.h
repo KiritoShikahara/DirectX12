@@ -33,10 +33,13 @@ namespace ecs
         float Friction = 0.5f; // 摩擦係数 [0, 1]
         float Restitution = 0.0f;        // 反発係数 [0, 1]（0=反発なし、1=完全弾性）
 
+        float GravityFactor = 1.0f; // 重力係数
+        float LinearDamping = 0.5f; // 押し出しの減衰量
+
         // 拘束
-        bool LockRotationX = false;
-        bool LockRotationY = false;
-        bool LockRotationZ = false;
+        bool LockRotationX = true;
+        bool LockRotationY = true;
+        bool LockRotationZ = true;
 
         // 状態
         bool IsBodyCreated = false;
@@ -54,12 +57,13 @@ namespace ecs
         bool HasMoveRequest = false;
 
         // ファクトリ
-        static RigidBodyComponent MakeDynamic(float mass = 1.0f, float friction = 0.5f)
+        static RigidBodyComponent MakeDynamic(float mass = 1.0f, float friction = 0.5f,float gravityFactor = 1.0f)
         {
             RigidBodyComponent rb;
             rb.MotionType = eMotionType::Dynamic;
             rb.Mass = mass;
             rb.Friction = friction;
+            rb.GravityFactor = gravityFactor;
             return rb;
         }
         static RigidBodyComponent MakeStatic(float friction = 0.5f)

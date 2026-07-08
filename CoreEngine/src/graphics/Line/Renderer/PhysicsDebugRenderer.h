@@ -88,7 +88,7 @@ namespace graphics
 		graphics::GDescriptorHeapManager* mHeapManager = nullptr;
 		bool mIsInitialized = false;
 
-		bool              mEnabled = false;
+		bool              mEnabled = true;
 		DirectX::XMFLOAT4 mDynamicColor = { 1.f, 0.f, 0.f, 1.f }; // 動的（赤）
 		DirectX::XMFLOAT4 mStaticColor = { 0.f, 1.f, 0.f, 1.f }; // 静的（緑）
 		DirectX::XMFLOAT4 mKinematicColor = { 0.f, 0.5f, 1.f, 1.f }; // キネマティック（青）

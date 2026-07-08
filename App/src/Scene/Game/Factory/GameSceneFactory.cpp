@@ -1,7 +1,6 @@
 #include "apppch.h"
 #include "GameSceneFactory.h"
 
-#include<system/GameStateController/GameStateComponent.h>
 #include<system/CameraFollow/CameraFollowOffsetComponent.h>
 #include<Tag/EntityTag.h>
 
@@ -12,21 +11,31 @@
 #include<system/RotateToMove/RotateToMoveComponent.h>
 #include<system/MoveDirection/MoveDirectionComponent.h>
 
+// 敵
+#include<system/Enemy/Move/EnemyChaseComponent.h>
+
+// 状態
+#include<Scene/Game/State/GameState.h>
+
 namespace ecs
 {
-	void GameSceneFactory::CreateBGM()
-	{
-		// 仮の音楽
-		PLAY_BGM("Assets/Sound/BGM/BGM_Title.aud", true, 0.7);
-	}
-
-	void GameSceneFactory::CreateStateObject()
+	void GameSceneFactory::CreateStateController()
 	{
 		auto& manager = ENTITY_MANAGER;
 		auto entity = manager.CreateEntity();
 
-		// 状態
 		auto& state = manager.AddComponent<::ecs::GameStateComponent>(entity);
+		state.GameState = ::sys::eGameState::InGame;
+
+		//GetTime().SetTimeScale(0.0f);
+
+
+	}
+
+	void GameSceneFactory::CreateBGM()
+	{
+		// 仮の音楽
+		PLAY_BGM("Assets/Sound/BGM/BGM_Title.aud", true, 0.7);
 	}
 
 	void GameSceneFactory::CreateGround()
@@ -66,8 +75,10 @@ namespace ecs
 		fbx.Resource = player_res;
 
 		// 入力
-		manager.AddComponent<ecs::ColliderComponent>(player, ecs::ColliderComponent::MakeBox({ 1,3,1 }));
-		manager.AddComponent<ecs::RigidBodyComponent>(player, ecs::RigidBodyComponent::MakeKinematic());
+		manager.AddComponent<ecs::ColliderComponent>(player, ecs::ColliderComponent::MakeBox({ 5,30,5 }));
+		auto& rigid = manager.AddComponent<ecs::RigidBodyComponent>(player, ecs::RigidBodyComponent::MakeDynamic());
+		rigid.GravityFactor = 0.0f;
+		rigid.LinearDamping = 10.0f;
 
 		// 状態
 		auto& state = manager.AddComponent<::ecs::PlayerStateComponent>(player);
@@ -132,6 +143,43 @@ namespace ecs
 	void GameSceneFactory::CreateStartEffect()
 	{
 
+	}
+
+	void GameSceneFactory::CreateEnemy()
+	{
+		// 管理
+		auto& manager = ENTITY_MANAGER;
+		auto& registry = ENTT_REGISTRY;
+		auto res = ::graphics::FbxResourceManager::Get().Load("Assets/Fbx/Faul/Faul.fbx.bin");
+
+		// 敵の生成
+		auto scale = 0.2f;
+		auto enemy = manager.CreateEntity();
+
+		// 座標系
+		auto& tr = manager.AddComponent<ecs::Transform>(enemy);
+		tr.SetScale(scale);
+		tr.SetPosition(10, 0.1, 30);
+
+		// 物理
+		manager.AddComponent<ecs::ColliderComponent>(enemy, ecs::ColliderComponent::MakeBox({ 5,30,5 }));
+		auto& rigid = manager.AddComponent<ecs::RigidBodyComponent>(enemy, ecs::RigidBodyComponent::MakeDynamic());
+		rigid.GravityFactor = 0.0f;
+		rigid.LinearDamping = 10.0f;
+
+		// モデル
+		auto& fbx = manager.AddComponent<ecs::FbxComponent>(enemy);
+		fbx.Resource = res;
+		fbx.CustomColor = { 1,1,0.5,1 };
+
+		// 移動
+		auto& chase = manager.AddComponent<::ecs::EnemyChaseComponent>(enemy);
+		chase.MoveSpeed = 60.0f;
+		auto& rotate = manager.AddComponent<::ecs::RotateToMoveComponent>(enemy);
+		rotate.InstantRotate = false;
+		manager.AddComponent<::ecs::MoveDirectionComponent>(enemy);
+
+		registry.emplace<::ecs::EnemyTag>(enemy);
 	}
 
 }
