@@ -12,6 +12,7 @@
 #include<scene/Game/State/GameStateSystem.h>
 #include<system/Enemy/Move/EnemyChaseSystem.h>
 #include<system/Player/UI/PlayerHpBarSystem.h>
+#include<system/GlowAnimation/SpriteGlowSystem.h>
 
 namespace scene
 {
@@ -76,6 +77,7 @@ namespace scene
 		manager.AddUserSystem<::ecs::RotateToMoveSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::ecs::CameraPlayerFollowSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::sys::GameStateSystem>(::ecs::eUpdatePhase::PostUpdate);
+		manager.AddUserSystem<::ecs::SpriteGlowSystem>(::ecs::eUpdatePhase::PostUpdate);
 	}
 
 	void GameScene::CreateEntitys()

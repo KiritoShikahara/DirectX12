@@ -18,6 +18,7 @@
 
 // UI
 #include<system/Player/UI/PlayerUiTag.h>
+#include<system/GlowAnimation/GlowAnimationComp.h>
 
 // 状態
 #include<Scene/Game/State/GameState.h>
@@ -220,6 +221,7 @@ namespace ecs
 			auto& sprite = manager.AddComponent<::ecs::Sprite>(entity, res);
 			sprite.SetLayer(::ecs::SpriteLayer::UI,2);
 			sprite.Intensity = 1.5f;
+
 		}
 
 		// 本体の作成
@@ -235,6 +237,12 @@ namespace ecs
 			auto& sprite = manager.AddComponent<::ecs::Sprite>(entity, res);
 			sprite.SetLayer(::ecs::SpriteLayer::UI, 1);
 			sprite.Intensity = 5.0f;
+
+			auto& glow = manager.AddComponent<::ecs::GlowAnimation>(entity);
+			glow.Amplitude = 2;
+			glow.BaseIntensity = 5;
+			glow.Frequency = 0.5;
+			glow.PhaseOffset = 0.0f;
 
 			registry.emplace<::ecs::PlayerHpBarTag>(entity);
 
