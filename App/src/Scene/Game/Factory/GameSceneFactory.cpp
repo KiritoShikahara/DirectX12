@@ -10,9 +10,13 @@
 #include<system/Player/InputSystem/PlayerInputSystem.h>
 #include<system/RotateToMove/RotateToMoveComponent.h>
 #include<system/MoveDirection/MoveDirectionComponent.h>
+#include<system/Player/Status/PlayerStatusComponent.h>
 
 // 敵
 #include<system/Enemy/Move/EnemyChaseComponent.h>
+
+// UI
+#include<system/Player/UI/PlayerUiTag.h>
 
 // 状態
 #include<Scene/Game/State/GameState.h>
@@ -93,6 +97,10 @@ namespace ecs
 		rotate.InstantRotate = false;
 		manager.AddComponent<::ecs::MoveDirectionComponent>(player);
 
+		// ステータス
+		auto& status = manager.AddComponent<::ecs::PlayerStatusComponent>(player);
+		status.CurrentHp = 100;
+
 		registry.emplace<::ecs::PlayerTag>(player);
 
 		// 初期武器の生成
@@ -145,6 +153,12 @@ namespace ecs
 
 	}
 
+	void GameSceneFactory::CreateUI()
+	{
+		// 体力バーのUI
+		CreatePlayerHpBar();
+	}
+
 	void GameSceneFactory::CreateEnemy()
 	{
 		// 管理
@@ -180,6 +194,47 @@ namespace ecs
 		manager.AddComponent<::ecs::MoveDirectionComponent>(enemy);
 
 		registry.emplace<::ecs::EnemyTag>(enemy);
+	}
+
+	void GameSceneFactory::CreatePlayerHpBar()
+	{
+		auto& manager = ENTITY_MANAGER;
+		auto& registry = ENTT_REGISTRY;
+		float scale = 0.7;
+		// 座標
+		float offcet = 220;
+		float pos_y = 850;
+
+		// ベースの作成
+		{
+			auto entity = manager.CreateEntity();
+			auto res = ::graphics::TextureManager::Get().GetOrLoad("Assets/Texture/UI/HpBar/bar_base.png");
+
+			auto& tr = manager.AddComponent<ecs::Transform>(entity);
+			tr.Set2DScale({scale,scale});
+			tr.Set2DPosition(0, pos_y);
+
+			auto& sprite = manager.AddComponent<::ecs::Sprite>(entity, res);
+			sprite.SetLayer(::ecs::SpriteLayer::UI,2);
+		}
+
+		// 本体の作成
+		{
+			auto entity = manager.CreateEntity();
+			auto res = ::graphics::TextureManager::Get().GetOrLoad("Assets/Texture/UI/HpBar/bar1.png");
+
+			auto& tr = manager.AddComponent<ecs::Transform>(entity);
+			tr.Set2DScale({ scale,scale });
+			tr.Set2DPosition(offcet, pos_y);
+
+
+			auto& sprite = manager.AddComponent<::ecs::Sprite>(entity, res);
+			sprite.SetLayer(::ecs::SpriteLayer::UI, 1);
+
+			registry.emplace<::ecs::PlayerHpBarTag>(entity);
+
+		}
+
 	}
 
 }

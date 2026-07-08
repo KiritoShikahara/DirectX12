@@ -145,6 +145,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\system\Player\UI\PlayerHpBarSystem.cpp" />
     <ClCompile Include="src\system\Enemy\Move\EnemyChaseSystem.cpp" />
     <ClCompile Include="src\Scene\Game\State\GameStateSystem.cpp" />
     <ClCompile Include="src\system\RotateToMove\RotateToMoveSystem.cpp" />
@@ -180,12 +181,14 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\system\Player\UI\PlayerHpBarSystem.h" />
     <ClInclude Include="src\system\Enemy\Move\EnemyChaseSystem.h" />
     <ClInclude Include="src\Scene\Game\State\GameStateSystem.h" />
     <ClInclude Include="src\Scene\Game\State\GameState.h" />
     <ClInclude Include="src\system\Enemy\Move\EnemyChaseComponent.h" />
     <ClInclude Include="src\system\MoveDirection\MoveDirectionComponent.h" />
     <ClInclude Include="src\system\Player\Status\PlayerStatusComponent.h" />
+    <ClInclude Include="src\system\Player\UI\PlayerUiTag.h" />
     <ClInclude Include="src\system\Player\Weapon\Inventory\WeaponInventoryComponent.h" />
     <ClInclude Include="src\system\RotateToMove\RotateToMoveSystem.h" />
     <ClInclude Include="src\system\Player\State\PlayerStateSystem.h" />

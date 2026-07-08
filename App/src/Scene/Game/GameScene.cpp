@@ -11,6 +11,7 @@
 #include<system/RotateToMove/RotateToMoveSystem.h>
 #include<scene/Game/State/GameStateSystem.h>
 #include<system/Enemy/Move/EnemyChaseSystem.h>
+#include<system/Player/UI/PlayerHpBarSystem.h>
 
 namespace scene
 {
@@ -71,6 +72,7 @@ namespace scene
 		manager.AddUserSystem<::ecs::PlayerStateSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::PlayerMovementSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::EnemyChaseSystem>(::ecs::eUpdatePhase::Update);
+		manager.AddUserSystem<::ecs::PlayerHpBarSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::RotateToMoveSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::ecs::CameraPlayerFollowSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::sys::GameStateSystem>(::ecs::eUpdatePhase::PostUpdate);
@@ -90,6 +92,8 @@ namespace scene
 		::ecs::GameSceneFactory::CreatePlayer(::ecs::CreatePlayerContext{ mSpellID });
 		// カメラ
 		::ecs::GameSceneFactory::CreateCamera();
+		// UI
+		::ecs::GameSceneFactory::CreateUI();
 
 		// 敵
 		::ecs::GameSceneFactory::CreateEnemy();

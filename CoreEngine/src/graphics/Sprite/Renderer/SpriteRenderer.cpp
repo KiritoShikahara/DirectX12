@@ -215,8 +215,11 @@ namespace graphics
 		// 描画サイズの決定（Size が 0 のときはテクスチャの実サイズを使用）
 		const float baseW = (sp.Size.x > 0.0f) ? sp.Size.x : sp.Texture->GetWidth();
 		const float baseH = (sp.Size.y > 0.0f) ? sp.Size.y : sp.Texture->GetHeight();
-		const float w = baseW * sp.DrawScale.x;
-		const float h = baseH * sp.DrawScale.y;
+
+		// Transform の Scale を反映（DrawScale と別軸で乗算する）
+		const XMFLOAT3& trScale = tr.GetScale();
+		const float w = baseW * sp.DrawScale.x * trScale.x;
+		const float h = baseH * sp.DrawScale.y * trScale.y;
 
 		// 統合 Transform から 2D 位置・回転を取得
 		const XMFLOAT2 pos2D = tr.Get2DPosition();

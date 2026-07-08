@@ -42,10 +42,16 @@ namespace ecs
 
 		// パーク選択ウィジェットとシステム
 
+		// 体力バーのUI
+		static void CreateUI();
 
 	public:
 		// 敵の生成
 		static void CreateEnemy();
+
+	private:
+		// プレイヤーの体力バー生成
+		static void CreatePlayerHpBar();
 	};
 }
 
