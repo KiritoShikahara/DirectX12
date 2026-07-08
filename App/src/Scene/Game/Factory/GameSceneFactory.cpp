@@ -219,6 +219,7 @@ namespace ecs
 
 			auto& sprite = manager.AddComponent<::ecs::Sprite>(entity, res);
 			sprite.SetLayer(::ecs::SpriteLayer::UI,2);
+			sprite.Intensity = 1.5f;
 		}
 
 		// 本体の作成
@@ -233,6 +234,7 @@ namespace ecs
 
 			auto& sprite = manager.AddComponent<::ecs::Sprite>(entity, res);
 			sprite.SetLayer(::ecs::SpriteLayer::UI, 1);
+			sprite.Intensity = 5.0f;
 
 			registry.emplace<::ecs::PlayerHpBarTag>(entity);
 
