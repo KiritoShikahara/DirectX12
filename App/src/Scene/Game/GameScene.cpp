@@ -29,7 +29,6 @@
 #include<Data/Enemy/EnemyData.h>
 
 // デバッグ
-#include<system/Enemy/Status/EnemyStatusDebugPanel.h>
 
 namespace scene
 {
@@ -53,11 +52,25 @@ namespace scene
 		// エンティティ生成
 		CreateEntitys();
 
+#ifdef _DEBUG
+		// デバッグ
+		this->DebugInitialize();
+
+
+#endif // _DEBUG
+
 		DEBUG_LOG(::sys::eLogLevel::Log, "Game Scene.");
 	}
 
 	void GameScene::Finalize()
 	{
+		
+#ifdef _DEBUG
+			// デバッグ
+			this->DebugFinalize();
+
+
+#endif // _DEBUG
 	}
 
 	void GameScene::LoadData()
@@ -124,9 +137,14 @@ namespace scene
 		::ecs::GameSceneFactory::CreateEnemy();
 	}
 
-	void GameScene::Debug()
+	void GameScene::DebugInitialize()
 	{
+		mEnemyStatusDebugPanel = std::make_unique<debug::EnemyStatusDebugPanel>();
+	}
 
+	void GameScene::DebugFinalize()
+	{
+		mEnemyStatusDebugPanel.reset();
 	}
 
 

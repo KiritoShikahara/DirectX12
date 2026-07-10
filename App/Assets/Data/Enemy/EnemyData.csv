@@ -1,2 +1,2 @@
-﻿id,名前,最大体力,移動速度,攻撃力,経験値
-1001,Test1,10,10,3,1
+Id,Name,MaxHp,MoveSpeed,AtkPower,Exp
+0,,10,2,1,1

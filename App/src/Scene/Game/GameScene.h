@@ -1,6 +1,9 @@
 #pragma once
 
 #include<system/Scene/IScene.h>
+#include<system/Enemy/Status/EnemyStatusDebugPanel.h>
+
+#include<memory>
 
 namespace scene
 {
@@ -26,12 +29,16 @@ namespace scene
 		void CreateEntitys();
 
 		// デバック処理呼び出し
-		void Debug();
+		void DebugInitialize();
+		// デバック処理終了
+		void DebugFinalize();
 	private:
 		/// <summary>
 		/// 選択されたスペルのID
 		/// </summary>
 		uint32_t mSpellID = 1001;
+
+		std::unique_ptr<debug::EnemyStatusDebugPanel> mEnemyStatusDebugPanel;
 	};
 }
 
