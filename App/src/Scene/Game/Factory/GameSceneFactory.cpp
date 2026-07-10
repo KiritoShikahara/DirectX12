@@ -15,6 +15,8 @@
 
 // 敵
 #include<system/Enemy/Move/EnemyChaseComponent.h>
+#include<system/Enemy/Attack/EnemyAttackComponent.h>
+#include<system/Enemy/Status/EnemyStatusComponent.h>
 
 // UI
 #include<system/Player/UI/PlayerUiTag.h>
@@ -196,6 +198,12 @@ namespace ecs
 		auto& rotate = manager.AddComponent<::ecs::RotateToMoveComponent>(enemy);
 		rotate.InstantRotate = false;
 		manager.AddComponent<::ecs::MoveDirectionComponent>(enemy);
+
+		// ステータス
+		auto& status = manager.AddComponent<::ecs::EnemyStatusComponent>(enemy);
+
+		// 攻撃
+		auto& attack = manager.AddComponent<::ecs::EnemyAttackComponent>(enemy);
 
 		registry.emplace<::ecs::EnemyTag>(enemy);
 	}
