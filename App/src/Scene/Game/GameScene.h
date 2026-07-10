@@ -24,6 +24,9 @@ namespace scene
 
 		// エンティティの生成
 		void CreateEntitys();
+
+		// デバック処理呼び出し
+		void Debug();
 	private:
 		/// <summary>
 		/// 選択されたスペルのID

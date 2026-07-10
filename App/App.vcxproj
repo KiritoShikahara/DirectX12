@@ -145,6 +145,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\system\Enemy\Status\EnemyStatusDebugPanel.cpp" />
     <ClCompile Include="src\system\Damage\PlayerContactDamage\PlayerContactDamageSystem.cpp" />
     <ClCompile Include="src\system\Player\UI\PlayerHpBarSystem.cpp" />
     <ClCompile Include="src\system\Enemy\Move\EnemyChaseSystem.cpp" />
@@ -182,6 +183,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Data\Enemy\EnemyData.h" />
+    <ClInclude Include="src\system\Enemy\Status\EnemyStatusDebugPanel.h" />
     <ClInclude Include="src\system\Damage\PlayerContactDamage\PlayerContactDamageSystem.h" />
     <ClInclude Include="src\system\Enemy\Attack\EnemyAttackComponent.h" />
     <ClInclude Include="src\system\Enemy\Status\EnemyStatusComponent.h" />

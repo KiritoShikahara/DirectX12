@@ -39,7 +39,6 @@ namespace sys
             {
                 controller.GameOverRequested = false;
                 controller.ResultType = eResultType::GameOver;
-                EnterResult(controller);
                 break;
             }
 
@@ -48,7 +47,6 @@ namespace sys
             {
                 controller.GameClearRequested = false;
                 controller.ResultType = eResultType::Clear;
-                EnterResult(controller);
                 break;
             }
 

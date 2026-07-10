@@ -25,6 +25,12 @@
 // ダメージ
 #include<system/Damage/PlayerContactDamage/PlayerContactDamageSystem.h>
 
+// データ
+#include<Data/Enemy/EnemyData.h>
+
+// デバッグ
+#include<system/Enemy/Status/EnemyStatusDebugPanel.h>
+
 namespace scene
 {
 	GameScene::GameScene(uint32_t SpellID)
@@ -57,6 +63,11 @@ namespace scene
 	void GameScene::LoadData()
 	{
 		auto id = mSpellID;
+
+		// データ読み込み
+		data::DataRegistry::Get().Register<data::EnemyData>("Assets/Data/Enemy/EnemyData.csv");
+		data::DataRegistry::Get().LoadAll();
+
 	}
 
 	void GameScene::LoadResource()
@@ -111,6 +122,11 @@ namespace scene
 
 		// 敵
 		::ecs::GameSceneFactory::CreateEnemy();
+	}
+
+	void GameScene::Debug()
+	{
+
 	}
 
 

@@ -44,6 +44,8 @@ namespace ecs
     /// </summary>
     struct ENGINE_API EnemyStatusComponent
     {
+		int EnemyId = 0; // 敵の種類ID。マスタデータのIDと対応する。
+
         EnemyBaseStatus    Base;
         EnemyWaveModifier  WaveMod;
         EnemyCurrentStatus Current;
