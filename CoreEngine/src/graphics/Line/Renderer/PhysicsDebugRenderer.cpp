@@ -51,7 +51,7 @@ namespace graphics
             return false;
         }
 
-        // 動的頂点バッファ作成
+        // 動的頂点バッファ作成（FRAME_COUNT 個のリングとして確保される）
         mVertexBuffer = std::make_unique<VertexBuffer>();
         if (!mVertexBuffer->CreateDynamic(sizeof(WireVertex) * kMaxVertices, sizeof(WireVertex)))
         {
@@ -60,7 +60,7 @@ namespace graphics
         }
 
         // ImGui ウィンドウ登録
-        sys::ImGuiManager::Get().AddDebugUI([this]() { ImGuiWindow(); },"Physics");
+        sys::ImGuiManager::Get().AddDebugUI([this]() { ImGuiWindow(); }, "Physics");
 
         mIsInitialized = true;
         DEBUG_LOG(sys::eLogLevel::Log, "PhysicsDebugRenderer: Initialized.");
@@ -71,11 +71,13 @@ namespace graphics
     {
         if (!mIsInitialized) return;
 
-        // 注: mCameraBuffer は独自定数バッファクラスのデストラクタで安全に解放されます。
-        // もし明示的な解放関数（Release 等）を実装されている場合はここで呼び出してください。
         mCameraBuffer.reset();
         mVertexBuffer.reset();
         mPipeline.reset();
+
+        mLineVertices.clear();
+        mDrawVertexCount = 0;
+
         mHeapManager = nullptr;
         mIsInitialized = false;
     }
@@ -89,7 +91,7 @@ namespace graphics
         auto& device = graphics::DX12Device::Get();
 
         // 自作 ConstantBuffer クラスを使って初期化
-        // 内部で 256 バイトアライメント計算と CBV 登録が全自動で行われます
+        // 内部で 256 バイトアライメント計算と CBV 登録が全自動で行われる
         mCameraBuffer = std::make_unique<graphics::ConstantBuffer>();
         if (!mCameraBuffer->Create(device, *mHeapManager, sizeof(CameraData)))
         {
@@ -127,10 +129,24 @@ namespace graphics
     }
 
     // ==============================================================
-    //  Draw
+    //  Begin  ― 前フレームの描画データをクリアする
     // ==============================================================
 
-    void PhysicsDebugRenderer::Draw(entt::registry& registry, ID3D12GraphicsCommandList* cmdList)
+    void PhysicsDebugRenderer::Begin()
+    {
+        mLineVertices.clear();
+        mDrawVertexCount = 0;
+    }
+
+    // ==============================================================
+    //  UpdateAndDraw  ― 収集フェーズ
+    //
+    //  registry / Jolt / CameraSystem から頂点を構築し、
+    //  カメラ定数バッファと頂点バッファへ転送するところまでを行う。
+    //  コマンドリストへの記録は一切行わない。
+    // ==============================================================
+
+    void PhysicsDebugRenderer::UpdateAndDraw(entt::registry& registry)
     {
         if (!mIsInitialized || !mEnabled) return;
 
@@ -148,12 +164,10 @@ namespace graphics
             &camData.ViewProjection,
             DirectX::XMMatrixTranspose(cam->GetViewProjectionMatrix()));
 
-        // 自作 ConstantBuffer の Update メソッドを使用して安全にGPUへ転送
+        // 現在フレームの ConstantBuffer へ転送する
         mCameraBuffer->Update(&camData, sizeof(CameraData));
 
         // ── Jolt から Shape の三角形を取り出して頂点構築 ─────────────
-        mLineVertices.clear();
-
         auto& bodyInterface = sys::PhysicsManager::Get().GetBodyInterface();
 
         registry.view<ecs::RigidBodyComponent, ecs::ColliderComponent>().each(
@@ -174,7 +188,7 @@ namespace graphics
                 {
                     switch (rb.MotionType)
                     {
-                    case ecs::eMotionType::Dynamic:   color = mDynamicColor;   break;
+                    case ecs::eMotionType::Dynamic:    color = mDynamicColor;   break;
                     case ecs::eMotionType::Static:     color = mStaticColor;    break;
                     case ecs::eMotionType::Kinematic:  color = mKinematicColor; break;
                     default:                           color = mDynamicColor;   break;
@@ -185,8 +199,8 @@ namespace graphics
                 const JPH::RMat44 joltWorld = bodyInterface.GetWorldTransform(rb.BodyID);
 
                 // ── GetTrianglesStart に Jolt のワールド変換を直接渡す ──
-                // これで triangle 頂点が最初から完璧なワールド空間で返ってくるため、
-                // C++側での手動の XMMATRIX 変換やオフセット計算が一切不要になります。
+                // これで triangle 頂点が最初からワールド空間で返ってくるため、
+                // C++ 側での手動の XMMATRIX 変換やオフセット計算が不要になる。
                 JPH::ShapeRefC shape = bodyInterface.GetShape(rb.BodyID);
                 if (!shape) return;
 
@@ -196,7 +210,7 @@ namespace graphics
                     JPH::AABox::sBiggest(),
                     joltWorld.GetTranslation(),    // COM のワールド位置
                     joltWorld.GetQuaternion(),     // ワールド回転
-                    JPH::Vec3::sReplicate(1.0f)); // スケール
+                    JPH::Vec3::sReplicate(1.0f));  // スケール
 
                 static constexpr int kBatchSize = 64;
                 JPH::Float3 joltVerts[kBatchSize * 3];
@@ -226,25 +240,43 @@ namespace graphics
 
         if (mLineVertices.empty()) return;
 
-        // ── 頂点バッファに転送 ────────────────────────────────────────
+        // ── 頂点バッファに転送（現在フレームのリソースへ書き込まれる）──
         const size_t vertCount = std::min(mLineVertices.size(), kMaxVertices);
         const size_t uploadSize = sizeof(WireVertex) * vertCount;
         mVertexBuffer->Update(mLineVertices.data(), uploadSize, 0);
 
-        // ── 描画コマンド発行 ──────────────────────────────────────────
+        // End() が参照する描画頂点数を確定する
+        mDrawVertexCount = static_cast<UINT>(vertCount);
+    }
+
+    // ==============================================================
+    //  End  ― 記録フェーズ
+    //
+    //  収集済みデータをコマンドリストへ記録するだけ。
+    //  registry / GPU バッファの Update には一切触れない。
+    // ==============================================================
+
+    void PhysicsDebugRenderer::End(ID3D12GraphicsCommandList* cmdList)
+    {
+        if (!mIsInitialized || !mEnabled) return;
+        if (cmdList == nullptr) return;
+        if (mDrawVertexCount == 0) return;
+
         ID3D12DescriptorHeap* heaps[] = { mHeapManager->GetNativeHeap() };
-        cmdList->SetDescriptorHeaps(1, heaps);
+        cmdList->SetDescriptorHeaps(_countof(heaps), heaps);
+
         cmdList->SetGraphicsRootSignature(mPipeline->GetRootSignature());
 
-        // 自作 ConstantBuffer から GPU ハンドルを安全に取得してディスクリプタテーブルへバインド
+        // ConstantBuffer から現在フレームの GPU ハンドルを取得してバインドする
         cmdList->SetGraphicsRootDescriptorTable(
             LinePipeline::SLOT_CAMERA_BUFFER,
             mCameraBuffer->GetGpuHandle());
 
         cmdList->SetPipelineState(mPipeline->GetPipelineState());
         cmdList->IASetPrimitiveTopology(mPipeline->GetTopology());
+
         mVertexBuffer->Set(cmdList, 0);
-        cmdList->DrawInstanced(static_cast<UINT>(vertCount), 1, 0, 0);
+        cmdList->DrawInstanced(mDrawVertexCount, 1, 0, 0);
     }
 
     // ==============================================================

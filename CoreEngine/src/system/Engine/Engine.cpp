@@ -337,7 +337,7 @@ namespace sys
             sys::PhysicsSystem::BuildPendingBodies(registry);
             sys::PhysicsSystem::SyncFromTransform(registry);
 
-			::sys::PhysicsSystem::ApplyMoveVelocity(registry, time.GetFixedDeltaTime());
+            ::sys::PhysicsSystem::ApplyMoveVelocity(registry, time.GetFixedDeltaTime());
 
             while (time.AccumulateFixedStep())
                 sys::PhysicsSystem::Update(registry, time.GetFixedDeltaTime());
@@ -358,77 +358,122 @@ namespace sys
         }
     }
 
+    /// <summary>
+    /// 描画。
+    ///
+    /// フレームは以下の 2 フェーズに厳密に分かれる。
+    ///
+    /// [収集フェーズ]  Begin() / UpdateAndDraw()
+    ///   - entt::registry を読む
+    ///   - GPU バッファへの Update()（StructuredBuffer 等）を行う
+    ///   - テクスチャの遅延ロード（GDescriptorHeapManager::Issuance）を行う
+    ///   → registry / ヒープマネージャに触れてよいのはこのフェーズのみ
+    ///
+    /// [記録フェーズ]  End() / Flush()
+    ///   - コマンドリストへの記録のみを行う
+    ///   - registry には一切触れない
+    ///   - GPU バッファの Update() も行わない（GetGpuHandle() の読み取りのみ）
+    ///   → チャネルごとにコマンドリストが分かれているため、
+    ///      将来ここを並列化できる（現時点ではシングルスレッドで実行する）
+    ///
+    /// チャネルの投入順（= 描画順）は eRenderChannel の宣言順で保証される。
+    /// </summary>
     void Engine::Render()
     {
+        using namespace graphics;
+
         auto  context = mDX12Renderer->GetContext();
         auto& registry = mEntityManager->GetRegistry();
-        auto  cmdList = context->GetCommandList();
 
-        // Begin
+        // ── Begin ────────────────────────────────────────────────
+        // BeginRendering() 内で RenderContext::SetFrameIndex() が呼ばれ、
+        // 全チャネルのコマンドリストが開かれる。
         {
             mDX12Renderer->BeginFrame();
-            graphics::RenderContext::Get().SetFrameIndex(context->GetCurrentFrameIndex());
             mImGuiManager->NewFrame();
             mImGuiManager->Update();
         }
 
-        // Draw
+        SINGLETON_REF(graphics::FbxRenderer, fbxRenderer);
+        SINGLETON_REF(graphics::SkyboxRenderer, skyboxRenderer);
+        SINGLETON_REF(graphics::SpriteRenderer, spriteRenderer);
+        SINGLETON_REF(graphics::ShapeRenderer, shapeRenderer);
+        SINGLETON_REF(graphics::TextRenderer, textRenderer);
+
+        // ── 収集フェーズ ──────────────────────────────────────────
+        // registry の読み取りと GPU バッファへの転送はすべてここで完結させる。
         {
-            SINGLETON_REF(graphics::FbxRenderer, FbxRenderer);
+            fbxRenderer.Begin();
+            fbxRenderer.UpdateAndDraw(registry);
 
-            // フレームデータ取得
-            FbxRenderer.Begin();
-            FbxRenderer.UpdateAndDraw(registry);
+            // SkyboxRenderer は内部で TextureManager::GetOrLoad()（遅延ロード）を行う。
+            // Issuance() はスレッドセーフではないため、必ずこのフェーズで呼ぶこと。
+            skyboxRenderer.Begin();
+            skyboxRenderer.UpdateAndDraw(registry);
 
-            //    RTV を外して Shadow Map (DSV) に深度を書き込む。
-            FbxRenderer.DrawShadowPass(cmdList);
-
-            // メインのRTV/DSV ビューポートを再セット
-            context->RestoreMainRenderTarget(cmdList);
-
-            // 通常描画パス (Shadow Map は SRV として t10 にバインド済み)
-            FbxRenderer.End(cmdList);
-
-
-            // skybox
-            SINGLETON_REF(graphics::SkyboxRenderer, SkyboxRenderer);
-            SkyboxRenderer.Begin();
-            SkyboxRenderer.UpdateAndDraw(registry);
-            SkyboxRenderer.End(cmdList, FbxRenderer.GetSceneBufferGpuHandle());
-
-            // effect
-            graphics::EffekseerManager::Get().Draw(registry, cmdList);
-
-            // 2D Sprite
-            SINGLETON_REF(graphics::SpriteRenderer, spriteRenderer);
             spriteRenderer.Begin();
             spriteRenderer.UpdateAndDraw(registry);
-            spriteRenderer.End(cmdList);
 
-            // Shape
-            SINGLETON_REF(graphics::ShapeRenderer, ShapeRenderer);
-            ShapeRenderer.Begin();
-            ShapeRenderer.UpdateAndDraw(registry);
-            ShapeRenderer.End(cmdList);
+            shapeRenderer.Begin();
+            shapeRenderer.UpdateAndDraw(registry);
 
-            // テキスト
-            SINGLETON_REF(graphics::TextRenderer, TextRenderer);
-            TextRenderer.Begin();
-            TextRenderer.UpdateAndDraw(registry);
-            TextRenderer.Flush(cmdList);
+            textRenderer.Begin();
+            textRenderer.UpdateAndDraw(registry);
 
 #ifdef _DEBUG
-            graphics::PhysicsDebugRenderer::Get().Draw(registry, cmdList);
+            SINGLETON_REF(graphics::PhysicsDebugRenderer, physicsDebugRenderer);
+            physicsDebugRenderer.Begin();
+            physicsDebugRenderer.UpdateAndDraw(registry);
 #endif
-
-            // シーントランジション（フェードイン/アウト）のフルスクリーンオーバーレイ。
-            // すべてのシーン描画コマンドの後、EndFrame() より前に発行する必要がある。
-            mSceneManager->DrawTransition(cmdList);
         }
 
-        // End
+        // ── 記録フェーズ ──────────────────────────────────────────
+        // 各チャネルへコマンドを記録する。registry には触れない。
         {
-            mImGuiManager->EndFrame();
+            // Shadow: RTV を外して Shadow Map (DSV) に深度を書き込む。
+            //         専用チャネルなので他チャネルの RTV 設定には影響しない
+            //         （RestoreMainRenderTarget() は不要）。
+            fbxRenderer.DrawShadowPass(
+                context->GetCommandList(eRenderChannel::Shadow));
+
+            // Scene: 通常描画パス（Shadow Map は SRV としてバインド済み）と Skybox
+            {
+                auto* cmdList = context->GetCommandList(eRenderChannel::Scene);
+                fbxRenderer.End(cmdList);
+                skyboxRenderer.End(cmdList, fbxRenderer.GetSceneBufferGpuHandle());
+            }
+
+            // Effect: Effekseer はスレッドセーフでないため専用チャネルに隔離する
+            EffekseerManager::Get().Draw(
+                registry, context->GetCommandList(eRenderChannel::Effect));
+
+            // Sprite: 2D 描画（Sprite → Shape → Text の順）
+            {
+                auto* cmdList = context->GetCommandList(eRenderChannel::Sprite);
+                spriteRenderer.End(cmdList);
+                shapeRenderer.End(cmdList);
+                textRenderer.Flush(cmdList);
+            }
+
+            // Debug: デバッグ描画・トランジション・ImGui
+            {
+                auto* cmdList = context->GetCommandList(eRenderChannel::Debug);
+
+#ifdef _DEBUG
+                graphics::PhysicsDebugRenderer::Get().End(cmdList);
+#endif
+                // シーントランジション（フェードイン/アウト）のフルスクリーンオーバーレイ。
+                // すべてのシーン描画コマンドの後に発行する必要がある。
+                mSceneManager->DrawTransition(cmdList);
+
+                // ImGui はスレッドセーフでないため Debug チャネル（メインスレッド）で記録する。
+                mImGuiManager->EndFrame(cmdList);
+            }
+        }
+
+        // ── End ──────────────────────────────────────────────────
+        // 全チャネルを Close し、宣言順に ExecuteCommandLists → Present。
+        {
             mDX12Renderer->EndFrame();
         }
     }

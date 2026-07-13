@@ -15,7 +15,15 @@ namespace graphics
 	class GDescriptorHeapManager;
 
 	/// <summary>
-	/// 当たり判定のデバック用のワイヤーフレームを表示する
+	/// 当たり判定のデバック用のワイヤーフレームを表示する。
+	///
+	/// 他のレンダラーと同じく Begin() → UpdateAndDraw() → End() の3段構成を取る。
+	///   Begin()         : 前フレームのデータをクリアする
+	///   UpdateAndDraw() : registry / Jolt から頂点を収集し GPU バッファへ転送する（収集フェーズ）
+	///   End()           : コマンドリストへの記録のみを行う（記録フェーズ）
+	///
+	/// 記録フェーズでは registry にも GPU バッファの Update にも触れないため、
+	/// 将来チャネルを別スレッドで記録しても安全。
 	/// </summary>
 	class PhysicsDebugRenderer : public utility::Singleton<PhysicsDebugRenderer>
 	{
@@ -35,11 +43,24 @@ namespace graphics
 		void Finalize();
 
 		/// <summary>
-		/// コライダーのワイヤーフレームを描画する。
-		/// DX12Renderer::BeginFrame() の後・EndFrame() の前に呼ぶこと。
-		/// IsEnabled() == false のとき即リターンする。
+		/// 前フレームの描画データをクリアする。
+		/// 収集フェーズの先頭で呼ぶこと。
 		/// </summary>
-		void Draw(entt::registry& registry, ID3D12GraphicsCommandList* cmdList);
+		void Begin();
+
+		/// <summary>
+		/// registry と Jolt からコライダー形状を収集し、
+		/// カメラ定数バッファと頂点バッファへ転送する。
+		/// 収集フェーズ（シングルスレッド）で呼ぶこと。
+		/// IsEnabled() == false のとき何もしない。
+		/// </summary>
+		void UpdateAndDraw(entt::registry& registry);
+
+		/// <summary>
+		/// 収集済みデータを GPU コマンドとして発行する。
+		/// registry には触れないため、記録フェーズで呼べる。
+		/// </summary>
+		void End(ID3D12GraphicsCommandList* cmdList);
 
 	private:
 
@@ -50,11 +71,12 @@ namespace graphics
 			DirectX::XMFLOAT4 Color;
 		};
 
-		/// <summary>カメラ StructuredBuffer の要素型</summary>
+		/// <summary>カメラ ConstantBuffer の要素型</summary>
 		struct CameraData
 		{
 			DirectX::XMFLOAT4X4 ViewProjection; // CPU 側で転置済み
 		};
+
 	private:
 
 		/// <summary>
@@ -94,8 +116,14 @@ namespace graphics
 		DirectX::XMFLOAT4 mKinematicColor = { 0.f, 0.5f, 1.f, 1.f }; // キネマティック（青）
 		DirectX::XMFLOAT4 mSensorColor = { 1.f, 1.f,  0.f, 1.f }; // センサー（黄）
 
+		/// <summary>収集フェーズで構築される頂点リスト</summary>
 		std::vector<WireVertex> mLineVertices;
+
+		/// <summary>
+		/// 今フレームに描画する頂点数。
+		/// UpdateAndDraw() が確定し、End() が参照する。
+		/// 0 のとき End() は何もしない。
+		/// </summary>
+		UINT mDrawVertexCount = 0;
 	};
 }
-
-

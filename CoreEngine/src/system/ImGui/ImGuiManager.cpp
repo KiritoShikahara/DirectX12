@@ -74,7 +74,7 @@ namespace sys
 		}
 
 		// EndFrame() で毎フレーム使うものだけ保持する
-		mRendererContext = &context;
+		// （コマンドリストは呼び出し側から渡されるため DX12Context の保持は不要）
 		mHeapManager = &descriptorHeapManager;
 
 		mIsInitialized = true;
@@ -100,7 +100,6 @@ namespace sys
 		}
 		mFontHeap.Release();
 
-		mRendererContext = nullptr;
 		mHeapManager = nullptr;
 		mIsInitialized = false;
 
@@ -146,19 +145,23 @@ namespace sys
 
 	/// <summary>
 	/// 描画データの確定と ImGui コマンドの発行。
-	/// Flip() の直前に呼ぶ。
+	///
+	/// ImGui の DX12 バックエンドはスレッドセーフではないため、
+	/// 必ずメインスレッドから eRenderChannel::Debug のコマンドリストを渡して呼ぶこと。
 	/// </summary>
-	void ImGuiManager::EndFrame()
+	/// <param name="cmdList">記録先のコマンドリスト</param>
+	void ImGuiManager::EndFrame(ID3D12GraphicsCommandList* cmdList)
 	{
 #if defined(_DEBUG) || DEV_TOOL_ENABLED
+		if (!mIsInitialized || cmdList == nullptr) return;
+
 		// 描画データの確定
 		ImGui::Render();
 
-		// コマンドリストへの描画コマンド発行
-		// SetDescriptorHeaps は描画直前に呼ぶ必要がある
-		// （DX12 の仕様上、後から呼んだものが有効になるため）
-		auto* cmdList = mRendererContext->GetCommandList();
-
+		// SetDescriptorHeaps はコマンドリスト単位の状態。
+		// DX12Context::BeginRendering() が全チャネルに設定済みだが、
+		// 同一チャネル内で他のレンダラーが差し替えている可能性があるため
+		// 描画直前に張り直す。
 		ID3D12DescriptorHeap* heaps[] = { mHeapManager->GetNativeHeap() };
 		cmdList->SetDescriptorHeaps(_countof(heaps), heaps);
 

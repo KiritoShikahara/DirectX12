@@ -7,6 +7,7 @@
 #include<functional>
 #include<unordered_map>
 
+struct ID3D12GraphicsCommandList;
 
 namespace graphics
 {
@@ -55,9 +56,13 @@ namespace sys
 
 		/// <summary>
 		/// 描画データの確定と ImGui コマンドの発行。
-		/// Flip() の直前に呼ぶ。
+		///
+		/// ImGui の DX12 バックエンドはスレッドセーフではないため、
+		/// 必ずメインスレッドから eRenderChannel::Debug のコマンドリストを渡して呼ぶこと。
+		/// 記録フェーズ（Flip() の前）で呼ぶ。
 		/// </summary>
-		void EndFrame();
+		/// <param name="cmdList">記録先のコマンドリスト</param>
+		void EndFrame(ID3D12GraphicsCommandList* cmdList);
 
 		/// <summary>
 		/// デバッグ UI 描画関数を登録する。
@@ -99,12 +104,6 @@ namespace sys
 		/// フォント用ディスクリプタスロット
 		/// </summary>
 		graphics::GDescriptorHeap          mFontHeap;
-
-		/// <summary>
-		/// EndFrame() で毎フレーム使うコマンドリストの借用元。
-		/// ライフタイムは Engine 側が保証する前提でポインタ保持。
-		/// </summary>
-		graphics::DX12Context* mRendererContext = nullptr;
 
 		/// <summary>
 		/// EndFrame() の SetDescriptorHeaps に渡すネイティブヒープの借用元。

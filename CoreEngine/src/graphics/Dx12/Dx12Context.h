@@ -15,6 +15,11 @@ namespace graphics
     /// スワップチェインを使ったフレーム描画ループを管理する。
     /// デバイス層(DX12Device)に依存する。
     /// DX12Rendererによって所有・管理される。
+    ///
+    /// コマンドリストは eRenderChannel ごとに分割されており、
+    /// チャネル単位で別スレッドから記録できる。
+    /// GPU への投入(ExecuteCommandLists)は Flip() がチャネルの宣言順に行うため、
+    /// 記録順が並列化で入れ替わっても描画順は保証される。
     /// </summary>
     class ENGINE_API DX12Context
     {
@@ -39,13 +44,24 @@ namespace graphics
         bool Finalize();
 
         /// <summary>
-        /// フレーム描画の開始
-        /// (バックバッファのクリア・レンダーターゲット設定)
+        /// フレーム描画の開始。
+        ///
+        /// 1. 現フレームのGPU完了を待機
+        /// 2. RenderContext にフレームインデックスを通知
+        ///    （StructuredBuffer / ConstantBuffer / VertexBuffer のリング切り替えに必須）
+        /// 3. 全チャネルのアロケータ／コマンドリストを Reset して開く
+        /// 4. 全チャネルに DescriptorHeap / RTV / DSV / Viewport を設定
+        /// 5. Pre チャネルに barrier(PRESENT→RT) と RTV/DSV クリアを積む
         /// </summary>
         void BeginRendering();
 
         /// <summary>
-        /// 画面のフリップ(コマンド送信・Present)
+        /// 画面のフリップ。
+        ///
+        /// 1. Post チャネルに barrier(RT→PRESENT) を積む
+        /// 2. 全チャネルを Close
+        /// 3. チャネルの宣言順に ExecuteCommandLists
+        /// 4. Present + フェンス Signal
         /// </summary>
         void Flip();
 
@@ -55,26 +71,35 @@ namespace graphics
         void WaitForGPU();
 
         /// <summary>
-        /// ビューポートとシザー矩形の設定
+        /// ビューポートとシザー矩形の設定。
+        /// 記録先のコマンドリストを明示的に受け取る。
         /// </summary>
-        void SetViewPort(float Width, float Height, float x = 0.0f, float y = 0.0f);
+        /// <param name="cmdList">設定先のコマンドリスト</param>
+        void SetViewPort(ID3D12GraphicsCommandList* cmdList,
+            float Width, float Height, float x = 0.0f, float y = 0.0f);
 
         /// <summary>
-        /// Shadow Pass 後にメインの RTV / DSV を再セットする。
-        /// DrawShadowPass() は OMSetRenderTargets(0, nullptr) で RT を外すため、
-        /// 通常描画パスの前に必ずこれを呼ぶこと。
+        /// メインの RTV / DSV / ビューポートを再セットする。
+        ///
+        /// 注意: チャネル分割により BeginRendering() が全チャネルに RTV を設定するため、
+        ///       通常は呼ぶ必要がない。
+        ///       同一チャネル内で RT を付け外しする場合にのみ使用すること。
         /// </summary>
         void RestoreMainRenderTarget(ID3D12GraphicsCommandList* cmdList);
 
         /// <summary>
-        /// 描画用コマンドリストの取得
+        /// 指定チャネルの描画用コマンドリストを取得する。
+        /// BeginRendering() 〜 Flip() の間のみ有効。
+        ///
+        /// 注意: 1つのチャネルを複数スレッドから同時に触ってはならない。
         /// </summary>
-        ID3D12GraphicsCommandList* GetCommandList();
+        /// <param name="channel">取得するチャネル</param>
+        ID3D12GraphicsCommandList* GetCommandList(eRenderChannel channel);
 
         /// <summary>
-        /// 現在フレームのコマンドアロケーターの取得
+        /// 現在フレーム・指定チャネルのコマンドアロケーターの取得
         /// </summary>
-        ID3D12CommandAllocator* GetCommandAllocator();
+        ID3D12CommandAllocator* GetCommandAllocator(eRenderChannel channel);
 
         /// <summary>
         /// コマンドキューの取得
@@ -91,6 +116,11 @@ namespace graphics
         /// </summary>
         UINT GetCurrentFrameIndex() const;
 
+        /// <summary>スクリーン横幅</summary>
+        UINT GetWidth() const { return mWidth; }
+        /// <summary>スクリーン縦幅</summary>
+        UINT GetHeight() const { return mHeight; }
+
     private:
         bool InitializeCommandObjects();
         bool InitializeSwapChain(HWND WindowHandle, UINT Width, UINT Height);
@@ -98,19 +128,39 @@ namespace graphics
         bool InitializeDepthHeap(UINT Width, UINT Height);
         bool InitializeFence();
 
+        /// <summary>現在フレームの RTV ハンドルを取得する</summary>
+        D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentRtvHandle() const;
+
+        /// <summary>DSV ハンドルを取得する</summary>
+        D3D12_CPU_DESCRIPTOR_HANDLE GetDsvHandle() const;
+
+        /// <summary>リソースバリアを積むヘルパー</summary>
+        static void Barrier(
+            ID3D12GraphicsCommandList* cmdList,
+            ID3D12Resource* resource,
+            D3D12_RESOURCE_STATES before,
+            D3D12_RESOURCE_STATES after);
+
         /// <summary>
         /// フレームごとのリソースまとめ
         /// </summary>
         struct FrameResource
         {
-            /// <summary>コマンドリストの記録に使う専用の領域。実行後はリセット必須</summary>
-            CmdAlloc Allocator = nullptr;
             /// <summary>実際に色を書き込まれるバックバッファテクスチャ</summary>
             Resource BackBuffer = nullptr;
             /// <summary>このフレームのGPU完了を確認するためのフェンス値</summary>
             UINT64   FenceValue = 0;
             /// <summary>このフレーム用のアップロードプール</summary>
             MAPool   UploadPool = nullptr;
+
+            /// <summary>
+            /// チャネルごとのコマンドアロケーター。
+            /// 記録中は他スレッドと共有できないためチャネル単位で持つ。
+            /// </summary>
+            std::array<CmdAlloc, CHANNEL_COUNT> Allocators{};
+
+            /// <summary>チャネルごとのコマンドリスト</summary>
+            std::array<CmdList, CHANNEL_COUNT> CmdLists{};
         };
 
         /// <summary>DX12Deviceへの参照(ライフタイムの管理はサービス側が行う)</summary>
@@ -120,8 +170,6 @@ namespace graphics
         SwapChain   mSwapChain;
         /// <summary>完了したコマンドをGPUへ送り出すキュー</summary>
         CmdQueue    mCmdQueue;
-        /// <summary>GPUへの命令を記録するコマンドリスト</summary>
-        CmdList     mCmdList;
 
         /// <summary>フレームごとのリソース配列</summary>
         std::array<FrameResource, graphics::FRAME_COUNT> mFrames;
@@ -142,6 +190,9 @@ namespace graphics
         UINT64      mNextFenceValue = 1;
         /// <summary>現在フレームのインデックス</summary>
         UINT        mFrameIndex = 0;
+
+        /// <summary>RTV ディスクリプタ1個分のバイトサイズ</summary>
+        UINT        mRtvIncrementSize = 0;
 
         /// <summary>背景クリア色</summary>
         Color       mClearColor;

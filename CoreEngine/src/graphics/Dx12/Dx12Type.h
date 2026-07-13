@@ -43,4 +43,22 @@ namespace graphics
 
 	// フレームバッファの数
 	inline constexpr uint32_t FRAME_COUNT = 3;
+
+	/// <summary>
+	/// コマンドリストの記録単位。
+	/// 宣言順 = ExecuteCommandLists への投入順 = 描画順。
+	/// </summary>
+	enum class eRenderChannel : uint32_t
+	{
+		Pre = 0,   // barrier(PRESENT→RT) + RTV/DSV クリア
+		Shadow,    // FbxRenderer::DrawShadowPass (RTV を外すので隔離)
+		Scene,     // FbxRenderer::End + SkyboxRenderer::End
+		Effect,    // Effekseer (メインスレッド固定)
+		Sprite,    // Sprite + Shape + Text
+		Debug,     // PhysicsDebug + Transition + ImGui (メインスレッド固定)
+		Post,      // barrier(RT→PRESENT)
+		Count
+	};
+	inline constexpr uint32_t CHANNEL_COUNT = static_cast<uint32_t>(eRenderChannel::Count);
+
 }

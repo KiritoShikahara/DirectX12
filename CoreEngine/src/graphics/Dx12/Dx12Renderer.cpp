@@ -53,10 +53,6 @@ namespace graphics
 
         // コンテキストに描画開始を委譲
         mContext->BeginRendering();
-
-        // 毎フレームのビューポートをスクリーン全体に設定
-        // 必要に応じて呼び出し側から SetViewPort で上書き可能
-        mContext->SetViewPort(static_cast<float>(mWidth), static_cast<float>(mHeight));
     }
 
     void DX12Renderer::EndFrame()

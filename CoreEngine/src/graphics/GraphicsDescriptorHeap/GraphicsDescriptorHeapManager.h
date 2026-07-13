@@ -17,7 +17,7 @@ namespace graphics
 		SINGLETON_ACCESSOR(GDescriptorHeapManager);
 
 		/// <summary>管理するスロットの最大数</summary>
-		static constexpr int MAX_DESCRIPTOR = 512;
+		static constexpr int MAX_DESCRIPTOR = 4096;
 
 		/// <summary>
 		/// 初期化。
