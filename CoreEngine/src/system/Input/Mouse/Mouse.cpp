@@ -137,4 +137,20 @@ namespace sys
             return eMouseButton::Unknown;
         }
     }
+
+    bool Mouse::IsAnyInput() const
+    {
+        for (int i = 0; i < kButtonCount; ++i)
+        {
+            if (mCurrButtons[i]) return true;
+        }
+
+        // ホイール操作
+        if (mWheel != 0.0f) return true;
+
+        // 座標の移動（Update() 前なので mPosition と mPrevPosition を直接比較する）
+        constexpr float kMoveEpsilon = 0.5f; // ピクセル単位。わずかな揺れは無視する
+        return std::abs(mPosition.x - mPrevPosition.x) > kMoveEpsilon
+            || std::abs(mPosition.y - mPrevPosition.y) > kMoveEpsilon;
+    }
 }
