@@ -226,7 +226,11 @@ namespace graphics
     }
 
     // ============================================================
-    //  UpdateAndDraw  (変更なし)
+    //  UpdateAndDraw  (収集フェーズ)
+    //
+    //  registry から描画対象を収集し、GPU バッファへの転送まで完結させる。
+    //  DrawShadowPass() / End() は記録のみを行うため、
+    //  Update() を呼ぶのはこの関数だけ。
     // ============================================================
     void FbxRenderer::UpdateAndDraw(entt::registry& registry)
     {
@@ -293,6 +297,24 @@ namespace graphics
 
             Submit(*item.fbx->Resource, worldF, bonePtr, item.fbx->CustomColor);
         }
+
+        // ── GPU バッファへの転送 ──────────────────────────────────
+        // Submit() で mInstanceData / mBoneData が確定した後に一度だけ転送する。
+        // DrawShadowPass() と End() の両方がこのデータを参照するが、
+        // どちらも記録のみを行うため転送はここに集約する。
+        if (!mInstanceData.empty())
+        {
+            mInstanceBuffer->Update(
+                mInstanceData.data(),
+                sizeof(FbxInstanceData) * mInstanceData.size());
+        }
+
+        if (!mBoneData.empty())
+        {
+            mBoneBuffer->Update(
+                mBoneData.data(),
+                sizeof(XMFLOAT4X4) * mBoneData.size());
+        }
     }
 
     // ============================================================
@@ -353,9 +375,13 @@ namespace graphics
     }
 
     // ============================================================
-    //  DrawShadowPass
-    //  通常描画パスの前に呼ぶ。
+    //  DrawShadowPass  (記録フェーズ)
+    //
     //  UpdateAndDraw で蓄積した DrawCall をライト空間で深度描画する。
+    //  OMSetRenderTargets(0, nullptr) で RTV を外し、ビューポートも
+    //  SHADOW_MAP_SIZE に変更するが、これらはコマンドリスト単位の状態のため
+    //  専用チャネル (eRenderChannel::Shadow) に隔離されている限り
+    //  他チャネルには影響しない (RestoreMainRenderTarget は不要)。
     // ============================================================
     void FbxRenderer::DrawShadowPass(ID3D12GraphicsCommandList* cmdList)
     {
@@ -365,22 +391,8 @@ namespace graphics
         if (shadowLight.Type != 0 /*DIRECTIONAL*/ || !shadowLight.CastShadow) return;
         if (mDrawCalls.empty()) return;
 
-        // ── GPU バッファを先に更新 ────────────────────────────────
-        // (End() でも更新するが Shadow Pass が先なので事前に書き込む)
-        mInstanceBuffer->Update(
-            mInstanceData.data(),
-            sizeof(FbxInstanceData) * mInstanceData.size());
-
-        if (!mBoneData.empty())
-        {
-            mBoneBuffer->Update(
-                mBoneData.data(),
-                sizeof(XMFLOAT4X4) * mBoneData.size());
-        }
-
-        mLightBuffer->Update(
-            mLightData.data(),
-            sizeof(LightData) * mLightData.size());
+        // GPU バッファは UpdateAndDraw() で転送済み。
+        // この関数はコマンドの記録のみを行い、registry / GPU バッファには触れない。
 
         // ── Shadow Map を DSV として使えるようにバリア ────────────
         auto barrierToDSV = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -454,24 +466,14 @@ namespace graphics
     }
 
     // ============================================================
-    //  End  (通常描画パス)
+    //  End  (通常描画パス / 記録フェーズ)
+    //
+    //  GPU バッファは UpdateAndDraw() で転送済み。
+    //  この関数はコマンドの記録のみを行い、registry / GPU バッファには触れない。
     // ============================================================
     void FbxRenderer::End(ID3D12GraphicsCommandList* cmdList)
     {
         if (mDrawCalls.empty()) return;
-
-        // Shadow Pass で更新済みの場合も再度 Update するが、
-        // 内容は同じなので二重書き込みのコストのみ (許容範囲)
-        mInstanceBuffer->Update(
-            mInstanceData.data(),
-            sizeof(FbxInstanceData) * mInstanceData.size());
-
-        if (!mBoneData.empty())
-        {
-            mBoneBuffer->Update(
-                mBoneData.data(),
-                sizeof(XMFLOAT4X4) * mBoneData.size());
-        }
 
         ID3D12DescriptorHeap* heaps[] = { mHeapManager->GetNativeHeap() };
         cmdList->SetDescriptorHeaps(1, heaps);
