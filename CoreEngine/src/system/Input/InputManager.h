@@ -15,6 +15,17 @@
 
 namespace sys
 {
+
+	/// <summary>
+	/// 最後に入力があった入力デバイスの種別。
+	/// エイム方式の切り替えなど、デバイスに応じた挙動の分岐に使う。
+	/// </summary>
+	enum class eInputDevice
+	{
+		KeyboardMouse,
+		Pad,
+	};
+
 	/// <summary>
 	/// 入力管理クラス
 	/// </summary>
@@ -86,7 +97,27 @@ namespace sys
 		[[nodiscard]] bool IsActionHeld(const std::string& actionName) const;
 		[[nodiscard]] bool IsActionReleased(const std::string& actionName) const;
 
+		/// <summary>
+		/// 最後に入力があったデバイスを取得する。
+		/// どちらにも入力が無いフレームでは前回の値を維持する。
+		/// </summary>
+		[[nodiscard]] eInputDevice GetLastInputDevice() const { return mLastInputDevice; }
+
+
+		/// <summary>
+		/// マウス座標を仮想解像度基準（Window::GetVirtualWidth/Height）に変換して返す。
+		/// CameraSystem::ScreenPointToRay 等はこの座標系を前提とするため、
+		/// 生の GetPosition()（実ウィンドウのピクセル座標）ではなくこちらを使うこと。
+		/// </summary>
+		[[nodiscard]] DirectX::XMFLOAT2 GetMouseVirtualPosition() const;
+
 	private:
+		/// <summary>各デバイスの入力有無を見て mLastInputDevice を更新する</summary>
+		void UpdateLastInputDevice();
+
+		/// <summary>最後に入力があったデバイス</summary>
+		eInputDevice mLastInputDevice = eInputDevice::KeyboardMouse;
+
 		std::unordered_map<std::string, ActionBinding> mActionMaps;
 
 		std::unique_ptr<PadManager> mPadManager;

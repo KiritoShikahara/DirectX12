@@ -2,6 +2,7 @@
 #include"InputManager.h"
 
 #include<Utility/config/DebugConfig.h>
+#include<system/Window/Window.h>
 
 namespace sys
 {
@@ -55,6 +56,8 @@ namespace sys
 
     void InputManager::Update()
     {
+        UpdateLastInputDevice();
+
         mPadManager->Update();
         mMouse->Update();
         mKeyboard->Update();
@@ -205,5 +208,39 @@ namespace sys
             if (mMouse->IsReleased(mouse)) return true;
         }
         return false;
+    }
+
+    void InputManager::UpdateLastInputDevice()
+    {
+        // パッドを優先して判定する。
+        // パッド操作中にマウスが微動しても切り替わらないようにするため。
+        if (mPadManager->IsAnyInput())
+        {
+            mLastInputDevice = eInputDevice::Pad;
+            return;
+        }
+
+        if (mKeyboard->IsAnyKeyHeld() || mMouse->IsAnyInput())
+        {
+            mLastInputDevice = eInputDevice::KeyboardMouse;
+            return;
+        }
+
+        // どちらにも入力が無ければ前回の値を維持する
+    }
+
+    DirectX::XMFLOAT2 InputManager::GetMouseVirtualPosition() const
+    {
+        const DirectX::XMFLOAT2 raw = mMouse->GetPosition();
+
+        const auto& window = sys::Window::Get();
+        const float scaleX = window.GetScaleX();
+        const float scaleY = window.GetScaleY();
+
+        // GetScaleX/Y は「仮想サイズ → 実サイズ」の比率なので、逆算して仮想座標に戻す
+        return {
+            (scaleX != 0.0f) ? raw.x / scaleX : raw.x,
+            (scaleY != 0.0f) ? raw.y / scaleY : raw.y
+        };
     }
 }

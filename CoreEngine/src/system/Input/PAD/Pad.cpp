@@ -165,6 +165,21 @@ namespace sys
         return { mRightStick.x, -mRightStick.y };
     }
 
+    bool Pad::IsAnyInput() const
+    {
+        // ボタン
+        if (mCurrButtons != 0) return true;
+
+        // トリガー（デッドゾーン適用済み）
+        if (mLeftTrigger > 0.0f || mRightTrigger > 0.0f) return true;
+
+        // スティック（デッドゾーン適用済みなので 0 でなければ入力あり）
+        if (mLeftStick.x != 0.0f || mLeftStick.y != 0.0f) return true;
+        if (mRightStick.x != 0.0f || mRightStick.y != 0.0f) return true;
+
+        return false;
+    }
+
     // -----------------------------------------------------------------------
     //  ImGui デバッグ表示
     // -----------------------------------------------------------------------

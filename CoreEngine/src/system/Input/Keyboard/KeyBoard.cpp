@@ -63,6 +63,15 @@ namespace sys
         return !mCurrKeys[idx] && mPrevKeys[idx];
     }
 
+    bool Keyboard::IsAnyKeyHeld() const
+    {
+        for (int i = 0; i < kKeyCount; ++i)
+        {
+            if (mCurrKeys[i]) return true;
+        }
+        return false;
+    }
+
     // -----------------------------------------------------------------------
     //  private ヘルパー
     // -----------------------------------------------------------------------

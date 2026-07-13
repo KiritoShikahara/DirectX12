@@ -145,6 +145,16 @@ namespace sys
         return button != ePadButton::Count;
     }
 
+    bool PadManager::IsAnyInput() const
+    {
+        std::lock_guard lock(mMutex);
+        for (const auto& pad : mPads)
+        {
+            if (pad.IsAnyInput()) return true;
+        }
+        return false;
+    }
+
     // -----------------------------------------------------------------------
     //  ImGui デバッグ表示
     // -----------------------------------------------------------------------
