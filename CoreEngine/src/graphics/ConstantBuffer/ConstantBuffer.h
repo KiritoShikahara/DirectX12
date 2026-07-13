@@ -18,6 +18,8 @@ namespace graphics
 	/// </summary>
 	class ENGINE_API ConstantBuffer
 	{
+        /// <summary>現在のフレームインデックス（StructuredBuffer と同じ取得元）</summary>
+        uint32_t GetCurrentIndex() const;
 	public:
 		ConstantBuffer() = default;
 		~ConstantBuffer() = default;
@@ -44,15 +46,22 @@ namespace graphics
         /// </summary>
         D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandle() const;
 
-        bool IsValid() const { return mCbvHeap.IsValid() && mMappedPtr != nullptr; }
+        bool IsValid() const;
 
     private:
-        Resource     mResource = nullptr;
-        MAAllocation mAlloc = nullptr;
-        void* mMappedPtr = nullptr;
+        /// <summary>
+		/// 1フレーム分のリソース情報。
+        /// </summary>
+        struct FrameResource
+        {
+            Resource        Resource = nullptr;
+            MAAllocation    Alloc = nullptr;
+            void* MappedPtr = nullptr;
+            GDescriptorHeap CbvHeap;
+        };
+        std::array<FrameResource, FRAME_COUNT> mFrames;
 
-        /// <summary>GDescriptorHeapManager から取得した CBV スロット（RAII）</summary>
-        GDescriptorHeap mCbvHeap;
+        uint32_t mAlignedSize = 0;
 	};
 }
 

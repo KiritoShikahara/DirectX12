@@ -54,13 +54,20 @@ namespace graphics
 			{ { 1.0f, 1.0f, 0.0f }, { 1.0f, 1.0f } }, // 右下
 		};
 
+		//mVB = std::make_unique<VertexBuffer>();
+		//if (!mVB->CreateDynamic(sizeof(vertices), sizeof(SpriteVertex)))
+		//{
+		//	DEBUG_LOG(sys::eLogLevel::Error, "ShapeRenderer: Failed to create vertex buffer.");
+		//	return false;
+		//}
+		//mVB->Update(vertices, sizeof(vertices));
+
 		mVB = std::make_unique<VertexBuffer>();
-		if (!mVB->CreateDynamic(sizeof(vertices), sizeof(SpriteVertex)))
+		if (!mVB->CreateStaticSync(vertices, sizeof(vertices), sizeof(SpriteVertex)))
 		{
-			DEBUG_LOG(sys::eLogLevel::Error, "ShapeRenderer: Failed to create vertex buffer.");
+			DEBUG_LOG(sys::eLogLevel::Error, "SpriteRenderer: Failed to create vertex buffer.");
 			return false;
 		}
-		mVB->Update(vertices, sizeof(vertices));
 
 		// 依存オブジェクトの保存
 		mHeapManager = &heapManager;
