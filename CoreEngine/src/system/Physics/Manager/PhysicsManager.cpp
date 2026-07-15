@@ -1,10 +1,12 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "PhysicsManager.h"
 
 
 // Jolt
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Core/Factory.h>
+
+#include "../System/PhysicsSystem.h"
 
 using namespace JPH;
 using namespace JPH::literals;
@@ -193,6 +195,11 @@ namespace sys
 
         mContactListener = std::make_unique<ContactListener>(registry);
         mPhysicsSystem->SetContactListener(mContactListener.get());
+
+        // RigidBodyComponent(またはそれを持つエンティティ)が破棄される直前に
+        // Jolt 側の Body を確実に除去する(孤立 Body 防止)。
+        // エディタの Play/Stop でのエンティティ一括破棄時にも効く。
+        registry.on_destroy<ecs::RigidBodyComponent>().connect<&PhysicsSystem::OnRigidBodyComponentDestroyed>();
 
         mIsInitialized = true;
         return true;

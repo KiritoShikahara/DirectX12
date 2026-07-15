@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include<graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeapInfo.h>
 #include<Utility/Export/Export.h>
@@ -7,6 +7,7 @@
 
 #include <array>
 #include <d3d12.h>
+#include <mutex>
 
 namespace graphics
 {
@@ -75,5 +76,11 @@ namespace graphics
 
 		/// <summary>次の空き検索を始めるオフセット（Next-Fit）</summary>
 		int mSearchOffset = 0;
+
+		/// <summary>
+		/// mIsUse / mSearchOffset を保護する排他制御。
+		/// Issuance/Discard を複数スレッドから同時に呼んだ場合のスロット破損を防ぐ。
+		/// </summary>
+		std::mutex mMutex;
 	};
 }

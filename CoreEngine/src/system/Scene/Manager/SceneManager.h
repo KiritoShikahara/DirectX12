@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include<Utility/Singleton/Singleton.hpp>
 #include"../IScene.h"
@@ -120,6 +120,15 @@ namespace sys
 		/// </summary>
 		/// <returns>true:終了</returns>
 		[[nodiscard]] bool IsTransitionFinished();
+
+		/// <summary>
+		/// 現在のシーンをトランジションなしで即座に作り直す。
+		/// プレイヤー・敵など、シーンの Initialize() が生成する全エンティティが
+		/// 初期状態に戻る(Local エンティティは全破棄→再生成)。
+		/// エディタの Play→Stop(EditorManager::ExitPlayMode)から呼ばれる想定。
+		/// </summary>
+		void ReloadCurrentScene();
+
 	private:
 		/// <summary>
 		/// シーン切り替え
@@ -137,6 +146,13 @@ namespace sys
 		/// 次に切り替えるSceneファクトリ nullptr == 切り替えなし
 		/// </summary>
 		std::function<std::unique_ptr<IScene>()> mPendingSceneFactory;
+
+		/// <summary>
+		/// 現在のシーンを再生成するためのファクトリ(ReloadCurrentScene 用)。
+		/// mPendingSceneFactory と異なり、呼び出しても消費されない
+		/// (呼び出し時に複製してから使う)。
+		/// </summary>
+		std::function<std::unique_ptr<IScene>()> mCurrentSceneFactory;
 
 		/// <summary>
 		/// 今のスクリーンの名前
@@ -166,7 +182,17 @@ namespace sys
 	template<TScene T, typename ...Args>
 	inline void SceneManager::Initialize(Args && ...args)
 	{
-		mCurrentScene = std::make_unique<T>(std::forward<Args>(args)...);
+		mCurrentSceneFactory = [args = std::make_tuple(std::forward<Args>(args)...)]() mutable
+			{
+				return std::apply(
+					[](auto&&... a) { return std::make_unique<T>(std::forward<decltype(a)>(a)...); },
+					std::move(args));
+			};
+
+		// mCurrentSceneFactory 自体は ReloadCurrentScene 用に消費せず残しておくため、
+		// 生成には複製を使う。
+		auto factoryCopy = mCurrentSceneFactory;
+		mCurrentScene = factoryCopy();
 		mCurrentScene->Initialize();
 	}
 

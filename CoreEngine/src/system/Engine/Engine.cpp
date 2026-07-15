@@ -27,6 +27,12 @@
 #include<graphics/Fbx/Renderer/FbxRenderer.h>
 #include<graphics/Sprite/Renderer/SpriteRenderer.h>
 #include<graphics/Line/Renderer/PhysicsDebugRenderer.h>
+#include<graphics/Line/Renderer/LightDebugRenderer.h>
+
+// Editor (_DEBUG専用の配置/選択/Play-Stopワークフロー)
+#include<system/Editor/EditorManager.h>
+#include<system/Editor/EditorSystem.h>
+#include<system/Editor/EditorUI.h>
 #include<graphics/Transition/TransitionRenderer.h>
 
 // Resource
@@ -142,6 +148,10 @@ namespace sys
         if (mDX12Renderer != nullptr)
             mDX12Renderer->WaitForGPU();
 
+        // 描画コマンド記録用ワーカーを停止する（以降 Render() は呼ばれない）
+        if (mRenderThreadPool != nullptr)
+            mRenderThreadPool->Finalize();
+
         FbxRenderer::Get().Finalize();
         SkyboxRenderer::Get().Finalize();
         PrimitiveResourceManager::Get().Finalize();
@@ -153,6 +163,8 @@ namespace sys
 
 #ifdef _DEBUG
         graphics::PhysicsDebugRenderer::Get().Finalize();
+        graphics::LightDebugRenderer::Get().Finalize();
+        sys::EditorUI::Get().Finalize();
 #endif
 
         // 2. リソースマネージャーのクリア（ここで Texture 等のディスクリプタが解放される）
@@ -214,6 +226,10 @@ namespace sys
             *mWindow, *mDevice,
             *mDX12Renderer->GetContext(),
             descriptorHeapManager) == false) return false;
+
+        // 描画コマンド記録用ワーカープール（Shadow / Scene / Sprite の3チャネル分）
+        mRenderThreadPool = std::make_unique<utility::ThreadPool>();
+        mRenderThreadPool->Initialize(3);
 
         return true;
     }
@@ -284,6 +300,8 @@ namespace sys
         if (PhysicsManager.Initialize(mEntityManager->GetRegistry()) == false) return false;
 #ifdef _DEBUG
         if (graphics::PhysicsDebugRenderer::Get().Initialize() == false) return false;
+        if (graphics::LightDebugRenderer::Get().Initialize() == false) return false;
+        if (sys::EditorUI::Get().Initialize(mEntityManager->GetRegistry()) == false) return false;
 #endif
         // データベース初期化
         ::data::DataRegistry::Get().Init("Assets/Bin/DB/db.db");
@@ -323,6 +341,30 @@ namespace sys
         auto& registry = ecs::EntityManager::Get().GetRegistry();
         auto  dt = time.GetDeltaTime();
         float rawDt = time.GetRawDeltaTime();
+
+#ifdef _DEBUG
+        // Editモード中はゲームロジック・物理・アニメ・エフェクトを一切動かさず、
+        // 表示に必要な最小限のシステムとエディタ操作(選択/配置/ドラッグ)のみ実行する。
+        // Playモードでは従来通りフル更新する。
+        if (sys::EditorManager::Get().IsPlaying())
+        {
+            UpdateGameplay(dt, rawDt, registry);
+        }
+        else
+        {
+            sys::CameraSystem::Get().Update(registry);
+            sys::LightSystem::Update(registry);
+            sys::EditorSystem::Get().Update(registry);
+        }
+#else
+        // Releaseビルドにはエディタ機能自体が無いため、常にフル更新する。
+        UpdateGameplay(dt, rawDt, registry);
+#endif
+    }
+
+    void Engine::UpdateGameplay(float dt, float rawDt, entt::registry& registry)
+    {
+        auto& time = GetTime();
 
         {
             mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PreUpdate, registry, dt, rawDt);
@@ -374,9 +416,12 @@ namespace sys
     ///   - registry には一切触れない
     ///   - GPU バッファの Update() も行わない（GetGpuHandle() の読み取りのみ）
     ///   → チャネルごとにコマンドリストが分かれているため、
-    ///      将来ここを並列化できる（現時点ではシングルスレッドで実行する）
+    ///      Shadow / Scene / Sprite はワーカースレッドで並列に記録する。
+    ///      Effect（Effekseer）/ Debug（ImGui）はスレッドセーフでないため
+    ///      メインスレッドで記録し、ワーカーと並行して実行する。
     ///
-    /// チャネルの投入順（= 描画順）は eRenderChannel の宣言順で保証される。
+    /// チャネルの投入順（= 描画順）は eRenderChannel の宣言順で保証される
+    /// （記録順が並列化で入れ替わっても Flip() の ExecuteCommandLists 順は変わらない）。
     /// </summary>
     void Engine::Render()
     {
@@ -424,43 +469,63 @@ namespace sys
             SINGLETON_REF(graphics::PhysicsDebugRenderer, physicsDebugRenderer);
             physicsDebugRenderer.Begin();
             physicsDebugRenderer.UpdateAndDraw(registry);
+
+            SINGLETON_REF(graphics::LightDebugRenderer, lightDebugRenderer);
+            lightDebugRenderer.Begin();
+            lightDebugRenderer.UpdateAndDraw(registry);
 #endif
         }
 
         // ── 記録フェーズ ──────────────────────────────────────────
         // 各チャネルへコマンドを記録する。registry には触れない。
+        //
+        // Shadow / Scene / Sprite はワーカースレッドへ委譲し、
+        // その間メインスレッドで Effect / Debug チャネルを記録することで
+        // 実際に並列に記録する。GPU への投入(ExecuteCommandLists)は
+        // WaitAll() で全ワーカーの記録完了を待った後、Flip() がチャネルの
+        // 宣言順に行うため、記録順が入れ替わっても描画順は保証される。
         {
-            // Shadow: RTV を外して Shadow Map (DSV) に深度を書き込む。
-            //         専用チャネルなので他チャネルの RTV 設定には影響しない
-            //         （RestoreMainRenderTarget() は不要）。
-            fbxRenderer.DrawShadowPass(
-                context->GetCommandList(eRenderChannel::Shadow));
-
-            // Scene: 通常描画パス（Shadow Map は SRV としてバインド済み）と Skybox
+            std::function<void()> parallelTasks[3] =
             {
-                auto* cmdList = context->GetCommandList(eRenderChannel::Scene);
-                fbxRenderer.End(cmdList);
-                skyboxRenderer.End(cmdList, fbxRenderer.GetSceneBufferGpuHandle());
-            }
+                // Shadow: RTV を外して Shadow Map (DSV) に深度を書き込む。
+                //         専用チャネルなので他チャネルの RTV 設定には影響しない
+                //         （RestoreMainRenderTarget() は不要）。
+                [&]()
+                {
+                    fbxRenderer.DrawShadowPass(
+                        context->GetCommandList(eRenderChannel::Shadow));
+                },
+                // Scene: 通常描画パス（Shadow Map は SRV としてバインド済み）と Skybox
+                [&]()
+                {
+                    auto* cmdList = context->GetCommandList(eRenderChannel::Scene);
+                    fbxRenderer.End(cmdList);
+                    skyboxRenderer.End(cmdList, fbxRenderer.GetSceneBufferGpuHandle());
+                },
+                // Sprite: 2D 描画（Sprite → Shape → Text の順）
+                [&]()
+                {
+                    auto* cmdList = context->GetCommandList(eRenderChannel::Sprite);
+                    spriteRenderer.End(cmdList);
+                    shapeRenderer.End(cmdList);
+                    textRenderer.Flush(cmdList);
+                },
+            };
+            mRenderThreadPool->Dispatch(parallelTasks, 3);
 
-            // Effect: Effekseer はスレッドセーフでないため専用チャネルに隔離する
+            // Effect: Effekseer はスレッドセーフでないため専用チャネルに隔離し、
+            //         ワーカーと並行してメインスレッドで記録する。
             EffekseerManager::Get().Draw(
                 registry, context->GetCommandList(eRenderChannel::Effect));
 
-            // Sprite: 2D 描画（Sprite → Shape → Text の順）
-            {
-                auto* cmdList = context->GetCommandList(eRenderChannel::Sprite);
-                spriteRenderer.End(cmdList);
-                shapeRenderer.End(cmdList);
-                textRenderer.Flush(cmdList);
-            }
-
-            // Debug: デバッグ描画・トランジション・ImGui
+            // Debug: デバッグ描画・トランジション・ImGui。
+            //        いずれもスレッドセーフでないためメインスレッドで記録する。
             {
                 auto* cmdList = context->GetCommandList(eRenderChannel::Debug);
 
 #ifdef _DEBUG
                 graphics::PhysicsDebugRenderer::Get().End(cmdList);
+                graphics::LightDebugRenderer::Get().End(cmdList);
 #endif
                 // シーントランジション（フェードイン/アウト）のフルスクリーンオーバーレイ。
                 // すべてのシーン描画コマンドの後に発行する必要がある。
@@ -469,6 +534,11 @@ namespace sys
                 // ImGui はスレッドセーフでないため Debug チャネル（メインスレッド）で記録する。
                 mImGuiManager->EndFrame(cmdList);
             }
+
+            // Shadow / Scene / Sprite チャネルの記録完了を待つ。
+            // parallelTasks はローカル変数のため、EndFrame() で Close するより前に
+            // 必ず全ワーカーの記録が終わっていなければならない。
+            mRenderThreadPool->WaitAll();
         }
 
         // ── End ──────────────────────────────────────────────────

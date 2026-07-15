@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include<Utility/Singleton/Singleton.hpp>
 
 #include <Jolt/Jolt.h>
@@ -73,6 +73,12 @@ namespace sys
 		bool                     IsInitialized() const { return mIsInitialized; }
 
 		JPH::JobSystemThreadPool& GetJobSystem() { return *mJobSystem; }
+
+		/// <summary>
+		/// 衝突イベントリスナーの取得。
+		/// PhysicsSystem::Update() の直後に FlushPendingEvents() を呼ぶために使う。
+		/// </summary>
+		ContactListener& GetContactListener() { return *mContactListener; }
 
 	private:
 

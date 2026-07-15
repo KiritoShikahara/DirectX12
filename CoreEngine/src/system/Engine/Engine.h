@@ -1,9 +1,11 @@
-#pragma once
+﻿#pragma once
 #include<Utility/Singleton/Singleton.hpp>
 #include<Utility/Export/Export.h>
+#include<Utility/Thread/ThreadPool.h>
 #include<system/Time/Time.h>
 #include<graphics/Dx12/Dx12Renderer.h>
 #include<memory>
+#include<entt/entt.hpp>
 
 namespace graphics
 {
@@ -92,6 +94,12 @@ namespace sys
 		void Update();
 
 		/// <summary>
+		/// 通常のゲームループ本体(ゲームロジック・物理・アニメ・エフェクト)。
+		/// Update() から、Playモード中(またはReleaseビルド、エディタ機能自体がない場合)に呼ばれる。
+		/// </summary>
+		void UpdateGameplay(float deltaTime, float rawDeltaTime, entt::registry& registry);
+
+		/// <summary>
 		/// 描画
 		/// </summary>
 		void Render();
@@ -157,5 +165,12 @@ namespace sys
 		/// シーン管理
 		/// </summary>
 		SceneManager* mSceneManager;
+
+		/// <summary>
+		/// 描画コマンド記録の並列化に使うワーカープール。
+		/// Shadow / Scene / Sprite チャネルの記録をワーカーへ委譲し、
+		/// メインスレッドは Effect / Debug チャネルを記録する。
+		/// </summary>
+		std::unique_ptr<utility::ThreadPool> mRenderThreadPool;
 	};
 }

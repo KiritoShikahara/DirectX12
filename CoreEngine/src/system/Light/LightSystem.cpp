@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "LightSystem.h"
 
 #include <ecs/component/Light/LightComponent.h>
@@ -45,8 +45,11 @@ namespace sys
 
                     // View 行列
                     XMVECTOR up = XMVectorSet(0.f, 1.f, 0.f, 0.f);
-                    // ライト方向がほぼ真上/真下のとき up が平行になるので回避
-                    if (XMVectorGetX(XMVector3Dot(dir, up)) > 0.99f)
+                    // ライト方向が真上/真下(平行 or 反平行)のとき up と縮退し
+                    // XMMatrixLookAtLH が特異行列(NaN)になるため、絶対値で判定して回避する。
+                    // デフォルトの Direction={0,-1,0}(真下)はまさにこのケースに該当するため、
+                    // fabs を取らないと既定シーンで常にシャドウが壊れる。
+                    if (std::fabs(XMVectorGetX(XMVector3Dot(dir, up))) > 0.99f)
                         up = XMVectorSet(0.f, 0.f, 1.f, 0.f);
 
                     XMMATRIX lightView = XMMatrixLookAtLH(lightPos, target, up);
@@ -194,6 +197,42 @@ namespace sys
 
                             ImGui::Separator();
 
+                            // ── Position ───────────────────────────────────
+                            // Directional Light は Transform を持たず、
+                            // ShadowTarget - Direction * ShadowDistance で位置が決まる。
+                            // CastShadow が false でもここは常に表示・編集可能にする
+                            // (以前は Shadow Settings 内 = CastShadow オンのときしか
+                            //  座標を操作できなかったため)。
+                            {
+                                const XMVECTOR dirV = XMVector3Normalize(XMLoadFloat3(&light.Direction));
+                                const XMVECTOR targetV = XMLoadFloat3(&light.ShadowTarget);
+                                const XMVECTOR lightPosV = XMVectorSubtract(
+                                    targetV, XMVectorScale(dirV, light.ShadowDistance));
+
+                                XMFLOAT3 lightPos;
+                                XMStoreFloat3(&lightPos, lightPosV);
+
+                                float posBuf[3] = { lightPos.x, lightPos.y, lightPos.z };
+                                if (ImGui::DragFloat3("Light Position", posBuf, 0.1f, -1000.f, 1000.f, "%.1f"))
+                                {
+                                    // Distance は維持したまま、指定位置に来るよう Target を逆算する
+                                    const XMVECTOR newPosV = XMLoadFloat3(reinterpret_cast<XMFLOAT3*>(posBuf));
+                                    const XMVECTOR newTargetV = XMVectorAdd(
+                                        newPosV, XMVectorScale(dirV, light.ShadowDistance));
+                                    XMStoreFloat3(&light.ShadowTarget, newTargetV);
+                                }
+
+                                float tgt[3] = { light.ShadowTarget.x, light.ShadowTarget.y, light.ShadowTarget.z };
+                                if (ImGui::DragFloat3("Aim Target", tgt, 0.1f, -1000.f, 1000.f, "%.1f"))
+                                    light.ShadowTarget = { tgt[0], tgt[1], tgt[2] };
+
+                                ImGui::DragFloat("Distance", &light.ShadowDistance, 0.5f, 1.f, 500.f, "%.1f");
+
+                                ImGui::TextDisabled("Light Position = Aim Target - Direction * Distance");
+                            }
+
+                            ImGui::Separator();
+
                             // ── Shadow 設定 ───────────────────────────────
                             if (ImGui::CollapsingHeader("Shadow Settings"))
                             {
@@ -204,14 +243,7 @@ namespace sys
                                     ImGui::DragFloat("Shadow Range", &light.ShadowRange, 0.5f, 1.f, 500.f, "%.1f");
                                     ImGui::DragFloat("Shadow Near", &light.ShadowNear, 0.01f, 0.01f, 10.f, "%.3f");
                                     ImGui::DragFloat("Shadow Far", &light.ShadowFar, 1.f, 1.f, 1000.f, "%.1f");
-                                    ImGui::DragFloat("Shadow Distance", &light.ShadowDistance, 0.5f, 1.f, 500.f, "%.1f");
                                     ImGui::DragFloat("Shadow Bias", &light.ShadowBias, 0.0001f, 0.f, 0.1f, "%.4f");
-
-                                    float tgt[3] = { light.ShadowTarget.x, light.ShadowTarget.y, light.ShadowTarget.z };
-                                    if (ImGui::DragFloat3("Shadow Target", tgt, 0.1f, -1000.f, 1000.f, "%.1f"))
-                                        light.ShadowTarget = { tgt[0], tgt[1], tgt[2] };
-
-                                    ImGui::TextDisabled("Light pos = Target - Direction * Distance");
                                 }
                             }
 

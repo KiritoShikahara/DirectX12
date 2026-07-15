@@ -1,16 +1,19 @@
-#pragma once
+﻿#pragma once
 
 namespace ecs
 {
-    // �V�[�����ׂ��Ő�������
+    // �V�[�����ׂ��Ő�������
     struct PersistentTag {};
 
-    // ���݂̃t���[���̍Ō�ɍ폜�����\��
+    // ���݂̃t���[���̍Ō�ɍ폜�����\��
     struct PendingDestroyTag {};
 
-    // �ҏW���̃G�f�B�^��ł̂ݑI������Ă���
+    // �ҏW���̃G�f�B�^��ł̂ݑI������Ă���
     struct SelectedTag {};
 
-    // �J�����ɉf��Ώۂł���
+    // �J�����ɉf��Ώۂł���
     struct RenderableTag {};
+
+    // エディタで配置されたエンティティ。Save/Load/スナップショットの対象になる。
+    struct PlaceableTag {};
 }

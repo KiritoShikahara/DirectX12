@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "GraphicsDescriptorHeapManager.h"
 
 
@@ -86,6 +86,8 @@ namespace graphics
 			return { -1, 0 };
 		}
 
+		std::lock_guard<std::mutex> lock(mMutex);
+
 		// Next-Fit でフリーな連続スロットを探す
 		for (int count = 0; count < MAX_DESCRIPTOR; )
 		{
@@ -134,6 +136,8 @@ namespace graphics
 	void GDescriptorHeapManager::Discard(GDescriptorHeapInfo& Info)
 	{
 		if (!Info.IsValid()) return;
+
+		std::lock_guard<std::mutex> lock(mMutex);
 
 		// 範囲外への書き込みを防ぐ
 		const int end = std::min(Info.Index + Info.Size, MAX_DESCRIPTOR);

@@ -1,4 +1,4 @@
-#include "apppch.h"
+﻿#include "apppch.h"
 #include "GameScene.h"
 
 #include"../macros.h"
@@ -78,8 +78,15 @@ namespace scene
 		auto id = mSpellID;
 
 		// データ読み込み
-		data::DataRegistry::Get().Register<data::EnemyData>("Assets/Data/Enemy/EnemyData.csv");
-		data::DataRegistry::Get().LoadAll();
+		// DataRegistry はプロセス全体で1つのシングルトンのため、
+		// GameScene が再初期化される(エディタの Stop によるシーン再構築等)場合、
+		// 二重登録で RegistryBase の assert に落ちないようにガードする。
+		auto& dataRegistry = data::DataRegistry::Get();
+		if (!dataRegistry.IsRegistered<data::EnemyData>())
+		{
+			dataRegistry.Register<data::EnemyData>("Assets/Data/Enemy/EnemyData.csv");
+		}
+		dataRegistry.LoadAll();
 
 	}
 

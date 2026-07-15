@@ -1,19 +1,19 @@
-#include"pch.h"
+ï»¿#include"pch.h"
 #include "TextureManager.h"
 #include"Texture.h"
 
 namespace graphics
 {
 	/// <summary>
-	/// ƒeƒNƒXƒ`ƒƒ‚Ìæ“¾Aƒ~ƒ[ƒh‚È‚çƒ[ƒh‚·‚éB
+	/// ï¿½eï¿½Nï¿½Xï¿½`ï¿½ï¿½ï¿½Ìæ“¾ï¿½Aï¿½~ï¿½ï¿½ï¿½[ï¿½hï¿½È‚çƒï¿½[ï¿½hï¿½ï¿½ï¿½ï¿½B
 	/// </summary>
-	/// <param name="FilePath">ƒtƒ@ƒCƒ‹ƒpƒX</param>
-	/// <returns>QÆ—p‚Ìƒ|ƒCƒ“ƒ^</returns>
+	/// <param name="FilePath">ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½pï¿½X</param>
+	/// <returns>ï¿½Qï¿½Æ—pï¿½Ìƒ|ï¿½Cï¿½ï¿½ï¿½^</returns>
 	Texture* TextureManager::GetOrLoad(const std::filesystem::path& FilePath)
 	{
 		std::string key = std::filesystem::absolute(FilePath).generic_string();
 
-		// ŒŸõ
+		// ï¿½ï¿½ï¿½ï¿½
 		{
 			std::lock_guard<std::mutex> lock(mMutex);
 			auto it = mResources.find(key);
@@ -23,28 +23,25 @@ namespace graphics
 			}
 		}
 
-		// ƒ[ƒh
+		// ãƒ­ãƒ¼ãƒ‰
 		auto newTexture = std::make_unique<Texture>();
 		if (!newTexture->Create(FilePath))
 		{
 			return nullptr;
 		}
 
-		// “o˜^
+		// ç™»éŒ²
+		// ä»–ã‚¹ãƒ¬ãƒƒãƒ‰ãŒåŒã˜ã‚­ãƒ¼ã‚’å…ˆã«ç™»éŒ²æ¸ˆã¿(inserted==false)ã§ã‚‚ã€
+		// æ—¢å­˜ã‚¨ãƒ³ãƒˆãƒªã‚’è¿”ã™(nullptrã‚’è¿”ã™ã¨å‘¼ã³å‡ºã—å´ãŒãƒ­ãƒ¼ãƒ‰æ¸ˆã¿ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚’å–å¾—ã§ããªããªã‚‹)ã€‚
 		{
 			std::lock_guard<std::mutex> lock(mMutex);
-			auto [it, inserted] = mResources.emplace(key, std::move(newTexture));
-			if (inserted)
-			{
-				return it->second.get();
-			}
+			auto it = mResources.emplace(key, std::move(newTexture)).first;
+			return it->second.get();
 		}
-
-		return nullptr;
 	}
 
 	/// <summary>
-	/// ‚·‚×‚Ä‚ÌƒeƒNƒXƒ`ƒƒ‚ğ‰ğ•ú‚·‚éB
+	/// ï¿½ï¿½ï¿½×‚Ä‚Ìƒeï¿½Nï¿½Xï¿½`ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½B
 	/// </summary>
 	void TextureManager::Clear()
 	{

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "PhysicsSystem.h"
 
 #include"../Manager/PhysicsManager.h"
@@ -9,6 +9,9 @@
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/OffsetCenterOfMassShape.h>
+#include <Jolt/Physics/Collision/RayCast.h>
+#include <Jolt/Physics/Collision/CastResult.h>
+#include <Jolt/Physics/Collision/NarrowPhaseQuery.h>
 
 // ECS
 #include<ecs/component/transform/TransformComponent.h>
@@ -224,7 +227,7 @@ namespace sys
     /// Jolt のシミュレーションを 1 ステップ進める。
     /// FixedUpdate フェーズで呼ぶこと（固定タイムステップ推奨）。
     /// </summary>
-    void PhysicsSystem::Update(entt::registry& /*registry*/, float fixedDeltaTime)
+    void PhysicsSystem::Update(entt::registry& registry, float fixedDeltaTime)
     {
         auto& mgr = PhysicsManager::Get();
         if (!mgr.IsInitialized())
@@ -240,6 +243,12 @@ namespace sys
             collisionSteps,
             &mgr.GetTempAllocator(),
             &mgr.GetJobSystem()); // JobSystem は PhysicsSystem 内部に渡し済み
+
+        // Update() 呼び出し中、ContactListener::OnContactAdded は Jolt の
+        // ジョブスレッドから並行に呼ばれ、entt::registry には触れず保留バッファへ
+        // 積むだけになっている。Update() が返った時点でジョブは全て完了しているため、
+        // メインスレッドであるここで安全に registry へ反映する。
+        mgr.GetContactListener().FlushPendingEvents(registry);
     }
 
     /// <summary>
@@ -349,6 +358,76 @@ namespace sys
                 rb.MoveVelocity.x = 0.f;
                 rb.MoveVelocity.z = 0.f;
             });
+    }
+
+    /// <summary>
+    /// レイが最初にヒットした Body を entt::entity として返す(エディタのクリック選択用)。
+    /// </summary>
+    bool PhysicsSystem::TryPickEntity(
+        entt::registry& registry,
+        const DirectX::XMFLOAT3& rayOrigin,
+        const DirectX::XMFLOAT3& rayDirection,
+        float maxDistance,
+        entt::entity& outEntity,
+        DirectX::XMFLOAT3& outHitPoint)
+    {
+        auto& mgr = PhysicsManager::Get();
+        if (!mgr.IsInitialized())
+        {
+            return false;
+        }
+
+        JPH::Vec3 dir = ToJolt(rayDirection);
+        if (dir.LengthSq() < 1.0e-8f)
+        {
+            return false;
+        }
+        dir = dir.Normalized();
+
+        JPH::RRayCast ray;
+        ray.mOrigin = JPH::RVec3(ToJolt(rayOrigin));
+        ray.mDirection = dir * maxDistance;
+
+        JPH::RayCastResult hit;
+        const bool hasHit = mgr.GetPhysicsSystem().GetNarrowPhaseQuery().CastRay(ray, hit);
+        if (!hasHit)
+        {
+            return false;
+        }
+
+        const uint64_t userData = mgr.GetBodyInterface().GetUserData(hit.mBodyID);
+        outEntity = static_cast<entt::entity>(static_cast<uint32_t>(userData));
+        if (!registry.valid(outEntity))
+        {
+            return false;
+        }
+
+        const JPH::RVec3 hitPos = ray.mOrigin + hit.mFraction * ray.mDirection;
+        outHitPoint = FromJolt(JPH::Vec3(hitPos));
+        return true;
+    }
+
+    /// <summary>
+    /// entt 側で RigidBodyComponent が破棄される直前に呼ばれ、
+    /// Body が生成済みなら Jolt から確実に除去する(孤立 Body の防止)。
+    /// </summary>
+    void PhysicsSystem::OnRigidBodyComponentDestroyed(entt::registry& registry, entt::entity entity)
+    {
+        const auto& rb = registry.get<ecs::RigidBodyComponent>(entity);
+        if (!rb.IsBodyCreated)
+        {
+            return;
+        }
+
+        auto& mgr = PhysicsManager::Get();
+        if (!mgr.IsInitialized())
+        {
+            return;
+        }
+
+        auto& bodyInterface = mgr.GetBodyInterface();
+        bodyInterface.RemoveBody(rb.BodyID);
+        bodyInterface.DestroyBody(rb.BodyID);
     }
 
 }

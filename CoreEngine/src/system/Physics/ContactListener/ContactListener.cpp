@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "ContactListener.h"
 
 #include<Jolt/Physics/Body/Body.h>
@@ -7,13 +7,21 @@
 
 namespace sys
 {
+	namespace
+	{
+		// 1ãƒ•ãƒ¬ãƒ¼ãƒ ã§ç™ºç”Ÿã—ã†ã‚‹ä¿ç•™ã‚¤ãƒ™ãƒ³ãƒˆæ•°ã®ç›®å®‰ã€‚
+		// æ¯ãƒ•ãƒ¬ãƒ¼ãƒ ã®å†ç¢ºä¿ã‚’é¿ã‘ã‚‹ãŸã‚åˆæœŸäºˆç´„ã—ã¦ãŠãã€‚
+		constexpr size_t kPendingEventsReserve = 256;
+	}
+
 	ContactListener::ContactListener(entt::registry& registry)
 		: mRegistry(registry)
 	{
+		mPendingEvents.reserve(kPendingEventsReserve);
 	}
 
 	/// <summary>
-	/// Body ‚Ì UserData ‚ğ entt::entity ‚É•ÏŠ·‚·‚é
+	/// Body ã® UserData ã‹ã‚‰ entt::entity ã¸å¤‰æ›ã™ã‚‹
 	/// </summary>
 	inline entt::entity sys::ContactListener::ToEntity(const JPH::Body& body)
 	{
@@ -21,34 +29,10 @@ namespace sys
 			static_cast<uint32_t>(body.GetUserData()));
 	}
 
-	/// <summary>
-	/// entity ‚É CollisionEnterEvent ‚ª‚È‚¯‚ê‚Î¶¬‚µAOtherEntities ‚É other ‚ğ’Ç‰Á‚·‚é
-	/// </summary>
-	void ContactListener::AppendCollisionEnter(entt::entity entity, entt::entity other)
+	void ContactListener::PushPendingEvent(EventKind kind, entt::entity entity, entt::entity other)
 	{
-		if (!mRegistry.valid(entity)) return;
-
-		auto* ev = mRegistry.try_get<ecs::CollisionEnterEvent>(entity);
-		if (ev == nullptr)
-		{
-			ev = &mRegistry.emplace<ecs::CollisionEnterEvent>(entity);
-		}
-		ev->OtherEntities.push_back(other);
-	}
-
-	/// <summary>
-	/// entity ‚É SensorEnterEvent ‚ª‚È‚¯‚ê‚Î¶¬‚µAVisitors ‚É visitor ‚ğ’Ç‰Á‚·‚é
-	/// </summary>
-	void ContactListener::AppendSensorEnter(entt::entity entity, entt::entity visitor)
-	{
-		if (!mRegistry.valid(entity)) return;
-
-		auto* ev = mRegistry.try_get<ecs::SensorEnterEvent>(entity);
-		if (ev == nullptr)
-		{
-			ev = &mRegistry.emplace<ecs::SensorEnterEvent>(entity);
-		}
-		ev->Visitors.push_back(visitor);
+		std::lock_guard<std::mutex> lock(mPendingMutex);
+		mPendingEvents.push_back({ kind, entity, other });
 	}
 
 	void ContactListener::OnContactAdded(
@@ -57,6 +41,8 @@ namespace sys
 		const JPH::ContactManifold& /*inManifold*/,
 		JPH::ContactSettings&      /*ioSettings*/)
 	{
+		// ã“ã®é–¢æ•°ã¯ Jolt ã®è¡çªæ¤œå‡ºã‚¸ãƒ§ãƒ–ã‚¹ãƒ¬ãƒƒãƒ‰ã‹ã‚‰ä¸¦è¡Œã«å‘¼ã°ã‚Œã†ã‚‹ãŸã‚ã€
+		// entt::registry ã«ã¯ä¸€åˆ‡è§¦ã‚Œãšã€ä¿ç•™ã‚¤ãƒ™ãƒ³ãƒˆãƒãƒƒãƒ•ã‚¡ã¸ç©ã‚€ã ã‘ã«ã™ã‚‹ã€‚
 		const entt::entity entityA = ToEntity(inBody1);
 		const entt::entity entityB = ToEntity(inBody2);
 
@@ -65,20 +51,52 @@ namespace sys
 
 		if (isSensorA)
 		{
-			// A ‚ªƒZƒ“ƒT[ ¨ A ‚É SensorEnterEventAB ‚ªN“üÒ
-			AppendSensorEnter(entityA, entityB);
+			// A ãŒã‚»ãƒ³ã‚µãƒ¼ â†’ A ã« SensorEnterEventã€B ãŒä¾µå…¥è€…
+			PushPendingEvent(EventKind::SensorEnter, entityA, entityB);
 		}
 		else if (isSensorB)
 		{
-			// B ‚ªƒZƒ“ƒT[ ¨ B ‚É SensorEnterEventAA ‚ªN“üÒ
-			AppendSensorEnter(entityB, entityA);
+			// B ãŒã‚»ãƒ³ã‚µãƒ¼ â†’ B ã« SensorEnterEventã€A ãŒä¾µå…¥è€…
+			PushPendingEvent(EventKind::SensorEnter, entityB, entityA);
 		}
 		else
 		{
-			// ’Êí‚Ì•¨—Õ“Ë ¨ —¼•û‚É CollisionEnterEvent
-			AppendCollisionEnter(entityA, entityB);
-			AppendCollisionEnter(entityB, entityA);
+			// é€šå¸¸ã®ç‰©ç†è¡çª â†’ åŒæ–¹ã« CollisionEnterEvent
+			PushPendingEvent(EventKind::CollisionEnter, entityA, entityB);
+			PushPendingEvent(EventKind::CollisionEnter, entityB, entityA);
 		}
 	}
-}
 
+	void ContactListener::FlushPendingEvents(entt::registry& registry)
+	{
+		// ãƒ¡ã‚¤ãƒ³ã‚¹ãƒ¬ãƒƒãƒ‰ã®ã¿ã‹ã‚‰å‘¼ã°ã‚Œã‚‹æƒ³å®šã€‚ãƒ­ãƒƒã‚¯ã¯ Jolt å´ã¨ã®æ•´åˆæ€§ã®ãŸã‚ã€‚
+		std::lock_guard<std::mutex> lock(mPendingMutex);
+
+		for (const PendingEvent& ev : mPendingEvents)
+		{
+			if (!registry.valid(ev.Entity)) continue;
+
+			if (ev.Kind == EventKind::CollisionEnter)
+			{
+				auto* comp = registry.try_get<ecs::CollisionEnterEvent>(ev.Entity);
+				if (comp == nullptr)
+				{
+					comp = &registry.emplace<ecs::CollisionEnterEvent>(ev.Entity);
+				}
+				comp->OtherEntities.push_back(ev.Other);
+			}
+			else // SensorEnter
+			{
+				auto* comp = registry.try_get<ecs::SensorEnterEvent>(ev.Entity);
+				if (comp == nullptr)
+				{
+					comp = &registry.emplace<ecs::SensorEnterEvent>(ev.Entity);
+				}
+				comp->Visitors.push_back(ev.Other);
+			}
+		}
+
+		// capacity ã¯ä¿æŒã—ãŸã¾ã¾ã‚¯ãƒªã‚¢ã—ã€æ¯ãƒ•ãƒ¬ãƒ¼ãƒ ã®å†ç¢ºä¿ã‚’é¿ã‘ã‚‹
+		mPendingEvents.clear();
+	}
+}

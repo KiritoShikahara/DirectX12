@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "Dx12Device.h"
 #include<initguid.h>
 #include<d3dx12.h>
@@ -104,6 +104,10 @@ namespace graphics
 	bool DX12Device::UploadTextureData(ID3D12Resource* pResource, const std::vector<D3D12_SUBRESOURCE_DATA>& subresources)
 	{
 		if (pResource == nullptr || subresources.empty()) return false;
+
+		// UploadBufferData と同じアップロードコンテキスト(mUploadAllocator/mUploadCmdList/mUploadFence)
+		// を共有しているため、同じ mUploadMutex で排他制御する。
+		std::lock_guard<std::mutex> lock(mUploadMutex);
 
 		// アロケーターとコマンドリストをリセット
 		mUploadAllocator->Reset();

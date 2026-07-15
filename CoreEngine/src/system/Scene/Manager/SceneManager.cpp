@@ -1,9 +1,10 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "SceneManager.h"
 
 #include"../Factory/SceneFactory.h"
 #include<graphics/Transition/TransitionRenderer.h>
 #include<ecs/entity/EntityManager.h>
+#include<ecs/system/manager/ComponentSystemManager.h>
 
 namespace sys
 {
@@ -13,7 +14,12 @@ namespace sys
 	/// </summary>
 	void SceneManager::Initialize(const std::string& sceneName)
 	{
-		mCurrentScene = SceneFactory::Get().Create(sceneName);
+		mCurrentSceneFactory = [sceneName]() { return SceneFactory::Get().Create(sceneName); };
+
+		// mCurrentSceneFactory 自体は ReloadCurrentScene 用に消費せず残しておくため、
+		// 生成には複製を使う。
+		auto factoryCopy = mCurrentSceneFactory;
+		mCurrentScene = factoryCopy();
 		mCurrentSceneName = sceneName;
 		mCurrentScene->Initialize();
 	}
@@ -159,6 +165,10 @@ namespace sys
 		// エンティティの破棄
 		::ecs::EntityManager::Get().ClearLocalEntities();
 
+		// 前シーンが登録したユーザーシステムをクリアする。
+		// (これが無いと ChangeScene のたびに同じ System が積み重なって多重実行される)
+		::ecs::ComponentSystemManager::Get().ClearUserSystems();
+
 		// 旧シーン終了
 		if (mCurrentScene)
 		{
@@ -166,9 +176,37 @@ namespace sys
 			mCurrentScene.reset();
 		}
 
+		// ReloadCurrentScene 用に複製してから消費する
+		mCurrentSceneFactory = mPendingSceneFactory;
+		mCurrentSceneName = mPendingSceneName;
+
 		// 新シーン生成 & 開始
 		mCurrentScene = mPendingSceneFactory();
 		mPendingSceneFactory = nullptr;
+
+		if (mCurrentScene)
+		{
+			mCurrentScene->Initialize();
+		}
+	}
+
+	void SceneManager::ReloadCurrentScene()
+	{
+		if (!mCurrentSceneFactory) return;
+
+		::ecs::EntityManager::Get().ClearLocalEntities();
+		::ecs::ComponentSystemManager::Get().ClearUserSystems();
+
+		if (mCurrentScene)
+		{
+			mCurrentScene->Finalize();
+			mCurrentScene.reset();
+		}
+
+		// mCurrentSceneFactory 自体は使い捨てにせず、複製を呼び出す。
+		// (再度 ReloadCurrentScene() が呼ばれても安全なように)
+		auto factoryCopy = mCurrentSceneFactory;
+		mCurrentScene = factoryCopy();
 
 		if (mCurrentScene)
 		{

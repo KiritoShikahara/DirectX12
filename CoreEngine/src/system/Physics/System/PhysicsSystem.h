@@ -1,7 +1,8 @@
-#pragma once
+﻿#pragma once
 
 #include<entt/entt.hpp>
 #include<Utility/Export/Export.h>
+#include<DirectXMath.h>
 #include<ecs/component/collider/ColliderComponent.h>
 #include<ecs/component/rigidbody/RigidbodyComponent.h>
 #include <Jolt/Physics/Collision/Shape/Shape.h>
@@ -65,6 +66,32 @@ namespace sys
         /// PostUpdate フェーズで呼ぶこと。
         /// </summary>
         static void ClearMoveVelocity(entt::registry& registry);
+
+        /// <summary>
+        /// レイが最初にヒットした Body を entt::entity として返す(エディタのクリック選択用)。
+        /// Collider を持たないエンティティはヒットしない。
+        /// </summary>
+        /// <param name="rayOrigin">レイの始点(ワールド座標)</param>
+        /// <param name="rayDirection">レイの方向(非正規化可、長さは無視して maxDistance を使う)</param>
+        /// <param name="maxDistance">レイの最大到達距離</param>
+        /// <param name="outEntity">ヒットしたエンティティ(戻り値 true のときのみ有効)</param>
+        /// <param name="outHitPoint">ヒット位置(ワールド座標、戻り値 true のときのみ有効)</param>
+        /// <returns>true:ヒットした</returns>
+        static bool TryPickEntity(
+            entt::registry& registry,
+            const DirectX::XMFLOAT3& rayOrigin,
+            const DirectX::XMFLOAT3& rayDirection,
+            float maxDistance,
+            entt::entity& outEntity,
+            DirectX::XMFLOAT3& outHitPoint);
+
+        /// <summary>
+        /// entt 側で RigidBodyComponent(またはエンティティごと)が破棄される直前に呼ばれる。
+        /// Body が生成済みなら Jolt から確実に除去し、孤立 Body の発生を防ぐ。
+        /// registry.on_destroy&lt;RigidBodyComponent&gt;() のコールバックとして
+        /// PhysicsManager::Initialize() で接続される。
+        /// </summary>
+        static void OnRigidBodyComponentDestroyed(entt::registry& registry, entt::entity entity);
 
     private:
         /// <summary>

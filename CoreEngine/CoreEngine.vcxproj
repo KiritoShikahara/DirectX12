@@ -129,7 +129,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NOMINMAX;NDEBUG;_CONSOLE;JPH_RELEASE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;NDEBUG;_CONSOLE;JPH_RELEASE;JPH_PROFILE_ENABLED;JPH_DEBUG_RENDERER;JPH_FLOATING_POINT_EXCEPTIONS_ENABLED;JPH_OBJECT_STREAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)external;$(ProjectDir)src;$(ProjectDir)src\pch;$(ProjectDir)external\JoltPhysics;$(ProjectDir)external\SQLite;$(ProjectDir)external\Effekseer\src\Effekseer;$(ProjectDir)external\Effekseer\src</AdditionalIncludeDirectories>
@@ -177,6 +177,7 @@
     <ClInclude Include="src\system\Scene\Factory\SceneFactory.h" />
     <ClInclude Include="src\system\Scene\Manager\SceneManager.h" />
     <ClInclude Include="src\graphics\Line\Renderer\PhysicsDebugRenderer.h" />
+    <ClInclude Include="src\graphics\Line\Renderer\LightDebugRenderer.h" />
     <ClInclude Include="src\graphics\Line\Pipeline\LinePipeline.h" />
     <ClInclude Include="src\system\Engine\EngineDefine.h" />
     <ClInclude Include="src\system\Light\LightSystem.h" />
@@ -261,6 +262,15 @@
     <ClInclude Include="src\Utility\config\DebugConfig.h" />
     <ClInclude Include="src\Utility\Export\Export.h" />
     <ClInclude Include="src\Utility\Singleton\Singleton.hpp" />
+    <ClInclude Include="src\Utility\Thread\ThreadPool.h" />
+    <ClInclude Include="src\ecs\component\Common\NameComponent.h" />
+    <ClInclude Include="src\ecs\component\Common\AssetKeyComponent.h" />
+    <ClInclude Include="src\ecs\Serialization\ComponentReflection.h" />
+    <ClInclude Include="src\ecs\Serialization\PlaceableComponentReflection.h" />
+    <ClInclude Include="src\ecs\Serialization\EditorSerialization.h" />
+    <ClInclude Include="src\system\Editor\EditorManager.h" />
+    <ClInclude Include="src\system\Editor\EditorSystem.h" />
+    <ClInclude Include="src\system\Editor\EditorUI.h" />
     <ClInclude Include="src\system\Window\Window.h" />
     <ClInclude Include="src\system\Time\Time.h" />
     <ClInclude Include="src\graphics\VertexBuffer\VertexBuffer.h" />
@@ -316,6 +326,7 @@
     <ClCompile Include="src\system\Scene\Factory\SceneFactory.cpp" />
     <ClCompile Include="src\system\Scene\Manager\SceneManager.cpp" />
     <ClCompile Include="src\graphics\Line\Renderer\PhysicsDebugRenderer.cpp" />
+    <ClCompile Include="src\graphics\Line\Renderer\LightDebugRenderer.cpp" />
     <ClCompile Include="src\graphics\Line\Pipeline\LinePipeline.cpp" />
     <ClCompile Include="src\system\Light\LightSystem.cpp" />
     <ClCompile Include="src\system\Physics\Manager\PhysicsManager.cpp" />
@@ -404,6 +415,21 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\system\Logger\Logger.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\Utility\Thread\ThreadPool.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\ecs\Serialization\EditorSerialization.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\system\Editor\EditorManager.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\system\Editor\EditorSystem.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\system\Editor\EditorUI.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\graphics\Color\Color.cpp" />
