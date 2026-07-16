@@ -40,13 +40,17 @@ namespace sys
 			const JPH::ContactManifold& inManifold,
 			JPH::ContactSettings& ioSettings) override;
 
-		// 継続・終了は今は使わない
+		/// <summary>
+		/// 衝突継続コールバック。接触が続いている間、毎フレーム呼ばれる。
+		/// OnContactAdded と同様、CollisionStayEvent/SensorStayEvent を保留バッファへ積むだけにする。
+		/// （継続ダメージのクールダウン判定など、密着し続けている間も
+		/// 毎フレーム検知したい処理のために必要）
+		/// </summary>
 		void OnContactPersisted(
-			const JPH::Body&,
-			const JPH::Body&,
-			const JPH::ContactManifold&,
-			JPH::ContactSettings&) override {
-		}
+			const JPH::Body& inBody1,
+			const JPH::Body& inBody2,
+			const JPH::ContactManifold& inManifold,
+			JPH::ContactSettings& ioSettings) override;
 
 		void OnContactRemoved(
 			const JPH::SubShapeIDPair&) override {
@@ -69,7 +73,9 @@ namespace sys
 		enum class EventKind : uint8_t
 		{
 			CollisionEnter,
+			CollisionStay,
 			SensorEnter,
+			SensorStay,
 		};
 
 		/// <summary>

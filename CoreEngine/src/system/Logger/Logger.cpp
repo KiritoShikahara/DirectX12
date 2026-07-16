@@ -6,7 +6,7 @@ namespace sys
 	namespace
 	{
 		/// <summary>
-		/// ƒƒOƒŒƒxƒ‹‚Ì•\¦ƒ‰ƒxƒ‹‚ğ•Ô‚·B•‚ğ‘µ‚¦‚Ä®—ñ‚³‚¹‚éB
+		/// ï¿½ï¿½ï¿½Oï¿½ï¿½ï¿½xï¿½ï¿½ï¿½Ì•\ï¿½ï¿½ï¿½ï¿½ï¿½xï¿½ï¿½ï¿½ï¿½Ô‚ï¿½ï¿½Bï¿½ï¿½ï¿½ğ‘µ‚ï¿½ï¿½Äï¿½ï¿½ñ‚³‚ï¿½ï¿½ï¿½B
 		/// </summary>
 		constexpr std::string_view LevelLabel(eLogLevel level) noexcept
 		{
@@ -24,15 +24,15 @@ namespace sys
 
 	bool Logger::Initialize()
 	{
-		// VS‚Ìo—ÍƒEƒBƒ“ƒhƒEiƒfƒoƒbƒO—pj
+		// VSï¿½Ìoï¿½ÍƒEï¿½Bï¿½ï¿½ï¿½hï¿½Eï¿½iï¿½fï¿½oï¿½bï¿½Oï¿½pï¿½j
 		AddSink(std::make_unique<DebugOutputSink>());
 
-		// ƒRƒ“ƒ\[ƒ‹ƒVƒ“ƒN‚ÍƒfƒoƒbƒOƒrƒ‹ƒh‚Ì‚İ
+		// ï¿½Rï¿½ï¿½ï¿½\ï¿½[ï¿½ï¿½ï¿½Vï¿½ï¿½ï¿½Nï¿½Íƒfï¿½oï¿½bï¿½Oï¿½rï¿½ï¿½ï¿½hï¿½Ì‚ï¿½
 #if defined(_DEBUG) || ECSE_DEV_TOOL_ENABLED
 		AddSink(std::make_unique<ConsoleLogSink>(true));
 #endif
 
-		// ƒtƒ@ƒCƒ‹ƒVƒ“ƒN‚Íí‚É“o˜^‚·‚éiÀsƒƒO‚Ì•Û‘¶j
+		// ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½Vï¿½ï¿½ï¿½Nï¿½Íï¿½É“oï¿½^ï¿½ï¿½ï¿½ï¿½iï¿½ï¿½ï¿½sï¿½ï¿½ï¿½Oï¿½Ì•Û‘ï¿½ï¿½j
 		AddSink(std::make_unique<FileLogSink>("ecse_log.txt"));
 
 		DEBUG_LOG(eLogLevel::Log, "Logger initialized.");
@@ -42,7 +42,7 @@ namespace sys
 
 	void Logger::Finalize()
 	{
-		// TODO:ƒƒOo—Í
+		// TODO:ï¿½ï¿½ï¿½Oï¿½oï¿½ï¿½
 		DEBUG_LOG(eLogLevel::Log, "Logger finalized.");
 
 		std::lock_guard lock(sMutex);
@@ -50,7 +50,7 @@ namespace sys
 	}
 
 	/// <summary>
-	/// ƒVƒ“ƒN‚ğ’Ç‰Á‚·‚éBƒXƒŒƒbƒhƒZ[ƒtB
+	/// ï¿½Vï¿½ï¿½ï¿½Nï¿½ï¿½Ç‰ï¿½ï¿½ï¿½ï¿½ï¿½Bï¿½Xï¿½ï¿½ï¿½bï¿½hï¿½Zï¿½[ï¿½tï¿½B
 	/// </summary>
 	void Logger::AddSink(std::unique_ptr<ILogSink> sink)
 	{
@@ -59,7 +59,7 @@ namespace sys
 	}
 	
 	/// <summary>
-	/// ‘SƒVƒ“ƒN‚Ö”z‘—‚·‚éBFatal ‚Ìê‡‚Í MessageBox + DebugBreak ‚às‚¤B
+	/// ï¿½Sï¿½Vï¿½ï¿½ï¿½Nï¿½Ö”zï¿½ï¿½ï¿½ï¿½ï¿½ï¿½BFatal ï¿½Ìê‡ï¿½ï¿½ MessageBox + DebugBreak ï¿½ï¿½ï¿½sï¿½ï¿½ï¿½B
 	/// </summary>
 	void Logger::Dispatch(eLogLevel level, const std::string& message, const std::source_location& location)
 	{
@@ -71,7 +71,7 @@ namespace sys
 			}
 		}
 
-		// Fatal ‚ÌŒãˆ—‚ÍƒVƒ“ƒN‚ÌŠO‚Ås‚¤iƒ~ƒ…[ƒeƒbƒNƒX‚ğè•ú‚µ‚Ä‚©‚çj
+		// Fatal ï¿½ÌŒãˆï¿½ï¿½ï¿½ÍƒVï¿½ï¿½ï¿½Nï¿½ÌŠOï¿½Åsï¿½ï¿½ï¿½iï¿½~ï¿½ï¿½ï¿½[ï¿½eï¿½bï¿½Nï¿½Xï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½j
 		if (level == eLogLevel::Fatal)
 		{
 			std::string detail = std::format(
@@ -87,13 +87,13 @@ namespace sys
 	}
 
 	/// <summary>
-	/// Visual Studio ‚Ìo—ÍƒEƒBƒ“ƒhƒE‚Ö OutputDebugStringA ‚Å‘‚«o‚·ƒVƒ“ƒNB
+	/// Visual Studio ï¿½Ìoï¿½ÍƒEï¿½Bï¿½ï¿½ï¿½hï¿½Eï¿½ï¿½ OutputDebugStringA ï¿½Åï¿½ï¿½ï¿½ï¿½oï¿½ï¿½ï¿½Vï¿½ï¿½ï¿½Nï¿½B
 	/// </summary>
 	void DebugOutputSink::Write(eLogLevel level, std::string_view message, const std::source_location& location)
 	{
 		std::string out;
 
-		// ƒtƒ@ƒCƒ‹–¼‚Æs”Ô†‚Í Warning ˆÈã‚Ì‚İ•t—^‚·‚é
+		// ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½Æsï¿½Ôï¿½ï¿½ï¿½ Warning ï¿½Èï¿½Ì‚İ•tï¿½^ï¿½ï¿½ï¿½ï¿½
 		if (level != eLogLevel::Log)
 		{
 			out = std::format("{}{} [{}({})]\n",
@@ -130,8 +130,8 @@ namespace sys
 	}
 
 	/// <summary>
-	/// AllocConsole ‚Å¶¬‚µ‚½ƒRƒ“ƒ\[ƒ‹ƒEƒBƒ“ƒhƒE‚Ö‘‚«o‚·ƒVƒ“ƒNB
-	/// ƒfƒoƒbƒOƒrƒ‹ƒh‚Å‚Ì‚İ—LŒøB
+	/// AllocConsole ï¿½Åï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Rï¿½ï¿½ï¿½\ï¿½[ï¿½ï¿½ï¿½Eï¿½Bï¿½ï¿½ï¿½hï¿½Eï¿½Öï¿½ï¿½ï¿½ï¿½oï¿½ï¿½ï¿½Vï¿½ï¿½ï¿½Nï¿½B
+	/// ï¿½fï¿½oï¿½bï¿½Oï¿½rï¿½ï¿½ï¿½hï¿½Å‚Ì‚İ—Lï¿½ï¿½ï¿½B
 	/// </summary>
 	void ConsoleLogSink::Write(eLogLevel level, std::string_view message, const std::source_location& location)
 	{
@@ -139,7 +139,7 @@ namespace sys
 
 		std::cout << LevelLabel(level) << message << '\n';
 
-		// ”­¶‰ÓŠ‚Í Warning ˆÈã‚Ì‚İ•\¦‚·‚é
+		// ï¿½ï¿½ï¿½ï¿½ï¿½Óï¿½ï¿½ï¿½ Warning ï¿½Èï¿½Ì‚İ•\ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		if (level != eLogLevel::Log)
 		{
 			std::cout << "  -> " << location.file_name()
@@ -153,20 +153,20 @@ namespace sys
 	void ConsoleLogSink::SetTextColor(eLogLevel level)
 	{
 		HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-		WORD   color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; // ”’iƒfƒtƒHƒ‹ƒgj
+		WORD   color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; // ï¿½ï¿½ï¿½iï¿½fï¿½tï¿½Hï¿½ï¿½ï¿½gï¿½j
 
 		switch (level)
 		{
 		case eLogLevel::Warning:
-			color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;  // ‰©
+			color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;  // ï¿½ï¿½
 			break;
 		case eLogLevel::Error:
-			color = FOREGROUND_RED | FOREGROUND_INTENSITY;                     // Ô
+			color = FOREGROUND_RED | FOREGROUND_INTENSITY;                     // ï¿½ï¿½
 			break;
 		case eLogLevel::Fatal:
 			color = BACKGROUND_RED |
 				FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE |
-				FOREGROUND_INTENSITY;                                       // Ô”wŒiE”’•¶š
+				FOREGROUND_INTENSITY;                                       // ï¿½Ô”wï¿½iï¿½Eï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 			break;
 		default:
 			break;
@@ -185,7 +185,8 @@ namespace sys
 
 	FileLogSink::FileLogSink(std::string_view filePath)
 	{
-		fopen_s(&mFile, filePath.data(), "a");
+		// èµ·å‹•ã®ãŸã³ã«ãƒªã‚»ãƒƒãƒˆã—ã€æœ€å¾Œã«èµ·å‹•ã—ãŸ1å›åˆ†ã®ãƒ­ã‚°ã®ã¿ã‚’æ®‹ã™ï¼ˆ"a"=è¿½è¨˜ã ã¨è‚¥å¤§åŒ–ã—ç¶šã‘ã‚‹ãŸã‚ï¼‰
+		fopen_s(&mFile, filePath.data(), "w");
 	}
 
 	FileLogSink::~FileLogSink()
@@ -198,13 +199,13 @@ namespace sys
 	}
 
 	/// <summary>
-	/// ƒeƒLƒXƒgƒtƒ@ƒCƒ‹‚Öƒ^ƒCƒ€ƒXƒ^ƒ“ƒv•t‚«‚Å’Ç‹L‚·‚éƒVƒ“ƒN
+	/// ï¿½eï¿½Lï¿½Xï¿½gï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½Öƒ^ï¿½Cï¿½ï¿½ï¿½Xï¿½^ï¿½ï¿½ï¿½vï¿½tï¿½ï¿½ï¿½Å’Ç‹Lï¿½ï¿½ï¿½ï¿½Vï¿½ï¿½ï¿½N
 	/// </summary>
 	void FileLogSink::Write(eLogLevel level, std::string_view message, const std::source_location& location)
 	{
 		if (mFile == nullptr) return;
 
-		// ƒ^ƒCƒ€ƒXƒ^ƒ“ƒv‚ğ¶¬‚·‚é
+		// ï¿½^ï¿½Cï¿½ï¿½ï¿½Xï¿½^ï¿½ï¿½ï¿½vï¿½ğ¶ï¿½ï¿½ï¿½ï¿½ï¿½
 		const auto now = std::chrono::system_clock::now();
 		const auto timeStr = std::format("{:%Y-%m-%d %H:%M:%S}", now);
 
@@ -227,7 +228,7 @@ namespace sys
 		}
 
 		fputs(line.c_str(), mFile);
-		fflush(mFile);  // ƒvƒƒZƒX‚ªˆÙíI—¹‚µ‚Ä‚à‘‚«o‚·
+		fflush(mFile);  // ï¿½vï¿½ï¿½ï¿½Zï¿½Xï¿½ï¿½ï¿½Ùï¿½Iï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½oï¿½ï¿½
 
 	}
 

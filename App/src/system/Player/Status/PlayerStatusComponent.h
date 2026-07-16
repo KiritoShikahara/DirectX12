@@ -1,6 +1,7 @@
 #pragma once
 
 #include<Utility/Export/Export.h>
+#include<algorithm>
 
 namespace ecs
 {
@@ -12,7 +13,10 @@ namespace ecs
         float MaxHp = 100.0f; // 最大体力
         float MoveSpeed = 5.0f;   // 移動速度
         float AtkPower = 10.0f;  // 攻撃力
-        float Defense = 0.0f;   // 防御力（被ダメージ軽減に使う）
+        // 防御力（被ダメージ軽減に使う。PlayerContactDamageSystemのkDefenseHalfPoint(50)を
+        // 基準にした半減点方式）。0のままだとMulDefense(乗算バフ)が何倍しても0のままになり
+        // 防御系パークが無意味になるため、非0の初期値を与える
+        float Defense = 20.0f;
         float CooldownRate = 1.0f;   // クールダウン倍率（1.0=等倍、<1で短縮）
     };
 
@@ -53,6 +57,9 @@ namespace ecs
         CurrentStatus  Current;   // Recompute() の結果（参照用）
         float          CurrentHp = 100.0f; // 現在体力
 
+        /// <summary>true の間、被ダメージ判定を無効化する（必殺技演出中等）</summary>
+        bool           IsInvincible = false;
+
         /// <summary>
         /// パーク適用後に呼ぶ：Base × Modifier → Current。
         /// 生成直後にも一度呼び、CurrentHp = Current.MaxHp で初期化すること。
@@ -63,7 +70,10 @@ namespace ecs
             Current.MoveSpeed = Base.MoveSpeed * Modifier.MulMoveSpeed;
             Current.AtkPower = Base.AtkPower * Modifier.MulAtkPower;
             Current.Defense = Base.Defense * Modifier.MulDefense;
-            Current.CooldownRate = Base.CooldownRate * Modifier.MulCooldownRate;
+
+            // クールダウン短縮系パークが積み重なっても0以下(発射間隔が0や負)にならないようクランプする
+            constexpr float kMinCooldownRate = 0.1f;
+            Current.CooldownRate = std::max(kMinCooldownRate, Base.CooldownRate * Modifier.MulCooldownRate);
         }
     };
 }

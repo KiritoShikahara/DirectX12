@@ -1,0 +1,2 @@
+Id,Name,BaseDamage,DamagePerLevel,OrbCount,OrbitRadius,OrbitSpeed,HitRadius,HitInterval,HeightOffset,OrbEffectPath,HitEffectPath
+0,FrostOrb,4,1,2,15,120,4.5,0.5,30,Assets/Effect/Light4.efk,Assets/Effect/HitEffect.efk

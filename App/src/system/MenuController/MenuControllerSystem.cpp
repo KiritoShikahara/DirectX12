@@ -2,7 +2,7 @@
 #include "MenuControllerSystem.h"
 
 #include"MenuControllerComp.h"
-#include<Scene/Title/TitleScene.h>
+#include<Scene/Hub/HubScene.h>
 #include<Scene/Game/GameScene.h>
 
 #include"../macros.h"
@@ -97,10 +97,10 @@ namespace ecs
 			return;
 		}
 
-		// 戻るならタイトル
+		// 戻るならハブ画面（タイトルへ直接戻すと2択の前段が飛ばされてしまうため）
 		if (input.IsActionPressed("Cancel") == true)
 		{
-			::sys::SceneManager::Get().ChangeSceneWithTransition<::scene::TitleScene>();
+			::sys::SceneManager::Get().ChangeSceneWithTransition<::scene::HubScene>();
 			PLAY_SE("Assets/Sound/SE/SE_Select.aud", false, 1, false);
 			return;
 		}

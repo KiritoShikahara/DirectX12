@@ -9,9 +9,15 @@ namespace graphics
 	/// </summary>
 	/// <param name="FilePath">�t�@�C���p�X</param>
 	/// <returns>�Q�Ɨp�̃|�C���^</returns>
-	Texture* TextureManager::GetOrLoad(const std::filesystem::path& FilePath)
+	Texture* TextureManager::GetOrLoad(const std::filesystem::path& FilePath, bool isSRGB)
 	{
 		std::string key = std::filesystem::absolute(FilePath).generic_string();
+		// 同じパスでも色空間の解釈(isSRGB)が異なれば別テクスチャとして扱う。
+		// (色テクスチャ用とデータテクスチャ用で誤って同一キャッシュを共有しないため)
+		if (isSRGB)
+		{
+			key += "|srgb";
+		}
 
 		// ����
 		{
@@ -25,7 +31,7 @@ namespace graphics
 
 		// ロード
 		auto newTexture = std::make_unique<Texture>();
-		if (!newTexture->Create(FilePath))
+		if (!newTexture->Create(FilePath, isSRGB))
 		{
 			return nullptr;
 		}

@@ -3,6 +3,7 @@
 #include<entt/entt.hpp>
 #include<Utility/Export/Export.h>
 #include<DirectXMath.h>
+#include<vector>
 #include<ecs/component/collider/ColliderComponent.h>
 #include<ecs/component/rigidbody/RigidbodyComponent.h>
 #include <Jolt/Physics/Collision/Shape/Shape.h>
@@ -50,7 +51,7 @@ namespace sys
         static void SyncFromTransform(entt::registry& registry);
 
         /// <summary>
-        /// フレーム末尾に CollisionEnterEvent / SensorEnterEvent を全削除する。
+        /// フレーム末尾に CollisionEnterEvent / CollisionStayEvent / SensorEnterEvent / SensorStayEvent を全削除する。
         /// PostUpdate フェーズで呼ぶこと。
         /// </summary>
         static void ClearCollisionEvents(entt::registry& registry);
@@ -84,6 +85,20 @@ namespace sys
             float maxDistance,
             entt::entity& outEntity,
             DirectX::XMFLOAT3& outHitPoint);
+
+        /// <summary>
+        /// 球形範囲と重なっている Body を全て entt::entity として収集する(範囲攻撃等で使用)。
+        /// Collider を持たないエンティティは対象にならない。センサー/通常Bodyを問わず収集するため、
+        /// 対象を絞りたい場合は呼び出し側でタグ等によるフィルタを行うこと。
+        /// </summary>
+        /// <param name="center">球の中心(ワールド座標)</param>
+        /// <param name="radius">球の半径</param>
+        /// <param name="outEntities">重なっているエンティティを追加する(呼び出し前にクリアしない)</param>
+        static void OverlapSphere(
+            entt::registry& registry,
+            const DirectX::XMFLOAT3& center,
+            float radius,
+            std::vector<entt::entity>& outEntities);
 
         /// <summary>
         /// entt 側で RigidBodyComponent(またはエンティティごと)が破棄される直前に呼ばれる。

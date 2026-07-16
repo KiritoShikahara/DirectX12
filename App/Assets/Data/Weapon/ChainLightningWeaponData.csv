@@ -1,0 +1,2 @@
+Id,Name,FireInterval,BaseDamage,DamagePerLevel,DamageFalloffPerJump,SearchRadius,JumpRadius,MaxJumps,HeightOffset,HitEffectPath,HitEffectScale
+0,ChainLightning,1.2,6,1.5,0.75,80,25,3,30,Assets/Effect/AttackHit.efk,4

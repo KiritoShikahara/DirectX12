@@ -15,42 +15,42 @@ namespace graphics
 		virtual ~Texture();
 
 		/// <summary>
-		/// ƒŠƒ\[ƒX‚Ìì¬
+		/// ï¿½ï¿½ï¿½\ï¿½[ï¿½Xï¿½Ìì¬
 		/// </summary>
-		/// <param name="FilePath">ƒeƒNƒXƒ`ƒƒƒtƒ@ƒCƒ‹‚ÌƒpƒX</param>
-		/// <returns>ì¬‚É¬Œ÷‚µ‚½ê‡‚ÍtrueA¸”s‚µ‚½ê‡‚Ífalse</returns>
-		bool Create(const std::filesystem::path& FilePath);
+		/// <param name="FilePath">ï¿½eï¿½Nï¿½Xï¿½`ï¿½ï¿½ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½Ìƒpï¿½X</param>
+		/// <returns>ï¿½ì¬ï¿½Éï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ê‡ï¿½ï¿½trueï¿½Aï¿½ï¿½ï¿½sï¿½ï¿½ï¿½ï¿½ï¿½ê‡ï¿½ï¿½false</returns>
+		bool Create(const std::filesystem::path& FilePath, bool isSRGB = false);
 
 		/// <summary>
-		/// ƒŠƒ\[ƒX‚Ì‰ğ•ú
+		/// ï¿½ï¿½ï¿½\ï¿½[ï¿½Xï¿½Ì‰ï¿½ï¿½
 		/// </summary>
 		void Release();
 
 		/// <summary>
-		/// Š„‚è“–‚Ä‚ç‚ê‚½ƒCƒ“ƒfƒbƒNƒX
+		/// ï¿½ï¿½ï¿½è“–ï¿½Ä‚ï¿½ê‚½ï¿½Cï¿½ï¿½ï¿½fï¿½bï¿½Nï¿½X
 		/// </summary>
 		/// <returns></returns>
 		uint32_t GetDescriptorIndex() const;
 
 		/// <summary>
-		/// Š„‚è“–‚Ä‚ç‚ê‚½Gpuƒnƒ“ƒhƒ‹‚Ìæ“¾
+		/// ï¿½ï¿½ï¿½è“–ï¿½Ä‚ï¿½ê‚½Gpuï¿½nï¿½ï¿½ï¿½hï¿½ï¿½ï¿½Ìæ“¾
 		/// </summary>
 		/// <returns></returns>
 		D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandle() const;
 
 		/// <summary>
-		/// ƒeƒNƒXƒ`ƒƒ‚Ì•
+		/// ï¿½eï¿½Nï¿½Xï¿½`ï¿½ï¿½ï¿½Ì•ï¿½
 		/// </summary>
 		/// <returns></returns>
 		float GetWidth()const;
 		/// <summary>
-		/// ƒeƒNƒXƒ`ƒƒ‚Ì‚‚³
+		/// ï¿½eï¿½Nï¿½Xï¿½`ï¿½ï¿½ï¿½Ìï¿½ï¿½ï¿½
 		/// </summary>
 		/// <returns></returns>
 		float GetHeight()const;
 
 		/// <summary>
-		/// ƒŠƒ\[ƒX‚Ìæ“¾
+		/// ï¿½ï¿½ï¿½\ï¿½[ï¿½Xï¿½Ìæ“¾
 		/// </summary>
 		/// <returns></returns>
 		ID3D12Resource* GetResource() const;
@@ -58,25 +58,25 @@ namespace graphics
 		bool IsValid()   const { return mSrvHeap.IsValid(); }
 	private:
 		/// <summary>
-		/// ƒŠƒ\[ƒX
+		/// ï¿½ï¿½ï¿½\ï¿½[ï¿½X
 		/// </summary>
 		Resource mResource;
 		/// <summary>
-		/// ƒƒ‚ƒŠŠ„‚è“–‚Äî•ñ
+		/// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½è“–ï¿½Äï¿½ï¿½
 		/// </summary>
 		MAAllocation mAllocation;
 
 		/// <summary>
-		/// SRV—p‚ÌƒfƒBƒXƒNƒŠƒvƒ^ƒXƒƒbƒg
+		/// SRVï¿½pï¿½Ìƒfï¿½Bï¿½Xï¿½Nï¿½ï¿½ï¿½vï¿½^ï¿½Xï¿½ï¿½ï¿½bï¿½g
 		/// </summary>
 		graphics::GDescriptorHeap mSrvHeap;
 
 		/// <summary>
-		/// ƒeƒNƒXƒ`ƒƒ‰¡•
+		/// ï¿½eï¿½Nï¿½Xï¿½`ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		/// </summary>
 		float mWidth;
 		/// <summary>
-		/// ƒeƒNƒXƒ`ƒƒc•
+		/// ï¿½eï¿½Nï¿½Xï¿½`ï¿½ï¿½ï¿½cï¿½ï¿½
 		/// </summary>
 		float mHeight;
 	};

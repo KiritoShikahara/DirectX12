@@ -3,6 +3,7 @@
 
 #include"PlayerMovementComponent.h"
 #include"../State/PlayerStateComponent.h"
+#include"../Status/PlayerStatusComponent.h"
 #include<system/MoveDirection/MoveDirectionComponent.h>
 
 namespace ecs
@@ -10,7 +11,7 @@ namespace ecs
 	void PlayerMovementSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
 		registry.view<ecs::PlayerMovementComponent, ecs::PlayerStateComponent, ecs::RigidBodyComponent, ecs::MoveDirectionComponent>().each(
-			[&](ecs::PlayerMovementComponent& movement, ecs::PlayerStateComponent& state, ecs::RigidBodyComponent& rb, ecs::MoveDirectionComponent& moveDir)
+			[&](entt::entity entity, ecs::PlayerMovementComponent& movement, ecs::PlayerStateComponent& state, ecs::RigidBodyComponent& rb, ecs::MoveDirectionComponent& moveDir)
 			{
 				if (state.CurrentState != ecs::ePlayerState::Move)
 				{
@@ -25,8 +26,17 @@ namespace ecs
 					return;
 				}
 
+				// PlayerStatusComponent::Current.MoveSpeed(パークで強化される値)は
+				// MaxSpeedとは単位が異なるため、Base比の比率として掛け合わせる
+				float speedMultiplier = 1.0f;
+				if (const auto* status = registry.try_get<ecs::PlayerStatusComponent>(entity);
+					status != nullptr && status->Base.MoveSpeed > 0.0f)
+				{
+					speedMultiplier = status->Current.MoveSpeed / status->Base.MoveSpeed;
+				}
+
 				const DirectX::XMFLOAT3 horizontalVelocity =
-					ComputeHorizontalVelocity(movement, deltaTime);
+					ComputeHorizontalVelocity(movement, deltaTime, speedMultiplier);
 
 				rb.MoveVelocity.x = horizontalVelocity.x;
 				rb.MoveVelocity.z = horizontalVelocity.z;
@@ -44,7 +54,7 @@ namespace ecs
 			});
 	}
 
-	DirectX::XMFLOAT3 PlayerMovementSystem::ComputeHorizontalVelocity(ecs::PlayerMovementComponent& movement, float deltaTime)
+	DirectX::XMFLOAT3 PlayerMovementSystem::ComputeHorizontalVelocity(ecs::PlayerMovementComponent& movement, float deltaTime, float speedMultiplier)
 	{
 		using namespace DirectX;
 
@@ -54,17 +64,18 @@ namespace ecs
 
 		const XMVECTOR dir = hasInput ? XMVector3Normalize(input) : XMVectorZero();
 		const float inputScale = std::min(inputLen, 1.0f);
+		const float maxSpeed = movement.MaxSpeed * speedMultiplier;
 
 		if (!movement.UseAcceleration)
 		{
-			movement.CurrentSpeed = hasInput ? movement.MaxSpeed * inputScale : 0.f;
+			movement.CurrentSpeed = hasInput ? maxSpeed * inputScale : 0.f;
 
 			XMFLOAT3 immediateResult;
 			XMStoreFloat3(&immediateResult, dir * movement.CurrentSpeed);
 			return immediateResult;
 		}
 
-		const float targetSpeed = hasInput ? movement.MaxSpeed * inputScale : 0.f;
+		const float targetSpeed = hasInput ? maxSpeed * inputScale : 0.f;
 		const float rate = hasInput ? movement.Acceleration : movement.Deceleration;
 
 		const float diff = targetSpeed - movement.CurrentSpeed;

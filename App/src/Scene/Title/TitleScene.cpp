@@ -12,6 +12,12 @@ namespace scene
 {
 	void TitleScene::Initialize()
 	{
+		// TimeScaleはプロセス全体で共有され、シーンを跨いでも持ち越される。
+		// GameOver/PerkSelect等でTimeScale=0.0のままResult→Titleへ遷移してくるケースがあるため、
+		// 一時停止の概念が無いTitleでは必ず1.0へ戻す
+		// （深く止めるとGlowAnimation等rawDeltaTime依存の演出しか動かなくなる）。
+		GetTime().SetTimeScale(1.0);
+
 		CreateCompSystem();
 
 		LoadResource();

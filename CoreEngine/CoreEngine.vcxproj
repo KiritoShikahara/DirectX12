@@ -188,6 +188,7 @@
     <ClInclude Include="src\graphics\PrimitiveModel\Generator\GeometryGenerator.h" />
     <ClInclude Include="src\system\Physics\ContactListener\ContactListener.h" />
     <ClInclude Include="src\ecs\component\collider\ColliderComponent.h" />
+    <ClInclude Include="src\ecs\component\Debug\DebugWireSphereComponent.h" />
     <ClInclude Include="src\ecs\component\rigidbody\RigidbodyComponent.h" />
     <ClInclude Include="src\ecs\system\manager\ComponentSystemManager.h" />
     <ClInclude Include="src\audio\BGM\BGMStream.h" />

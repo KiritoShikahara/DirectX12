@@ -96,6 +96,16 @@ namespace data
             mDb.exec(sql);
         }
 
+        // テーブルを削除する。CREATE TABLE IF NOT EXISTS(EnsureTable)は既存テーブルの列構成を
+        // 更新しないため、フィールド追加/削除等のスキーマ変更時はこれで一度削除してから
+        // SaveAll<T>()等を呼び、新しい列構成で作り直す
+        template<typename T>
+        void DropTable()
+        {
+            const char* table = TypeDescriptor<T>::TableName();
+            mDb.exec(std::string("DROP TABLE IF EXISTS ") + table + ";");
+        }
+
         template<typename T>
         std::vector<T> LoadAll()
         {

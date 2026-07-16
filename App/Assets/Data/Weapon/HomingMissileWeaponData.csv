@@ -1,0 +1,2 @@
+Id,Name,FireInterval,ProjectileSpeed,TurnSpeed,BaseDamage,DamagePerLevel,BaseExplosionRadius,ExplosionRadiusPerLevel,HitRadiusMultiplier,ProjectileLifeTime,SearchRadius,HeightOffset,ProjectileEffectPath,ExplosionEffectPath
+0,HomingMissile,0.6,55,320,6,1.5,10,1.5,2,4,80,30,Assets/Effect/PhantasmMeteor.efk,Assets/Effect/Skill1Hit.efk

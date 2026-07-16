@@ -98,6 +98,15 @@ namespace graphics
 			const DirectX::XMFLOAT3& to,
 			const DirectX::XMFLOAT4& color);
 
+		/// <summary>
+		/// ワイヤーフレーム球を構築する（XY/XZ/YZの3つの円で近似）。
+		/// DebugWireSphereComponent の可視化用。
+		/// </summary>
+		void PushWireSphere(
+			const DirectX::XMFLOAT3& center,
+			float radius,
+			const DirectX::XMFLOAT4& color);
+
 	private:
 		std::unique_ptr<graphics::LinePipeline> mPipeline;
 

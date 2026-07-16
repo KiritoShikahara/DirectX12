@@ -12,6 +12,13 @@ namespace scene
 {
 	void MenuScene::Initialize()
 	{
+		// TimeScaleはプロセス全体で共有され、シーンを跨いでも持ち越される。
+		// GameOver等でTimeScale=0.0のままTitle→Menuへ遷移してくるケースがあるため、
+		// 一時停止の概念が無いMenuでは必ず1.0へ戻す
+		// （MenuSlideSystemはdeltaTime依存のため、0.0のままだと選択インデックスは
+		// 正しく更新されるのにスライド移動だけ起きない、という不具合になる）。
+		GetTime().SetTimeScale(1.0);
+
 		// システム
 		CreateUserSystem();
 
@@ -115,6 +122,11 @@ namespace scene
 		auto& MenuControllerComp = manager.AddComponent<::ecs::MenuControllerComp>(ent_MenuController);
 		MenuControllerComp.WindowWidth = static_cast<float>(::sys::Window::Get().GetVirtualWidth());
 
+		// MenuPagingSystem の TargetX 計算式(centerX + diff * WindowWidth、diff=pageIndex-CurrentlySelectedIdx)
+		// と初期配置を一致させるための中央オフセット。これが無いと選択中(page0)がX=0(画面左端)を
+		// 中心に配置され、Pivot={0.5,0.5}のため画像の左半分が画面外に出た状態で表示されてしまう。
+		const float centerX = MenuControllerComp.WindowWidth * 0.5f;
+
 		// 読み込み成功したページ数
 		uint32_t pageIndex = 0;
 		float Height = ::sys::Window::Get().GetVirtualHeight() / 2;
@@ -141,8 +153,8 @@ namespace scene
 
 			auto& slide = manager.AddComponent<::ecs::MenuSlideComp>(entity);
 
-			// 初期座標
-			const float restX = static_cast<float>(pageIndex) * MenuControllerComp.WindowWidth;
+			// 初期座標(MenuPagingSystemのTargetX計算式と一致させる)
+			const float restX = centerX + static_cast<float>(pageIndex) * MenuControllerComp.WindowWidth;
 			transform.Set2DPosition(restX, Height);
 			slide.TargetX = restX;
 

@@ -1,7 +1,13 @@
-#pragma once
+﻿#pragma once
 
 #include<system/Scene/IScene.h>
 #include<system/Enemy/Status/EnemyStatusDebugPanel.h>
+#include<Scene/Game/Debug/GameStatusDebugPanel.h>
+#include<Scene/Game/Wave/WaveDebugPanel.h>
+#include<system/Player/Weapon/SingleShot/SingleShotWeaponDebugPanel.h>
+#include<Scene/Game/Debug/WeaponInventoryDebugPanel.h>
+#include<system/Player/Ultimate/UltimateDebugPanel.h>
+#include<Data/Save/PlayerSaveDebugPanel.h>
 
 #include<memory>
 
@@ -39,6 +45,12 @@ namespace scene
 		uint32_t mSpellID = 1001;
 
 		std::unique_ptr<debug::EnemyStatusDebugPanel> mEnemyStatusDebugPanel;
+		std::unique_ptr<debug::GameStatusDebugPanel> mGameStatusDebugPanel;
+		std::unique_ptr<debug::WaveDebugPanel> mWaveDebugPanel;
+		std::unique_ptr<debug::SingleShotWeaponDebugPanel> mSingleShotWeaponDebugPanel;
+		std::unique_ptr<debug::WeaponInventoryDebugPanel> mWeaponInventoryDebugPanel;
+		std::unique_ptr<debug::UltimateDebugPanel> mUltimateDebugPanel;
+		std::unique_ptr<debug::PlayerSaveDebugPanel> mPlayerSaveDebugPanel;
 	};
 }
 

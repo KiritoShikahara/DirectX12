@@ -7,14 +7,14 @@ namespace ecs
 {
     struct ENGINE_API PlayerMovementComponent
     {
-        float MaxSpeed = 50.0f; // Å‘å‘¬“x
-        float Acceleration = 100.0f; // ‰Á‘¬“x
-        float Deceleration = 20.0f; // Œ¸Š—Ê
+        float MaxSpeed = 75.0f; // ï¿½Å‘å‘¬ï¿½x
+        float Acceleration = 100.0f; // ï¿½ï¿½ï¿½ï¿½ï¿½x
+        float Deceleration = 20.0f; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-        DirectX::XMFLOAT3 MoveInput = { 0.f, 0.f, 0.f }; // ˆÚ“®—Ê
+        DirectX::XMFLOAT3 MoveInput = { 0.f, 0.f, 0.f }; // ï¿½Ú“ï¿½ï¿½ï¿½
 
-        float CurrentSpeed = 0.0f; // ¡‚Ì‘¬“x
+        float CurrentSpeed = 0.0f; // ï¿½ï¿½ï¿½Ì‘ï¿½ï¿½x
 
-        bool UseAcceleration = false; // Ô‚È‚Ç‚Å‰Á‘¬“x‚ğg—p‚·‚é‚©‚Ç‚¤‚© true:g—p‚·‚é
+        bool UseAcceleration = false; // ï¿½Ô‚È‚Ç‚Å‰ï¿½ï¿½ï¿½ï¿½xï¿½ï¿½ï¿½gï¿½pï¿½ï¿½ï¿½é‚©ï¿½Ç‚ï¿½ï¿½ï¿½ true:ï¿½gï¿½pï¿½ï¿½ï¿½ï¿½
     };
 }

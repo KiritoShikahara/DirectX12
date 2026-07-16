@@ -1,0 +1,2 @@
+Id,Name,FireInterval,BaseDamage,DamagePerLevel,BaseRadius,RadiusPerLevel,HitRadiusMultiplier,SearchRadius,MaxTargets,Duration,TickInterval,ForwardOffset,EffectPath
+0,IceSpike,1,8,2,15,1.5,2,105,5,2,0.5,3,Assets/Effect/LightningStrike.efk

@@ -267,6 +267,9 @@
     <ClInclude Include="src\ecs\component\collider\ColliderComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\ecs\component\Debug\DebugWireSphereComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="src\ecs\component\rigidbody\RigidbodyComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>

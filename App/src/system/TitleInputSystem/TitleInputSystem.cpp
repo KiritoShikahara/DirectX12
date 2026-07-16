@@ -1,16 +1,16 @@
 #include "apppch.h"
 #include "TitleInputSystem.h"
-#include <Scene/Menu/MenuScene.h>
+#include <Scene/Hub/HubScene.h>
 
 void sys::TitleInputSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 {
 
 	auto& input = ::sys::InputManager::Get();
 
-	// セレクトなら SE + メニュー画面遷移
+	// セレクトなら SE + ハブ画面遷移（武器・ステージ選択/ステータス強化の2択はHubSceneが担当）
 	if (input.IsActionPressed("Select") == true)
 	{
-		::sys::SceneManager::Get().ChangeSceneWithTransition<::scene::MenuScene>();
+		::sys::SceneManager::Get().ChangeSceneWithTransition<::scene::HubScene>();
 		PLAY_SE("Assets/Sound/SE/SE_Select.aud",false,1,false);
 	}
 

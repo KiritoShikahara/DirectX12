@@ -1,0 +1,2 @@
+Id,Name,FireInterval,BaseDamage,DamagePerLevel,BaseRadius,RadiusPerLevel,HitRadiusMultiplier,SearchRadius,MeteorCount,HeightOffset,EffectPath
+0,Meteor,4,20,5,12,1.5,1.5,60,3,0,Assets/Effect/PhantasmMeteor.efk;Assets/Effect/Fire7.efk

@@ -1,0 +1,2 @@
+Id,Name,FireInterval,ProjectileSpeed,BaseDamage,DamagePerLevel,BaseExplosionRadius,ExplosionRadiusPerLevel,HitRadiusMultiplier,ProjectileLifeTime,HeightOffset,ProjectileEffectPath,ExplosionEffectPath
+0,FireBolt,0.8,60,12,3,15,2,2,2,30,Assets/Effect/Fire3.efk,Assets/Effect/Blow2.efk

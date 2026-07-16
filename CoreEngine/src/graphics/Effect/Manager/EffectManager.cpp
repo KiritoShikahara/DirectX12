@@ -113,13 +113,31 @@ namespace graphics
 
                 if (!effect.IsVisible) return;
 
+                // Transform に追従する位置を解決する（無ければ Offset を直接座標として使う）。
+                // Play() での初回再生位置と SetLocation() での追従先を同じ値にするため、
+                // ここで一度だけ計算して使い回す（バラバラに計算すると再生直後の1フレームだけ
+                // Offset(原点扱い)に表示されてから追従先へ飛ぶ、という表示不具合になる）。
+                ecs::Transform* targetTrans = nullptr;
+
+                if (effect.Parent != entt::null && registry.valid(effect.Parent))
+                    targetTrans = registry.try_get<ecs::Transform>(effect.Parent);
+                else
+                    targetTrans = registry.try_get<ecs::Transform>(entity);
+
+                const DirectX::XMFLOAT3 worldPos = targetTrans
+                    ? DirectX::XMFLOAT3{
+                        targetTrans->GetPosition().x + effect.Offset.x,
+                        targetTrans->GetPosition().y + effect.Offset.y,
+                        targetTrans->GetPosition().z + effect.Offset.z }
+                    : effect.Offset;
+
                 // 再生終了していたら
                 if (!effect.Effect.IsPlaying())
                 {
                     if (effect.IsLoop== true && effect.Asset != nullptr)
                     {
-                        // ループ: 再スタート
-                        effect.Effect.Play(effect.Asset, effect.Offset, effect.Effect.ShouldDestroy());
+                        // ループ: 現在の追従先座標から再スタート
+                        effect.Effect.Play(effect.Asset, worldPos, effect.Effect.ShouldDestroy());
                     }
                     else
                     {
@@ -130,25 +148,10 @@ namespace graphics
                     }
                 }
 
-                // Transform に追従する位置・回転・スケールの更新
-                ecs::Transform* targetTrans = nullptr;
-
-                if (effect.Parent != entt::null && registry.valid(effect.Parent))
-                    targetTrans = registry.try_get<ecs::Transform>(effect.Parent);
-                else
-                    targetTrans = registry.try_get<ecs::Transform>(entity);
+                effect.Effect.SetLocation(worldPos);
 
                 if (targetTrans)
                 {
-                    // 位置 = Transform.Position + Offset
-                    const auto& pos = targetTrans->GetPosition();
-                    DirectX::XMFLOAT3 finalPos = {
-                        pos.x + effect.Offset.x,
-                        pos.y + effect.Offset.y,
-                        pos.z + effect.Offset.z
-                    };
-                    effect.Effect.SetLocation(finalPos);
-
                     // スケール = Transform.Scale * EffectComponent.Scale
                     const auto& trScale = targetTrans->GetScale();
                     effect.Effect.SetScale({
@@ -159,10 +162,10 @@ namespace graphics
                 }
                 else
                 {
-                    // Transform が無い場合は Offset を直接座標として使う
-                    effect.Effect.SetLocation(effect.Offset);
                     effect.Effect.SetScale(effect.Scale);
                 }
+
+                effect.Effect.SetRotation(effect.Rotation);
 
             });
 

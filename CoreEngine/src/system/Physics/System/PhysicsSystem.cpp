@@ -12,6 +12,8 @@
 #include <Jolt/Physics/Collision/RayCast.h>
 #include <Jolt/Physics/Collision/CastResult.h>
 #include <Jolt/Physics/Collision/NarrowPhaseQuery.h>
+#include <Jolt/Physics/Collision/CollideShape.h>
+#include <Jolt/Physics/Collision/CollisionCollectorImpl.h>
 
 // ECS
 #include<ecs/component/transform/TransformComponent.h>
@@ -315,15 +317,15 @@ namespace sys
     }
 
     /// <summary>
-    /// フレーム末尾に CollisionEnterEvent / SensorEnterEvent を全削除する。
+    /// フレーム末尾に CollisionEnterEvent / CollisionStayEvent / SensorEnterEvent / SensorStayEvent を全削除する。
     /// PostUpdate フェーズで呼ぶこと。
     /// </summary>
     void PhysicsSystem::ClearCollisionEvents(entt::registry& registry)
     {
         registry.clear<ecs::CollisionEnterEvent>();
+        registry.clear<ecs::CollisionStayEvent>();
         registry.clear<ecs::SensorEnterEvent>();
-
-
+        registry.clear<ecs::SensorStayEvent>();
     }
 
     /// <summary>
@@ -405,6 +407,47 @@ namespace sys
         const JPH::RVec3 hitPos = ray.mOrigin + hit.mFraction * ray.mDirection;
         outHitPoint = FromJolt(JPH::Vec3(hitPos));
         return true;
+    }
+
+    /// <summary>
+    /// 球形範囲と重なっている Body を全て entt::entity として収集する(範囲攻撃等で使用)。
+    /// </summary>
+    void PhysicsSystem::OverlapSphere(
+        entt::registry& registry,
+        const DirectX::XMFLOAT3& center,
+        float radius,
+        std::vector<entt::entity>& outEntities)
+    {
+        auto& mgr = PhysicsManager::Get();
+        if (!mgr.IsInitialized())
+        {
+            return;
+        }
+
+        JPH::SphereShape sphere(radius);
+        const JPH::RMat44 transform = JPH::RMat44::sTranslation(ToJolt(center));
+
+        JPH::CollideShapeSettings settings;
+        JPH::AllHitCollisionCollector<JPH::CollideShapeCollector> collector;
+
+        mgr.GetPhysicsSystem().GetNarrowPhaseQuery().CollideShape(
+            &sphere,
+            JPH::Vec3::sReplicate(1.0f),
+            transform,
+            settings,
+            JPH::RVec3::sZero(),
+            collector);
+
+        auto& bodyInterface = mgr.GetBodyInterface();
+        for (const auto& hit : collector.mHits)
+        {
+            const uint64_t userData = bodyInterface.GetUserData(hit.mBodyID2);
+            const entt::entity entity = static_cast<entt::entity>(static_cast<uint32_t>(userData));
+            if (registry.valid(entity))
+            {
+                outEntities.push_back(entity);
+            }
+        }
     }
 
     /// <summary>

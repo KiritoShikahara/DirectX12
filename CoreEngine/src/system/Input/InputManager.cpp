@@ -22,16 +22,21 @@ namespace sys
         AddAction("Sprint", { { eKeyCode::LShift }, { ePadButton::L1 }, {} });
         AddAction("Select", { { eKeyCode::Space }, { ePadButton::A }, { eMouseButton::Left } });
         AddAction("Cancel", { { eKeyCode::Escape }, { ePadButton::B }, {} });
+        AddAction("Delete", { { eKeyCode::Delete }, {}, {} });
         AddAction("Attack", { {}, { ePadButton::R2 }, { eMouseButton::Left } });
+        AddAction("Attack2", { {}, { ePadButton::L2 }, { eMouseButton::Right } });
         AddAction("Interact", { { eKeyCode::F }, { ePadButton::X }, {} });
         AddAction("MoveRight", { { eKeyCode::D }, { ePadButton::DPadRight }, {} });
         AddAction("MoveLeft", { { eKeyCode::A }, { ePadButton::DPadLeft }, {} });
         AddAction("Skill1", { { eKeyCode::Q }, { ePadButton::L1 }, {} });
         AddAction("Skill2", { { eKeyCode::E }, { ePadButton::R1 }, {} });
+        AddAction("Ultimate", { { eKeyCode::Q }, { ePadButton::R1 }, {} });
 
         AddAction("Option", { { eKeyCode::Escape }, { ePadButton::Menu }, {} });
         AddAction("MenuRight", { { eKeyCode::D,eKeyCode::Right }, { ePadButton::DPadRight }, {} });
         AddAction("MenuLeft", { { eKeyCode::A,eKeyCode::Left }, { ePadButton::DPadLeft },  {} });
+        AddAction("MenuUp", { { eKeyCode::W,eKeyCode::Up }, { ePadButton::DPadUp },  {} });
+        AddAction("MenuDown", { { eKeyCode::S,eKeyCode::Down }, { ePadButton::DPadDown },  {} });
 
         /*
         * ImGuiに登録

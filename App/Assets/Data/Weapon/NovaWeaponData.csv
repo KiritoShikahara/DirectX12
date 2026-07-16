@@ -1,0 +1,2 @@
+Id,Name,PulseInterval,BaseDamage,DamagePerLevel,BaseRadius,RadiusPerLevel,HitRadiusMultiplier,HeightOffset,EffectPath
+0,Nova,1.5,10,3,15,2,2,30,Assets/Effect/Herald.efk

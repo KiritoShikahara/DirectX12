@@ -39,7 +39,26 @@ namespace sys
 		}
 
 		UpdateSelection(registry, selectPressed);
+
+		if (input.IsActionPressed("Delete"))
+		{
+			DeleteSelected(registry);
+		}
+
 		UpdateDrag(registry, selectHeld);
+	}
+
+	void EditorSystem::DeleteSelected(entt::registry& registry)
+	{
+		auto selectedView = registry.view<ecs::SelectedTag, ecs::PlaceableTag>();
+		if (selectedView.begin() == selectedView.end())
+		{
+			return;
+		}
+
+		const entt::entity selected = *selectedView.begin();
+		registry.destroy(selected);
+		mIsDragging = false;
 	}
 
 	bool EditorSystem::UpdatePlacement(entt::registry& registry, bool selectPressed)

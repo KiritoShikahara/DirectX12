@@ -195,6 +195,22 @@ namespace sys
 			ImGui::Separator();
 		}
 
+		// Play中は編集操作(削除含む)を無効化する(Placement Palette等と同じ方針)
+		ImGui::BeginDisabled(sys::EditorManager::Get().IsPlaying());
+		ImGui::PushStyleColor(ImGuiCol_Button, { 0.6f, 0.15f, 0.15f, 1.0f });
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.8f, 0.2f, 0.2f, 1.0f });
+		const bool deletePressed = ImGui::Button("Delete Object");
+		ImGui::PopStyleColor(2);
+		ImGui::EndDisabled();
+		ImGui::Separator();
+
+		if (deletePressed)
+		{
+			sys::EditorSystem::Get().DeleteSelected(registry);
+			ImGui::End();
+			return;
+		}
+
 		if (auto* transform = registry.try_get<ecs::Transform>(entity))
 		{
 			if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))

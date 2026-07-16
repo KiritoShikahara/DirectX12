@@ -19,24 +19,25 @@ namespace graphics
 		SINGLETON_ACCESSOR(TextureManager);
 
 		/// <summary>
-		/// ƒeƒNƒXƒ`ƒƒ‚Ìæ“¾Aƒ~ƒ[ƒh‚È‚çƒ[ƒh‚·‚éB
+		/// ï¿½eï¿½Nï¿½Xï¿½`ï¿½ï¿½ï¿½Ìæ“¾ï¿½Aï¿½~ï¿½ï¿½ï¿½[ï¿½hï¿½È‚çƒï¿½[ï¿½hï¿½ï¿½ï¿½ï¿½B
 		/// </summary>
-		/// <param name="FilePath">ƒtƒ@ƒCƒ‹ƒpƒX</param>
-		/// <returns>QÆ—p‚Ìƒ|ƒCƒ“ƒ^</returns>
-		Texture* GetOrLoad(const std::filesystem::path& FilePath);
+		/// <param name="FilePath">ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½pï¿½X</param>
+		/// <param name="isSRGB">trueï¿½È‚ï¿½SRVï¿½ï¿½sRGBï¿½Æ‚ï¿½ï¿½Ä‰ï¿½ï¿½ß‚ï¿½ï¿½ï¿½(Albedo/Emissiveï¿½È‚Ç Fï¿½eï¿½Nï¿½Xï¿½`ï¿½ï¿½ï¿½p)</param>
+		/// <returns>ï¿½Qï¿½Æ—pï¿½Ìƒ|ï¿½Cï¿½ï¿½ï¿½^</returns>
+		Texture* GetOrLoad(const std::filesystem::path& FilePath, bool isSRGB = false);
 
 		/// <summary>
-		/// ‚·‚×‚Ä‚ÌƒeƒNƒXƒ`ƒƒ‚ğ‰ğ•ú‚·‚éB
+		/// ï¿½ï¿½ï¿½×‚Ä‚Ìƒeï¿½Nï¿½Xï¿½`ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½B
 		/// </summary>
 		void Clear();
 	private:
 		/// <summary>
-		/// ƒŠƒ\[ƒX‘S‘Ì
+		/// ï¿½ï¿½ï¿½\ï¿½[ï¿½Xï¿½Sï¿½ï¿½
 		/// </summary>
 		std::unordered_map<std::string, std::unique_ptr<Texture>> mResources;
 
 		/// <summary>
-		/// ”r‘¼§Œä
+		/// ï¿½rï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		/// </summary>
 		std::mutex mMutex;
 

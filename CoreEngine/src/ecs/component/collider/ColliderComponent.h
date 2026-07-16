@@ -71,9 +71,30 @@ namespace ecs
     };
 
     /// <summary>
+    /// 衝突継続イベント。衝突が継続している間、毎フレーム発行される
+    /// （開始フレームも含む）。接触している間ずっと処理したい
+    /// （継続ダメージのクールダウン判定など）場合はこちらを使う。
+    /// </summary>
+    struct ENGINE_API CollisionStayEvent
+    {
+        std::vector<entt::entity> OtherEntities;
+    };
+
+    /// <summary>
 	/// センサーへの侵入イベント。センサーに他のエンティティが侵入したフレームに発行される。
     /// </summary>
     struct ENGINE_API SensorEnterEvent
+    {
+        std::vector<entt::entity> Visitors;
+    };
+
+    /// <summary>
+    /// センサー継続侵入イベント。センサーに他のエンティティが侵入している間、毎フレーム発行される
+    /// （開始フレームも含む）。密着し続けている間も繰り返し判定したい（周回する持続武器の
+    /// ヒットクールダウン判定など）場合は、1回しか発行されないSensorEnterEventではなく
+    /// こちらを使う。
+    /// </summary>
+    struct ENGINE_API SensorStayEvent
     {
         std::vector<entt::entity> Visitors;
     };

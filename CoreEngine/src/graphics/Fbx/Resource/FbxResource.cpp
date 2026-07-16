@@ -65,10 +65,13 @@ namespace graphics
                 if (size > 0) fread(s.data(), 1, size, fp);
             };
 
-        auto LoadTex = [&](const std::string& relPath) -> Texture*
+        // isSRGB: Albedo/EmissiveはsRGBエンコードされた色情報のため、
+        // SRVをsRGBとして解釈し線形空間で正しくライティング計算できるようにする。
+        // Normal/Metallic/Roughness/AOは非色データのため線形のまま扱う。
+        auto LoadTex = [&](const std::string& relPath, bool isSRGB) -> Texture*
             {
                 if (relPath.empty()) return nullptr;
-                return texManager.GetOrLoad((baseDir / relPath).string());
+                return texManager.GetOrLoad((baseDir / relPath).string(), isSRGB);
             };
 
         // ---- ヘッダー ----
@@ -128,12 +131,12 @@ namespace graphics
             ReadStr(aoPath);
             ReadStr(emissivePath);
 
-            sec.AlbedoTexture = LoadTex(albedoPath);
-            sec.NormalTexture = LoadTex(normalPath);
-            sec.MetallicTexture = LoadTex(metallicPath);
-            sec.RoughnessTexture = LoadTex(roughnessPath);
-            sec.AOTexture = LoadTex(aoPath);
-            sec.EmissiveTexture = LoadTex(emissivePath);
+            sec.AlbedoTexture = LoadTex(albedoPath, true);
+            sec.NormalTexture = LoadTex(normalPath, false);
+            sec.MetallicTexture = LoadTex(metallicPath, false);
+            sec.RoughnessTexture = LoadTex(roughnessPath, false);
+            sec.AOTexture = LoadTex(aoPath, false);
+            sec.EmissiveTexture = LoadTex(emissivePath, true);
 
             DirectX::XMFLOAT3 baseColor = {};
             fread(&baseColor, sizeof(DirectX::XMFLOAT3), 1, fp);

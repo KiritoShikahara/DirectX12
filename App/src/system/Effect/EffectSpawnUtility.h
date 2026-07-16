@@ -1,0 +1,49 @@
+﻿#pragma once
+
+#include<DirectXMath.h>
+#include<entt/entt.hpp>
+#include<string>
+#include<vector>
+
+namespace ecs::effectutil
+{
+    /// <summary>
+    /// ';'区切りで1つ以上のエフェクトアセットパスを指定できるようにするためのユーティリティ。
+    /// 複数指定した場合、それぞれ独立したエンティティとして同じ位置/追従先で同時に再生されるため、
+    /// 結果的に複数のエフェクトを組み合わせて1つの演出として見せることができる
+    /// （例: 閃光+衝撃波+火花、を3つのエフェクトを重ねて表現する等）。
+    /// </summary>
+
+    /// <summary>
+    /// ワンショット再生: 指定位置に、';'区切りの各エフェクトを1つずつ独立したエンティティで
+    /// 1回だけ再生する（再生終了後、各エンティティは自動的に破棄される）。
+    /// outEntitiesを渡すと生成したエンティティを追加する。再生終了(≒破棄)の監視には
+    /// AnyPlaying()を使う。rotationは素材の既定の向き(オイラー角、ラジアン)からの回転で、
+    /// 省略時{0,0,0}は素材の既定の向きのまま再生する。
+    /// </summary>
+    void PlayOneShotCombined(
+        const std::string& delimitedPaths,
+        const DirectX::XMFLOAT3& position,
+        float scale,
+        std::vector<entt::entity>* outEntities = nullptr,
+        const DirectX::XMFLOAT3& rotation = { 0.f, 0.f, 0.f });
+
+    /// <summary>
+    /// entitiesのうち、有効かつ再生中(EffectComponent::Effect.IsPlaying())のものが
+    /// 1つでもあればtrueを返す。無効なエンティティ(既に再生終了して破棄済み)はfalse扱いにする。
+    /// PlayOneShotCombinedで生成したエンティティ群の「全て再生し終わったか」の監視に使う。
+    /// </summary>
+    bool AnyPlaying(entt::registry& registry, const std::vector<entt::entity>& entities);
+
+    /// <summary>
+    /// ループ再生: parentEntity(Transformを持つこと)に追従する、';'区切りの各エフェクトを
+    /// それぞれ独立したエンティティでループ再生する。生成したエンティティは全てoutEntitiesへ
+    /// 追加するので、呼び出し側はparentEntityが破棄される前に必ずこれらをdestroyしてループを
+    /// 止めること（EffekseerManagerはParent無効時、位置をOffset固定として扱い続けてしまうため）。
+    /// </summary>
+    void PlayLoopingCombined(
+        const std::string& delimitedPaths,
+        entt::entity parentEntity,
+        float scale,
+        std::vector<entt::entity>& outEntities);
+}

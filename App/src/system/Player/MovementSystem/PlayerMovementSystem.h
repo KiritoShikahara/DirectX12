@@ -15,7 +15,7 @@ namespace ecs
 
 	private:
 		static DirectX::XMFLOAT3 ComputeHorizontalVelocity(
-			ecs::PlayerMovementComponent& movement, float deltaTime);
+			ecs::PlayerMovementComponent& movement, float deltaTime, float speedMultiplier);
 	};
 }
 

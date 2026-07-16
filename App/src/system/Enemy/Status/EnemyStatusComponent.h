@@ -13,6 +13,9 @@ namespace ecs
         float MaxHp = 10.0f;     // 最大HP
         float MoveSpeed = 2.0f;  // 移動速度 m/s
         float AtkPower = 1.0f;   // 接触ダメージ
+        float ExperienceValue = 1.0f; // 撃破時にプレイヤーへ与える経験値(EnemyData.csvのExpと対応)
+        float GoldValue = 3.0f;       // 撃破時にプレイヤーへ与えるゴールド(ExperienceValueと同様、
+                                       // 現状EnemyData.csvには未接続。ボースはGameSceneFactoryで倍率適用)
     };
 
     /// <summary>

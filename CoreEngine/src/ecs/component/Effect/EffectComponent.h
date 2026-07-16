@@ -35,6 +35,12 @@ namespace ecs
         /// </summary>
         DirectX::XMFLOAT3 Scale = { 1.f, 1.f, 1.f };
 
+        /// <summary>
+        /// エフェクト自体の回転（オイラー角、ラジアン）。既定値{0,0,0}は素材が想定する
+        /// 既定の向きのまま再生する（毎フレームEffekseerManager::Updateが適用する）。
+        /// </summary>
+        DirectX::XMFLOAT3 Rotation = { 0.f, 0.f, 0.f };
+
         /// <summary>ループ再生するか</summary>
         bool IsLoop = false;
 

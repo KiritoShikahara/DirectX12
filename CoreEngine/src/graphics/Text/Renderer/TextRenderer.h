@@ -9,6 +9,7 @@
 
 #include <DirectXMath.h>
 #include <entt/entt.hpp>
+#include <array>
 #include <cstdint>
 #include <filesystem>
 #include <memory>
@@ -71,17 +72,31 @@ namespace graphics
         bool BuildConstantBuffer(DX12Device& device, GDescriptorHeapManager& heapManager);
         bool BuildVertexBuffer(DX12Device& device);
 
+        /// <summary>フレームインフライト中の書き込み先取り違えを防ぐため、現在の描画対象フレーム番号を返す</summary>
+        static uint32_t GetCurrentFrameIndex();
+
         std::unique_ptr<TextPipeline> mPipeline;
         std::unique_ptr<TextAtlas>    mAtlas;       // ← Renderer が所有
 
-        Resource        mCbResource;
-        GDescriptorHeap mCbvHeap;
-        TextSceneData* mCbMapped = nullptr;
+        // CB/VB は FRAME_COUNT(トリプルバッファ) 分だけ個別に持つ。
+        // 単一バッファのままだと、GPU がまだ前フレームの描画コマンドで参照している
+        // 最中に CPU が同じメモリへ Submit() で上書きしてしまい、文字のちらつき
+        // (点滅・表示崩れ) の原因になる。
+        struct FrameBuffer
+        {
+            Resource        CbResource;
+            MAAllocation    CbAllocation;
+            GDescriptorHeap CbvHeap;
+            TextSceneData* CbMapped = nullptr;
+
+            Resource     VbResource;
+            MAAllocation VbAllocation;
+            TextVertex* VbMapped = nullptr;
+        };
+        std::array<FrameBuffer, FRAME_COUNT> mFrames;
 
         static constexpr uint32_t MAX_CHARS = 4096;
         static constexpr uint32_t VERTS_PER_CHAR = 6;
-        Resource    mVbResource;
-        TextVertex* mVbMapped = nullptr;
 
         std::vector<DrawCall> mDrawCalls;
         uint32_t              mVertexCursor = 0;

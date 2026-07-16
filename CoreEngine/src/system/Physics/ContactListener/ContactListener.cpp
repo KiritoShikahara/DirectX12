@@ -62,8 +62,43 @@ namespace sys
 		else
 		{
 			// 通常の物理衝突 → 双方に CollisionEnterEvent
+			// 開始フレームも「接触中」に含めるため CollisionStayEvent も併せて積む
 			PushPendingEvent(EventKind::CollisionEnter, entityA, entityB);
 			PushPendingEvent(EventKind::CollisionEnter, entityB, entityA);
+			PushPendingEvent(EventKind::CollisionStay, entityA, entityB);
+			PushPendingEvent(EventKind::CollisionStay, entityB, entityA);
+		}
+	}
+
+	void ContactListener::OnContactPersisted(
+		const JPH::Body& inBody1,
+		const JPH::Body& inBody2,
+		const JPH::ContactManifold& /*inManifold*/,
+		JPH::ContactSettings&      /*ioSettings*/)
+	{
+		// OnContactAdded と同じくジョブスレッドから並行に呼ばれうるため、
+		// entt::registry には触れず保留バッファへ積むだけにする。
+		const entt::entity entityA = ToEntity(inBody1);
+		const entt::entity entityB = ToEntity(inBody2);
+
+		const bool isSensorA = inBody1.IsSensor();
+		const bool isSensorB = inBody2.IsSensor();
+
+		if (isSensorA)
+		{
+			// A がセンサー → A に SensorStayEvent、B が侵入者
+			PushPendingEvent(EventKind::SensorStay, entityA, entityB);
+		}
+		else if (isSensorB)
+		{
+			// B がセンサー → B に SensorStayEvent、A が侵入者
+			PushPendingEvent(EventKind::SensorStay, entityB, entityA);
+		}
+		else
+		{
+			// 通常の物理衝突 → 双方に CollisionStayEvent
+			PushPendingEvent(EventKind::CollisionStay, entityA, entityB);
+			PushPendingEvent(EventKind::CollisionStay, entityB, entityA);
 		}
 	}
 
@@ -85,12 +120,30 @@ namespace sys
 				}
 				comp->OtherEntities.push_back(ev.Other);
 			}
-			else // SensorEnter
+			else if (ev.Kind == EventKind::CollisionStay)
+			{
+				auto* comp = registry.try_get<ecs::CollisionStayEvent>(ev.Entity);
+				if (comp == nullptr)
+				{
+					comp = &registry.emplace<ecs::CollisionStayEvent>(ev.Entity);
+				}
+				comp->OtherEntities.push_back(ev.Other);
+			}
+			else if (ev.Kind == EventKind::SensorEnter)
 			{
 				auto* comp = registry.try_get<ecs::SensorEnterEvent>(ev.Entity);
 				if (comp == nullptr)
 				{
 					comp = &registry.emplace<ecs::SensorEnterEvent>(ev.Entity);
+				}
+				comp->Visitors.push_back(ev.Other);
+			}
+			else // SensorStay
+			{
+				auto* comp = registry.try_get<ecs::SensorStayEvent>(ev.Entity);
+				if (comp == nullptr)
+				{
+					comp = &registry.emplace<ecs::SensorStayEvent>(ev.Entity);
 				}
 				comp->Visitors.push_back(ev.Other);
 			}

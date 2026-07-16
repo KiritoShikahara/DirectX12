@@ -19,6 +19,7 @@
 #include <ecs/component/collider/ColliderComponent.h>
 #include <ecs/component/transform/TransformComponent.h>
 #include <ecs/component/camera/CameraComponent.h>
+#include <ecs/component/Debug/DebugWireSphereComponent.h>
 
 // sys
 #include <system/Camera/CameraSystem.h>
@@ -238,6 +239,14 @@ namespace graphics
                 }
             });
 
+        // ── Jolt に登録されないアドホックな当たり判定(OverlapSphere等)の可視化 ──────
+        // DebugWireSphereComponent が付与されたエンティティをワイヤーフレーム球として描画する。
+        registry.view<ecs::Transform, ecs::DebugWireSphereComponent>().each(
+            [&](const ecs::Transform& tr, const ecs::DebugWireSphereComponent& wire)
+            {
+                PushWireSphere(tr.GetPosition(), wire.Radius, wire.Color);
+            });
+
         if (mLineVertices.empty()) return;
 
         // ── 頂点バッファに転送（現在フレームのリソースへ書き込まれる）──
@@ -291,6 +300,38 @@ namespace graphics
         if (mLineVertices.size() + 2 > kMaxVertices) return;
         mLineVertices.push_back({ from, color });
         mLineVertices.push_back({ to,   color });
+    }
+
+    // ==============================================================
+    //  PushWireSphere
+    //  XY/XZ/YZ の3つの円で球を近似する（軽量・実装単純さ優先）。
+    // ==============================================================
+
+    void PhysicsDebugRenderer::PushWireSphere(
+        const DirectX::XMFLOAT3& center,
+        float radius,
+        const DirectX::XMFLOAT4& color)
+    {
+        constexpr int kSegments = 24;
+
+        for (int axis = 0; axis < 3; ++axis) // 0:XY 1:XZ 2:YZ
+        {
+            DirectX::XMFLOAT3 prev{};
+            for (int i = 0; i <= kSegments; ++i)
+            {
+                const float t = DirectX::XM_2PI * static_cast<float>(i) / static_cast<float>(kSegments);
+                const float c = std::cos(t) * radius;
+                const float s = std::sin(t) * radius;
+
+                DirectX::XMFLOAT3 p = center;
+                if (axis == 0)      { p.x += c; p.y += s; }
+                else if (axis == 1) { p.x += c; p.z += s; }
+                else                { p.y += c; p.z += s; }
+
+                if (i > 0) PushLine(prev, p, color);
+                prev = p;
+            }
+        }
     }
 
 } // namespace graphics

@@ -6,18 +6,18 @@
 namespace data
 {
     /// <summary>
-    /// “G‚Ì‰ŠúƒXƒe[ƒ^ƒX ƒ}ƒXƒ^iCSV / DBjB
-    /// EnemyStatusComponent ‚Ì BaseiMaxHp / MoveSpeed / AtkPowerj‚Ö‘Î‰‚·‚éB
-    /// CSV ƒwƒbƒ_–¼‚ÍŠeƒtƒB[ƒ‹ƒh–¼‚ÆŠ®‘Sˆê’v‚³‚¹‚é‚±‚ÆB
+    /// ï¿½Gï¿½Ìï¿½ï¿½ï¿½ï¿½Xï¿½eï¿½[ï¿½^ï¿½X ï¿½}ï¿½Xï¿½^ï¿½iCSV / DBï¿½jï¿½B
+    /// EnemyStatusComponent ï¿½ï¿½ Baseï¿½iMaxHp / MoveSpeed / AtkPowerï¿½jï¿½Ö‘Î‰ï¿½ï¿½ï¿½ï¿½ï¿½B
+    /// CSV ï¿½wï¿½bï¿½_ï¿½ï¿½ï¿½ÍŠeï¿½tï¿½Bï¿½[ï¿½ï¿½ï¿½hï¿½ï¿½ï¿½ÆŠï¿½ï¿½Sï¿½ï¿½vï¿½ï¿½ï¿½ï¿½ï¿½é‚±ï¿½ÆB
     /// </summary>
     struct EnemyData
     {
-        int         Id = 0;     // “GíIDiåƒL[BEnemyStatusComponent::EnemyId ‚Æ‘Î‰j
-        std::string Name;              // •\¦–¼EƒfƒoƒbƒO—p
-        float       MaxHp = 10.0f; // Å‘åHP
-        float       MoveSpeed = 2.0f;  // ˆÚ“®‘¬“x m/s
-        float       AtkPower = 1.0f;  // ÚGƒ_ƒ[ƒW
-        int         Exp = 1;     // Œ‚”j‚ÌŠl“¾ŒoŒ±’l
+        int         Id = 0;     // ï¿½Gï¿½ï¿½IDï¿½iï¿½ï¿½Lï¿½[ï¿½BEnemyStatusComponent::EnemyId ï¿½Æ‘Î‰ï¿½ï¿½j
+        std::string Name;              // ï¿½\ï¿½ï¿½ï¿½ï¿½ï¿½Eï¿½fï¿½oï¿½bï¿½Oï¿½p
+        float       MaxHp = 10.0f; // ï¿½Å‘ï¿½HP
+        float       MoveSpeed = 2.0f;  // ï¿½Ú“ï¿½ï¿½ï¿½ï¿½x m/s
+        float       AtkPower = 1.0f;  // ï¿½ÚGï¿½_ï¿½ï¿½ï¿½[ï¿½W
+        int         Exp = 3;     // ï¿½ï¿½ï¿½jï¿½ï¿½ï¿½ÌŠlï¿½ï¿½ï¿½oï¿½ï¿½ï¿½l
 
         REFLECT_BEGIN(EnemyData, "enemies")
             REFLECT_FIELD_ID(Id)

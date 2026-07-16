@@ -370,6 +370,13 @@ namespace sys
             mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PreUpdate, registry, dt, rawDt);
             mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::Update, registry, dt, rawDt);
 
+            // Update フェーズの各システムが CollisionEnterEvent/SensorEnterEvent を読み終えた直後に
+            // クリアする。これらのイベントは前フレームの物理ステップ(下の PhysicsSystem::Update)が
+            // 生成したものを Update フェーズで消費する設計(1フレーム遅延)のため、
+            // このタイミングを逃す(=消費前にクリアする/クリアし忘れる)と、
+            // 消費し損ねる、または同じ接触が毎フレーム蓄積し続けて過剰にダメージ判定されるバグになる。
+            sys::PhysicsSystem::ClearCollisionEvents(registry);
+
             // シーン切り替えリクエスト（ChangeSceneWithTransition 等）は上記の Update フェーズ内、
             // 例えば TitleInputSystem::Update で発行される。
             // そのため SceneManager::Update（フェード進行）は各システムの実行後に呼び、
