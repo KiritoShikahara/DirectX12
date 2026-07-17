@@ -53,6 +53,9 @@ namespace ecs
 			{ ePerkEffectType::AcquireWeapon, L"新武器: Homing Missile", 0.0f, eWeaponType::Homing, 0 },
 			{ ePerkEffectType::AcquireWeapon, L"新武器: Chain Lightning", 0.0f, eWeaponType::Chain, 0 },
 			{ ePerkEffectType::AcquireWeapon, L"新武器: Meteor",  0.0f, eWeaponType::Meteor, 0 },
+			{ ePerkEffectType::AcquireWeapon, L"新武器: Void Beam", 0.0f, eWeaponType::VoidBeam, 0 },
+			{ ePerkEffectType::AcquireWeapon, L"新武器: Bone Spear", 0.0f, eWeaponType::BoneSpear, 0 },
+			{ ePerkEffectType::AcquireWeapon, L"新武器: Cleave", 0.0f, eWeaponType::Cleave, 0 },
 		};
 		return pool;
 	}

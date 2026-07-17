@@ -70,7 +70,16 @@ namespace ecs
 					projectile.Damage,
 					projectile.ExplosionEffectPath });
 
-				hitProjectiles.push_back(entity);
+				// PierceCount(貫通弾/Bone Spear専用、通常弾は0)が残っている間は消滅させず、
+				// 貫通回数だけを消費する。0未満になった時点で通常弾と同じく破棄する
+				if (projectile.PierceCount > 0)
+				{
+					--projectile.PierceCount;
+				}
+				else
+				{
+					hitProjectiles.push_back(entity);
+				}
 			});
 
 		// view 走査完了後にダメージ適用・エフェクト生成・弾の破棄を行う

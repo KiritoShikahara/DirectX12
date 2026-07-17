@@ -10,6 +10,9 @@
 #include<system/Player/Weapon/Nova/NovaWeaponRuntimeComponent.h>
 #include<system/Player/Weapon/Homing/HomingMissileRuntimeComponent.h>
 #include<system/Player/Weapon/ChainLightning/ChainLightningRuntimeComponent.h>
+#include<system/Player/Weapon/VoidBeam/VoidBeamRuntimeComponent.h>
+#include<system/Player/Weapon/BoneSpear/BoneSpearRuntimeComponent.h>
+#include<system/Player/Weapon/Cleave/CleaveRuntimeComponent.h>
 #include<system/Player/Ultimate/PlayerUltimateComponent.h>
 #include<Data/Ultimate/UltimateData.h>
 #include<system/Enemy/Status/EnemyStatusComponent.h>
@@ -180,6 +183,30 @@ namespace debug
 						case ecs::eWeaponType::Chain:
 							typeName = "Chain";
 							if (auto* rt = registry.try_get<ecs::ChainLightningRuntimeComponent>(weaponEntity))
+							{
+								cooldownTimer = rt->CooldownTimer;
+								hasRuntime = true;
+							}
+							break;
+						case ecs::eWeaponType::VoidBeam:
+							typeName = "VoidBeam";
+							if (auto* rt = registry.try_get<ecs::VoidBeamRuntimeComponent>(weaponEntity))
+							{
+								cooldownTimer = rt->CooldownTimer;
+								hasRuntime = true;
+							}
+							break;
+						case ecs::eWeaponType::BoneSpear:
+							typeName = "BoneSpear";
+							if (auto* rt = registry.try_get<ecs::BoneSpearRuntimeComponent>(weaponEntity))
+							{
+								cooldownTimer = rt->CooldownTimer;
+								hasRuntime = true;
+							}
+							break;
+						case ecs::eWeaponType::Cleave:
+							typeName = "Cleave";
+							if (auto* rt = registry.try_get<ecs::CleaveRuntimeComponent>(weaponEntity))
 							{
 								cooldownTimer = rt->CooldownTimer;
 								hasRuntime = true;

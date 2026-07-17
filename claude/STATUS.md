@@ -1,6 +1,6 @@
 # STATUS
 
-最終更新: 2026-07-16
+最終更新: 2026-07-17
 
 ## ブランチ
 feature/TestClaude（変更は全て未コミット。ユーザーの指示なしにコミット/push等のgit操作はしない）
@@ -179,6 +179,47 @@ feature/TestClaude（変更は全て未コミット。ユーザーの指示な�
     コメントで明示されていたため対応)。db.dbへ`meteor_weapons`新規テーブルを同期済み。
   - Debug/Release両方ビルド確認済み、実機起動でエラーなし(検証用の一時コード・
     起動シーン切り替え・テスト用JSONは全て元に戻した)。
+
+- **新規武器3種を追加（ユーザー指示: 攻撃案の提示→Void Beam/Bone Spear/Cleaveの3案を全て採用）**。
+  いずれもNova/Homing Missile/Chain Lightning/Meteorと同じ「狙い不要・自動発動・パーク経由
+  でのみ取得」ファミリーに統一(既存の手動入力2枠(Attack/Attack2)を使い切っており、
+  3つ目の手動武器を増やすとInputManager改修が必要になるため)。
+  - **Void Beam(貫通レーザー)**: 新規`eWeaponType::VoidBeam`/`data::VoidBeamWeaponData`/
+    `VoidBeamRuntimeComponent`/`VoidBeamWeaponSystem`。最も近い敵の方向へ直線を伸ばし、
+    `PhysicsSystem::OverlapSphere`で拾った候補を「線分への垂線距離」で数式フィルタして
+    直線上の敵全員を貫通ヒットさせる(新規の物理クエリ形状は追加せず、既存のOverlapSphere+
+    数式フィルタで完結)。Chain Lightningと同じく移動する実体を持たない瞬間ヒット方式。
+  - **Bone Spear(貫通弾)**: 新規`eWeaponType::BoneSpear`/`data::BoneSpearWeaponData`/
+    `BoneSpearRuntimeComponent`/`BoneSpearWeaponSystem`。既存`ProjectileComponent`へ
+    `PierceCount`フィールドを追加(通常弾は0のままで既存武器に影響無し)、
+    `ProjectileCollisionSystem`を「PierceCountが残っている間は消滅せず貫通する」よう拡張。
+    Homing Missileと同じ発射パイプラインを流用するが誘導はしない(直進)。
+  - **Cleave(近接扇状攻撃)**: 新規`eWeaponType::Cleave`/`data::CleaveWeaponData`/
+    `CleaveRuntimeComponent`/`CleaveWeaponSystem`。狙い方向を中心とした扇状範囲を
+    OverlapSphere+角度フィルタで判定し、範囲内の敵全員にダメージ+ノックバックを与える。
+    ノックバック実現のため新規`ecs::EnemyKnockbackComponent`/`EnemyKnockbackSystem`
+    (`App/src/system/Enemy/Knockback/`)を追加。`EnemyChaseSystem`は毎フレーム
+    `RigidBodyComponent::MoveVelocity`を無条件上書きするため、このコンポーネント保持中は
+    追従移動を丸ごとスキップするガードを1行追加(2システムが同一フレームで速度を
+    取り合わないようにするための明示的な排他制御。仮に実行順で偶然競合しなくても、
+    将来の登録順変更で壊れる暗黙の依存を避けるため意図的に追加)。
+  - 3種とも`PerkDefinition`にAcquireWeaponパークを追加、`WeaponInventoryDebugPanel`/
+    `GameStatusDebugPanel`にも表示・追加操作を登録済み。db.dbへ`void_beam_weapons`/
+    `bone_spear_weapons`/`cleave_weapons`新規テーブルを同期済み(一時的な`SaveCsvToDb()`
+    呼び出しでDebugビルドを1回起動→db.db書き込み確認→コード側は元に戻す、確立済みの手順)。
+  - 新規作成した.h/.cppファイル(15個)は作成直後、BOM無しでREFLECT_FIELDマクロが
+    壊れる既知の問題(DECISIONS.md参照)が実際に発生したため、PowerShellでUTF-8 BOM付きへ
+    再保存して解消した。Debug/Release両方ビルド成功、実機起動でエラーなし確認済み
+    (プレースホルダーエフェクト: VoidBeam=LightningStrike.efk、Bone Spear=Sword1.efk/
+    HitEffect.efk、Cleave=Sword6.efk、いずれも仮流用)。
+  - 実機での手動プレイ確認(パーク選択でのランダム出現→取得→各武器の発動・貫通/ノックバック
+    挙動の目視確認)はまだ未実施。
+- **バグ修正: PlayerSaveData保存時のクラッシュ**（ユーザー報告: `Assets/Bin/Save/`フォルダが
+  存在せず`ConfigManager<PlayerSaveData>::Save()`で例外）。`std::ofstream`は中間ディレクトリを
+  自動作成しないため、`JsonSerializer::SaveToFile()`側で保存前に
+  `std::filesystem::create_directories()`するよう修正(`ConfigManager<T>`利用箇所全てに
+  共通する根本修正、詳細はDECISIONS.md)。フォルダを実際に削除した状態から起動させ、
+  自動生成・エラーなしを確認済み。Debug/Release両方ビルド確認済み。
 
 ## 次にやるべきこと
 - 敵の出現率向上・Meteor武器・強化確認ダイアログの実機手動操作確認（スポーン間隔が

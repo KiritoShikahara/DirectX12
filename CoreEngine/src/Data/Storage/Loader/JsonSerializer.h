@@ -4,6 +4,7 @@
 #include<json/json.hpp>
 #include<string>
 #include<fstream>
+#include<filesystem>
 #include<stdexcept>
 
 namespace data
@@ -81,6 +82,16 @@ namespace data
         template<typename T>
         static void SaveToFile(const std::string& filePath, const T& obj, int indent = 4)
         {
+            // std::ofstreamは中間ディレクトリを自動作成しないため、
+            // 保存先フォルダが存在しない場合(初回実行・フォルダの誤削除等)に
+            // is_open()==falseとなり例外が飛んでいた。書き込み前に必ず作成しておく。
+            const std::filesystem::path path(filePath);
+            const std::filesystem::path parent = path.parent_path();
+            if (!parent.empty())
+            {
+                std::filesystem::create_directories(parent);
+            }
+
             std::ofstream f(filePath);
             if (!f.is_open())
                 throw std::runtime_error("[JsonSerializer] Failed to write: " + filePath);

@@ -1,0 +1,2 @@
+Id,Name,FireInterval,ProjectileSpeed,BaseDamage,DamagePerLevel,BaseExplosionRadius,ExplosionRadiusPerLevel,HitRadiusMultiplier,PierceCount,ProjectileLifeTime,SearchRadius,HeightOffset,ProjectileEffectPath,ExplosionEffectPath
+0,BoneSpear,1.4,45,9,2.5,4,0.5,1.5,2,3,80,30,Assets/Effect/Sword1.efk,Assets/Effect/HitEffect.efk

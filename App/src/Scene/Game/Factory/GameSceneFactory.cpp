@@ -27,6 +27,9 @@
 #include<system/Player/Weapon/Homing/HomingMissileRuntimeComponent.h>
 #include<system/Player/Weapon/ChainLightning/ChainLightningRuntimeComponent.h>
 #include<system/Player/Weapon/Meteor/MeteorWeaponRuntimeComponent.h>
+#include<system/Player/Weapon/VoidBeam/VoidBeamRuntimeComponent.h>
+#include<system/Player/Weapon/BoneSpear/BoneSpearRuntimeComponent.h>
+#include<system/Player/Weapon/Cleave/CleaveRuntimeComponent.h>
 
 // 敵
 #include<system/Enemy/Move/EnemyChaseComponent.h>
@@ -211,6 +214,15 @@ namespace ecs
 			break;
 		case ::ecs::eWeaponType::Meteor:
 			manager.AddComponent<::ecs::MeteorWeaponRuntimeComponent>(weapon);
+			break;
+		case ::ecs::eWeaponType::VoidBeam:
+			manager.AddComponent<::ecs::VoidBeamRuntimeComponent>(weapon);
+			break;
+		case ::ecs::eWeaponType::BoneSpear:
+			manager.AddComponent<::ecs::BoneSpearRuntimeComponent>(weapon);
+			break;
+		case ::ecs::eWeaponType::Cleave:
+			manager.AddComponent<::ecs::CleaveRuntimeComponent>(weapon);
 			break;
 		}
 

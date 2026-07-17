@@ -58,5 +58,12 @@ namespace ecs
 
         /// <summary>Targetが無効な場合に再捕捉を試みる範囲(m)</summary>
         float HomingSearchRadius = 0.0f;
+
+        // ── 貫通弾(Bone Spear)専用 ──────────────────────────────
+        // 通常の弾はPierceCount=0のままで、命中時に即座に消滅する(既存の全武器と同じ挙動)。
+
+        /// <summary>命中してもこの回数だけ消滅せずに貫通する。命中のたびに1ずつ減算し、
+        /// 0未満になったタイミングで消滅する(ProjectileCollisionSystemが処理)</summary>
+        int PierceCount = 0;
     };
 }

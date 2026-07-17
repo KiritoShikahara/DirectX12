@@ -73,6 +73,15 @@
       （スポーン間隔短縮の体感確認、Meteorの発動確認、StatusUpgradeSceneの確認
       ダイアログ・ゴールド不足/MAXメッセージの表示確認）
 
+- [ ] ゲーム: 新規武器3種(Void Beam/Bone Spear/Cleave)の実機手動操作確認
+      （WeaponInventoryDebugPanelから取得orパーク選択で出現→各武器が自動発動するか、
+      Void Beamが直線上の敵複数体を貫通ヒットするか、Bone Spearが命中しても消滅せず
+      PierceCount分だけ貫通するか、Cleaveが扇状範囲の敵をなぎ払い実際にノックバックで
+      吹き飛ぶか、ノックバック中に敵が通常の追従移動へ変な動きで戻らないかを実際に
+      プレイして確認）
+- [ ] エンジン: EnemyKnockbackComponent/EnemyKnockbackSystem(新規)の実機動作確認
+      （Cleave以外の攻撃中は通常通りEnemyChaseSystemが追従することの回帰確認も含む）
+
 ## 完了
 - [x] AGENTS.md 作成、claude/ 配下に進捗復旧用ファイル（STATUS.md / TASKS.md / DECISIONS.md / STRUCTURE.md）を整備 (2026-07-15)
 - [x] CLAUDE.md に「Claudeは指示なくgit操作をしない」を追記 (2026-07-15)
@@ -425,3 +434,32 @@
       非表示化(IsVisible=falseはEffekseer側の再生も一時停止させる)、ビーム(hougu_pre)
       再生終了時(FinishAndExplode冒頭)に再表示するようにした。db.db変更なし
       (C++側のみの変更)。Debug/Release両方で実機起動確認済み(エラーなし) (2026-07-16)
+- [x] ゲーム: 新規武器3種「Void Beam(貫通レーザー)」「Bone Spear(貫通弾)」
+      「Cleave(近接扇状攻撃)」を追加（ユーザー指示、攻撃案の提示→3案全て採用）。
+      いずれもNova/Homing Missile/Chain Lightning/Meteorと同じ「狙い不要・自動発動・
+      パーク経由でのみ取得」ファミリーに統一(既存の手動入力2枠(Attack/Attack2)を
+      使い切っているため)。Void Beamは最も近い敵の方向へ直線を伸ばし、OverlapSphere+
+      「線分への垂線距離」の数式フィルタで直線上の敵全員を貫通ヒットさせる(新規の物理
+      クエリ形状は追加せず既存のOverlapSphereで完結、Chain Lightningと同じ実体を持たない
+      瞬間ヒット方式)。Bone Spearは既存ProjectileComponentへPierceCountを追加し
+      (通常弾は0のまま既存武器に影響無し)、ProjectileCollisionSystemを「貫通回数が
+      残っている間は消滅しない」よう拡張、Homing Missileと同じ発射パイプラインを誘導無しで
+      流用。CleaveはOverlapSphere+角度フィルタで扇状範囲を判定しダメージ+ノックバックを
+      与える。ノックバック実現のため新規ecs::EnemyKnockbackComponent/EnemyKnockbackSystem
+      (App/src/system/Enemy/Knockback/)を追加し、EnemyChaseSystemには当該コンポーネント
+      保持中は追従移動を丸ごとスキップするガードを1行追加(2システムの速度上書き競合を
+      実行順に依存せず明示的に防ぐため)。3種ともPerkDefinition/WeaponInventoryDebugPanel/
+      GameStatusDebugPanelに登録済み。db.dbへvoid_beam_weapons/bone_spear_weapons/
+      cleave_weapons新規テーブルを同期済み。新規作成した.h/.cppでBOM無しによる
+      REFLECT_FIELDマクロ破損が実際に発生し、UTF-8 BOM付きへ再保存して解消(詳細は
+      DECISIONS.md)。Debug/Release両方ビルド成功、実機起動でエラーなし確認済み
+      (プレースホルダーエフェクトは仮流用、パーク選択での実際のランダム出現・取得・
+      各武器の発動/貫通/ノックバック挙動の目視確認はまだ) (2026-07-17)
+- [x] **バグ修正**: `Assets/Bin/Save/`フォルダが存在しない状態で`PlayerSaveData`の
+      `Save()`が呼ばれると`std::ofstream`が開けず例外が飛んでいた問題を修正
+      （ユーザー報告: `ConfigManager<PlayerSaveData>::Save()`でクラッシュ、
+      player_save.jsonが存在しない）。`JsonSerializer::SaveToFile()`側で保存前に
+      `std::filesystem::create_directories()`により親ディレクトリを作成するよう修正
+      (ConfigManager<T>を使う全箇所に共通する根本修正、詳細はDECISIONS.md)。
+      フォルダを実際に削除した状態から起動させ、自動生成・エラーなしを確認済み。
+      Debug/Release両方ビルド確認済み (2026-07-17)

@@ -31,6 +31,9 @@
 #include<system/Player/Weapon/Homing/HomingMissileSteeringSystem.h>
 #include<system/Player/Weapon/ChainLightning/ChainLightningWeaponSystem.h>
 #include<system/Player/Weapon/Meteor/MeteorWeaponSystem.h>
+#include<system/Player/Weapon/VoidBeam/VoidBeamWeaponSystem.h>
+#include<system/Player/Weapon/BoneSpear/BoneSpearWeaponSystem.h>
+#include<system/Player/Weapon/Cleave/CleaveWeaponSystem.h>
 #include<system/Player/Ultimate/PlayerUltimateSystem.h>
 #include<system/Player/Weapon/Projectile/ProjectileMovementSystem.h>
 #include<system/Player/Weapon/Projectile/ProjectileCollisionSystem.h>
@@ -39,6 +42,7 @@
 // 敵
 #include<system/Enemy/Move/EnemyChaseSystem.h>
 #include<system/Enemy/Death/EnemyDeathSystem.h>
+#include<system/Enemy/Knockback/EnemyKnockbackSystem.h>
 
 // パーク
 #include<system/Player/Perk/PerkSelectSystem.h>
@@ -63,6 +67,9 @@
 #include<Data/Weapon/HomingMissileWeaponData.h>
 #include<Data/Weapon/ChainLightningWeaponData.h>
 #include<Data/Weapon/MeteorWeaponData.h>
+#include<Data/Weapon/VoidBeamWeaponData.h>
+#include<Data/Weapon/BoneSpearWeaponData.h>
+#include<Data/Weapon/CleaveWeaponData.h>
 #include<Data/Ultimate/UltimateData.h>
 #include<Data/StatUpgrade/StatUpgradeData.h>
 #include<Data/Save/PlayerSaveData.h>
@@ -154,6 +161,18 @@ namespace scene
 		{
 			dataRegistry.Register<data::MeteorWeaponData>("Assets/Data/Weapon/MeteorWeaponData.csv");
 		}
+		if (!dataRegistry.IsRegistered<data::VoidBeamWeaponData>())
+		{
+			dataRegistry.Register<data::VoidBeamWeaponData>("Assets/Data/Weapon/VoidBeamWeaponData.csv");
+		}
+		if (!dataRegistry.IsRegistered<data::BoneSpearWeaponData>())
+		{
+			dataRegistry.Register<data::BoneSpearWeaponData>("Assets/Data/Weapon/BoneSpearWeaponData.csv");
+		}
+		if (!dataRegistry.IsRegistered<data::CleaveWeaponData>())
+		{
+			dataRegistry.Register<data::CleaveWeaponData>("Assets/Data/Weapon/CleaveWeaponData.csv");
+		}
 		if (!dataRegistry.IsRegistered<data::UltimateData>())
 		{
 			dataRegistry.Register<data::UltimateData>("Assets/Data/Ultimate/UltimateData.csv");
@@ -212,9 +231,15 @@ namespace scene
 		manager.AddUserSystem<::ecs::HomingMissileSteeringSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::ChainLightningWeaponSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::MeteorWeaponSystem>(::ecs::eUpdatePhase::Update);
+		manager.AddUserSystem<::ecs::VoidBeamWeaponSystem>(::ecs::eUpdatePhase::Update);
+		manager.AddUserSystem<::ecs::BoneSpearWeaponSystem>(::ecs::eUpdatePhase::Update);
+		manager.AddUserSystem<::ecs::CleaveWeaponSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::ProjectileCollisionSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::ProjectileMovementSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::TemporaryLifetimeSystem>(::ecs::eUpdatePhase::Update);
+		// ノックバック処理(Cleave)はEnemyChaseSystemより前に実行し、
+		// 同一フレーム内でMoveVelocityの上書き合戦にならないようにする
+		manager.AddUserSystem<::ecs::EnemyKnockbackSystem>(::ecs::eUpdatePhase::Update);
 		// ダメージ計算(Update)が終わった後にHP0の敵をまとめて破棄する
 		manager.AddUserSystem<::ecs::EnemyDeathSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::ecs::RotateToMoveSystem>(::ecs::eUpdatePhase::PostUpdate);

@@ -4,6 +4,7 @@
 #include<system/MoveDirection/MoveDirectionComponent.h>
 #include<Tag/EntityTag.h>
 #include"EnemyChaseComponent.h"
+#include<system/Enemy/Knockback/EnemyKnockbackComponent.h>
 
 using namespace DirectX;
 
@@ -27,11 +28,16 @@ namespace ecs
 		// プレイヤーに向けて移動
 
         registry.view<EnemyTag, EnemyChaseComponent, Transform, RigidBodyComponent, MoveDirectionComponent>().each(
-            [&](EnemyChaseComponent& chase,
+            [&](entt::entity entity,
+                EnemyChaseComponent& chase,
                 Transform& transform,
                 RigidBodyComponent& rigidBody,
                 MoveDirectionComponent& moveDir)
             {
+                // ノックバック中はEnemyKnockbackSystemがMoveVelocityを制御するため、
+                // 通常の追従移動を上書きしないようここで完全にスキップする
+                if (registry.all_of<EnemyKnockbackComponent>(entity)) return;
+
                 const XMFLOAT3 pos = transform.GetPosition();
 
                 // プレイヤーへのベクトル（水平面のみ：Y を無視）

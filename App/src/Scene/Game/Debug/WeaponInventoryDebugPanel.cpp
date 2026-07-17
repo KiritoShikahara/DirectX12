@@ -25,6 +25,9 @@ namespace
         { "Homing Missile",         ecs::eWeaponType::Homing,      0, ecs::eWeaponControl::Auto },
         { "Chain Lightning",        ecs::eWeaponType::Chain,       0, ecs::eWeaponControl::Auto },
         { "Meteor",                 ecs::eWeaponType::Meteor,      0, ecs::eWeaponControl::Auto },
+        { "Void Beam",              ecs::eWeaponType::VoidBeam,    0, ecs::eWeaponControl::Auto },
+        { "Bone Spear",             ecs::eWeaponType::BoneSpear,   0, ecs::eWeaponControl::Auto },
+        { "Cleave",                 ecs::eWeaponType::Cleave,      0, ecs::eWeaponControl::Auto },
     };
 
     const char* WeaponTypeName(ecs::eWeaponType type)
@@ -38,6 +41,9 @@ namespace
         case ecs::eWeaponType::Homing:      return "Homing";
         case ecs::eWeaponType::Chain:       return "Chain";
         case ecs::eWeaponType::Meteor:      return "Meteor";
+        case ecs::eWeaponType::VoidBeam:    return "VoidBeam";
+        case ecs::eWeaponType::BoneSpear:   return "BoneSpear";
+        case ecs::eWeaponType::Cleave:      return "Cleave";
         default:                            return "Unknown";
         }
     }

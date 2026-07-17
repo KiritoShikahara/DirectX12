@@ -121,6 +121,18 @@
   必ず直後にBOMバイト(`ef bb bf`)を確認する。Edit toolによる部分編集は既存のバイト列を
   保持するため対象外（新規ファイルはWriteでしか作れないため必ず要確認）。
 
+## 2026-07-17 JsonSerializer::SaveToFileは保存前に親ディレクトリを作成する
+- 内容: `ConfigManager<T>::Save()`(`PlayerSaveData`が使用)が、保存先の`Assets/Bin/Save/`
+  フォルダが存在しない状態で呼ばれ、`std::ofstream`が開けず`std::runtime_error`が
+  投げられてデバッガでブレークする事案が発生した。`std::ofstream`は中間ディレクトリを
+  自動作成しないため、フォルダが誤って削除された場合や新規環境への配置直後は
+  必ず再発する。`ConfigManager<T>`を使う箇所全て(将来の追加設定含む)に共通する問題のため、
+  個別のセーブデータ側ではなく`JsonSerializer::SaveToFile()`
+  (`CoreEngine/src/Data/Storage/Loader/JsonSerializer.h`)側で
+  `std::filesystem::create_directories()`により親ディレクトリを保存前に作成するよう修正した。
+- 対応: 修正後、実際に`Assets/Bin/Save/`フォルダを削除した状態から起動→Save()を実行させ、
+  フォルダ・ファイルが自動生成されエラーが出ないことを確認済み。
+
 ## 2026-07-16 EnTTのview.each()は空のタグ型にはコールバック引数を渡さない
 - 内容: `ecs::StatusUpgradeGoldUiTag`のようにフィールドを持たない空のタグ構造体を
   `registry.view<EmptyTag, TextComponent>().each([&](const EmptyTag&, TextComponent&){...})`

@@ -1,0 +1,2 @@
+Id,Name,FireInterval,BaseDamage,DamagePerLevel,BaseRadius,RadiusPerLevel,HitRadiusMultiplier,ConeAngleDegrees,KnockbackForce,KnockbackDuration,HeightOffset,EffectPath
+0,Cleave,1.2,12,3,20,2,1.2,60,30,0.25,30,Assets/Effect/Sword6.efk
