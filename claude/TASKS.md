@@ -572,3 +572,31 @@
       追加、GameSceneFactory::CreateEnemyの色分けをswitch文に一般化。新規.cppファイルを
       App.vcxproj/filtersに登録(未登録によるリンクエラーを修正)。db.db同期。
       Debug/Release両方ビルド・起動確認済み (2026-07-17)
+- [x] エンジン: 処理効率・FBXクオリティの監査に基づく修正3件。FbxPipelineのカリングを
+      NONE→BACK(ShadowPipelineと整合、描画負荷半減。要目視確認)。FbxRenderer::UpdateAndDraw
+      の毎フレームvector生成をmRenderItemsメンバへ昇格。欠落していたT_StoneTiles_02_Normal.png
+      を新規生成して警告を解消。Debug/Release両方ビルド・起動確認済み (2026-07-17)
+- [x] 要ユーザー確認 → 不具合報告あり: FbxPipelineのカリングをBACKに変更したところ
+      ユーザーからマテリアル消失・地面が見えないと報告。Field(地面)モデルの巻き順が
+      D3D12既定と逆だったことが原因と判断し、NONEへ差し戻し済み(2026-07-17)。
+- [ ] 今後の課題: FBXの巻き順不一致を根本解決してBACKカリングを再度有効化する。
+      候補: FrontCounterClockwise=TRUEを試す/メッシュ単位でカリング方向を切替可能にする/
+      変換ツール側で巻き順を統一する。現状はNONE(カリング無効)のまま。
+- [x] ゲーム: 必殺技preビームの向きをカメラ方向→地面(真下)固定に変更、カメラの高さを
+      500→900へさらに引き上げ(ユーザーフィードバック「めっちゃいい、もっと高く」)。
+      UltimateData::BeamCameraOffsetをBeamDownOffsetへリネーム(db.db列名変更のため
+      DropTable→再同期)。不要になったNormalizeOrZeroヘルパーを削除。
+      Debug/Release両方ビルド・起動確認済み (2026-07-18)
+- [x] ゲーム: 必殺技のpre(ビーム)終了後にmainエフェクトを再生し、mainの終了後に座標・カメラを
+      戻すよう変更(以前はpre終了直後に座標復元していた)。eUltimatePhaseにPlayingMainを追加、
+      UltimateData::MaxMainDurationを新設。CameraHeightを900→700に調整。db.db同期
+      (列追加のためDropTable)。Debug/Release両方ビルド・起動確認済み (2026-07-18)
+- [x] バグ修正: 必殺技で上昇するプレイヤーと接触して押し上げられた敵が、残留Y速度をクリアする
+      箇所が無かったため空まで浮遊し続けていた問題を修正。EnemyChaseSystemの追従中・静止中
+      両方の分岐で毎フレームMoveVelocityをY含め明示的にリセットするよう変更。
+      Debug/Release両方ビルド・起動確認済み (2026-07-18)
+- [x] バグ修正: 敵の湧き出しY座標がplayerPos.yに依存しており、必殺技上昇中に敵がプレイヤーと
+      同じ高さで湧いていた問題を修正(固定のkSpawnGroundYを使うよう変更)。
+      必殺技の範囲ダメージによる撃破が必殺技ゲージへ加算されてしまう不具合も修正
+      (EnemyStatusComponent::DamagedByUltimateフラグを新設しEnemyDeathSystemで除外)。
+      Debug/Release両方ビルド・起動確認済み (2026-07-18)

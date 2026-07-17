@@ -13,6 +13,13 @@
 #include <graphics/StructuredBuffer/StructuredBuffer.h>
 #include <graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeap.h>
 
+namespace ecs
+{
+    struct Transform;
+    struct FbxComponent;
+    struct FbxAnimComponent;
+}
+
 namespace graphics
 {
     class DX12Device;
@@ -93,6 +100,14 @@ namespace graphics
             uint32_t           InstanceIndex = 0;
         };
 
+        // ── UpdateAndDraw() 内で収集する描画対象1件分 ───────────────
+        struct RenderItem
+        {
+            const ecs::Transform*    Transform = nullptr;
+            const ecs::FbxComponent* Fbx = nullptr;
+            ecs::FbxAnimComponent*   Anim = nullptr;
+        };
+
         // ── 上限定数 ─────────────────────────────────────────────
         static constexpr uint32_t MAX_FBX_INSTANCES = 512u;
         static constexpr uint32_t MAX_TOTAL_BONES = 32768u;
@@ -117,6 +132,9 @@ namespace graphics
         std::vector<DirectX::XMFLOAT4X4> mBoneData;
         std::vector<DrawCall>             mDrawCalls;
         std::vector<LightData>            mLightData;
+
+        // UpdateAndDraw()の一時バッファ。毎フレームclear()して再利用する(毎フレームのnew/vector生成禁止のため)
+        std::vector<RenderItem>           mRenderItems;
 
         // ── デフォルトテクスチャ ──────────────────────────────────
         Texture* mDefaultWhiteTexture = nullptr;

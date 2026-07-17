@@ -56,6 +56,12 @@ namespace ecs
         /// <summary>現在HP。生成直後は Recompute() → CurrentHp = Current.MaxHp で初期化する。</summary>
         float CurrentHp = 10.0f;
 
+        /// <summary>必殺技の範囲ダメージを受けたか。EnemyDeathSystemがこれを見て、必殺技自身の
+        /// 撃破では必殺技ゲージ(PlayerUltimateComponent::KillCount)を加算しないようにする
+        /// (発動直後にゲージが再び貯まってしまう自己参照的な挙動を防ぐため)。
+        /// ゴールド・経験値・パワーチャージは通常の撃破と同様に加算される。</summary>
+        bool DamagedByUltimate = false;
+
         /// <summary>Base × WaveModifier を計算して Current に反映する。</summary>
         void Recompute()
         {

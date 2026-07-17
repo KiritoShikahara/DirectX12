@@ -10,7 +10,8 @@ namespace ecs
     enum class eUltimatePhase
     {
         Ascending,   // 指定の高さ(RiseHeight)まで上昇中
-        PlayingBeam, // 上昇完了、ビームエフェクトの再生終了を待っている
+        PlayingBeam, // 上昇完了、ビーム(pre)エフェクトの再生終了を待っている
+        PlayingMain, // ビーム(pre)終了、メイン(main)エフェクトの再生終了を待っている
     };
 
     /// <summary>
@@ -32,11 +33,12 @@ namespace ecs
         eUltimatePhase Phase = eUltimatePhase::Ascending;
 
         /// <summary>
-        /// PlayingBeamフェーズに入ってからの経過時間(秒、rawDeltaTime基準)。
-        /// UltimateData::MaxBeamDurationに達したら、ビーム再生中でも強制的に次へ進める安全装置に使う
+        /// 現在のフェーズ(PlayingBeam/PlayingMain)に入ってからの経過時間(秒、rawDeltaTime基準)。
+        /// フェーズが切り替わるたびに0にリセットする。UltimateData::MaxBeamDuration/
+        /// MaxMainDurationに達したら、再生中でも強制的に次へ進める安全装置に使う
         /// (エフェクトパス未設定やアセット異常でIsPlaying()が永久にtrueのままになるケースに備える)。
         /// </summary>
-        float BeamElapsedTime = 0.0f;
+        float PhaseElapsedTime = 0.0f;
 
         /// <summary>発動した瞬間のプレイヤー座標（上昇前の地面位置。カメラ位置・詠唱エフェクト・
         /// 復帰時のテレポート先の基準にする）</summary>
@@ -48,8 +50,11 @@ namespace ecs
         /// <summary>満タン中にプレイヤーへ纏わせているオーラのエフェクトエンティティ一覧（複数対応）</summary>
         std::vector<entt::entity> AuraEffectEntities;
 
-        /// <summary>上昇完了後に再生したビームエフェクトのエンティティ一覧（再生終了監視用）</summary>
+        /// <summary>上昇完了後に再生したビーム(pre)エフェクトのエンティティ一覧（再生終了監視用）</summary>
         std::vector<entt::entity> BeamEffectEntities;
+
+        /// <summary>ビーム(pre)終了後に再生したメイン(main)エフェクトのエンティティ一覧（再生終了監視用）</summary>
+        std::vector<entt::entity> MainEffectEntities;
     };
 
     /// <summary>

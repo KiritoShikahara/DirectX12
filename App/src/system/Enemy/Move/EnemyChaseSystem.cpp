@@ -50,6 +50,10 @@ namespace ecs
                 if (dist <= kEpsilon)
                 {
                     moveDir.IsMoving = false;
+                    // Y方向の残留速度(必殺技中に上昇するプレイヤーと接触して押し上げられた場合等)を
+                    // 毎フレーム明示的に0へリセットする(GravityFactor=0のため自然には落ちてこない)
+                    rigidBody.MoveVelocity = { 0.0f, 0.0f, 0.0f };
+                    rigidBody.HasMoveRequest = true;
                     return;
                 }
 
@@ -58,7 +62,7 @@ namespace ecs
                 // 向きは間合い内でも更新し続ける（プレイヤーを向く）
                 XMStoreFloat3(&moveDir.Direction, dir);
 
-                // 停止間合いより遠いときだけ移動速度を積む
+                // 停止間合いより遠いときだけ移動速度を積む（dirのYは常に0のためvelocity.yも常に0）
                 if (dist > chase.StopDistance)
                 {
                     XMFLOAT3 velocity;
@@ -70,7 +74,10 @@ namespace ecs
                 }
                 else
                 {
-                    // 間合い内：移動リクエストは積まない（MoveVelocity はフレーム末にクリアされる）
+                    // 間合い内：水平移動はしないが、Y方向の残留速度(必殺技中に上昇するプレイヤーと
+                    // 接触して押し上げられた場合等)は毎フレーム明示的に0へリセットする
+                    rigidBody.MoveVelocity = { 0.0f, 0.0f, 0.0f };
+                    rigidBody.HasMoveRequest = true;
                     moveDir.IsMoving = false;
                 }
             });

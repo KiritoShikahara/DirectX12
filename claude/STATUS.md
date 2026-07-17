@@ -571,3 +571,96 @@ feature/TestClaude（変更は全て未コミット。ユーザーの指示な�
     こちらはビルドは通っていたので同様にIDE整理のため合わせて登録した)。
   - db.db同期：StatUpgradeData/EnemyDataは既存テーブルへの行追加のみ(DropTable不要)。
     Debug/Release両方ビルド・起動確認済み(20秒間クラッシュなし)。
+
+- **システム監査に基づくエンジン側の修正3件**（ユーザー指示「処理効率やfbxのクオリティアップとか。
+  修正するべき個所などを洗ってみて」→ forkによる監査後、提示した優先度上位3件を実施）。
+  1. `FbxPipeline.cpp`: メインパスのラスタライザが`D3D12_CULL_MODE_NONE`(カリング無効)に
+     なっていた。`ShadowPipeline.cpp`は同じ根拠で既に`D3D12_CULL_MODE_BACK`を使っており、
+     整合性が無かった(意図的な両面描画の根拠となるマテリアル側の両面フラグも存在しない)。
+     `BACK`に変更し、全キャラクター/敵の描画で頂点・ピクセル処理を約半減。
+     ※DX12フリップモデルスワップチェーンの制約でPrintWindowによる3D描画内容の
+     スクリーンショット検証ができなかったため、ユーザーに目視確認を依頼済み。
+  2. `FbxRenderer::UpdateAndDraw`が毎フレーム`std::vector<RenderItem> items`をローカル
+     生成していた(CLAUDE.md明記の「毎フレームのvector生成禁止」に抵触)。`RenderItem`を
+     `DrawCall`と同じ形でFbxRenderer.hへ private nested struct として移動し、
+     `mRenderItems`メンバ変数(毎フレーム`clear()`して再利用)へ昇格。
+  3. `Assets/Fbx/Field/Texture/T_StoneTiles_02_Normal.png`が存在せず、起動毎に
+     `Texture: File not found`警告が出続けていた。`Field.fbx.bin.txt`で確認したところ
+     元のFBXマテリアル定義自体がこのファイルを参照しており(パスの問題ではなく実体が
+     欠落)、PowerShell+System.Drawingでフラットな法線マップ(8x8、RGB(128,128,255)=
+     タンジェント空間で真上を指す平坦法線)を新規生成して配置。警告は解消し、
+     見た目は既存のデフォルト法線フォールバックと同等(退行なし)。
+  - Debug/Release両方ビルド・起動確認済み(15秒間クラッシュなし、警告メッセージ解消)。
+
+- **CullMode=BACK変更を差し戻し(ユーザー報告: マテリアルが消える・地面が見えない)**。
+  前回のFbxPipeline.cpp修正(NONE→BACK)により、Field(地面)モデルの頂点巻き順が
+  D3D12既定(時計回り=表面)と逆だったため、地面メッシュ全体がカリングされて非表示に
+  なっていた。原因調査の結果に基づき`D3D12_CULL_MODE_NONE`へ差し戻し、事情をコード
+  コメントに明記(FrontCounterClockwise=TRUEを試す、メッシュ単位でカリング方向を
+  切り替え可能にする、等が今後の対応候補)。Debug/Release両方ビルド・起動確認済み。
+  他の2件(FbxRendererのvectorメンバ化、StoneTiles法線マップ生成)はレンダリングの
+  可視性に影響しない変更のため維持。
+
+- **必殺技のカメラワークを「正面下から見上げ」→「背後上空から見下ろし」構図へ変更**
+  （ユーザー指示「必殺技のカメラワークなんだけどプレイヤーの後ろから下を見る感じ」）。
+  `PlayerUltimateSystem::UpdateCamera`のカメラ位置計算を`start + forward*CameraDistance`
+  (正面方向)から`start - forward*CameraDistance`(背後方向)へ変更。`UltimateData`の
+  `CameraDistance`を50→80、`CameraHeight`を15→500(上昇距離RiseHeight=450より高くし、
+  上昇中ずっと見下ろす構図を維持する)、`CameraLookOffset`を40→20(見下ろす構図のため
+  「顔の高さを狙う」必要が無くなった分を縮小)に変更。db.db同期(値変更のみ、
+  DropTable不要)。Debug/Release両方ビルド・起動確認済み(クラッシュなし)。
+  ※カメラワークの見た目(実際のフレーミング)はDX12描画内容のスクリーンショット検証が
+  できないため未確認。ユーザーに実機での目視確認を依頼。
+
+- **必殺技のpreビーム方向を地面向きに変更、カメラをさらに高く**（ユーザー指示・フィードバック）。
+  1. preビーム(hougu_pre.efk)の先端がカメラ方向を向く仕様だったのを、常に真下(地面方向)を
+     向くよう固定方向化(`ComputeBeamRotationFromDirection({0,-1,0})`)。カメラ座標を都度
+     参照する必要が無くなったため関連コードを削除し、今回不要になった`NormalizeOrZero`
+     ヘルパーも削除(死コード化を避けるため)。
+     `UltimateData::BeamCameraOffset`(カメラ方向へずらす量)は用途が変わったため
+     `BeamDownOffset`(真下へずらす量)へリネーム(列名変更のためdb.dbはDropTable→再同期)。
+  2. カメラワークの見た目について「めっちゃいい、もっと高く」とフィードバックを受け、
+     `UltimateData::CameraHeight`を500→900へさらに引き上げ(より見下ろす角度を強調)。
+  - Debug/Release両方ビルド・db.db同期・起動確認済み(クラッシュなし)。
+
+- **必殺技: preビーム終了後にmainエフェクトを再生してからその終了後に座標復元するよう修正、
+  カメラ高さを700へ調整**（ユーザー指示）。
+  `eUltimatePhase`に`PlayingMain`を新設(Ascending→PlayingBeam→PlayingMain→座標復元/
+  ダメージの4段階に変更)。`PlayerUltimateComponent::BeamElapsedTime`を`PhaseElapsedTime`に
+  リネームし、PlayingBeam/PlayingMainの両フェーズで使い回す(フェーズ切替時に0リセット)。
+  `MainEffectEntities`を新設しメインエフェクトの再生終了監視に使用。
+  `UltimateData::MaxMainDuration`を新設(メイン再生の安全装置タイムアウト、MaxBeamDurationと
+  同じ役割)。メイン(hougu_main、ActivationEffectPath)は、ビーム終了時点のプレイヤー座標
+  (まだ上空、地面へ戻す前)で再生するよう変更し、`FinishAndExplode`からエフェクト再生と
+  地面めり込み対策の`ActivationHeightOffset`ロジックを削除(既にPlayingMain遷移時に
+  同じフィールドを流用)。`CameraHeight`を900→700に調整。
+  db.db同期(MaxMainDuration列追加のためDropTable→再同期)。Debug/Release両方ビルド・
+  起動確認済み(クラッシュなし)。
+
+- **必殺技中に敵が空まで追ってくるバグを修正**（ユーザー報告「敵の追従はY軸以外で行ってくれ」）。
+  `EnemyChaseSystem`の方向計算自体は元々Y成分を無視していたが、間合い内で静止中の敵は
+  `MoveVelocity`/`HasMoveRequest`を一切更新しないままだったため、必殺技で上昇するプレイヤーの
+  物理ボディと接触して押し上げられた際の残留Y速度がクリアされず(敵は`GravityFactor=0`のため
+  自然には落下しない)、そのまま浮遊し続けて「空まで追いかけてくる」ように見えていた。
+  追従中・間合い内で静止中の両方の分岐で、毎フレーム明示的に`MoveVelocity={0,0,0}`+
+  `HasMoveRequest=true`を設定してY速度を含めリセットするよう修正。
+  Debug/Release両方ビルド・起動確認済み(クラッシュなし、db.db変更なし)。
+
+- **敵の湧き出しY座標がプレイヤーの現在座標に依存していたバグを修正、必殺技の自爆撃破で
+  ゲージが貯まる不具合を修正**（ユーザー指摘・報告2件）。
+  1. `EnemySpawnSystem::ComputeSpawnPosition`が敵の湧き出しY座標に`playerPos.y`(プレイヤーの
+     現在のY座標)をそのまま使っていたため、必殺技で上昇中に新しく湧いた敵がプレイヤーと
+     同じ高さ(=空中)に出現していた。これが「敵が空まで追いかけてくる」ように見えていた
+     主因(前回のEnemyChaseSystemのY速度リセット修正は別途正しい改善だが、主因はこちら)。
+     地面は平面である前提の固定値`kSpawnGroundY`(=0.1、`GameSceneFactory::CreatePlayer`の
+     初期Y座標と合わせた値)を使うよう修正。
+  2. 必殺技の範囲ダメージによる撃破が、必殺技ゲージ(`PlayerUltimateComponent::KillCount`)へ
+     加算されてしまっていた。`AwardUltimateCharge`には元々「発動中は加算しない」ガードが
+     あったが、`FinishAndExplode`内でダメージ適用直後に`ultimate.IsActive=false`にしてしまう
+     ため、実際の撃破判定(`EnemyDeathSystem::Update`)が反映されるのは次フレームで、
+     その時点では既に`IsActive=false`になっておりガードが効かなかった。
+     `EnemyStatusComponent::DamagedByUltimate`フラグを新設し、`FinishAndExplode`で
+     大ダメージを与える際にtrueへ設定、`EnemyDeathSystem::Update`がこのフラグを見て
+     必殺技ゲージへの加算対象から除外するよう修正(ゴールド・経験値・パワーチャージは
+     従来どおり加算される)。
+  - Debug/Release両方ビルド・起動確認済み(クラッシュなし、db.db変更なし)。

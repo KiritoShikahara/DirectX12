@@ -251,39 +251,33 @@ namespace graphics
                 sizeof(LightData) * mLightData.size());
         }
 
-        struct RenderItem
-        {
-            const ecs::Transform* transform;
-            const ecs::FbxComponent* fbx;
-            ecs::FbxAnimComponent* anim;
-        };
-
-        std::vector<RenderItem> items;
+        // 毎フレームのvector生成を避けるため、メンバ変数(mRenderItems)を使い回す
+        mRenderItems.clear();
         auto view = registry.view<ecs::Transform, ecs::FbxComponent>();
-        items.reserve(view.size_hint());
+        mRenderItems.reserve(view.size_hint());
 
         view.each([&](auto entity, ecs::Transform& tr, ecs::FbxComponent& fbxComp)
             {
                 if (!fbxComp.IsVisible || !fbxComp.Resource || !fbxComp.Resource->IsLoaded()) return;
                 ecs::FbxAnimComponent* anim = registry.try_get<ecs::FbxAnimComponent>(entity);
-                items.push_back({ &tr, &fbxComp, anim });
+                mRenderItems.push_back({ &tr, &fbxComp, anim });
             });
 
-        for (auto& item : items)
+        for (auto& item : mRenderItems)
         {
-            const bool hasAnimation = (item.anim && item.fbx->Resource->HasSkinning());
+            const bool hasAnimation = (item.Anim && item.Fbx->Resource->HasSkinning());
             if (hasAnimation)
-                item.anim->CalcBoneMatrices(*item.fbx->Resource);
+                item.Anim->CalcBoneMatrices(*item.Fbx->Resource);
 
             XMFLOAT3 pivot = { 0.f, 0.f, 0.f };
             if (!hasAnimation)
             {
-                pivot = item.fbx->AutoPivot
-                    ? item.fbx->Resource->GetBottomCenterPivot()
-                    : item.fbx->PivotOffset;
+                pivot = item.Fbx->AutoPivot
+                    ? item.Fbx->Resource->GetBottomCenterPivot()
+                    : item.Fbx->PivotOffset;
             }
 
-            XMMATRIX world = item.transform->GetWorldMatrix();
+            XMMATRIX world = item.Transform->GetWorldMatrix();
             if (pivot.x != 0.f || pivot.y != 0.f || pivot.z != 0.f)
                 world = XMMatrixTranslation(pivot.x, pivot.y, pivot.z) * world;
 
@@ -291,11 +285,11 @@ namespace graphics
             XMStoreFloat4x4(&worldF, XMMatrixTranspose(world));
 
             const std::vector<XMFLOAT4X4>* bonePtr =
-                (hasAnimation && !item.anim->BoneMatrices.empty())
-                ? &item.anim->BoneMatrices
+                (hasAnimation && !item.Anim->BoneMatrices.empty())
+                ? &item.Anim->BoneMatrices
                 : nullptr;
 
-            Submit(*item.fbx->Resource, worldF, bonePtr, item.fbx->CustomColor);
+            Submit(*item.Fbx->Resource, worldF, bonePtr, item.Fbx->CustomColor);
         }
 
         // ── GPU バッファへの転送 ──────────────────────────────────

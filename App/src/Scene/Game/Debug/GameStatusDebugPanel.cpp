@@ -110,7 +110,9 @@ namespace debug
 					ImGui::ProgressBar(ratio, ImVec2(-1.0f, 0.0f));
 					if (ultimate.IsActive)
 					{
-						const char* phaseName = (ultimate.Phase == ecs::eUltimatePhase::Ascending) ? "Ascending" : "PlayingBeam";
+						const char* phaseName =
+							(ultimate.Phase == ecs::eUltimatePhase::Ascending) ? "Ascending" :
+							(ultimate.Phase == ecs::eUltimatePhase::PlayingBeam) ? "PlayingBeam" : "PlayingMain";
 						ImGui::TextColored(ImVec4(1.0f, 0.5f, 1.0f, 1.0f), "  ACTIVE (%s)", phaseName);
 					}
 					else if (ultimate.IsReady)

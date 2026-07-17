@@ -19,6 +19,12 @@ namespace ecs
 {
 	namespace
 	{
+		// 敵の湧き出し高さ(地面のY座標。GameSceneFactory::CreatePlayerの初期Y座標(0.1)と合わせる)。
+		// プレイヤーの現在のY座標(playerPos.y)を使うと、必殺技での上昇中に敵がプレイヤーと
+		// 同じ高さ(=空中)で湧いてしまい、あたかも空まで追いかけてきたように見えるバグになるため、
+		// 地面は常に平面である前提でこの固定値を使う
+		constexpr float kSpawnGroundY = 0.1f;
+
 		// プロセス全体で1つの乱数エンジンを使い回す（毎フレーム再生成しない）
 		std::mt19937& GetRandomEngine()
 		{
@@ -108,7 +114,7 @@ namespace ecs
 		return
 		{
 			playerPos.x + std::cos(angle) * radius,
-			playerPos.y,
+			kSpawnGroundY,
 			playerPos.z + std::sin(angle) * radius,
 		};
 	}

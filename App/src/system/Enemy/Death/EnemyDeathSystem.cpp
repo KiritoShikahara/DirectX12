@@ -20,6 +20,9 @@ namespace ecs
 		std::vector<entt::entity> dead;
 		float totalExperience = 0.0f;
 		float totalGold = 0.0f;
+		// 必殺技自身の範囲ダメージで倒した敵は、必殺技ゲージへ加算しない対象
+		// (EnemyStatusComponent::DamagedByUltimate参照)のため、通常撃破数と分けて数える
+		int ultimateChargeableKillCount = 0;
 
 		registry.view<EnemyTag, EnemyStatusComponent>().each(
 			[&](entt::entity entity, const EnemyStatusComponent& status)
@@ -29,6 +32,10 @@ namespace ecs
 					dead.push_back(entity);
 					totalExperience += status.Base.ExperienceValue;
 					totalGold += status.Base.GoldValue;
+					if (!status.DamagedByUltimate)
+					{
+						ultimateChargeableKillCount += 1;
+					}
 				}
 			});
 
@@ -44,7 +51,10 @@ namespace ecs
 
 		if (!dead.empty())
 		{
-			AwardUltimateCharge(registry, static_cast<int>(dead.size()));
+			if (ultimateChargeableKillCount > 0)
+			{
+				AwardUltimateCharge(registry, ultimateChargeableKillCount);
+			}
 			AwardPowerCharge(registry, static_cast<int>(dead.size()));
 		}
 

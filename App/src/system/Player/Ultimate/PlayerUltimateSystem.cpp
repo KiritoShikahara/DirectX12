@@ -17,16 +17,6 @@
 
 namespace
 {
-    /// <summary>ゼロベクトルなら{0,0,0}を返す安全な正規化</summary>
-    DirectX::XMFLOAT3 NormalizeOrZero(const DirectX::XMFLOAT3& v)
-    {
-        const float lenSq = v.x * v.x + v.y * v.y + v.z * v.z;
-        if (lenSq < 0.0001f) return { 0.0f, 0.0f, 0.0f };
-
-        const float invLen = 1.0f / std::sqrt(lenSq);
-        return { v.x * invLen, v.y * invLen, v.z * invLen };
-    }
-
     /// <summary>
     /// ビーム素材は既定でローカル+Z(Effekseer Editorの青軸方向)を向いている前提で、
     /// その先端が正規化済みdirの方向を向くようなオイラー角(ピッチ=X軸回転、ヨー=Y軸回転)を
@@ -122,7 +112,7 @@ namespace ecs
         ultimate.IsActive = true;
         ultimate.IsReady = false;
         ultimate.Phase = ecs::eUltimatePhase::Ascending;
-        ultimate.BeamElapsedTime = 0.0f;
+        ultimate.PhaseElapsedTime = 0.0f;
         ultimate.KillCount = 0;
         ultimate.StartPosition = playerTransform->GetPosition();
         DirectX::XMStoreFloat3(&ultimate.ForwardDir, playerTransform->GetForward());
@@ -155,7 +145,7 @@ namespace ecs
         }
     }
 
-    /// <summary>発動中(IsActive)の毎フレーム処理：Ascending/PlayingBeamフェーズの遷移判定</summary>
+    /// <summary>発動中(IsActive)の毎フレーム処理：Ascending/PlayingBeam/PlayingMainフェーズの遷移判定</summary>
     void PlayerUltimateSystem::UpdateActive(
         entt::registry& registry,
         entt::entity playerEntity,
@@ -164,7 +154,7 @@ namespace ecs
         const data::UltimateData& masterData,
         float rawDeltaTime)
     {
-        // カメラは発動中ずっと固定位置・見上げるLookAtのまま(毎フレーム上書きし続ける)
+        // カメラは発動中ずっと固定位置・見下ろすLookAtのまま(毎フレーム上書きし続ける)
         UpdateCamera(registry, playerEntity, ultimate, masterData);
 
         const auto* playerTransform = registry.try_get<ecs::Transform>(playerEntity);
@@ -177,7 +167,7 @@ namespace ecs
 
             if (currentHeight < masterData.RiseHeight) return; // 上昇継続中
 
-            // 3. 上昇完了：静止し、ビームエフェクトを再生してその終了を待つフェーズへ
+            // 3. 上昇完了：静止し、ビーム(pre)エフェクトを再生してその終了を待つフェーズへ
             auto* rigid = registry.try_get<ecs::RigidBodyComponent>(playerEntity);
             if (rigid != nullptr)
             {
@@ -186,39 +176,21 @@ namespace ecs
             }
 
             ultimate.Phase = ecs::eUltimatePhase::PlayingBeam;
-            ultimate.BeamElapsedTime = 0.0f;
+            ultimate.PhaseElapsedTime = 0.0f;
 
             const DirectX::XMFLOAT3 beamPosition = playerTransform != nullptr
                 ? playerTransform->GetPosition()
                 : ultimate.StartPosition;
 
-            // ビームの先端がカメラの方向を向くよう、現在のカメラ座標(UpdateCameraで
-            // このフレーム分は更新済み)から回転を算出する。また、プレイヤー座標そのままだと
-            // カメラの正面へまっすぐ延びる形になり奥行きが見えず視認しづらいため、
-            // カメラ方向へBeamCameraOffset分だけ手前にずらして再生する
-            const entt::entity cameraEntity = ::sys::CameraSystem::Get().GetMainCameraEntity();
-            const auto* cameraTransform = (cameraEntity != entt::null && registry.valid(cameraEntity))
-                ? registry.try_get<ecs::Transform>(cameraEntity)
-                : nullptr;
-
-            DirectX::XMFLOAT3 beamRotation = { 0.0f, 0.0f, 0.0f };
-            DirectX::XMFLOAT3 beamSpawnPosition = beamPosition;
-            if (cameraTransform != nullptr)
+            // ビームの先端が地面(真下)を向くよう固定方向で再生する。プレイヤー座標そのままだと
+            // 自機モデルの足元と重なって見えるため、BeamDownOffset分だけ下にずらして再生する
+            const DirectX::XMFLOAT3 beamRotation = ComputeBeamRotationFromDirection({ 0.0f, -1.0f, 0.0f });
+            const DirectX::XMFLOAT3 beamSpawnPosition =
             {
-                const DirectX::XMFLOAT3& cameraPos = cameraTransform->GetPosition();
-                const DirectX::XMFLOAT3 dirToCamera = NormalizeOrZero({
-                    cameraPos.x - beamPosition.x,
-                    cameraPos.y - beamPosition.y,
-                    cameraPos.z - beamPosition.z });
-
-                beamRotation = ComputeBeamRotationFromDirection(dirToCamera);
-                beamSpawnPosition =
-                {
-                    beamPosition.x + dirToCamera.x * masterData.BeamCameraOffset,
-                    beamPosition.y + dirToCamera.y * masterData.BeamCameraOffset,
-                    beamPosition.z + dirToCamera.z * masterData.BeamCameraOffset,
-                };
-            }
+                beamPosition.x,
+                beamPosition.y - masterData.BeamDownOffset,
+                beamPosition.z,
+            };
 
             ecs::effectutil::PlayOneShotCombined(
                 masterData.BeamEffectPath, beamSpawnPosition, masterData.BeamScale,
@@ -226,17 +198,46 @@ namespace ecs
             return;
         }
 
-        // PlayingBeamフェーズ：ビームの再生終了(またはMaxBeamDurationでのタイムアウト)を待つ
-        ultimate.BeamElapsedTime += rawDeltaTime;
-        const bool stillPlaying = ecs::effectutil::AnyPlaying(registry, ultimate.BeamEffectEntities);
-        const bool timedOut = ultimate.BeamElapsedTime >= masterData.MaxBeamDuration;
+        if (ultimate.Phase == ecs::eUltimatePhase::PlayingBeam)
+        {
+            // ビーム(pre)の再生終了(またはMaxBeamDurationでのタイムアウト)を待つ
+            ultimate.PhaseElapsedTime += rawDeltaTime;
+            const bool beamStillPlaying = ecs::effectutil::AnyPlaying(registry, ultimate.BeamEffectEntities);
+            const bool beamTimedOut = ultimate.PhaseElapsedTime >= masterData.MaxBeamDuration;
 
-        if (stillPlaying && !timedOut) return;
+            if (beamStillPlaying && !beamTimedOut) return;
+
+            // 4. ビーム終了：まだ座標は戻さず、同じ位置でメイン(main)エフェクトを再生してその終了を待つ
+            ultimate.Phase = ecs::eUltimatePhase::PlayingMain;
+            ultimate.PhaseElapsedTime = 0.0f;
+
+            const DirectX::XMFLOAT3 mainPosition = playerTransform != nullptr
+                ? playerTransform->GetPosition()
+                : ultimate.StartPosition;
+            const DirectX::XMFLOAT3 mainSpawnPosition =
+            {
+                mainPosition.x,
+                mainPosition.y + masterData.ActivationHeightOffset,
+                mainPosition.z,
+            };
+
+            ecs::effectutil::PlayOneShotCombined(
+                masterData.ActivationEffectPath, mainSpawnPosition, masterData.ActivationScale,
+                &ultimate.MainEffectEntities);
+            return;
+        }
+
+        // PlayingMainフェーズ：メイン(main)の再生終了(またはMaxMainDurationでのタイムアウト)を待つ
+        ultimate.PhaseElapsedTime += rawDeltaTime;
+        const bool mainStillPlaying = ecs::effectutil::AnyPlaying(registry, ultimate.MainEffectEntities);
+        const bool mainTimedOut = ultimate.PhaseElapsedTime >= masterData.MaxMainDuration;
+
+        if (mainStillPlaying && !mainTimedOut) return;
 
         FinishAndExplode(registry, playerEntity, ultimate, status, masterData);
     }
 
-    /// <summary>プレイヤー正面・低い位置から見上げる構図になるようカメラのTransformを直接更新する</summary>
+    /// <summary>プレイヤー背後・高い位置から見下ろす構図になるようカメラのTransformを直接更新する</summary>
     void PlayerUltimateSystem::UpdateCamera(
         entt::registry& registry,
         entt::entity playerEntity,
@@ -253,14 +254,14 @@ namespace ecs
         const DirectX::XMFLOAT3& start = ultimate.StartPosition;
         const DirectX::XMFLOAT3& forward = ultimate.ForwardDir;
 
-        // 発動時に捕捉したプレイヤーの正面方向へCameraDistance離れた、低い位置(CameraHeight)から
-        // 見上げる構図にする。カメラ自体の位置は発動中ずっと固定で、追従はしない
-        // (LookAtだけが現在のプレイヤー座標へ追従する)。
+        // 発動時に捕捉したプレイヤーの背後方向(-forward)へCameraDistance離れた、高い位置
+        // (CameraHeight)から見下ろす構図にする。カメラ自体の位置は発動中ずっと固定で、
+        // 追従はしない(LookAtだけが現在のプレイヤー座標へ追従する)。
         const DirectX::XMFLOAT3 cameraPos =
         {
-            start.x + forward.x * masterData.CameraDistance,
+            start.x - forward.x * masterData.CameraDistance,
             start.y + masterData.CameraHeight,
-            start.z + forward.z * masterData.CameraDistance,
+            start.z - forward.z * masterData.CameraDistance,
         };
         cameraTransform->SetPosition(cameraPos);
 
@@ -274,7 +275,7 @@ namespace ecs
         cameraTransform->LookAt(lookAt);
     }
 
-    /// <summary>ビーム終了後：プレイヤー座標・無敵状態を戻し、その場で全体ダメージ+爆発エフェクトを発生させる</summary>
+    /// <summary>メイン(main)終了後：プレイヤー座標・無敵状態を戻し、その場で全体ダメージを与える</summary>
     void PlayerUltimateSystem::FinishAndExplode(
         entt::registry& registry,
         entt::entity playerEntity,
@@ -282,11 +283,11 @@ namespace ecs
         ecs::PlayerStatusComponent& status,
         const data::UltimateData& masterData)
     {
-        // ビーム(hougu_pre)の再生が終わったので、非表示化していた他の武器のエフェクトを
+        // メイン(hougu_main)の再生が終わったので、非表示化していた他の武器のエフェクトを
         // 元に戻す（これ以降、各武器Systemの発動もIsPlayerUltimateActive()=falseになり再開する）
         SetOtherEffectsVisible(registry, true);
 
-        // 4. プレイヤーの座標を瞬時に発動前の位置へ戻す(テレポート)。
+        // 5. プレイヤーの座標を瞬時に発動前の位置へ戻す(テレポート)。
         // Dynamic Bodyは物理側が位置の権威のため、Transformを直接書き換えただけでは
         // 次の物理ステップでJolt側の位置により上書きされてしまう。TransformDirtyTagを
         // 付与するとPhysicsSystem::SyncFromTransformがこのTransformの値をJolt側へ
@@ -309,26 +310,21 @@ namespace ecs
 
         status.IsInvincible = false;
 
-        // 5. その場(元の座標)にいる敵全員へ大ダメージ + 爆発エフェクト
+        // その場(元の座標)にいる敵全員へ大ダメージ(メイン(main)エフェクトは既にPlayingMainフェーズで
+        // 再生済みのため、ここでは座標復元とダメージ適用のみ行う)。
+        // DamagedByUltimate=trueにしておくことで、この後EnemyDeathSystemが処理する撃破が
+        // 必殺技ゲージへ加算されないようにする(発動直後に即ゲージが貯まる自己参照を防ぐため。
+        // ゴールド・経験値・パワーチャージは通常どおり加算される)
         registry.view<ecs::EnemyTag, ecs::EnemyStatusComponent, ecs::Transform>().each(
             [&](ecs::EnemyStatusComponent& enemyStatus, ecs::Transform& enemyTransform)
             {
                 enemyStatus.CurrentHp = std::max(0.0f, enemyStatus.CurrentHp - masterData.Damage);
+                enemyStatus.DamagedByUltimate = true;
                 ecs::combatutil::SpawnDamageNumber(enemyTransform.GetPosition(), masterData.Damage, false);
             });
 
-        // Y=0(発動前の座標そのまま)で再生すると地面に少しめり込むため、ActivationHeightOffset分
-        // だけ上げて再生する
-        const DirectX::XMFLOAT3 explosionPosition =
-        {
-            ultimate.StartPosition.x,
-            ultimate.StartPosition.y + masterData.ActivationHeightOffset,
-            ultimate.StartPosition.z,
-        };
-        ecs::effectutil::PlayOneShotCombined(
-            masterData.ActivationEffectPath, explosionPosition, masterData.ActivationScale);
-
         ultimate.IsActive = false;
         ultimate.BeamEffectEntities.clear();
+        ultimate.MainEffectEntities.clear();
     }
 }
