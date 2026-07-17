@@ -54,6 +54,13 @@ namespace graphics
         void SetSpeed(float speed);
         void SetVisible(bool visible);
 
+        /// <summary>
+        /// 表示/非表示だけを切り替える(SetVisibleと異なりPauseはしない＝内部シミュレーションは
+        /// 進み続ける)。ループ再生の再始動直後のインスタンスを1フレームだけ隠しつつ内部状態を
+        /// 進めておきたい場合に使う（EffekseerManager::Update参照）。
+        /// </summary>
+        void SetRenderingVisible(bool visible);
+
         // -----------------------------------------------------------------------
         //  状態取得
         // -----------------------------------------------------------------------

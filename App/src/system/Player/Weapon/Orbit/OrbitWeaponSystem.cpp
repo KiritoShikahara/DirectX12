@@ -28,8 +28,9 @@ namespace ecs
 		auto stateView = registry.view<::ecs::GameStateComponent>();
 		if (stateView.begin() == stateView.end()) return;
 		if (registry.get<::ecs::GameStateComponent>(*stateView.begin()).GameState != ::sys::eGameState::InGame) return;
-		// 必殺技演出中は既存オーブの周回・当たり判定も一時停止させる
-		if (ecs::IsPlayerActionLocked(registry)) return;
+		// 必殺技演出中は既存オーブの周回・当たり判定も一時停止させる(自動発動武器のため
+		// Flicker Strike中は止めない。PlayerActionLock.h参照)
+		if (ecs::IsPlayerUltimateActive(registry)) return;
 
 		registry.view<ecs::WeaponComponent, ecs::OrbitWeaponRuntimeComponent>().each(
 			[&](ecs::WeaponComponent& weapon, ecs::OrbitWeaponRuntimeComponent& runtime)
@@ -37,7 +38,7 @@ namespace ecs
 				if (weapon.Type != ecs::eWeaponType::SelfDefense) return;
 				if (!registry.valid(weapon.Owner)) return;
 
-				const auto* masterData = DATA_MGR(data::OrbitWeaponData).GetById(weapon.WeaponID);
+				const auto* masterData = DATA_MGR(data::OrbitWeaponData).GetById((weapon.WeaponID + 1) * 1000 + weapon.Level);
 				if (masterData == nullptr) return;
 
 				// 発動トリガーの無い常時稼働の武器のため、初回Updateでオーブを生成する
@@ -56,11 +57,9 @@ namespace ecs
 					ownerPos.z,
 				};
 
-				// Lv1を基準（levelIndex=0）に、レベル毎の成長量を加算する。
 				// AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
-				const int levelIndex = std::max(0, weapon.Level - 1);
 				const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
-				const float damage = (masterData->BaseDamage + masterData->DamagePerLevel * static_cast<float>(levelIndex)) * atkMultiplier;
+				const float damage = masterData->Damage * atkMultiplier;
 				const float angularSpeed = DirectX::XMConvertToRadians(masterData->OrbitSpeed);
 
 				for (entt::entity orb : runtime.Orbs)

@@ -1,2 +1,2 @@
-Id,SpawnInterval,SpawnMarginMin,SpawnMarginMax,StatGrowthPerSecond,BossSpawnTime,ClearTime
-0,1.5,4,12,0.004,90,180
+Id,SpawnInterval,SpawnCountPerTick,SpawnMarginMin,SpawnMarginMax,StatGrowthPerSecond,BossSpawnTime,ClearTime
+0,1.5,20,4,12,0.004,90,180

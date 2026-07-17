@@ -17,6 +17,8 @@
 #include<system/Player/AimSysten/PlayerAimComponent.h>
 #include<system/Player/Level/PlayerLevelComponent.h>
 #include<system/Player/Ultimate/PlayerUltimateComponent.h>
+#include<system/Player/Perk/PlayerPerkLevelComponent.h>
+#include<system/Player/Perk/PerkDefinition.h>
 
 // 武器
 #include<system/Player/Weapon/Inventory/WeaponInventoryComponent.h>
@@ -39,6 +41,7 @@
 #include<system/Enemy/Move/EnemyChaseComponent.h>
 #include<system/Enemy/Attack/EnemyAttackComponent.h>
 #include<system/Enemy/Status/EnemyStatusComponent.h>
+#include<Data/Enemy/EnemyData.h>
 
 // UI
 #include<system/Player/UI/PlayerUiTag.h>
@@ -66,6 +69,7 @@ namespace ecs
 		if (const auto* waveData = DATA_MGR(data::WaveData).GetById(0))
 		{
 			wave.SpawnInterval = waveData->SpawnInterval;
+			wave.SpawnCountPerTick = waveData->SpawnCountPerTick;
 			wave.SpawnMarginMin = waveData->SpawnMarginMin;
 			wave.SpawnMarginMax = waveData->SpawnMarginMax;
 			wave.StatGrowthPerSecond = waveData->StatGrowthPerSecond;
@@ -150,6 +154,10 @@ namespace ecs
 		// レベル・経験値（パークシステム用）
 		manager.AddComponent<::ecs::PlayerLevelComponent>(player);
 
+		// パーク種別ごとの選択回数(data::PerkData::MaxLevelの上限判定にPerkSelectSystemが使う)
+		auto& perkLevel = manager.AddComponent<::ecs::PlayerPerkLevelComponent>(player);
+		perkLevel.PickCounts.assign(::ecs::GetPerkPool().size(), 0);
+
 		// 必殺技ゲージ（撃破数で蓄積、満タンで"Ultimate"アクションにより発動可能）
 		manager.AddComponent<::ecs::PlayerUltimateComponent>(player);
 
@@ -157,7 +165,7 @@ namespace ecs
 		// 開始時の所持数はFlickerStrikeWeaponData::InitialChargeに従う
 		// (パワーチャージの現状唯一の消費先のためここで管理する。MaxChargeと同じ方針)
 		auto& powerCharge = manager.AddComponent<::ecs::PlayerPowerChargeComponent>(player);
-		if (const auto* flickerStrikeData = DATA_MGR(data::FlickerStrikeWeaponData).GetById(0))
+		if (const auto* flickerStrikeData = DATA_MGR(data::FlickerStrikeWeaponData).GetById(data::kFlickerStrikeGlobalConfigId))
 		{
 			powerCharge.Count = flickerStrikeData->InitialCharge;
 		}
@@ -200,7 +208,7 @@ namespace ecs
 		auto& weaponComp = manager.AddComponent<::ecs::WeaponComponent>(weapon);
 		weaponComp.WeaponID = weaponId;
 		weaponComp.Type = type;
-		weaponComp.MaxLevel = 5; // 暫定値。パーク/レベルアップ仕様確定後に見直す
+		weaponComp.MaxLevel = 10; // 全武器共通。各武器のCSVはLv1〜10の10行を持つ(data::XxxWeaponData参照)
 		weaponComp.Level = 1;
 		weaponComp.Owner = player;
 		weaponComp.Control = control;
@@ -299,6 +307,16 @@ namespace ecs
 		{
 			status.Base.CooldownRate += cooldownRate->ValuePerLevel * static_cast<float>(save.CooldownRateLevel);
 		}
+		if (const auto* moveSpeed = dataMgr.GetById(static_cast<int>(data::eStatUpgradeType::MoveSpeed)))
+		{
+			status.Base.MoveSpeed += moveSpeed->ValuePerLevel * static_cast<float>(save.MoveSpeedLevel);
+		}
+		if (const auto* hpRegen = dataMgr.GetById(static_cast<int>(data::eStatUpgradeType::HpRegen)))
+		{
+			status.Base.HpRegenPerSecond += hpRegen->ValuePerLevel * static_cast<float>(save.HpRegenLevel);
+		}
+		// GoldGainRate/ExperienceGainRateはPlayerStatusComponentに接続しない
+		// (EnemyDeathSystem::AwardGold/AwardExperienceがPlayerSaveDataを直接参照する)
 	}
 
 	void GameSceneFactory::CreateCamera()
@@ -363,7 +381,8 @@ namespace ecs
 	void GameSceneFactory::CreateEnemy(
 		const DirectX::XMFLOAT3& position,
 		const ecs::EnemyWaveModifier& waveModifier,
-		bool isBoss)
+		bool isBoss,
+		int enemyId)
 	{
 		// ボースの強化倍率（暫定値。ボースを複数種類用意する段階になったらデータ化する）
 		constexpr float kBossHpMultiplier = 10.0f;
@@ -371,6 +390,16 @@ namespace ecs
 		constexpr float kBossScaleMultiplier = 2.5f;
 		constexpr float kBossExpMultiplier = 20.0f;
 		constexpr float kBossGoldMultiplier = 20.0f;
+
+		// 敵の種類ごとの色分け（専用モデルが用意されるまではプレイヤーモデルの色違いで代用する）。
+		// ボースは種類に関わらずこの色を優先する。
+		constexpr DirectX::XMFLOAT4 kBossColor = { 1.0f, 0.2f, 0.2f, 1.0f };
+		constexpr DirectX::XMFLOAT4 kGruntColor = { 1.0f, 1.0f, 0.5f, 1.0f };     // Id=0: 標準的な敵
+		constexpr DirectX::XMFLOAT4 kScoutColor = { 0.4f, 0.9f, 1.0f, 1.0f };    // Id=1: 高速・低HPな敵
+		constexpr DirectX::XMFLOAT4 kBruteColor = { 0.6f, 0.1f, 0.5f, 1.0f };    // Id=2: 低速・高HP・高火力な敵
+		constexpr DirectX::XMFLOAT4 kSprinterColor = { 0.5f, 1.0f, 0.3f, 1.0f }; // Id=3: 超高速・超低HPな敵
+
+		const auto* enemyData = DATA_MGR(data::EnemyData).GetById(enemyId);
 
 		// 管理
 		auto& manager = ENTITY_MANAGER;
@@ -399,19 +428,43 @@ namespace ecs
 		// モデル（専用モデルが用意されるまではプレイヤーモデルを色違いで代用する）
 		auto& fbx = manager.AddComponent<ecs::FbxComponent>(enemy);
 		fbx.Resource = res;
-		fbx.CustomColor = isBoss
-			? DirectX::XMFLOAT4{ 1.0f, 0.2f, 0.2f, 1.0f }
-			: DirectX::XMFLOAT4{ 1.0f, 1.0f, 0.5f, 1.0f };
 
-		// 移動（プレイヤーの実移動速度 PlayerMovementComponent::MaxSpeed(50) より少し遅くする）
+		DirectX::XMFLOAT4 enemyColor = kGruntColor;
+		if (isBoss)
+		{
+			enemyColor = kBossColor;
+		}
+		else
+		{
+			switch (enemyId)
+			{
+			case 1: enemyColor = kScoutColor; break;
+			case 2: enemyColor = kBruteColor; break;
+			case 3: enemyColor = kSprinterColor; break;
+			default: break; // Id=0またはその他は標準色(kGruntColor)のまま
+			}
+		}
+		fbx.CustomColor = enemyColor;
+
+		// 移動（EnemyData.csvのMoveSpeedを使用。プレイヤーの実移動速度
+		// PlayerMovementComponent::MaxSpeed(75)より遅くなるよう、各敵種のMoveSpeedを調整すること）
 		auto& chase = manager.AddComponent<::ecs::EnemyChaseComponent>(enemy);
-		chase.MoveSpeed = 40.0f;
+		chase.MoveSpeed = enemyData != nullptr ? enemyData->MoveSpeed : 40.0f;
 		auto& rotate = manager.AddComponent<::ecs::RotateToMoveComponent>(enemy);
 		rotate.InstantRotate = false;
 		manager.AddComponent<::ecs::MoveDirectionComponent>(enemy);
 
-		// ステータス（現在の難易度倍率を適用。ボースはさらに追加倍率をかける）
+		// ステータス（EnemyData.csvの種類別ステータスを基準値とし、現在の難易度倍率を適用。
+		// ボースはさらに追加倍率をかける）
 		auto& status = manager.AddComponent<::ecs::EnemyStatusComponent>(enemy);
+		status.EnemyId = enemyId;
+		if (enemyData != nullptr)
+		{
+			status.Base.MaxHp = enemyData->MaxHp;
+			status.Base.AtkPower = enemyData->AtkPower;
+			status.Base.ExperienceValue = static_cast<float>(enemyData->Exp);
+			status.Base.GoldValue = enemyData->GoldValue;
+		}
 		status.WaveMod = waveModifier;
 		if (isBoss)
 		{

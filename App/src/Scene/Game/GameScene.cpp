@@ -58,6 +58,7 @@
 
 // ダメージ
 #include<system/Damage/PlayerContactDamage/PlayerContactDamageSystem.h>
+#include<system/Player/Status/PlayerRegenSystem.h>
 
 // エフェクト先読み
 #include<system/Effect/EffectSpawnUtility.h>
@@ -79,6 +80,7 @@
 #include<Data/StatUpgrade/StatUpgradeData.h>
 #include<Data/Save/PlayerSaveData.h>
 #include<Data/Wave/WaveData.h>
+#include<Data/Perk/PerkData.h>
 
 // デバッグ
 
@@ -197,6 +199,10 @@ namespace scene
 		{
 			dataRegistry.Register<data::StatUpgradeData>("Assets/Data/StatUpgrade/StatUpgradeData.csv");
 		}
+		if (!dataRegistry.IsRegistered<data::PerkData>())
+		{
+			dataRegistry.Register<data::PerkData>("Assets/Data/Perk/PerkData.csv");
+		}
 		dataRegistry.LoadAll();
 
 		// プレイヤーの永続的な進行状況(ゴールド・ステータス強化レベル)。CSV/DBのマスタデータとは
@@ -300,6 +306,7 @@ namespace scene
 		manager.AddUserSystem<::ecs::WaveTimerUiSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::PlayerHpBarSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::PlayerContactDamageSystem>(::ecs::eUpdatePhase::Update);
+		manager.AddUserSystem<::ecs::PlayerRegenSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::SingleShotWeaponSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::AreaAttackWeaponSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::AreaAttackHazardSystem>(::ecs::eUpdatePhase::Update);

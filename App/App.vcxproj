@@ -149,6 +149,7 @@
     <ClCompile Include="src\system\Enemy\Status\EnemyStatusDebugPanel.cpp" />
     <ClCompile Include="src\system\Damage\PlayerContactDamage\PlayerContactDamageSystem.cpp" />
     <ClCompile Include="src\system\Player\Status\PlayerCombatUtil.cpp" />
+    <ClCompile Include="src\system\Player\Status\PlayerRegenSystem.cpp" />
     <ClCompile Include="src\system\UI\DamageNumber\DamageNumberSystem.cpp" />
     <ClCompile Include="src\system\Player\UI\PlayerHpBarSystem.cpp" />
     <ClCompile Include="src\system\Enemy\Death\EnemyDeathSystem.cpp" />
@@ -233,6 +234,7 @@
     <ClInclude Include="src\system\Enemy\Death\EnemyDeathSystem.h" />
     <ClInclude Include="src\system\Player\Level\PlayerLevelComponent.h" />
     <ClInclude Include="src\system\Player\Perk\PerkDefinition.h" />
+    <ClInclude Include="src\system\Player\Perk\PlayerPerkLevelComponent.h" />
     <ClInclude Include="src\system\Player\Perk\PerkSelectComponent.h" />
     <ClInclude Include="src\system\Player\Perk\PerkSelectSystem.h" />
     <ClInclude Include="src\Scene\Game\Result\ResultComponent.h" />
@@ -253,6 +255,7 @@
     <ClInclude Include="src\system\MoveDirection\MoveDirectionComponent.h" />
     <ClInclude Include="src\system\Player\Status\PlayerStatusComponent.h" />
     <ClInclude Include="src\system\Player\Status\PlayerCombatUtil.h" />
+    <ClInclude Include="src\system\Player\Status\PlayerRegenSystem.h" />
     <ClInclude Include="src\system\UI\DamageNumber\DamageNumberComponent.h" />
     <ClInclude Include="src\system\UI\DamageNumber\DamageNumberSystem.h" />
     <ClInclude Include="src\system\Player\UI\PlayerUiTag.h" />
@@ -278,6 +281,7 @@
     <ClInclude Include="src\Data\Save\PlayerSaveData.h" />
     <ClInclude Include="src\Data\Save\PlayerSaveDebugPanel.h" />
     <ClInclude Include="src\Data\StatUpgrade\StatUpgradeData.h" />
+    <ClInclude Include="src\Data\Perk\PerkData.h" />
     <ClInclude Include="src\system\GlowAnimation\SpriteGlowSystem.h" />
     <ClInclude Include="src\system\GlowAnimation\GlowAnimationComp.h" />
     <ClInclude Include="src\pch\apppch.h" />

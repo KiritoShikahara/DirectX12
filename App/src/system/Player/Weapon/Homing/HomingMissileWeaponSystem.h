@@ -21,11 +21,14 @@ namespace ecs
         void Update(entt::registry& registry, float deltaTime, float rawDeltaTime) override;
 
     private:
-        /// <summary>狙い方向へ追尾弾(ProjectileComponent、IsHoming=true)を1体生成する</summary>
+        /// <summary>狙い方向(shotCount>1の場合は扇状に広げたshotIndex番目の方向)へ
+        /// 追尾弾(ProjectileComponent、IsHoming=true)を1体生成する</summary>
         static void Fire(
             entt::registry& registry,
             const ecs::WeaponComponent& weapon,
             entt::entity target,
-            const data::HomingMissileWeaponData& masterData);
+            const data::HomingMissileWeaponData& masterData,
+            int shotIndex = 0,
+            int shotCount = 1);
     };
 }

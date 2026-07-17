@@ -15,6 +15,10 @@ namespace data
 		AtkPower = 1,
 		Defense = 2,
 		CooldownRate = 3,
+		MoveSpeed = 4,
+		GoldGainRate = 5,       // EnemyDeathSystem::AwardGoldの倍率(PlayerStatusComponentには接続しない)
+		HpRegen = 6,            // PlayerStatusComponent.Base.HpRegenPerSecondへ加算(ecs::PlayerRegenSystem参照)
+		ExperienceGainRate = 7, // EnemyDeathSystem::AwardExperienceの倍率(PlayerStatusComponentには接続しない)
 	};
 
 	/// <summary>

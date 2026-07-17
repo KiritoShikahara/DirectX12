@@ -11,8 +11,9 @@ namespace ecs
 {
     void HomingMissileSteeringSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
     {
-        // 必殺技演出中は既存の追尾弾の旋回も一時停止させる
-        if (ecs::IsPlayerActionLocked(registry)) return;
+        // 必殺技演出中は既存の追尾弾の旋回も一時停止させる(自動発動武器の弾のため
+        // Flicker Strike中は止めない。PlayerActionLock.h参照)
+        if (ecs::IsPlayerUltimateActive(registry)) return;
 
         registry.view<ecs::ProjectileComponent, ecs::Transform>().each(
             [&](ecs::ProjectileComponent& projectile, ecs::Transform& transform)

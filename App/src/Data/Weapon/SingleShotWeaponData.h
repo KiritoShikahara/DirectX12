@@ -7,25 +7,23 @@ namespace data
 {
     /// <summary>
     /// SingleShot型武器のマスタデータ（CSV/DB）。
-    /// WeaponComponent::WeaponID と対応する。
-    /// ダメージ・爆発半径は Base + PerLevel * (Level - 1) の線形成長とする。
+    /// Id = (WeaponID + 1) * 1000 + Level。武器種類ごとにLv1〜MaxLevelの行を持ち、
+    /// レベルアップ時は該当Idの行を直接取得する（Base+PerLevelの実行時計算は行わない）。
     /// CSV ヘッダー名は各フィールド名と完全一致すること。
     /// </summary>
     struct SingleShotWeaponData
     {
-        int         Id = 0;                  // 武器ID（主キー。WeaponComponent::WeaponID と対応）
+        int         Id = 0;                  // (WeaponID+1)*1000+Level（主キー）
         std::string Name;                    // 表示・デバッグ用
 
         float       FireInterval = 1.0f;     // 発射間隔(秒)。CooldownRateで乗算短縮される
         float       ProjectileSpeed = 20.0f; // 弾速 m/s
 
-        float       BaseDamage = 5.0f;       // Lv1火力
-        float       DamagePerLevel = 2.0f;   // レベル毎の火力増加量
+        float       Damage = 5.0f;           // このレベルでの火力
 
-        float       BaseExplosionRadius = 15.0f;    // Lv1爆発エフェクトの見た目基準半径(m)。敵3体分程度のサイズを想定
-        float       ExplosionRadiusPerLevel = 2.0f; // レベル毎の見た目基準半径増加量
+        float       ExplosionRadius = 15.0f; // このレベルでの爆発エフェクトの見た目基準半径(m)。敵3体分程度のサイズを想定
 
-        float       HitRadiusMultiplier = 2.0f; // 実際の当たり判定半径 = 上記(BaseExplosionRadius系)×この値。
+        float       HitRadiusMultiplier = 2.0f; // 実際の当たり判定半径 = ExplosionRadius×この値。
                                                  // エフェクトの見た目サイズは変えず、判定だけ拡大するため分離
 
         float       ProjectileLifeTime = 3.0f; // 何にも当たらなかった場合に消滅するまでの秒数
@@ -42,10 +40,8 @@ namespace data
             REFLECT_FIELD_STR(Name)
             REFLECT_FIELD_FLOAT(FireInterval)
             REFLECT_FIELD_FLOAT(ProjectileSpeed)
-            REFLECT_FIELD_FLOAT(BaseDamage)
-            REFLECT_FIELD_FLOAT(DamagePerLevel)
-            REFLECT_FIELD_FLOAT(BaseExplosionRadius)
-            REFLECT_FIELD_FLOAT(ExplosionRadiusPerLevel)
+            REFLECT_FIELD_FLOAT(Damage)
+            REFLECT_FIELD_FLOAT(ExplosionRadius)
             REFLECT_FIELD_FLOAT(HitRadiusMultiplier)
             REFLECT_FIELD_FLOAT(ProjectileLifeTime)
             REFLECT_FIELD_FLOAT(HeightOffset)

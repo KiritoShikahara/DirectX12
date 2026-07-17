@@ -7,30 +7,27 @@ namespace data
 {
     /// <summary>
     /// AreaAttack型武器のマスタデータ（CSV/DB）。
-    /// WeaponComponent::WeaponID と対応する。
-    /// ダメージ・範囲半径は Base + PerLevel * (Level - 1) の線形成長とする
-    /// （SingleShotWeaponDataと同じ方式）。
+    /// Id = (WeaponID + 1) * 1000 + Level。武器種類ごとにLv1〜MaxLevelの行を持ち、
+    /// レベルアップ時は該当Idの行を直接取得する（Base+PerLevelの実行時計算は行わない）。
     /// CSV ヘッダー名は各フィールド名と完全一致すること。
     ///
     /// 発動時、狙い方向の SearchRadius 内から敵を最大 MaxTargets 体まで探し、
     /// 各敵の座標へ個別に氷柱(ハザード)を落とす。各氷柱は Duration 秒間持続し、
-    /// TickInterval 秒ごとに BaseRadius 範囲内へダメージを与え続ける
+    /// TickInterval 秒ごとに Radius 範囲内へダメージを与え続ける
     /// （AreaAttackHazardComponent / AreaAttackHazardSystem が担当）。
     /// </summary>
     struct AreaAttackWeaponData
     {
-        int         Id = 0;                  // 武器ID（主キー。WeaponComponent::WeaponID と対応）
+        int         Id = 0;                  // (WeaponID+1)*1000+Level（主キー）
         std::string Name;                    // 表示・デバッグ用
 
         float       FireInterval = 1.0f;     // 発動間隔(秒)。CooldownRateで乗算短縮される
 
-        float       BaseDamage = 8.0f;       // 氷柱1個・1tickあたりのLv1火力
-        float       DamagePerLevel = 2.0f;   // レベル毎の火力増加量
+        float       Damage = 8.0f;           // 氷柱1個・1tickあたりのこのレベルでの火力
 
-        float       BaseRadius = 15.0f;              // 氷柱1個あたりのエフェクト見た目基準半径(m、Lv1)
-        float       RadiusPerLevel = 1.5f;          // レベル毎の見た目基準半径増加量
+        float       Radius = 15.0f;          // 氷柱1個あたりのエフェクト見た目基準半径(m、このレベル)
 
-        float       HitRadiusMultiplier = 2.0f; // 実際の当たり判定半径 = 上記(BaseRadius系)×この値。
+        float       HitRadiusMultiplier = 2.0f; // 実際の当たり判定半径 = Radius×この値。
                                                  // エフェクトの見た目サイズは変えず、判定だけ拡大するため分離
 
         float       SearchRadius = 105.0f;   // 発動時に敵を探す範囲(m)
@@ -47,10 +44,8 @@ namespace data
             REFLECT_FIELD_ID(Id)
             REFLECT_FIELD_STR(Name)
             REFLECT_FIELD_FLOAT(FireInterval)
-            REFLECT_FIELD_FLOAT(BaseDamage)
-            REFLECT_FIELD_FLOAT(DamagePerLevel)
-            REFLECT_FIELD_FLOAT(BaseRadius)
-            REFLECT_FIELD_FLOAT(RadiusPerLevel)
+            REFLECT_FIELD_FLOAT(Damage)
+            REFLECT_FIELD_FLOAT(Radius)
             REFLECT_FIELD_FLOAT(HitRadiusMultiplier)
             REFLECT_FIELD_FLOAT(SearchRadius)
             REFLECT_FIELD_INT(MaxTargets)

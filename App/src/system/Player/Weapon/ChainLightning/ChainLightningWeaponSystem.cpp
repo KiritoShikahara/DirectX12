@@ -25,8 +25,9 @@ namespace ecs
         auto stateView = registry.view<::ecs::GameStateComponent>();
         if (stateView.begin() == stateView.end()) return;
         if (registry.get<::ecs::GameStateComponent>(*stateView.begin()).GameState != ::sys::eGameState::InGame) return;
-        // 必殺技演出中は他の攻撃を発動させない
-        if (ecs::IsPlayerActionLocked(registry)) return;
+        // 必殺技演出中は他の攻撃を発動させない(自動発動武器のためFlicker Strike中は止めない。
+        // 手動攻撃のみをIsPlayerActionLocked()で止める設計。PlayerActionLock.h参照)
+        if (ecs::IsPlayerUltimateActive(registry)) return;
 
         registry.view<ecs::WeaponComponent, ecs::ChainLightningRuntimeComponent>().each(
             [&](ecs::WeaponComponent& weapon, ecs::ChainLightningRuntimeComponent& runtime)
@@ -40,7 +41,7 @@ namespace ecs
                 }
                 if (runtime.CooldownTimer > 0.0f) return;
 
-                const auto* masterData = DATA_MGR(data::ChainLightningWeaponData).GetById(weapon.WeaponID);
+                const auto* masterData = DATA_MGR(data::ChainLightningWeaponData).GetById((weapon.WeaponID + 1) * 1000 + weapon.Level);
                 if (masterData == nullptr) return;
 
                 const auto* ownerTransform = registry.try_get<ecs::Transform>(weapon.Owner);
@@ -53,7 +54,12 @@ namespace ecs
                 const entt::entity initialTarget = ecs::targetutil::FindNearestExcluding(registry, found, ownerTransform->GetPosition(), {});
                 if (!registry.valid(initialTarget)) return;
 
-                Zap(registry, weapon, *masterData, initialTarget);
+                // 攻撃回数パーク(AttackCountUp)分だけ発動を繰り返す(同じ初撃対象から再度連鎖する)
+                const int attackCount = ecs::combatutil::GetAttackCount(registry, weapon.Owner);
+                for (int i = 0; i < attackCount; ++i)
+                {
+                    Zap(registry, weapon, *masterData, initialTarget);
+                }
 
                 const auto* ownerStatus = registry.try_get<ecs::PlayerStatusComponent>(weapon.Owner);
                 const float cooldownRate = ownerStatus != nullptr ? ownerStatus->Current.CooldownRate : 1.0f;
@@ -68,11 +74,9 @@ namespace ecs
         const data::ChainLightningWeaponData& masterData,
         entt::entity initialTarget)
     {
-        // Lv1を基準（levelIndex=0）に、レベル毎の成長量を加算する。
         // AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
-        const int levelIndex = std::max(0, weapon.Level - 1);
         const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
-        float damage = (masterData.BaseDamage + masterData.DamagePerLevel * static_cast<float>(levelIndex)) * atkMultiplier;
+        float damage = masterData.Damage * atkMultiplier;
 
         std::vector<entt::entity> visited;
         entt::entity current = initialTarget;

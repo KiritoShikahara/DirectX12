@@ -23,8 +23,9 @@ namespace ecs
         auto stateView = registry.view<::ecs::GameStateComponent>();
         if (stateView.begin() == stateView.end()) return;
         if (registry.get<::ecs::GameStateComponent>(*stateView.begin()).GameState != ::sys::eGameState::InGame) return;
-        // 必殺技演出中は他の攻撃を発動させない
-        if (ecs::IsPlayerActionLocked(registry)) return;
+        // 必殺技演出中は他の攻撃を発動させない(自動発動武器のためFlicker Strike中は止めない。
+        // 手動攻撃のみをIsPlayerActionLocked()で止める設計。PlayerActionLock.h参照)
+        if (ecs::IsPlayerUltimateActive(registry)) return;
 
         registry.view<ecs::WeaponComponent, ecs::VoidBeamRuntimeComponent>().each(
             [&](ecs::WeaponComponent& weapon, ecs::VoidBeamRuntimeComponent& runtime)
@@ -38,7 +39,7 @@ namespace ecs
                 }
                 if (runtime.CooldownTimer > 0.0f) return;
 
-                const auto* masterData = DATA_MGR(data::VoidBeamWeaponData).GetById(weapon.WeaponID);
+                const auto* masterData = DATA_MGR(data::VoidBeamWeaponData).GetById((weapon.WeaponID + 1) * 1000 + weapon.Level);
                 if (masterData == nullptr) return;
 
                 const auto* ownerTransform = registry.try_get<ecs::Transform>(weapon.Owner);
@@ -65,7 +66,15 @@ namespace ecs
                     direction = { dx * invLen, 0.0f, dz * invLen };
                 }
 
-                Fire(registry, weapon, ownerPos, direction, *masterData);
+                // 攻撃回数パーク(AttackCountUp)分だけ扇状にビームを放つ
+                constexpr float kMultiBeamSpreadDegrees = 8.0f;
+                const int attackCount = ecs::combatutil::GetAttackCount(registry, weapon.Owner);
+                for (int i = 0; i < attackCount; ++i)
+                {
+                    const DirectX::XMFLOAT3 shotDirection = ecs::combatutil::ComputeSpreadDirection(
+                        direction, i, attackCount, kMultiBeamSpreadDegrees);
+                    Fire(registry, weapon, ownerPos, shotDirection, *masterData);
+                }
 
                 const auto* ownerStatus = registry.try_get<ecs::PlayerStatusComponent>(weapon.Owner);
                 const float cooldownRate = ownerStatus != nullptr ? ownerStatus->Current.CooldownRate : 1.0f;
@@ -81,11 +90,9 @@ namespace ecs
         const DirectX::XMFLOAT3& direction,
         const data::VoidBeamWeaponData& masterData)
     {
-        // Lv1を基準（levelIndex=0）に、レベル毎の成長量を加算する。
         // AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
-        const int levelIndex = std::max(0, weapon.Level - 1);
         const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
-        const float damage = (masterData.BaseDamage + masterData.DamagePerLevel * static_cast<float>(levelIndex)) * atkMultiplier;
+        const float damage = masterData.Damage * atkMultiplier;
 
         // ビーム全体を包含する球でまず候補を集め、線分への垂線距離で直線上の敵だけに絞り込む
         // （新規の物理クエリ形状(カプセル等)を増やさず、既存のOverlapSphere+数式フィルタで完結させる）。

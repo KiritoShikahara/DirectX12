@@ -18,6 +18,7 @@ namespace ecs
         // 防御系パークが無意味になるため、非0の初期値を与える
         float Defense = 20.0f;
         float CooldownRate = 1.0f;   // クールダウン倍率（1.0=等倍、<1で短縮）
+        float HpRegenPerSecond = 0.0f; // 秒間HP自然回復量(ecs::PlayerRegenSystemが毎フレーム加算)
     };
 
     /// <summary>
@@ -31,6 +32,12 @@ namespace ecs
         float MulAtkPower = 1.0f;
         float MulDefense = 1.0f;
         float MulCooldownRate = 1.0f;
+
+        // 1回の発動で攻撃(Fire/Pulse/Swing/Zap等)を繰り返す回数の倍率。
+        // 基準は常に1.0倍(素の状態で1回)のため、他のMul系と違いBaseStatusを持たない。
+        // 武器側はこの値を直接使わず ecs::combatutil::GetAttackCount() 経由で参照する
+        // (整数丸め・上限クランプをそこに集約するため)。
+        float MulAttackCount = 1.0f;
     };
 
     /// <summary>
@@ -45,6 +52,10 @@ namespace ecs
         float AtkPower = 10.0f;
         float Defense = 0.0f;
         float CooldownRate = 1.0f;
+        float HpRegenPerSecond = 0.0f;
+
+        // Modifier.MulAttackCountをそのまま反映(基準は常に1.0倍のため乗算元のBaseを持たない)
+        float AttackCountMultiplier = 1.0f;
     };
 
     /// <summary>
@@ -74,6 +85,12 @@ namespace ecs
             // クールダウン短縮系パークが積み重なっても0以下(発射間隔が0や負)にならないようクランプする
             constexpr float kMinCooldownRate = 0.1f;
             Current.CooldownRate = std::max(kMinCooldownRate, Base.CooldownRate * Modifier.MulCooldownRate);
+
+            // 現状パークによる倍率は無いため素の値をそのまま反映する
+            // (将来、回復速度アップ等のパークを追加する場合はMulHpRegenを新設してここに掛ける)
+            Current.HpRegenPerSecond = Base.HpRegenPerSecond;
+
+            Current.AttackCountMultiplier = Modifier.MulAttackCount;
         }
     };
 }

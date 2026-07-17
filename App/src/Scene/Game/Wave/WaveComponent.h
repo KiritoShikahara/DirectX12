@@ -14,8 +14,10 @@ namespace ecs
         float ElapsedTime = 0.0f;
 
         // ── 敵の継続スポーン ──────────────────────────────────
-        /// <summary>通常の敵を1体湧かせる間隔(秒)</summary>
+        /// <summary>通常の敵を湧かせる間隔(秒)</summary>
         float SpawnInterval = 1.5f;
+        /// <summary>1回のスポーンタイミングで湧かせる敵の数</summary>
+        int SpawnCountPerTick = 1;
         /// <summary>次のスポーンまでの残り時間(秒)。0開始なのでInGame開始直後に1体目が湧く</summary>
         float SpawnTimer = 0.0f;
         /// <summary>

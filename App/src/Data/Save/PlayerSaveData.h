@@ -22,6 +22,10 @@ namespace data
 		int AtkPowerLevel = 0;
 		int DefenseLevel = 0;
 		int CooldownRateLevel = 0;
+		int MoveSpeedLevel = 0;
+		int GoldGainRateLevel = 0;
+		int HpRegenLevel = 0;
+		int ExperienceGainRateLevel = 0;
 
 		REFLECT_BEGIN(PlayerSaveData, "player_save")
 			REFLECT_FIELD_INT(Gold)
@@ -29,6 +33,10 @@ namespace data
 			REFLECT_FIELD_INT(AtkPowerLevel)
 			REFLECT_FIELD_INT(DefenseLevel)
 			REFLECT_FIELD_INT(CooldownRateLevel)
+			REFLECT_FIELD_INT(MoveSpeedLevel)
+			REFLECT_FIELD_INT(GoldGainRateLevel)
+			REFLECT_FIELD_INT(HpRegenLevel)
+			REFLECT_FIELD_INT(ExperienceGainRateLevel)
 		REFLECT_END()
 	};
 

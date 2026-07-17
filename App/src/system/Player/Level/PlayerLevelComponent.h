@@ -22,7 +22,12 @@ namespace ecs
 		/// </summary>
 		float ExperienceToNextLevel = 6.0f;
 
-		/// <summary>レベルアップごとに ExperienceToNextLevel へ乗算する成長率</summary>
-		float ExperienceGrowthRate = 1.2f;
+		/// <summary>レベルアップごとに ExperienceToNextLevel へ乗算する成長率。
+		/// 1.2(20%/レベル)は複利で急激に重くなりすぎるとの指摘を受け、1.08(8%/レベル)へ緩和した
+		/// （個人開発プロトタイプの暫定値。プレイ感触に応じて調整すること）。</summary>
+		float ExperienceGrowthRate = 1.08f;
+
+		/// <summary>経験値獲得量の倍率(パークで加算。基準1.0倍)。EnemyDeathSystem::AwardExperience参照</summary>
+		float MulExperienceGain = 1.0f;
 	};
 }

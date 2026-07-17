@@ -5,10 +5,10 @@
 #include<system/Player/Level/PlayerLevelComponent.h>
 #include<system/Player/Ultimate/PlayerUltimateComponent.h>
 #include<system/Player/PowerCharge/PlayerPowerChargeComponent.h>
-#include<Data/Weapon/FlickerStrikeWeaponData.h>
 #include<Scene/Game/State/GameState.h>
 #include<Tag/EntityTag.h>
 #include<Data/Save/PlayerSaveData.h>
+#include<Data/StatUpgrade/StatUpgradeData.h>
 
 #include<cmath>
 #include<algorithm>
@@ -39,7 +39,7 @@ namespace ecs
 
 		if (totalGold > 0.0f)
 		{
-			AwardGold(static_cast<int>(std::lround(totalGold)));
+			AwardGold(totalGold);
 		}
 
 		if (!dead.empty())
@@ -66,7 +66,17 @@ namespace ecs
 		auto& level = registry.get<PlayerLevelComponent>(playerEntity);
 		auto& gameState = registry.get<GameStateComponent>(*stateView.begin());
 
-		level.Experience += experience;
+		// 経験値獲得量強化(data::eStatUpgradeType::ExperienceGainRate、永続)と
+		// ExperienceGainUpパーク(level.MulExperienceGain、今回のプレイのみ)の両方を乗算する
+		data::EnsurePlayerSaveDataLoaded();
+		const auto& save = data::ConfigRegistry::Get().GetManager<data::PlayerSaveData>().Get();
+		float permanentMultiplier = 1.0f;
+		if (const auto* upgradeData = DATA_MGR(data::StatUpgradeData).GetById(static_cast<int>(data::eStatUpgradeType::ExperienceGainRate)))
+		{
+			permanentMultiplier += upgradeData->ValuePerLevel * static_cast<float>(save.ExperienceGainRateLevel);
+		}
+
+		level.Experience += experience * level.MulExperienceGain * permanentMultiplier;
 
 		// ボース撃破・必殺技の全体ダメージ等で複数レベル分のXPが一度に入ることがあるため、
 		// whileループで超過した回数分だけレベルアップさせる。GameStateComponent::
@@ -93,27 +103,36 @@ namespace ecs
 		ultimate.KillCount += killCount;
 	}
 
-	/// <summary>撃破で得た合計ゴールドをPlayerSaveData(永続化データ)へ加算し即座に保存する</summary>
-	void EnemyDeathSystem::AwardGold(int gold)
+	/// <summary>撃破で得た合計ゴールドへゴールド獲得量強化(data::eStatUpgradeType::GoldGainRate)
+	/// の倍率をかけ、PlayerSaveData(永続化データ)へ加算し即座に保存する</summary>
+	void EnemyDeathSystem::AwardGold(float gold)
 	{
 		data::EnsurePlayerSaveDataLoaded();
 		auto& saveMgr = data::ConfigRegistry::Get().GetManager<data::PlayerSaveData>();
-		saveMgr.Get().Gold += gold;
+		auto& save = saveMgr.Get();
+
+		// CooldownRateのBaseと同じ「1.0を基準に加算する」方式(ValuePerLevel×レベル)
+		float goldGainMultiplier = 1.0f;
+		if (const auto* upgradeData = DATA_MGR(data::StatUpgradeData).GetById(static_cast<int>(data::eStatUpgradeType::GoldGainRate)))
+		{
+			goldGainMultiplier += upgradeData->ValuePerLevel * static_cast<float>(save.GoldGainRateLevel);
+		}
+
+		save.Gold += static_cast<int>(std::lround(gold * goldGainMultiplier));
 		saveMgr.Save();
 	}
 
-	/// <summary>撃破数をパワーチャージへ加算する（FlickerStrikeWeaponData::MaxChargeで頭打ち）</summary>
+	/// <summary>撃破数をパワーチャージへ加算する（ComputeMaxPowerCharge=プレイヤーレベルに
+	/// 応じて増加する上限で頭打ち）</summary>
 	void EnemyDeathSystem::AwardPowerCharge(entt::registry& registry, int killCount)
 	{
 		auto playerView = registry.view<PlayerTag, PlayerPowerChargeComponent>();
 		if (playerView.begin() == playerView.end()) return;
 
-		// パワーチャージの現状唯一の消費先であるFlickerStrikeWeaponDataからMaxChargeを取得する
-		// （所持しているかどうかに関わらずマスタデータとしては常にロードされている）
-		const auto* masterData = DATA_MGR(data::FlickerStrikeWeaponData).GetById(0);
-		const int maxCharge = masterData != nullptr ? masterData->MaxCharge : 0;
+		const entt::entity playerEntity = *playerView.begin();
+		const int maxCharge = ComputeMaxPowerCharge(registry, playerEntity);
 
-		auto& charge = registry.get<PlayerPowerChargeComponent>(*playerView.begin());
+		auto& charge = registry.get<PlayerPowerChargeComponent>(playerEntity);
 		charge.Count = std::min(maxCharge, charge.Count + killCount);
 	}
 }

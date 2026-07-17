@@ -23,8 +23,9 @@ namespace ecs
 		/// <summary>撃破数を必殺技ゲージへ加算する（ゲージ満タン中・発動中は加算しない）</summary>
 		static void AwardUltimateCharge(entt::registry& registry, int killCount);
 
-		/// <summary>撃破で得た合計ゴールドをPlayerSaveData(永続化データ)へ加算し即座に保存する</summary>
-		static void AwardGold(int gold);
+		/// <summary>撃破で得た合計ゴールドへゴールド獲得量強化(data::eStatUpgradeType::GoldGainRate)
+		/// の倍率をかけ、PlayerSaveData(永続化データ)へ加算し即座に保存する</summary>
+		static void AwardGold(float gold);
 
 		/// <summary>撃破数をパワーチャージへ加算する（FlickerStrikeWeaponData::MaxChargeで頭打ち）</summary>
 		static void AwardPowerCharge(entt::registry& registry, int killCount);

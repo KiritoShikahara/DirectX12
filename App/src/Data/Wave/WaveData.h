@@ -13,7 +13,8 @@ namespace data
     {
         int Id = 0; // 常に0固定（単一設定行のためのダミー主キー）
 
-        float SpawnInterval = 1.5f;         // 通常の敵を1体湧かせる間隔(秒)
+        float SpawnInterval = 1.5f;         // 通常の敵を湧かせる間隔(秒)
+        int SpawnCountPerTick = 1;          // 1回のスポーンタイミングで湧かせる敵の数
         float SpawnMarginMin = 4.0f;        // 画面外スポーンの最小マージン(m)
         float SpawnMarginMax = 12.0f;       // 画面外スポーンの最大マージン(m)
         float StatGrowthPerSecond = 0.004f; // 経過時間1秒あたりの敵ステータス成長率
@@ -23,6 +24,7 @@ namespace data
         REFLECT_BEGIN(WaveData, "wave_data")
             REFLECT_FIELD_ID(Id)
             REFLECT_FIELD_FLOAT(SpawnInterval)
+            REFLECT_FIELD_INT(SpawnCountPerTick)
             REFLECT_FIELD_FLOAT(SpawnMarginMin)
             REFLECT_FIELD_FLOAT(SpawnMarginMax)
             REFLECT_FIELD_FLOAT(StatGrowthPerSecond)

@@ -1,0 +1,11 @@
+Id,Name,MaxLevel
+0,MaxHpUp,10
+1,CooldownDown,5
+2,MoveSpeedUp,5
+3,AtkPowerUp,10
+4,DefenseUp,10
+5,AttackCountUp,1
+6,WeaponLevelUp,99
+7,AcquireWeapon,99
+8,HealHp,99
+9,ExperienceGainUp,10

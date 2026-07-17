@@ -64,10 +64,12 @@ namespace ecs
 	public:
 		// 敵の生成（EnemySpawnSystemから呼ばれる）
 		// position: 生成位置 / waveModifier: 現在の難易度倍率(HP・攻撃力) / isBoss: ボースとして生成するか
+		// enemyId: data::EnemyDataのId(敵の種類。ボースは常にId=0の強化版として生成する)
 		static void CreateEnemy(
 			const DirectX::XMFLOAT3& position,
 			const ecs::EnemyWaveModifier& waveModifier,
-			bool isBoss);
+			bool isBoss,
+			int enemyId = 0);
 
 	private:
 		// プレイヤーの体力バー生成

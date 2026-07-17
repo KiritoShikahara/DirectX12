@@ -1,2 +1,11 @@
-Id,Name,FireInterval,BaseDamage,DamagePerLevel,DamageFalloffPerJump,SearchRadius,JumpRadius,MaxJumps,HeightOffset,HitEffectPath,HitEffectScale
-0,ChainLightning,1.2,6,1.5,0.75,80,25,3,30,Assets/Effect/AttackHit.efk,4
+Id,Name,FireInterval,Damage,DamageFalloffPerJump,SearchRadius,JumpRadius,MaxJumps,HeightOffset,HitEffectPath,HitEffectScale
+1001,ChainLightning,1.2,6,0.75,80,25,3,30,Assets/Effect/AttackHit.efk,4
+1002,ChainLightning,1.2,7.5,0.75,80,25,3,30,Assets/Effect/AttackHit.efk,4
+1003,ChainLightning,1.2,9,0.75,80,25,3,30,Assets/Effect/AttackHit.efk,4
+1004,ChainLightning,1.2,10.5,0.75,80,25,3,30,Assets/Effect/AttackHit.efk,4
+1005,ChainLightning,1.2,12,0.75,80,25,3,30,Assets/Effect/AttackHit.efk,4
+1006,ChainLightning,1.2,13.5,0.75,80,25,3,30,Assets/Effect/AttackHit.efk,4
+1007,ChainLightning,1.2,15,0.75,80,25,3,30,Assets/Effect/AttackHit.efk,4
+1008,ChainLightning,1.2,16.5,0.75,80,25,3,30,Assets/Effect/AttackHit.efk,4
+1009,ChainLightning,1.2,18,0.75,80,25,3,30,Assets/Effect/AttackHit.efk,4
+1010,ChainLightning,1.2,19.5,0.75,80,25,3,30,Assets/Effect/AttackHit.efk,4

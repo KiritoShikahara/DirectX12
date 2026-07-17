@@ -12,7 +12,7 @@ namespace ecs
     /// <summary>
     /// Cleave型武器(WeaponComponent::Type == Cleave)の発動ロジック。
     /// 発動トリガーが無く、FireInterval秒ごとに所有者の狙い方向
-    /// (PlayerAimComponent::Direction)を中心とした扇状範囲(BaseRadius系×ConeAngleDegrees)
+    /// (PlayerAimComponent::Direction)を中心とした扇状範囲(Radius系×ConeAngleDegrees)
     /// 内にいる敵全員へ、即座に近接ダメージとノックバックを与える完全自動の武器。
     /// ノックバックはEnemyKnockbackComponentを付与することで実現し、
     /// 実際の速度適用・持続時間管理はEnemyKnockbackSystemが担当する。

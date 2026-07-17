@@ -5,6 +5,7 @@
 #include<system/UI/DamageNumber/DamageNumberComponent.h>
 
 #include<cmath>
+#include<algorithm>
 
 namespace
 {
@@ -15,6 +16,9 @@ namespace
 
     const DirectX::XMFLOAT4 kEnemyDamageColor = { 1.0f, 0.9f, 0.3f, 1.0f }; // 敵への与ダメージ: 黄
     const DirectX::XMFLOAT4 kPlayerDamageColor = { 1.0f, 0.3f, 0.3f, 1.0f }; // プレイヤーの被ダメージ: 赤
+
+    // 攻撃回数パークが極端に積み上がった場合の負荷・視認性悪化を防ぐ上限
+    constexpr int kMaxAttackCount = 6;
 }
 
 namespace ecs::combatutil
@@ -25,6 +29,35 @@ namespace ecs::combatutil
         if (status == nullptr || status->Base.AtkPower <= 0.0f) return 1.0f;
 
         return status->Current.AtkPower / status->Base.AtkPower;
+    }
+
+    int GetAttackCount(entt::registry& registry, entt::entity ownerEntity)
+    {
+        const auto* status = registry.try_get<ecs::PlayerStatusComponent>(ownerEntity);
+        if (status == nullptr) return 1;
+
+        const int count = static_cast<int>(std::lround(status->Current.AttackCountMultiplier));
+        return std::clamp(count, 1, kMaxAttackCount);
+    }
+
+    DirectX::XMFLOAT3 ComputeSpreadDirection(
+        const DirectX::XMFLOAT3& baseDirection, int index, int count, float spreadAngleDegrees)
+    {
+        if (count <= 1) return baseDirection;
+
+        // 中心(0度)を基準に対称に広がるオフセット角度を求める
+        // (例: count=3,spread=8度なら -8,0,+8度)
+        const float offsetDeg = spreadAngleDegrees * (static_cast<float>(index) - static_cast<float>(count - 1) * 0.5f);
+        const float rad = DirectX::XMConvertToRadians(offsetDeg);
+        const float cosA = std::cos(rad);
+        const float sinA = std::sin(rad);
+
+        return
+        {
+            baseDirection.x * cosA - baseDirection.z * sinA,
+            baseDirection.y,
+            baseDirection.x * sinA + baseDirection.z * cosA,
+        };
     }
 
     void SpawnDamageNumber(const DirectX::XMFLOAT3& worldPosition, float damage, bool isPlayerDamage)

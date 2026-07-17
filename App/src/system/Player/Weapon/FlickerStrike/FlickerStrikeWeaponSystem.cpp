@@ -39,6 +39,10 @@ namespace ecs
 {
     void FlickerStrikeWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
     {
+        // 注意: この武器は意図的に ecs::combatutil::GetAttackCount() (攻撃回数パーク)を
+        // 参照しない。追加ワープの回数は既にチャージ数×ChargeHitCountで管理されており、
+        // 攻撃回数パークまで重ねて適用すると二重に増幅してしまうため。
+
         // InGame中のみ動作する（PerkSelect/Result中に発動し続けないようにする）
         auto stateView = registry.view<::ecs::GameStateComponent>();
         if (stateView.begin() == stateView.end()) return;
@@ -53,7 +57,7 @@ namespace ecs
                 auto* flicker = registry.try_get<ecs::PlayerFlickerStrikeComponent>(weapon.Owner);
                 if (flicker == nullptr) return;
 
-                const auto* masterData = DATA_MGR(data::FlickerStrikeWeaponData).GetById(weapon.WeaponID);
+                const auto* masterData = DATA_MGR(data::FlickerStrikeWeaponData).GetById((weapon.WeaponID + 1) * 1000 + weapon.Level);
                 if (masterData == nullptr) return;
 
                 // シーケンス中は新規発動の判定をせず、ワープの継続処理のみ行う
@@ -268,11 +272,9 @@ namespace ecs
         playerTransform->SetPosition(warpPos);
         registry.emplace_or_replace<ecs::TransformDirtyTag>(weapon.Owner);
 
-        // Lv1を基準（levelIndex=0）に、レベル毎の成長量を加算する。
         // AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
-        const int levelIndex = std::max(0, weapon.Level - 1);
         const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
-        const float damage = (masterData.BaseDamage + masterData.DamagePerLevel * static_cast<float>(levelIndex)) * atkMultiplier;
+        const float damage = masterData.Damage * atkMultiplier;
 
         targetStatus->CurrentHp = std::max(0.0f, targetStatus->CurrentHp - damage);
         ecs::combatutil::SpawnDamageNumber(targetPos, damage, false);

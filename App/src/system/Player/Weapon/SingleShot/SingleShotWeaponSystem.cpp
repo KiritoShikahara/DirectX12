@@ -43,10 +43,15 @@ namespace ecs
 				}
 				if (!wantsToFire) return;
 
-				const auto* masterData = DATA_MGR(data::SingleShotWeaponData).GetById(weapon.WeaponID);
+				const auto* masterData = DATA_MGR(data::SingleShotWeaponData).GetById((weapon.WeaponID + 1) * 1000 + weapon.Level);
 				if (masterData == nullptr) return;
 
-				Fire(registry, weapon, *masterData);
+				// 攻撃回数パーク(AttackCountUp)分だけ扇状に発射する
+				const int attackCount = ecs::combatutil::GetAttackCount(registry, weapon.Owner);
+				for (int i = 0; i < attackCount; ++i)
+				{
+					Fire(registry, weapon, *masterData, i, attackCount);
+				}
 
 				const auto* ownerStatus = registry.try_get<ecs::PlayerStatusComponent>(weapon.Owner);
 				const float cooldownRate = ownerStatus != nullptr ? ownerStatus->Current.CooldownRate : 1.0f;
@@ -54,18 +59,28 @@ namespace ecs
 			});
 	}
 
-	/// <summary>狙い方向へ ProjectileComponent エンティティを1体生成する</summary>
+	namespace
+	{
+		// 攻撃回数パークで複数発射する際の、1ショットあたりの扇状スプレッド角度(度)
+		constexpr float kMultiShotSpreadDegrees = 8.0f;
+	}
+
+	/// <summary>狙い方向(shotCount>1の場合は扇状に広げたshotIndex番目の方向)へ
+	/// ProjectileComponent エンティティを1体生成する</summary>
 	void SingleShotWeaponSystem::Fire(
 		entt::registry& registry,
 		const ecs::WeaponComponent& weapon,
-		const data::SingleShotWeaponData& masterData)
+		const data::SingleShotWeaponData& masterData,
+		int shotIndex,
+		int shotCount)
 	{
 		const auto* ownerTransform = registry.try_get<ecs::Transform>(weapon.Owner);
 		const auto* ownerAim = registry.try_get<ecs::PlayerAimComponent>(weapon.Owner);
 		if (ownerTransform == nullptr || ownerAim == nullptr) return;
 
 		const DirectX::XMFLOAT3& ownerPos = ownerTransform->GetPosition();
-		const DirectX::XMFLOAT3& direction = ownerAim->Direction;
+		const DirectX::XMFLOAT3 direction = ecs::combatutil::ComputeSpreadDirection(
+			ownerAim->Direction, shotIndex, shotCount, kMultiShotSpreadDegrees);
 
 		// プレイヤー自身のコライダーに埋まって即着弾しないよう、狙い方向へ少し離した位置から発射する
 		constexpr float kSpawnOffset = 1.0f;
@@ -76,12 +91,10 @@ namespace ecs
 			ownerPos.z + direction.z * kSpawnOffset,
 		};
 
-		// Lv1を基準（levelIndex=0）に、レベル毎の成長量を加算する。
 		// AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
-		const int levelIndex = std::max(0, weapon.Level - 1);
 		const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
-		const float damage = (masterData.BaseDamage + masterData.DamagePerLevel * static_cast<float>(levelIndex)) * atkMultiplier;
-		const float radius = masterData.BaseExplosionRadius + masterData.ExplosionRadiusPerLevel * static_cast<float>(levelIndex);
+		const float damage = masterData.Damage * atkMultiplier;
+		const float radius = masterData.ExplosionRadius;
 		// 当たり判定半径は見た目基準半径(radius)とは別にHitRadiusMultiplierで拡大する。
 		// エフェクトの見た目サイズは従来通りradius基準のままにするため、ここで分離する。
 		const float hitRadius = radius * masterData.HitRadiusMultiplier;

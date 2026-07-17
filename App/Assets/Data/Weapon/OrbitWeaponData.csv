@@ -1,2 +1,11 @@
-Id,Name,BaseDamage,DamagePerLevel,OrbCount,OrbitRadius,OrbitSpeed,HitRadius,HitInterval,HeightOffset,OrbEffectPath,HitEffectPath
-0,FrostOrb,4,1,2,15,120,4.5,0.5,30,Assets/Effect/Light4.efk,Assets/Effect/HitEffect.efk
+Id,Name,Damage,OrbCount,OrbitRadius,OrbitSpeed,HitRadius,HitInterval,HeightOffset,OrbEffectPath,HitEffectPath
+1001,FrostOrb,4,2,15,120,4.5,0.5,30,Assets/Effect/Light4.efk,Assets/Effect/HitEffect.efk
+1002,FrostOrb,5,2,15,120,4.5,0.5,30,Assets/Effect/Light4.efk,Assets/Effect/HitEffect.efk
+1003,FrostOrb,6,2,15,120,4.5,0.5,30,Assets/Effect/Light4.efk,Assets/Effect/HitEffect.efk
+1004,FrostOrb,7,2,15,120,4.5,0.5,30,Assets/Effect/Light4.efk,Assets/Effect/HitEffect.efk
+1005,FrostOrb,8,2,15,120,4.5,0.5,30,Assets/Effect/Light4.efk,Assets/Effect/HitEffect.efk
+1006,FrostOrb,9,2,15,120,4.5,0.5,30,Assets/Effect/Light4.efk,Assets/Effect/HitEffect.efk
+1007,FrostOrb,10,2,15,120,4.5,0.5,30,Assets/Effect/Light4.efk,Assets/Effect/HitEffect.efk
+1008,FrostOrb,11,2,15,120,4.5,0.5,30,Assets/Effect/Light4.efk,Assets/Effect/HitEffect.efk
+1009,FrostOrb,12,2,15,120,4.5,0.5,30,Assets/Effect/Light4.efk,Assets/Effect/HitEffect.efk
+1010,FrostOrb,13,2,15,120,4.5,0.5,30,Assets/Effect/Light4.efk,Assets/Effect/HitEffect.efk

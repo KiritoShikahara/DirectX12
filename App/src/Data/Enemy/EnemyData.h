@@ -18,6 +18,7 @@ namespace data
         float       MoveSpeed = 2.0f;  // �ړ����x m/s
         float       AtkPower = 1.0f;  // �ڐG�_���[�W
         int         Exp = 3;     // ���j���̊l���o���l
+        float       GoldValue = 3.0f; // Gold awarded to the player on kill (EnemyDeathSystem::AwardGold)
 
         REFLECT_BEGIN(EnemyData, "enemies")
             REFLECT_FIELD_ID(Id)
@@ -26,6 +27,7 @@ namespace data
             REFLECT_FIELD_FLOAT(MoveSpeed)
             REFLECT_FIELD_FLOAT(AtkPower)
             REFLECT_FIELD_INT(Exp)
+            REFLECT_FIELD_FLOAT(GoldValue)
             REFLECT_END()
     };
 }

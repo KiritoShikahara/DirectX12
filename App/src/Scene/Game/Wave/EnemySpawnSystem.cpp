@@ -8,6 +8,7 @@
 #include<Tag/EntityTag.h>
 #include<system/Camera/CameraSystem.h>
 #include<system/Window/Window.h>
+#include<Data/Enemy/EnemyData.h>
 
 #include<random>
 #include<algorithm>
@@ -23,6 +24,17 @@ namespace ecs
 		{
 			static std::mt19937 engine{ std::random_device{}() };
 			return engine;
+		}
+
+		/// <summary>data::EnemyDataに登録されている敵の種類から一様ランダムに1つ選ぶ
+		/// （1種類も登録されていない場合はId=0を返す）</summary>
+		int PickRandomEnemyId()
+		{
+			const auto& enemies = DATA_MGR(data::EnemyData).GetAll();
+			if (enemies.empty()) return 0;
+
+			std::uniform_int_distribution<size_t> dist(0, enemies.size() - 1);
+			return enemies[dist(GetRandomEngine())].Id;
 		}
 	}
 
@@ -53,22 +65,28 @@ namespace ecs
 		const ecs::EnemyWaveModifier waveModifier =
 			ComputeWaveModifier(wave.ElapsedTime, wave.StatGrowthPerSecond);
 
-		// 通常の敵の継続スポーン
+		// 通常の敵の継続スポーン（1回のタイミングでSpawnCountPerTick体まとめて湧かせる。
+		// 重なって湧かないよう、1体ごとに独立してランダムな位置を求める。
+		// 敵の種類もdata::EnemyDataに登録されている中からランダムに選ぶ）
 		wave.SpawnTimer -= deltaTime;
 		if (wave.SpawnTimer <= 0.0f)
 		{
-			const XMFLOAT3 spawnPos = ComputeSpawnPosition(
-				registry, playerPos, wave.SpawnMarginMin, wave.SpawnMarginMax);
-			::ecs::GameSceneFactory::CreateEnemy(spawnPos, waveModifier, false);
+			const int spawnCount = std::max(1, wave.SpawnCountPerTick);
+			for (int i = 0; i < spawnCount; ++i)
+			{
+				const XMFLOAT3 spawnPos = ComputeSpawnPosition(
+					registry, playerPos, wave.SpawnMarginMin, wave.SpawnMarginMax);
+				::ecs::GameSceneFactory::CreateEnemy(spawnPos, waveModifier, false, PickRandomEnemyId());
+			}
 			wave.SpawnTimer = wave.SpawnInterval;
 		}
 
-		// ボース出現（1回だけ、通常の敵よりさらに奥から出す）
+		// ボース出現（1回だけ、通常の敵よりさらに奥から出す。種類は常にId=0の強化版）
 		if (!wave.BossSpawned && wave.ElapsedTime >= wave.BossSpawnTime)
 		{
 			const XMFLOAT3 spawnPos = ComputeSpawnPosition(
 				registry, playerPos, wave.SpawnMarginMax + 5.0f, wave.SpawnMarginMax + 15.0f);
-			::ecs::GameSceneFactory::CreateEnemy(spawnPos, waveModifier, true);
+			::ecs::GameSceneFactory::CreateEnemy(spawnPos, waveModifier, true, 0);
 			wave.BossSpawned = true;
 		}
 	}

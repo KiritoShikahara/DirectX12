@@ -27,10 +27,10 @@ namespace debug
 #ifdef _DEBUG
     void EnemyStatusDebugPanel::Draw()
     {
-        // Šù‘¶ƒe[ƒuƒ‹ƒGƒfƒBƒ^iLoad/Save CSVEDBAAdd RowAIdŠÜ‚Ş‘SƒZƒ‹•ÒWAPKd•¡ƒnƒCƒ‰ƒCƒgj
+        // ï¿½ï¿½ï¿½ï¿½ï¿½eï¿½[ï¿½uï¿½ï¿½ï¿½Gï¿½fï¿½Bï¿½^ï¿½iLoad/Save CSVï¿½EDBï¿½AAdd Rowï¿½AIdï¿½Ü‚Ş‘Sï¿½Zï¿½ï¿½ï¿½ÒWï¿½APKï¿½dï¿½ï¿½ï¿½nï¿½Cï¿½ï¿½ï¿½Cï¿½gï¿½j
         mInspector->Draw("Enemy Master");
 
-        // •ÒWŒ‹‰Ê‚ğ¶‘¶’†‚Ì“G‚ÖÄ“K—p‚·‚é‚½‚ß‚Ì‘€ìƒEƒBƒ“ƒhƒE
+        // ï¿½ÒWï¿½ï¿½ï¿½Ê‚ğ¶‘ï¿½ï¿½ï¿½ï¿½Ì“Gï¿½ÖÄ“Kï¿½pï¿½ï¿½ï¿½é‚½ï¿½ß‚Ì‘ï¿½ï¿½ï¿½Eï¿½Bï¿½ï¿½ï¿½hï¿½E
         if (ImGui::Begin("Enemy Apply"))
         {
 
@@ -63,9 +63,11 @@ namespace debug
                 st.Base.MaxHp = row.MaxHp;
                 st.Base.MoveSpeed = row.MoveSpeed;
                 st.Base.AtkPower = row.AtkPower;
+                st.Base.ExperienceValue = static_cast<float>(row.Exp);
+                st.Base.GoldValue = row.GoldValue;
 
-                st.Recompute();                    // Base ~ WaveMod ¨ Current
-                st.CurrentHp = st.Current.MaxHp;   // HP–ƒ^ƒ“‚É–ß‚·
+                st.Recompute();                    // Base ï¿½~ WaveMod ï¿½ï¿½ Current
+                st.CurrentHp = st.Current.MaxHp;   // HPï¿½ï¿½ï¿½^ï¿½ï¿½ï¿½É–ß‚ï¿½
             });
     }
 #else

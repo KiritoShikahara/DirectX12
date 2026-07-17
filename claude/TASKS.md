@@ -89,11 +89,6 @@
 - [ ] エンジン: IsPlayerActionLocked()統合リファクタの回帰確認（必殺技演出中の既存動作
       (他武器停止・パーク選択保留・プレイヤー操作ロック)が従来通り機能するか、Flicker Strike
       演出中も同様に機能するか）
-- [ ] **未解決バグ**: エフェクトが一定周期で一瞬・部分的に四角形ポリゴンになる問題。
-      先読み対応(PreloadWeaponEffects)では解消せず、FrostOrbの周回オーブ・IceSpike等
-      継続的にループ再生されるエフェクトで発生している模様。原因未特定
-      (EffekseerのHandle再発行タイミングを疑っているが未検証)。実機の録画等、
-      追加の手がかりが無いと切り分けが進めにくい状況
 - [ ] ゲーム: Flicker Strikeの仕様変更・バランス調整後の実機動作確認（狙い方向に敵がいる
       状態でRキーを押すと初撃が出るか、方向上に敵がいない場合は何も起きずクールダウンも
       消費しないか、ワープ演出中にAttack/Attack2/Ultimateを押すとその場でシーケンスが
@@ -481,3 +476,99 @@
       (ConfigManager<T>を使う全箇所に共通する根本修正、詳細はDECISIONS.md)。
       フォルダを実際に削除した状態から起動させ、自動生成・エラーなしを確認済み。
       Debug/Release両方ビルド確認済み (2026-07-17)
+- [x] エンジン: エフェクトが一瞬四角形ポリゴンになる問題を修正（ユーザー指示、
+      **ユーザーが実機プレイで解消を確認済み**）。EffekseerのHandleは単調増加カウンタで
+      エイリアシングは起きないと確認済み。IsLoop=trueのエフェクト(FrostOrbの周回オーブ・
+      IceSpike・各種投射武器のトレイル等)は素材の再生時間が尽きるたびに
+      EffekseerManager::UpdateがPlay()で再始動しており、生成直後のインスタンスが
+      ビルボードの向き等未確定のまま素の四角形に近い見た目で1フレーム描画されることが
+      原因と判明。新規graphics::EffectObject::SetRenderingVisible(bool)(SetVisibleと違い
+      Pauseしない)とecs::EffectComponent::IsHiddenAfterLoopRestart(新規)を追加し、
+      再始動直後の1フレームだけ非表示にして次のUpdateで表示を戻すようにした。
+      内部シミュレーションは止めないためゲームロジックには影響しない。Debug/Release
+      両方ビルド確認済み (2026-07-17)
+- [x] ゲーム: Flicker Strikeのヒットエフェクトを4倍に拡大（ユーザー指摘: 「小さすぎる
+      かな」）。ヒットエフェクトが対象の座標(+HeightOffset)で正しく再生されていることを
+      コードで確認した上で(FlickerStrikeWeaponSystem::WarpAndHit)、HitEffectScaleを
+      1.0→4.0に変更(同じ代用素材AttackHit.efkを使うChain Lightningと同じ基準)。
+      値の変更のみ(スキーマ変更なし)のためdb.dbはSaveCsvToDbのみで同期済み。
+      Debug/Release両方ビルド・起動確認済み (2026-07-17)
+- [x] ゲーム: 敵の出現数を20倍に（ユーザー指示）。data::WaveData/ecs::WaveComponentへ
+      SpawnCountPerTick(新規、デフォルト1)を追加し20に設定。EnemySpawnSystemは1回の
+      スポーンタイミングでSpawnCountPerTick体まとめて湧かせるよう変更(1体ごとに
+      独立してランダムな位置を求め重なりを回避)。GameSceneFactory::
+      CreateStateController/WaveDebugPanel::ApplyToRunningWaveにも反映処理を追加。
+      スキーマ変更のためdb.dbをDropTable→再同期済み。Debug/Release両方ビルド・
+      起動確認済み(20体まとめてスポーンしてもクラッシュ・異常なし) (2026-07-17)
+- [x] ゲーム: レベルアップの経験値増加率を緩和 + パワーチャージ上限をレベルに応じて
+      増加（ユーザー指示、2件まとめて対応）。PlayerLevelComponent::ExperienceGrowthRateを
+      1.2→1.08に変更(複利で重くなりすぎていたのを緩和、構造体デフォルト値のみで
+      CSV/DB非経由のためコード変更で即反映)。FlickerStrikeWeaponDataへ
+      MaxChargePerLevel(新規、デフォルト1)を追加し、パワーチャージ上限 = MaxCharge(初期5)
+      + MaxChargePerLevel×(プレイヤーLv-1)という計算式に変更。EnemyDeathSystem::
+      AwardPowerChargeとGameStatusDebugPanelで重複していた計算を新規
+      ecs::ComputeMaxPowerCharge()(PlayerPowerChargeComponent.h)へ切り出して共通化。
+      スキーマ変更のためdb.dbをDropTable→再同期済み。Debug/Release両方ビルド・
+      起動確認済み (2026-07-17)
+- [x] ゲーム: Flicker Strike中に自動発動武器も止まってしまう問題を修正（ユーザー指摘）。
+      ecs::IsPlayerActionLocked()を全武器Systemが一律参照していたため、自動発動武器
+      (Nova/Homing Missile/Chain Lightning/Meteor/SelfDefense(Orbit)/Void Beam/Bone Spear/
+      Cleave+共有Projectile系2システム+HomingMissileSteeringSystem、計11システム)が
+      Flicker Strike中も止まっていた。これら11システムをIsPlayerUltimateActive()のみの
+      参照に変更し必殺技演出中のみ停止するようにした。手動発動武器(SingleShot/
+      AreaAttack/AreaAttackHazard)・PlayerInputSystem・GameStateSystemはIsPlayerActionLocked()
+      のまま変更なし(Flicker Strike中も引き続きブロックし、手動攻撃入力自体が
+      シーケンスを打ち切る既存仕様は維持)。PlayerActionLock.hのコメントも更新。
+      db.db変更なし。Debug/Release両方ビルド・起動確認済み (2026-07-17)
+- [x] ゲーム: ステータス強化項目「移動速度」の追加、Flicker Strikeエフェクトを雷風+派手に
+      変更、新規敵タイプ「Scout」の追加（ユーザー指示、3件まとめて対応）。
+      eStatUpgradeType::MoveSpeed(=4)/PlayerSaveData::MoveSpeedLevel/StatUpgradeDataの
+      Id=4行を追加、StatusUpgradeComponent::kOptionCountを5に変更。Flicker Strikeの
+      HitEffectPathをLightningStrike.efk;Light4.efkに変更、HitEffectScaleを4→7に拡大。
+      data::EnemyDataが定義だけで実際には未使用だった接続漏れを解消:
+      GameSceneFactory::CreateEnemyへenemyId引数を追加しMaxHp/AtkPower/Exp/GoldValue/
+      MoveSpeedを実際にCSVから読むようにした。EnemyDataへGoldValue列を新設。
+      EnemySpawnSystemに敵タイプをランダム選択するPickRandomEnemyId()を新設(ボースは
+      常にId=0)。新規敵「Scout」(Id=1、素早く脆い性能)を追加。db.db同期
+      (EnemyDataは列追加のためDropTable→再同期)。Debug/Release両方ビルド・起動確認済み
+      (2026-07-17)
+- [x] エンジン/ゲーム: 全11種の武器マスタデータをID/レベル制方式へリファクタリング
+      （ユーザー指示。設計確認により対象=全武器一括、Base/PerLevel列は削除の方針で確定）。
+      Id = (WeaponID+1)*1000+Level に変更し、各武器のBaseDamage/DamagePerLevel(・Base
+      Radius系/RadiusPerLevel系)をDamage(・Radius/ExplosionRadius)という単一フィールドへ
+      統合、CSVはLv1〜5の5行構成に変更(値は旧計算式と完全一致するよう算出、バランス変更なし)。
+      対象: SingleShot/AreaAttack/Orbit/Nova/HomingMissile/ChainLightning/Meteor/
+      VoidBeam/BoneSpear/Cleave/FlickerStrikeの全11 XxxWeaponData.h・XxxWeaponSystem.cpp・
+      CSVを変更。db.db同期(11テーブル全てDropTable→再同期)。Debug/Release両方ビルド・
+      起動確認済み (2026-07-17)
+- [x] ゲーム: 全武器のレベル上限を5→10に拡張(CSV各10行化)、パーク選択に攻撃力+10%/
+      防御力+15%を追加、「1回の発動で出る攻撃を2倍にする」パーク(AttackCountUp)を新設
+      （ユーザー指示3件）。PlayerStatusComponentにMulAttackCount/AttackCountMultiplierを
+      追加、ecs::combatutil::GetAttackCount()/ComputeSpreadDirection()を新設。発動が
+      明確な9武器(Orbit・FlickerStrikeを除く)のFire/Pulse/Zap/Swingをループ化、単方向弾の
+      4武器は扇状スプレッドを追加。db.db同期(行数増加のみ、DropTable不要)。Debug/Release
+      両方ビルド・起動確認済み (2026-07-17)
+- [x] バグ修正: Flicker Strikeが初撃から連鎖しなくなっていた問題を修正。原因は前回の武器CSV
+      Id方式変更で不要になった旧方式のGetById(0)呼び出しが2箇所(PlayerPowerChargeComponent::
+      ComputeMaxPowerCharge、GameSceneFactory::CreatePlayer)に残っていたこと(パワーチャージの
+      上限・初期所持数が常に0になっていた)。FlickerStrikeWeaponData::kFlickerStrikeGlobalConfigId
+      (=1001)を追加し両箇所を修正。
+      ゲーム: パーク選択に種別ごとの最大レベル(data::PerkData、CSV/DB化)を追加。
+      PlayerPerkLevelComponentで選択回数を記録し、MaxLevelに達した種別をプールから除外。
+      攻撃回数パーク(AttackCountUp)はユーザー指示によりMaxLevel=1(1回のみ選択可、最大2倍まで)
+      に設定。db.db同期(PerkData新規テーブルのみ)。Debug/Release両方ビルド・起動確認済み
+      (2026-07-17)
+- [x] ゲーム: ゴールド強化項目に「ゴールド獲得量」(+10%/レベル、最大+100%)を追加。
+      パーク選択に「HP回復30%」「経験値獲得量+15%」を追加（ユーザー指示）。
+      eStatUpgradeType::GoldGainRate/PlayerSaveData::GoldGainRateLevelを追加し
+      EnemyDeathSystem::AwardGoldで倍率適用。PlayerLevelComponent::MulExperienceGainを
+      新設しAwardExperienceで倍率適用。ePerkEffectTypeにHealHp/ExperienceGainUpを
+      既存Id(0-7)を変えず末尾追加。db.db同期(既存テーブルへの行追加のみ)。
+      Debug/Release両方ビルド・起動確認済み (2026-07-17)
+- [x] ゲーム: ゴールド強化に「HP自然回復」(+0.5/秒/レベル)・「経験値獲得量」(永続、+10%/レベル)
+      の2項目を追加。新規PlayerRegenSystemでHP自然回復を毎フレーム適用。EnemyDeathSystemの
+      AwardExperienceに永続倍率+ExperienceGainUpパークの二重乗算を実装。
+      敵タイプに「Brute」(Id=2、低速・高HP・高火力)「Sprinter」(Id=3、超高速・超低HP)を
+      追加、GameSceneFactory::CreateEnemyの色分けをswitch文に一般化。新規.cppファイルを
+      App.vcxproj/filtersに登録(未登録によるリンクエラーを修正)。db.db同期。
+      Debug/Release両方ビルド・起動確認済み (2026-07-17)

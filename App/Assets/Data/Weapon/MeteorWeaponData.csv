@@ -1,2 +1,11 @@
-Id,Name,FireInterval,BaseDamage,DamagePerLevel,BaseRadius,RadiusPerLevel,HitRadiusMultiplier,SearchRadius,MeteorCount,HeightOffset,EffectPath
-0,Meteor,4,20,5,12,1.5,1.5,60,3,0,Assets/Effect/PhantasmMeteor.efk;Assets/Effect/Fire7.efk
+Id,Name,FireInterval,Damage,Radius,HitRadiusMultiplier,SearchRadius,MeteorCount,HeightOffset,EffectPath
+1001,Meteor,4,20,12,1.5,60,3,0,Assets/Effect/PhantasmMeteor.efk;Assets/Effect/Fire7.efk
+1002,Meteor,4,25,13.5,1.5,60,3,0,Assets/Effect/PhantasmMeteor.efk;Assets/Effect/Fire7.efk
+1003,Meteor,4,30,15,1.5,60,3,0,Assets/Effect/PhantasmMeteor.efk;Assets/Effect/Fire7.efk
+1004,Meteor,4,35,16.5,1.5,60,3,0,Assets/Effect/PhantasmMeteor.efk;Assets/Effect/Fire7.efk
+1005,Meteor,4,40,18,1.5,60,3,0,Assets/Effect/PhantasmMeteor.efk;Assets/Effect/Fire7.efk
+1006,Meteor,4,45,19.5,1.5,60,3,0,Assets/Effect/PhantasmMeteor.efk;Assets/Effect/Fire7.efk
+1007,Meteor,4,50,21,1.5,60,3,0,Assets/Effect/PhantasmMeteor.efk;Assets/Effect/Fire7.efk
+1008,Meteor,4,55,22.5,1.5,60,3,0,Assets/Effect/PhantasmMeteor.efk;Assets/Effect/Fire7.efk
+1009,Meteor,4,60,24,1.5,60,3,0,Assets/Effect/PhantasmMeteor.efk;Assets/Effect/Fire7.efk
+1010,Meteor,4,65,25.5,1.5,60,3,0,Assets/Effect/PhantasmMeteor.efk;Assets/Effect/Fire7.efk

@@ -39,7 +39,7 @@ namespace ecs
 				if (weapon.Type != ecs::eWeaponType::AreaAttack) return;
 				if (!registry.valid(weapon.Owner)) return;
 
-				const auto* masterData = DATA_MGR(data::AreaAttackWeaponData).GetById(weapon.WeaponID);
+				const auto* masterData = DATA_MGR(data::AreaAttackWeaponData).GetById((weapon.WeaponID + 1) * 1000 + weapon.Level);
 				if (masterData == nullptr) return;
 
 				// 探索範囲(センサー)の可視化は発動可否・クールダウンに関係なく毎フレーム更新する
@@ -63,7 +63,12 @@ namespace ecs
 				DEBUG_LOG(sys::eLogLevel::Log, "AreaAttackWeaponSystem: Fire triggered (control={})",
 					weapon.Control == ecs::eWeaponControl::Auto ? "Auto" : "Manual");
 
-				Fire(registry, weapon, *masterData);
+				// 攻撃回数パーク(AttackCountUp)分だけ発動を繰り返す
+				const int attackCount = ecs::combatutil::GetAttackCount(registry, weapon.Owner);
+				for (int i = 0; i < attackCount; ++i)
+				{
+					Fire(registry, weapon, *masterData);
+				}
 
 				const auto* ownerStatus = registry.try_get<ecs::PlayerStatusComponent>(weapon.Owner);
 				const float cooldownRate = ownerStatus != nullptr ? ownerStatus->Current.CooldownRate : 1.0f;
@@ -133,12 +138,10 @@ namespace ecs
 		std::vector<entt::entity> found;
 		::sys::PhysicsSystem::OverlapSphere(registry, searchCenter, masterData.SearchRadius, found);
 
-		// Lv1を基準（levelIndex=0）に、レベル毎の成長量を加算する。
 		// AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
-		const int levelIndex = std::max(0, weapon.Level - 1);
 		const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
-		const float damage = (masterData.BaseDamage + masterData.DamagePerLevel * static_cast<float>(levelIndex)) * atkMultiplier;
-		const float radius = masterData.BaseRadius + masterData.RadiusPerLevel * static_cast<float>(levelIndex);
+		const float damage = masterData.Damage * atkMultiplier;
+		const float radius = masterData.Radius;
 
 		int spawned = 0;
 		for (entt::entity entity : found)

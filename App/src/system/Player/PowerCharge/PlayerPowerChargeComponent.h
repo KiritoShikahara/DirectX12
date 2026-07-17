@@ -1,5 +1,10 @@
 ﻿#pragma once
 
+#include<Data/Storage/Registry/DataRegistry.h>
+#include<Data/Weapon/FlickerStrikeWeaponData.h>
+#include<system/Player/Level/PlayerLevelComponent.h>
+#include<entt/entt.hpp>
+
 namespace ecs
 {
     /// <summary>
@@ -13,4 +18,23 @@ namespace ecs
     {
         int Count = 0;
     };
+
+    /// <summary>
+    /// 現在のパワーチャージ上限を求める：FlickerStrikeWeaponData::MaxCharge(Lv1時点の初期値)+
+    /// MaxChargePerLevel×(プレイヤーレベル-1)。上限を参照する箇所(EnemyDeathSystem::
+    /// AwardPowerCharge、GameStatusDebugPanel等)は重複計算を避けるためここを共通で使う。
+    /// </summary>
+    inline int ComputeMaxPowerCharge(entt::registry& registry, entt::entity playerEntity)
+    {
+        const auto* masterData = DATA_MGR(data::FlickerStrikeWeaponData).GetById(data::kFlickerStrikeGlobalConfigId);
+        if (masterData == nullptr) return 0;
+
+        int level = 1;
+        if (const auto* playerLevel = registry.try_get<PlayerLevelComponent>(playerEntity))
+        {
+            level = playerLevel->Level;
+        }
+
+        return masterData->MaxCharge + masterData->MaxChargePerLevel * (level - 1);
+    }
 }

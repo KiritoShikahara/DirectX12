@@ -43,8 +43,9 @@ namespace ecs
 		auto stateView = registry.view<::ecs::GameStateComponent>();
 		if (stateView.begin() == stateView.end()) return;
 		if (registry.get<::ecs::GameStateComponent>(*stateView.begin()).GameState != ::sys::eGameState::InGame) return;
-		// 必殺技演出中は他の攻撃を発動させない
-		if (ecs::IsPlayerActionLocked(registry)) return;
+		// 必殺技演出中は他の攻撃を発動させない(自動発動武器のためFlicker Strike中は止めない。
+		// 手動攻撃のみをIsPlayerActionLocked()で止める設計。PlayerActionLock.h参照)
+		if (ecs::IsPlayerUltimateActive(registry)) return;
 
 		registry.view<ecs::WeaponComponent, ecs::MeteorWeaponRuntimeComponent>().each(
 			[&](ecs::WeaponComponent& weapon, ecs::MeteorWeaponRuntimeComponent& runtime)
@@ -58,12 +59,19 @@ namespace ecs
 				}
 				if (runtime.CooldownTimer > 0.0f) return;
 
-				const auto* masterData = DATA_MGR(data::MeteorWeaponData).GetById(weapon.WeaponID);
+				const auto* masterData = DATA_MGR(data::MeteorWeaponData).GetById((weapon.WeaponID + 1) * 1000 + weapon.Level);
 				if (masterData == nullptr) return;
 
 				// SearchRadius内に敵が1体も見つからなければクールダウンを消費せず待機する
 				// （対象なしで空撃ちしないため。他の自動発動武器と同じ方針）
 				if (!Fire(registry, weapon, *masterData)) return;
+
+				// 攻撃回数パーク(AttackCountUp)分だけ追加で発動を繰り返す(1回目は上のFireで消費済み)
+				const int attackCount = ecs::combatutil::GetAttackCount(registry, weapon.Owner);
+				for (int i = 1; i < attackCount; ++i)
+				{
+					Fire(registry, weapon, *masterData);
+				}
 
 				const auto* ownerStatus = registry.try_get<ecs::PlayerStatusComponent>(weapon.Owner);
 				const float cooldownRate = ownerStatus != nullptr ? ownerStatus->Current.CooldownRate : 1.0f;
@@ -99,12 +107,10 @@ namespace ecs
 		std::shuffle(enemies.begin(), enemies.end(), GetRandomEngine());
 		const int count = std::min<int>(masterData.MeteorCount, static_cast<int>(enemies.size()));
 
-		// Lv1を基準（levelIndex=0）に、レベル毎の成長量を加算する。
 		// AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
-		const int levelIndex = std::max(0, weapon.Level - 1);
 		const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
-		const float damage = (masterData.BaseDamage + masterData.DamagePerLevel * static_cast<float>(levelIndex)) * atkMultiplier;
-		const float radius = masterData.BaseRadius + masterData.RadiusPerLevel * static_cast<float>(levelIndex);
+		const float damage = masterData.Damage * atkMultiplier;
+		const float radius = masterData.Radius;
 		// 当たり判定半径は見た目基準半径(radius)とは別にHitRadiusMultiplierで拡大する。
 		// エフェクトの見た目サイズは従来通りradius基準のままにするため、ここで分離する。
 		const float hitRadius = radius * masterData.HitRadiusMultiplier;

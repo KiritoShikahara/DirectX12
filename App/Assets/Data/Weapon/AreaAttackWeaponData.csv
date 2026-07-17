@@ -1,2 +1,11 @@
-Id,Name,FireInterval,BaseDamage,DamagePerLevel,BaseRadius,RadiusPerLevel,HitRadiusMultiplier,SearchRadius,MaxTargets,Duration,TickInterval,ForwardOffset,EffectPath
-0,IceSpike,1,8,2,15,1.5,2,105,5,2,0.5,3,Assets/Effect/LightningStrike.efk
+Id,Name,FireInterval,Damage,Radius,HitRadiusMultiplier,SearchRadius,MaxTargets,Duration,TickInterval,ForwardOffset,EffectPath
+1001,IceSpike,1,8,15,2,105,5,2,0.5,3,Assets/Effect/LightningStrike.efk
+1002,IceSpike,1,10,16.5,2,105,5,2,0.5,3,Assets/Effect/LightningStrike.efk
+1003,IceSpike,1,12,18,2,105,5,2,0.5,3,Assets/Effect/LightningStrike.efk
+1004,IceSpike,1,14,19.5,2,105,5,2,0.5,3,Assets/Effect/LightningStrike.efk
+1005,IceSpike,1,16,21,2,105,5,2,0.5,3,Assets/Effect/LightningStrike.efk
+1006,IceSpike,1,18,22.5,2,105,5,2,0.5,3,Assets/Effect/LightningStrike.efk
+1007,IceSpike,1,20,24,2,105,5,2,0.5,3,Assets/Effect/LightningStrike.efk
+1008,IceSpike,1,22,25.5,2,105,5,2,0.5,3,Assets/Effect/LightningStrike.efk
+1009,IceSpike,1,24,27,2,105,5,2,0.5,3,Assets/Effect/LightningStrike.efk
+1010,IceSpike,1,26,28.5,2,105,5,2,0.5,3,Assets/Effect/LightningStrike.efk

@@ -7,8 +7,8 @@ namespace data
 {
     /// <summary>
     /// Void Beam型武器のマスタデータ（CSV/DB）。
-    /// WeaponComponent::WeaponID と対応する。
-    /// ダメージは Base + PerLevel * (Level - 1) の線形成長とする（他のWeaponDataと同じ方式）。
+    /// Id = (WeaponID + 1) * 1000 + Level。武器種類ごとにLv1〜MaxLevelの行を持ち、
+    /// レベルアップ時は該当Idの行を直接取得する（Base+PerLevelの実行時計算は行わない）。
     /// CSV ヘッダー名は各フィールド名と完全一致すること。
     ///
     /// 発動トリガーが無く、FireInterval秒ごとにSearchRadius内の最も近い敵の方向へ
@@ -20,13 +20,12 @@ namespace data
     /// </summary>
     struct VoidBeamWeaponData
     {
-        int         Id = 0;                  // 武器ID（主キー。WeaponComponent::WeaponID と対応）
+        int         Id = 0;                  // (WeaponID+1)*1000+Level（主キー）
         std::string Name;                    // 表示・デバッグ用
 
         float       FireInterval = 1.8f;     // 発動間隔(秒)。CooldownRateで乗算短縮される
 
-        float       BaseDamage = 7.0f;       // Lv1火力（貫通ヒットする全員に同じ値が入る）
-        float       DamagePerLevel = 2.0f;   // レベル毎の火力増加量
+        float       Damage = 7.0f;           // このレベルでの火力（貫通ヒットする全員に同じ値が入る）
 
         float       SearchRadius = 90.0f;    // 狙い方向(最も近い敵)を探す範囲(m)
         float       BeamLength = 90.0f;      // ビームの直線距離(m)
@@ -41,8 +40,7 @@ namespace data
             REFLECT_FIELD_ID(Id)
             REFLECT_FIELD_STR(Name)
             REFLECT_FIELD_FLOAT(FireInterval)
-            REFLECT_FIELD_FLOAT(BaseDamage)
-            REFLECT_FIELD_FLOAT(DamagePerLevel)
+            REFLECT_FIELD_FLOAT(Damage)
             REFLECT_FIELD_FLOAT(SearchRadius)
             REFLECT_FIELD_FLOAT(BeamLength)
             REFLECT_FIELD_FLOAT(BeamWidth)

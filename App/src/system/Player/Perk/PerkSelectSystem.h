@@ -26,5 +26,8 @@ namespace ecs
 		static void HandleInput(entt::registry& registry, entt::entity controllerEntity, PerkSelectComponent& select);
 		static void ApplyPerk(entt::registry& registry, const PerkDefinition& perk);
 		static void ExitPerkSelect(entt::registry& registry, entt::entity controllerEntity);
+
+		/// <summary>選択が確定したプールインデックスの選択回数(PlayerPerkLevelComponent)を+1する</summary>
+		static void IncrementPerkPickCount(entt::registry& registry, int poolIndex);
 	};
 }

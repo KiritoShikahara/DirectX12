@@ -16,7 +16,6 @@
 #include<system/Player/Weapon/FlickerStrike/FlickerStrikeRuntimeComponent.h>
 #include<system/Player/Weapon/FlickerStrike/FlickerStrikeComponent.h>
 #include<system/Player/PowerCharge/PlayerPowerChargeComponent.h>
-#include<Data/Weapon/FlickerStrikeWeaponData.h>
 #include<system/Player/Ultimate/PlayerUltimateComponent.h>
 #include<Data/Ultimate/UltimateData.h>
 #include<system/Enemy/Status/EnemyStatusComponent.h>
@@ -123,8 +122,7 @@ namespace debug
 			registry.view<ecs::PlayerTag, ecs::PlayerPowerChargeComponent>().each(
 				[&](entt::entity playerEntity, ecs::PlayerPowerChargeComponent& charge)
 				{
-					const auto* masterData = DATA_MGR(data::FlickerStrikeWeaponData).GetById(0);
-					const int maxCharge = masterData != nullptr ? masterData->MaxCharge : 0;
+					const int maxCharge = ecs::ComputeMaxPowerCharge(registry, playerEntity);
 
 					ImGui::Text("Power Charge: %d / %d", charge.Count, maxCharge);
 					ImGui::SameLine();

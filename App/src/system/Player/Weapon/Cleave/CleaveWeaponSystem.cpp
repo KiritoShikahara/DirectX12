@@ -39,8 +39,9 @@ namespace ecs
         auto stateView = registry.view<::ecs::GameStateComponent>();
         if (stateView.begin() == stateView.end()) return;
         if (registry.get<::ecs::GameStateComponent>(*stateView.begin()).GameState != ::sys::eGameState::InGame) return;
-        // 必殺技演出中は他の攻撃を発動させない
-        if (ecs::IsPlayerActionLocked(registry)) return;
+        // 必殺技演出中は他の攻撃を発動させない(自動発動武器のためFlicker Strike中は止めない。
+        // 手動攻撃のみをIsPlayerActionLocked()で止める設計。PlayerActionLock.h参照)
+        if (ecs::IsPlayerUltimateActive(registry)) return;
 
         registry.view<ecs::WeaponComponent, ecs::CleaveRuntimeComponent>().each(
             [&](ecs::WeaponComponent& weapon, ecs::CleaveRuntimeComponent& runtime)
@@ -54,10 +55,15 @@ namespace ecs
                 }
                 if (runtime.CooldownTimer > 0.0f) return;
 
-                const auto* masterData = DATA_MGR(data::CleaveWeaponData).GetById(weapon.WeaponID);
+                const auto* masterData = DATA_MGR(data::CleaveWeaponData).GetById((weapon.WeaponID + 1) * 1000 + weapon.Level);
                 if (masterData == nullptr) return;
 
-                Swing(registry, weapon, *masterData);
+                // 攻撃回数パーク(AttackCountUp)分だけ発動を繰り返す
+                const int attackCount = ecs::combatutil::GetAttackCount(registry, weapon.Owner);
+                for (int i = 0; i < attackCount; ++i)
+                {
+                    Swing(registry, weapon, *masterData);
+                }
 
                 const auto* ownerStatus = registry.try_get<ecs::PlayerStatusComponent>(weapon.Owner);
                 const float cooldownRate = ownerStatus != nullptr ? ownerStatus->Current.CooldownRate : 1.0f;
@@ -78,12 +84,10 @@ namespace ecs
         const DirectX::XMFLOAT3& ownerPos = ownerTransform->GetPosition();
         const DirectX::XMFLOAT3& aimDir = ownerAim->Direction;
 
-        // Lv1を基準（levelIndex=0）に、レベル毎の成長量を加算する。
         // AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
-        const int levelIndex = std::max(0, weapon.Level - 1);
         const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
-        const float damage = (masterData.BaseDamage + masterData.DamagePerLevel * static_cast<float>(levelIndex)) * atkMultiplier;
-        const float radius = masterData.BaseRadius + masterData.RadiusPerLevel * static_cast<float>(levelIndex);
+        const float damage = masterData.Damage * atkMultiplier;
+        const float radius = masterData.Radius;
         const float hitRadius = radius * masterData.HitRadiusMultiplier;
         const float coneHalfAngleRad = DirectX::XMConvertToRadians(masterData.ConeAngleDegrees);
 

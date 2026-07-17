@@ -3,6 +3,7 @@
 #include<string>
 #include<vector>
 #include<system/Player/Weapon/Inventory/WeaponInventoryComponent.h>
+#include<Data/Perk/PerkData.h>
 
 namespace ecs
 {
@@ -14,8 +15,15 @@ namespace ecs
 		MaxHpUp,       // PlayerStatusComponent.Modifier.MulMaxHp += Magnitude（増加分だけ現在HPも回復）
 		CooldownDown,  // PlayerStatusComponent.Modifier.MulCooldownRate += Magnitude（Magnitudeは負値）
 		MoveSpeedUp,   // PlayerStatusComponent.Modifier.MulMoveSpeed += Magnitude
+		AtkPowerUp,    // PlayerStatusComponent.Modifier.MulAtkPower += Magnitude
+		DefenseUp,     // PlayerStatusComponent.Modifier.MulDefense += Magnitude
+		AttackCountUp, // PlayerStatusComponent.Modifier.MulAttackCount += Magnitude（1回の発動で放つ攻撃回数の倍率）
 		WeaponLevelUp, // 所持武器のうちMaxLevel未満のものを1つ選びLevelを+1する（Magnitude未使用）
 		AcquireWeapon, // 所持していない指定の武器(AcquireWeaponType/AcquireWeaponId)を1つ取得する（Magnitude未使用）
+
+		// 以下は既存のdb.db/PerkData.csvのId(0-7)を変えないよう末尾に追加すること
+		HealHp,           // PlayerStatusComponent.CurrentHp += Current.MaxHp × Magnitude（即時回復、上限MaxHp）
+		ExperienceGainUp, // PlayerLevelComponent.MulExperienceGain += Magnitude（経験値獲得量の倍率）
 	};
 
 	/// <summary>
@@ -38,8 +46,10 @@ namespace ecs
 	///
 	/// PlayerStatusComponent::Current.AtkPowerは各武器のダメージ計算(ecs::combatutil::
 	/// GetAtkPowerMultiplier経由)に、Defenseは被ダメージ軽減式(PlayerContactDamageSystemの
-	/// 半減点方式)に接続済み。AtkPower/Defense系のパークもプールに追加可能な状態になったが、
-	/// 現状はまだ未追加（次の調整候補）。
+	/// 半減点方式)に接続済み。AttackCountはecs::combatutil::GetAttackCount経由で、
+	/// 発動が明確な武器(Orbit/FlickerStrikeを除く9種)がFire/Pulse/Swing/Zapをその回数だけ
+	/// 繰り返す形で反映される。HealHpは即時回復(Modifierを変更しない一回性の効果、
+	/// WeaponLevelUpと同じ扱い)。ExperienceGainUpはPlayerLevelComponentの経験値獲得倍率。
 	/// </summary>
 	inline const std::vector<PerkDefinition>& GetPerkPool()
 	{
@@ -48,6 +58,9 @@ namespace ecs
 			{ ePerkEffectType::MaxHpUp,       L"最大HP + 15%",    0.15f },
 			{ ePerkEffectType::CooldownDown,  L"攻撃間隔 - 10%",  -0.10f },
 			{ ePerkEffectType::MoveSpeedUp,   L"移動速度 + 10%",  0.10f },
+			{ ePerkEffectType::AtkPowerUp,    L"攻撃力 + 10%",    0.10f },
+			{ ePerkEffectType::DefenseUp,     L"防御力 + 15%",    0.15f },
+			{ ePerkEffectType::AttackCountUp, L"同時攻撃数 + 100%", 1.0f },
 			{ ePerkEffectType::WeaponLevelUp, L"武器レベルアップ", 0.0f },
 			{ ePerkEffectType::AcquireWeapon, L"新武器: Nova",    0.0f, eWeaponType::Nova, 0 },
 			{ ePerkEffectType::AcquireWeapon, L"新武器: Homing Missile", 0.0f, eWeaponType::Homing, 0 },
@@ -57,7 +70,20 @@ namespace ecs
 			{ ePerkEffectType::AcquireWeapon, L"新武器: Bone Spear", 0.0f, eWeaponType::BoneSpear, 0 },
 			{ ePerkEffectType::AcquireWeapon, L"新武器: Cleave", 0.0f, eWeaponType::Cleave, 0 },
 			{ ePerkEffectType::AcquireWeapon, L"新武器: Flicker Strike", 0.0f, eWeaponType::FlickerStrike, 0 },
+			{ ePerkEffectType::HealHp,           L"HP回復 30%",         0.30f },
+			{ ePerkEffectType::ExperienceGainUp, L"経験値獲得量 + 15%", 0.15f },
 		};
 		return pool;
+	}
+
+	/// <summary>
+	/// 指定のパーク種別を選択できる最大回数(data::PerkData::MaxLevel、CSV/DB)を求める。
+	/// データが未登録の場合は実質無制限(選択を誤ってブロックしないためのフォールバック)。
+	/// </summary>
+	inline int GetPerkMaxLevel(ePerkEffectType type)
+	{
+		constexpr int kFallbackMaxLevel = 99;
+		const auto* perkData = DATA_MGR(data::PerkData).GetById(static_cast<int>(type));
+		return perkData != nullptr ? perkData->MaxLevel : kFallbackMaxLevel;
 	}
 }

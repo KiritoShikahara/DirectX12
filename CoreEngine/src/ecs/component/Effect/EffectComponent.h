@@ -47,6 +47,15 @@ namespace ecs
         /// <summary>表示するか</summary>
         bool IsVisible = true;
         bool LastIsVisible = false;
+
+        /// <summary>
+        /// ループ再生を再始動した直後で、1フレームだけ非表示にしている最中か
+        /// (EffekseerManager::Update専用の内部状態。他システムから触らないこと)。
+        /// 生成直後のインスタンスはビルボードの向き等、前フレームとの差分に依存する項目が
+        /// まだ確定しておらず、素の四角形に近い見た目で1フレーム描画されることがあるため、
+        /// その1フレームだけ隠して内部状態が整うのを待つ。
+        /// </summary>
+        bool IsHiddenAfterLoopRestart = false;
     };
 
 } // namespace ecs

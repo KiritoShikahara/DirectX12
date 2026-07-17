@@ -7,9 +7,8 @@ namespace data
 {
     /// <summary>
     /// SelfDefense(周回)型武器のマスタデータ（CSV/DB）。
-    /// WeaponComponent::WeaponID と対応する。
-    /// ダメージは Base + PerLevel * (Level - 1) の線形成長とする
-    /// （SingleShot/AreaAttackと同じ方式）。
+    /// Id = (WeaponID + 1) * 1000 + Level。武器種類ごとにLv1〜MaxLevelの行を持ち、
+    /// レベルアップ時は該当Idの行を直接取得する（Base+PerLevelの実行時計算は行わない）。
     /// CSV ヘッダー名は各フィールド名と完全一致すること。
     ///
     /// 装備した瞬間からOrbCount個のオーブがプレイヤーを中心にOrbitRadius(m)の円周上を
@@ -19,11 +18,10 @@ namespace data
     /// </summary>
     struct OrbitWeaponData
     {
-        int         Id = 0;                  // 武器ID（主キー。WeaponComponent::WeaponID と対応）
+        int         Id = 0;                  // (WeaponID+1)*1000+Level（主キー）
         std::string Name;                    // 表示・デバッグ用
 
-        float       BaseDamage = 4.0f;       // 1オーブ・1ヒットあたりのLv1火力
-        float       DamagePerLevel = 1.0f;   // レベル毎の火力増加量
+        float       Damage = 4.0f;           // 1オーブ・1ヒットあたりのこのレベルでの火力
 
         int         OrbCount = 2;            // 周回するオーブの数
 
@@ -43,8 +41,7 @@ namespace data
         REFLECT_BEGIN(OrbitWeaponData, "orbit_weapons")
             REFLECT_FIELD_ID(Id)
             REFLECT_FIELD_STR(Name)
-            REFLECT_FIELD_FLOAT(BaseDamage)
-            REFLECT_FIELD_FLOAT(DamagePerLevel)
+            REFLECT_FIELD_FLOAT(Damage)
             REFLECT_FIELD_INT(OrbCount)
             REFLECT_FIELD_FLOAT(OrbitRadius)
             REFLECT_FIELD_FLOAT(OrbitSpeed)

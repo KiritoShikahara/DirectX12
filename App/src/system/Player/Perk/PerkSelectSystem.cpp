@@ -4,6 +4,8 @@
 #include<Scene/Game/State/GameState.h>
 #include<system/Player/Status/PlayerStatusComponent.h>
 #include<system/Player/Weapon/Inventory/WeaponInventoryComponent.h>
+#include<system/Player/Perk/PlayerPerkLevelComponent.h>
+#include<system/Player/Level/PlayerLevelComponent.h>
 #include<Scene/Game/Factory/GameSceneFactory.h>
 #include<Tag/EntityTag.h>
 
@@ -108,8 +110,18 @@ namespace ecs
 		const bool hasUpgradableWeapon = HasUpgradableWeapon(registry);
 		const bool hasFreeWeaponSlot = HasFreeWeaponSlot(registry);
 
+		// パーク種別ごとの最大レベル(data::PerkData::MaxLevel)判定用。
+		// プレイヤーが未生成/コンポーネント未付与の場合は判定をスキップする(全て候補に残す)
+		const std::vector<int>* pickCounts = nullptr;
+		auto perkLevelView = registry.view<PlayerTag, PlayerPerkLevelComponent>();
+		if (perkLevelView.begin() != perkLevelView.end())
+		{
+			pickCounts = &registry.get<PlayerPerkLevelComponent>(*perkLevelView.begin()).PickCounts;
+		}
+
 		// レベルアップ可能な武器が無ければ WeaponLevelUp を、
-		// 空きスロットが無い/既に所持している武器なら AcquireWeapon を候補から除外する
+		// 空きスロットが無い/既に所持している武器なら AcquireWeapon を、
+		// 種別ごとの選択回数がMaxLevelに達していれば候補から除外する
 		std::vector<int> validIndices;
 		validIndices.reserve(pool.size());
 		for (int i = 0; i < static_cast<int>(pool.size()); ++i)
@@ -117,6 +129,8 @@ namespace ecs
 			if (pool[i].Type == ePerkEffectType::WeaponLevelUp && !hasUpgradableWeapon) continue;
 			if (pool[i].Type == ePerkEffectType::AcquireWeapon &&
 				(!hasFreeWeaponSlot || HasWeapon(registry, pool[i].AcquireWeaponType, pool[i].AcquireWeaponId))) continue;
+			if (pickCounts != nullptr && i < static_cast<int>(pickCounts->size()) &&
+				(*pickCounts)[i] >= GetPerkMaxLevel(pool[i].Type)) continue;
 			validIndices.push_back(i);
 		}
 		if (validIndices.empty()) return; // 提示できるパークが無い（現状のプールでは基本発生しない）
@@ -174,8 +188,10 @@ namespace ecs
 		if (input.IsActionPressed("Select"))
 		{
 			const auto& pool = GetPerkPool();
-			const PerkDefinition& chosen = pool[select.ChoiceIndices[select.SelectedIndex]];
+			const int chosenIndex = select.ChoiceIndices[select.SelectedIndex];
+			const PerkDefinition& chosen = pool[chosenIndex];
 			ApplyPerk(registry, chosen);
+			IncrementPerkPickCount(registry, chosenIndex);
 			ExitPerkSelect(registry, controllerEntity);
 		}
 	}
@@ -207,6 +223,30 @@ namespace ecs
 			status.Modifier.MulMoveSpeed += perk.Magnitude;
 			status.Recompute();
 			break;
+		case ePerkEffectType::AtkPowerUp:
+			status.Modifier.MulAtkPower += perk.Magnitude;
+			status.Recompute();
+			break;
+		case ePerkEffectType::DefenseUp:
+			status.Modifier.MulDefense += perk.Magnitude;
+			status.Recompute();
+			break;
+		case ePerkEffectType::AttackCountUp:
+			status.Modifier.MulAttackCount += perk.Magnitude;
+			status.Recompute();
+			break;
+		case ePerkEffectType::HealHp:
+			status.CurrentHp = std::min(status.Current.MaxHp, status.CurrentHp + status.Current.MaxHp * perk.Magnitude);
+			break;
+		case ePerkEffectType::ExperienceGainUp:
+		{
+			auto* level = registry.try_get<PlayerLevelComponent>(playerEntity);
+			if (level != nullptr)
+			{
+				level->MulExperienceGain += perk.Magnitude;
+			}
+			break;
+		}
 		case ePerkEffectType::WeaponLevelUp:
 		{
 			auto* inventory = registry.try_get<WeaponInventoryComponent>(playerEntity);
@@ -236,6 +276,18 @@ namespace ecs
 			::ecs::GameSceneFactory::AddWeaponToPlayer(
 				playerEntity, perk.AcquireWeaponType, perk.AcquireWeaponId, ::ecs::eWeaponControl::Auto);
 			break;
+		}
+	}
+
+	void PerkSelectSystem::IncrementPerkPickCount(entt::registry& registry, int poolIndex)
+	{
+		auto playerView = registry.view<PlayerTag, PlayerPerkLevelComponent>();
+		if (playerView.begin() == playerView.end()) return;
+
+		auto& pickCounts = registry.get<PlayerPerkLevelComponent>(*playerView.begin()).PickCounts;
+		if (poolIndex >= 0 && poolIndex < static_cast<int>(pickCounts.size()))
+		{
+			pickCounts[poolIndex] += 1;
 		}
 	}
 

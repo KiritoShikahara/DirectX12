@@ -19,8 +19,9 @@ namespace ecs
         auto stateView = registry.view<::ecs::GameStateComponent>();
         if (stateView.begin() == stateView.end()) return;
         if (registry.get<::ecs::GameStateComponent>(*stateView.begin()).GameState != ::sys::eGameState::InGame) return;
-        // 必殺技演出中は他の攻撃を発動させない
-        if (ecs::IsPlayerActionLocked(registry)) return;
+        // 必殺技演出中は他の攻撃を発動させない(自動発動武器のためFlicker Strike中は止めない。
+        // 手動攻撃のみをIsPlayerActionLocked()で止める設計。PlayerActionLock.h参照)
+        if (ecs::IsPlayerUltimateActive(registry)) return;
 
         registry.view<ecs::WeaponComponent, ecs::BoneSpearRuntimeComponent>().each(
             [&](ecs::WeaponComponent& weapon, ecs::BoneSpearRuntimeComponent& runtime)
@@ -34,7 +35,7 @@ namespace ecs
                 }
                 if (runtime.CooldownTimer > 0.0f) return;
 
-                const auto* masterData = DATA_MGR(data::BoneSpearWeaponData).GetById(weapon.WeaponID);
+                const auto* masterData = DATA_MGR(data::BoneSpearWeaponData).GetById((weapon.WeaponID + 1) * 1000 + weapon.Level);
                 if (masterData == nullptr) return;
 
                 const auto* ownerTransform = registry.try_get<ecs::Transform>(weapon.Owner);
@@ -61,7 +62,15 @@ namespace ecs
                     direction = { dx * invLen, 0.0f, dz * invLen };
                 }
 
-                Fire(registry, weapon, direction, *masterData);
+                // 攻撃回数パーク(AttackCountUp)分だけ扇状に発射する
+                constexpr float kMultiShotSpreadDegrees = 6.0f;
+                const int attackCount = ecs::combatutil::GetAttackCount(registry, weapon.Owner);
+                for (int i = 0; i < attackCount; ++i)
+                {
+                    const DirectX::XMFLOAT3 shotDirection = ecs::combatutil::ComputeSpreadDirection(
+                        direction, i, attackCount, kMultiShotSpreadDegrees);
+                    Fire(registry, weapon, shotDirection, *masterData);
+                }
 
                 const auto* ownerStatus = registry.try_get<ecs::PlayerStatusComponent>(weapon.Owner);
                 const float cooldownRate = ownerStatus != nullptr ? ownerStatus->Current.CooldownRate : 1.0f;
@@ -90,12 +99,10 @@ namespace ecs
             ownerPos.z + direction.z * kSpawnOffset,
         };
 
-        // Lv1を基準（levelIndex=0）に、レベル毎の成長量を加算する。
         // AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
-        const int levelIndex = std::max(0, weapon.Level - 1);
         const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
-        const float damage = (masterData.BaseDamage + masterData.DamagePerLevel * static_cast<float>(levelIndex)) * atkMultiplier;
-        const float radius = masterData.BaseExplosionRadius + masterData.ExplosionRadiusPerLevel * static_cast<float>(levelIndex);
+        const float damage = masterData.Damage * atkMultiplier;
+        const float radius = masterData.ExplosionRadius;
         // 当たり判定半径は見た目基準半径(radius)とは別にHitRadiusMultiplierで拡大する。
         // エフェクトの見た目サイズは従来通りradius基準のままにするため、ここで分離する。
         const float hitRadius = radius * masterData.HitRadiusMultiplier;

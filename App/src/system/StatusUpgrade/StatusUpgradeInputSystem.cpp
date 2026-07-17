@@ -29,6 +29,10 @@ namespace
 		L"攻撃力",
 		L"防御力",
 		L"クールダウン短縮",
+		L"移動速度",
+		L"ゴールド獲得量",
+		L"HP自然回復",
+		L"経験値獲得量",
 	};
 
 	/// <summary>PlayerSaveDataから指定インデックス(data::eStatUpgradeType)の現在レベルを取得する</summary>
@@ -40,6 +44,10 @@ namespace
 		case data::eStatUpgradeType::AtkPower:    return save.AtkPowerLevel;
 		case data::eStatUpgradeType::Defense:     return save.DefenseLevel;
 		case data::eStatUpgradeType::CooldownRate:return save.CooldownRateLevel;
+		case data::eStatUpgradeType::MoveSpeed:   return save.MoveSpeedLevel;
+		case data::eStatUpgradeType::GoldGainRate:return save.GoldGainRateLevel;
+		case data::eStatUpgradeType::HpRegen:     return save.HpRegenLevel;
+		case data::eStatUpgradeType::ExperienceGainRate: return save.ExperienceGainRateLevel;
 		}
 		return 0;
 	}
@@ -53,6 +61,10 @@ namespace
 		case data::eStatUpgradeType::AtkPower:     save.AtkPowerLevel += 1;    break;
 		case data::eStatUpgradeType::Defense:      save.DefenseLevel += 1;     break;
 		case data::eStatUpgradeType::CooldownRate: save.CooldownRateLevel += 1; break;
+		case data::eStatUpgradeType::MoveSpeed:    save.MoveSpeedLevel += 1;    break;
+		case data::eStatUpgradeType::GoldGainRate: save.GoldGainRateLevel += 1; break;
+		case data::eStatUpgradeType::HpRegen:      save.HpRegenLevel += 1;     break;
+		case data::eStatUpgradeType::ExperienceGainRate: save.ExperienceGainRateLevel += 1; break;
 		}
 	}
 

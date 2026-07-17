@@ -7,9 +7,8 @@ namespace data
 {
     /// <summary>
     /// Cleave型武器のマスタデータ（CSV/DB）。
-    /// WeaponComponent::WeaponID と対応する。
-    /// ダメージ・射程は Base + PerLevel * (Level - 1) の線形成長とする
-    /// （他のWeaponDataと同じ方式）。
+    /// Id = (WeaponID + 1) * 1000 + Level。武器種類ごとにLv1〜MaxLevelの行を持ち、
+    /// レベルアップ時は該当Idの行を直接取得する（Base+PerLevelの実行時計算は行わない）。
     /// CSV ヘッダー名は各フィールド名と完全一致すること。
     ///
     /// 発動トリガーが無く、FireInterval秒ごとに狙い方向(PlayerAimComponent::Direction)を
@@ -19,18 +18,16 @@ namespace data
     /// </summary>
     struct CleaveWeaponData
     {
-        int         Id = 0;                  // 武器ID（主キー。WeaponComponent::WeaponID と対応）
+        int         Id = 0;                  // (WeaponID+1)*1000+Level（主キー）
         std::string Name;                    // 表示・デバッグ用
 
         float       FireInterval = 1.2f;     // 発動間隔(秒)。CooldownRateで乗算短縮される
 
-        float       BaseDamage = 12.0f;      // Lv1火力
-        float       DamagePerLevel = 3.0f;   // レベル毎の火力増加量
+        float       Damage = 12.0f;          // このレベルでの火力
 
-        float       BaseRadius = 20.0f;      // Lv1の扇状射程(m)
-        float       RadiusPerLevel = 2.0f;   // レベル毎の射程増加量
+        float       Radius = 20.0f;          // このレベルでの扇状射程(m)
 
-        float       HitRadiusMultiplier = 1.2f; // 実際の判定射程 = 上記(BaseRadius系)×この値。
+        float       HitRadiusMultiplier = 1.2f; // 実際の判定射程 = Radius×この値。
                                                   // エフェクトの見た目サイズは変えず、判定だけ拡大するため分離
 
         float       ConeAngleDegrees = 60.0f; // 狙い方向からの扇状半角(度)。合計はこの2倍が有効角度
@@ -46,10 +43,8 @@ namespace data
             REFLECT_FIELD_ID(Id)
             REFLECT_FIELD_STR(Name)
             REFLECT_FIELD_FLOAT(FireInterval)
-            REFLECT_FIELD_FLOAT(BaseDamage)
-            REFLECT_FIELD_FLOAT(DamagePerLevel)
-            REFLECT_FIELD_FLOAT(BaseRadius)
-            REFLECT_FIELD_FLOAT(RadiusPerLevel)
+            REFLECT_FIELD_FLOAT(Damage)
+            REFLECT_FIELD_FLOAT(Radius)
             REFLECT_FIELD_FLOAT(HitRadiusMultiplier)
             REFLECT_FIELD_FLOAT(ConeAngleDegrees)
             REFLECT_FIELD_FLOAT(KnockbackForce)

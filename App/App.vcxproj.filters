@@ -108,6 +108,9 @@
     <ClCompile Include="src\system\Player\Status\PlayerCombatUtil.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\system\Player\Status\PlayerRegenSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="src\system\UI\DamageNumber\DamageNumberSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -234,6 +237,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\Data\StatUpgrade\StatUpgradeData.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Data\Perk\PerkData.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\TitleInputSystem\TitleInputSystem.h">
@@ -458,6 +464,9 @@
     <ClInclude Include="src\system\Player\Status\PlayerCombatUtil.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\system\Player\Status\PlayerRegenSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="src\system\UI\DamageNumber\DamageNumberComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -483,6 +492,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\Player\Perk\PerkDefinition.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Perk\PlayerPerkLevelComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\Player\Perk\PerkSelectComponent.h">

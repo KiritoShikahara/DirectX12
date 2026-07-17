@@ -7,9 +7,8 @@ namespace data
 {
 	/// <summary>
 	/// Meteor型武器のマスタデータ（CSV/DB）。
-	/// WeaponComponent::WeaponID と対応する。
-	/// ダメージ・範囲半径は Base + PerLevel * (Level - 1) の線形成長とする
-	/// （他のWeaponDataと同じ方式）。
+	/// Id = (WeaponID + 1) * 1000 + Level。武器種類ごとにLv1〜MaxLevelの行を持ち、
+	/// レベルアップ時は該当Idの行を直接取得する（Base+PerLevelの実行時計算は行わない）。
 	/// CSV ヘッダー名は各フィールド名と完全一致すること。
 	///
 	/// 発動トリガーが無く、FireInterval秒ごとにSearchRadius内の敵からランダムに
@@ -19,18 +18,16 @@ namespace data
 	/// </summary>
 	struct MeteorWeaponData
 	{
-		int         Id = 0;                  // 武器ID（主キー。WeaponComponent::WeaponID と対応）
+		int         Id = 0;                  // (WeaponID+1)*1000+Level（主キー）
 		std::string Name;                    // 表示・デバッグ用
 
 		float       FireInterval = 4.0f;     // 発動間隔(秒)。CooldownRateで乗算短縮される
 
-		float       BaseDamage = 20.0f;      // Lv1火力
-		float       DamagePerLevel = 5.0f;   // レベル毎の火力増加量
+		float       Damage = 20.0f;          // このレベルでの火力
 
-		float       BaseRadius = 12.0f;      // Lv1のエフェクト見た目基準半径(m)
-		float       RadiusPerLevel = 1.5f;   // レベル毎の見た目基準半径増加量
+		float       Radius = 12.0f;          // このレベルでのエフェクト見た目基準半径(m)
 
-		float       HitRadiusMultiplier = 1.5f; // 実際の当たり判定半径 = 上記(BaseRadius系)×この値
+		float       HitRadiusMultiplier = 1.5f; // 実際の当たり判定半径 = Radius×この値
 
 		float       SearchRadius = 60.0f;    // この範囲内の敵を対象候補にする
 		int         MeteorCount = 3;         // 1回の発動で落とす隕石の数(=対象数の上限)
@@ -43,10 +40,8 @@ namespace data
 			REFLECT_FIELD_ID(Id)
 			REFLECT_FIELD_STR(Name)
 			REFLECT_FIELD_FLOAT(FireInterval)
-			REFLECT_FIELD_FLOAT(BaseDamage)
-			REFLECT_FIELD_FLOAT(DamagePerLevel)
-			REFLECT_FIELD_FLOAT(BaseRadius)
-			REFLECT_FIELD_FLOAT(RadiusPerLevel)
+			REFLECT_FIELD_FLOAT(Damage)
+			REFLECT_FIELD_FLOAT(Radius)
 			REFLECT_FIELD_FLOAT(HitRadiusMultiplier)
 			REFLECT_FIELD_FLOAT(SearchRadius)
 			REFLECT_FIELD_INT(MeteorCount)

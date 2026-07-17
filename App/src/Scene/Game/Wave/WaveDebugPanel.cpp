@@ -53,6 +53,7 @@ namespace debug
             [&](::ecs::WaveComponent& wave)
             {
                 wave.SpawnInterval = row->SpawnInterval;
+                wave.SpawnCountPerTick = row->SpawnCountPerTick;
                 wave.SpawnMarginMin = row->SpawnMarginMin;
                 wave.SpawnMarginMax = row->SpawnMarginMax;
                 wave.StatGrowthPerSecond = row->StatGrowthPerSecond;

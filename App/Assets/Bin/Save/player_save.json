@@ -1,7 +1,8 @@
 {
-    "AtkPowerLevel": 0,
-    "CooldownRateLevel": 0,
-    "DefenseLevel": 0,
-    "Gold": 657,
-    "MaxHpLevel": 0
+    "AtkPowerLevel": 10,
+    "CooldownRateLevel": 10,
+    "DefenseLevel": 10,
+    "Gold": 14967,
+    "MaxHpLevel": 10,
+    "MoveSpeedLevel": 0
 }

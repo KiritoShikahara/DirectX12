@@ -11,7 +11,7 @@ namespace ecs
 	/// </summary>
 	struct StatusUpgradeComponent
 	{
-		static constexpr int kOptionCount = 4;
+		static constexpr int kOptionCount = 8;
 
 		/// <summary>現在カーソルが当たっている選択肢(0..kOptionCount-1、data::eStatUpgradeTypeと対応)</summary>
 		int SelectedIndex = 0;

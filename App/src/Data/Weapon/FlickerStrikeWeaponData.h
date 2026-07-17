@@ -7,8 +7,8 @@ namespace data
 {
     /// <summary>
     /// Flicker Strike型武器のマスタデータ（CSV/DB）。
-    /// WeaponComponent::WeaponID と対応する。
-    /// ダメージは Base + PerLevel * (Level - 1) の線形成長とする（他のWeaponDataと同じ方式）。
+    /// Id = (WeaponID + 1) * 1000 + Level。武器種類ごとにLv1〜MaxLevelの行を持ち、
+    /// レベルアップ時は該当Idの行を直接取得する（Base+PerLevelの実行時計算は行わない）。
     /// CSV ヘッダー名は各フィールド名と完全一致すること。
     ///
     /// 狙い方向(PlayerAimComponent::Direction、他の武器と同じ基準)へ、InitialTargetMaxRange・
@@ -24,17 +24,19 @@ namespace data
     /// </summary>
     struct FlickerStrikeWeaponData
     {
-        int         Id = 0;                  // 武器ID（主キー。WeaponComponent::WeaponID と対応）
+        int         Id = 0;                  // (WeaponID+1)*1000+Level（主キー）
         std::string Name;                    // 表示・デバッグ用
 
         float       FireInterval = 1.2f;     // 発動間隔(秒)。CooldownRateで乗算短縮される
 
-        float       BaseDamage = 15.0f;      // 1ヒットあたりのLv1火力(初撃・追加ワープとも共通)。
-                                              // 序盤の雑魚敵(MaxHp10前後)を確実に一撃で倒せる値
-        float       DamagePerLevel = 2.5f;   // レベル毎の火力増加量
+        float       Damage = 15.0f;          // 1ヒットあたりのこのレベルでの火力(初撃・追加ワープとも共通)。
+                                              // 序盤の雑魚敵(MaxHp10前後)を確実に一撃で倒せる値が目安
 
         int         ChargeHitCount = 2;      // パワーチャージ1個につき発生する追加ワープ攻撃の回数
-        int         MaxCharge = 5;           // パワーチャージの上限(PlayerPowerChargeComponent側)
+        int         MaxCharge = 5;           // パワーチャージの上限の初期値(プレイヤーLv1時点)。
+                                              // 実際の上限 = MaxCharge + MaxChargePerLevel×(Lv-1)
+                                              // (ecs::ComputeMaxPowerCharge参照)
+        int         MaxChargePerLevel = 1;   // プレイヤーが1レベル上がるごとに上限へ加算される数
         int         InitialCharge = 3;       // ゲーム開始時に所持しているパワーチャージ数
 
         float       InitialTargetMaxRange = 60.0f; // 最初の対象を探す、狙い方向への最大距離(m)
@@ -46,17 +48,20 @@ namespace data
 
         float       HeightOffset = 30.0f;    // ヒットエフェクトの再生高さ = 対象のY座標 + この値(m)
 
-        std::string HitEffectPath;           // 命中のたびに1回だけ再生する被弾エフェクト(.efk)
-        float       HitEffectScale = 1.0f;   // ヒットエフェクトの見た目倍率
+        std::string HitEffectPath;           // 命中のたびに1回だけ再生する被弾エフェクト(.efk、
+                                              // ';'区切りで複数指定可)。雷を思わせる見た目にする
+                                              // ため、既定でLightningStrike.efk(雷本体)+
+                                              // Light4.efk(閃光)を組み合わせている
+        float       HitEffectScale = 7.0f;   // ヒットエフェクトの見た目倍率(派手さの要望により拡大)
 
         REFLECT_BEGIN(FlickerStrikeWeaponData, "flicker_strike_weapons")
             REFLECT_FIELD_ID(Id)
             REFLECT_FIELD_STR(Name)
             REFLECT_FIELD_FLOAT(FireInterval)
-            REFLECT_FIELD_FLOAT(BaseDamage)
-            REFLECT_FIELD_FLOAT(DamagePerLevel)
+            REFLECT_FIELD_FLOAT(Damage)
             REFLECT_FIELD_INT(ChargeHitCount)
             REFLECT_FIELD_INT(MaxCharge)
+            REFLECT_FIELD_INT(MaxChargePerLevel)
             REFLECT_FIELD_INT(InitialCharge)
             REFLECT_FIELD_FLOAT(InitialTargetMaxRange)
             REFLECT_FIELD_FLOAT(InitialSearchWidth)
@@ -68,6 +73,15 @@ namespace data
             REFLECT_FIELD_FLOAT(HitEffectScale)
         REFLECT_END()
     };
+
+    /// <summary>
+    /// MaxCharge/MaxChargePerLevel/InitialChargeはレベル非依存(全レベル行で同じ値)の
+    /// 武器グローバル設定のため、これらを参照する側(ecs::ComputeMaxPowerCharge、
+    /// GameSceneFactory::CreatePlayer)は武器インスタンスのLevelに関わらず常にこのId
+    /// (WeaponID=0のLv1行)を使う。Id=0(旧方式)へのGetByIdは行スキーマ変更後に必ず
+    /// nullptrになるため使用しないこと。
+    /// </summary>
+    constexpr int kFlickerStrikeGlobalConfigId = 1001;
 }
 
 REFLECT_REGISTER(data::FlickerStrikeWeaponData);

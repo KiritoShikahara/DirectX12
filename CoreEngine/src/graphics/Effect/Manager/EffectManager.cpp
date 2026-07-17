@@ -136,8 +136,19 @@ namespace graphics
                 {
                     if (effect.IsLoop== true && effect.Asset != nullptr)
                     {
-                        // ループ: 現在の追従先座標から再スタート
+                        // ループ: 現在の追従先座標から再スタートする。
+                        // 生成直後のインスタンスはビルボードの向き等、前フレームとの差分に
+                        // 依存する項目がまだ確定しておらず、素の四角形に近い見た目で1フレームだけ
+                        // 描画されてしまうことがある(周期的に「一瞬四角形になる」症状の原因と推測。
+                        // FrostOrbの周回オーブ・IceSpike・各種投射武器のトレイル等、IsLoop=trueで
+                        // 素材自体の長さより長く表示し続けたい場合にこの再始動が発生する)。
+                        // SetRenderingVisible(false)はSetVisibleと異なりPauseしないため、
+                        // 内部シミュレーションは1フレーム分進む。次のUpdateでIsPlaying()==trueに
+                        // なった時点(=内部状態が1tick進んだ後)で表示を戻すことで、その1フレームを
+                        // 隠しつつ実害(ゲームロジック上の再生継続)は出さないようにしている。
                         effect.Effect.Play(effect.Asset, worldPos, effect.Effect.ShouldDestroy());
+                        effect.Effect.SetRenderingVisible(false);
+                        effect.IsHiddenAfterLoopRestart = true;
                     }
                     else
                     {
@@ -146,6 +157,12 @@ namespace graphics
                             registry.destroy(entity);
                         return;
                     }
+                }
+                else if (effect.IsHiddenAfterLoopRestart)
+                {
+                    // 再始動直後の1フレームが経過し、内部状態が進んだので表示を戻す
+                    effect.Effect.SetRenderingVisible(true);
+                    effect.IsHiddenAfterLoopRestart = false;
                 }
 
                 effect.Effect.SetLocation(worldPos);
