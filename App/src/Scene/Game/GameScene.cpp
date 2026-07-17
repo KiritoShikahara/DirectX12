@@ -34,6 +34,7 @@
 #include<system/Player/Weapon/VoidBeam/VoidBeamWeaponSystem.h>
 #include<system/Player/Weapon/BoneSpear/BoneSpearWeaponSystem.h>
 #include<system/Player/Weapon/Cleave/CleaveWeaponSystem.h>
+#include<system/Player/Weapon/FlickerStrike/FlickerStrikeWeaponSystem.h>
 #include<system/Player/Ultimate/PlayerUltimateSystem.h>
 #include<system/Player/Weapon/Projectile/ProjectileMovementSystem.h>
 #include<system/Player/Weapon/Projectile/ProjectileCollisionSystem.h>
@@ -58,6 +59,9 @@
 // ダメージ
 #include<system/Damage/PlayerContactDamage/PlayerContactDamageSystem.h>
 
+// エフェクト先読み
+#include<system/Effect/EffectSpawnUtility.h>
+
 // データ
 #include<Data/Enemy/EnemyData.h>
 #include<Data/Weapon/SingleShotWeaponData.h>
@@ -70,6 +74,7 @@
 #include<Data/Weapon/VoidBeamWeaponData.h>
 #include<Data/Weapon/BoneSpearWeaponData.h>
 #include<Data/Weapon/CleaveWeaponData.h>
+#include<Data/Weapon/FlickerStrikeWeaponData.h>
 #include<Data/Ultimate/UltimateData.h>
 #include<Data/StatUpgrade/StatUpgradeData.h>
 #include<Data/Save/PlayerSaveData.h>
@@ -95,6 +100,9 @@ namespace scene
 
 		// リソース
 		LoadResource();
+
+		// 各武器/必殺技のエフェクト素材をロード画面中に先読みする
+		PreloadWeaponEffects();
 
 		// エンティティ生成
 		CreateEntitys();
@@ -173,6 +181,10 @@ namespace scene
 		{
 			dataRegistry.Register<data::CleaveWeaponData>("Assets/Data/Weapon/CleaveWeaponData.csv");
 		}
+		if (!dataRegistry.IsRegistered<data::FlickerStrikeWeaponData>())
+		{
+			dataRegistry.Register<data::FlickerStrikeWeaponData>("Assets/Data/Weapon/FlickerStrikeWeaponData.csv");
+		}
 		if (!dataRegistry.IsRegistered<data::UltimateData>())
 		{
 			dataRegistry.Register<data::UltimateData>("Assets/Data/Ultimate/UltimateData.csv");
@@ -210,6 +222,72 @@ namespace scene
 
 	}
 
+	/// <summary>
+	/// 各武器/必殺技のマスタデータが参照するエフェクト素材を、ロード画面中にまとめて
+	/// EffekseerManagerのキャッシュへ読み込んでおく。読み込みを各武器の初回発動まで
+	/// 遅延させると、プレイ中に初めて発動した瞬間にテクスチャ読み込みが走り、その間の
+	/// 数フレームだけ他の再生中エフェクトの描画が乱れる(四角形のポリゴンが一瞬見える等)
+	/// ことがあるため、事前に読み込んでおくことでこれを避ける。
+	/// 新しい武器種別やエフェクトパスを持つデータを追加した場合はここにも追記すること。
+	/// </summary>
+	void GameScene::PreloadWeaponEffects()
+	{
+		for (const auto& d : DATA_MGR(data::SingleShotWeaponData).GetAll())
+		{
+			ecs::effectutil::PreloadEffect(d.ProjectileEffectPath);
+			ecs::effectutil::PreloadEffect(d.ExplosionEffectPath);
+		}
+		for (const auto& d : DATA_MGR(data::AreaAttackWeaponData).GetAll())
+		{
+			ecs::effectutil::PreloadEffect(d.EffectPath);
+		}
+		for (const auto& d : DATA_MGR(data::OrbitWeaponData).GetAll())
+		{
+			ecs::effectutil::PreloadEffect(d.OrbEffectPath);
+			ecs::effectutil::PreloadEffect(d.HitEffectPath);
+		}
+		for (const auto& d : DATA_MGR(data::NovaWeaponData).GetAll())
+		{
+			ecs::effectutil::PreloadEffect(d.EffectPath);
+		}
+		for (const auto& d : DATA_MGR(data::HomingMissileWeaponData).GetAll())
+		{
+			ecs::effectutil::PreloadEffect(d.ProjectileEffectPath);
+			ecs::effectutil::PreloadEffect(d.ExplosionEffectPath);
+		}
+		for (const auto& d : DATA_MGR(data::ChainLightningWeaponData).GetAll())
+		{
+			ecs::effectutil::PreloadEffect(d.HitEffectPath);
+		}
+		for (const auto& d : DATA_MGR(data::MeteorWeaponData).GetAll())
+		{
+			ecs::effectutil::PreloadEffect(d.EffectPath);
+		}
+		for (const auto& d : DATA_MGR(data::VoidBeamWeaponData).GetAll())
+		{
+			ecs::effectutil::PreloadEffect(d.HitEffectPath);
+		}
+		for (const auto& d : DATA_MGR(data::BoneSpearWeaponData).GetAll())
+		{
+			ecs::effectutil::PreloadEffect(d.ProjectileEffectPath);
+			ecs::effectutil::PreloadEffect(d.ExplosionEffectPath);
+		}
+		for (const auto& d : DATA_MGR(data::CleaveWeaponData).GetAll())
+		{
+			ecs::effectutil::PreloadEffect(d.EffectPath);
+		}
+		for (const auto& d : DATA_MGR(data::FlickerStrikeWeaponData).GetAll())
+		{
+			ecs::effectutil::PreloadEffect(d.HitEffectPath);
+		}
+		for (const auto& d : DATA_MGR(data::UltimateData).GetAll())
+		{
+			ecs::effectutil::PreloadEffect(d.AuraEffectPath);
+			ecs::effectutil::PreloadEffect(d.BeamEffectPath);
+			ecs::effectutil::PreloadEffect(d.ActivationEffectPath);
+		}
+	}
+
 	void GameScene::CreateUserSystem()
 	{
 		auto& manager = ::ecs::ComponentSystemManager::Get();
@@ -234,6 +312,7 @@ namespace scene
 		manager.AddUserSystem<::ecs::VoidBeamWeaponSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::BoneSpearWeaponSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::CleaveWeaponSystem>(::ecs::eUpdatePhase::Update);
+		manager.AddUserSystem<::ecs::FlickerStrikeWeaponSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::ProjectileCollisionSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::ProjectileMovementSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::TemporaryLifetimeSystem>(::ecs::eUpdatePhase::Update);

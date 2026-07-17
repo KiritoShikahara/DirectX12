@@ -31,6 +31,7 @@ namespace sys
         AddAction("Skill1", { { eKeyCode::Q }, { ePadButton::L1 }, {} });
         AddAction("Skill2", { { eKeyCode::E }, { ePadButton::R1 }, {} });
         AddAction("Ultimate", { { eKeyCode::Q }, { ePadButton::R1 }, {} });
+        AddAction("FlickerStrike", { { eKeyCode::R }, { ePadButton::Y }, {} });
 
         AddAction("Option", { { eKeyCode::Escape }, { ePadButton::Menu }, {} });
         AddAction("MenuRight", { { eKeyCode::D,eKeyCode::Right }, { ePadButton::DPadRight }, {} });

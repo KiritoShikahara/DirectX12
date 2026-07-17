@@ -1,6 +1,6 @@
 # STATUS
 
-最終更新: 2026-07-17
+最終更新: 2026-07-17(続き)
 
 ## ブランチ
 feature/TestClaude（変更は全て未コミット。ユーザーの指示なしにコミット/push等のgit操作はしない）
@@ -220,6 +220,81 @@ feature/TestClaude（変更は全て未コミット。ユーザーの指示な�
   `std::filesystem::create_directories()`するよう修正(`ConfigManager<T>`利用箇所全てに
   共通する根本修正、詳細はDECISIONS.md)。フォルダを実際に削除した状態から起動させ、
   自動生成・エラーなしを確認済み。Debug/Release両方ビルド確認済み。
+
+- **新規スキル「Flicker Strike」を追加（ユーザー指示）**。パワーチャージ(敵撃破ごとに+1、
+  上限はFlickerStrikeWeaponData::MaxCharge、時間経過での減衰なし)を消費する連続ワープ攻撃。
+  マウスカーソル位置のレイキャスト(`CameraSystem::ScreenPointToRay`+`PhysicsSystem::
+  TryPickEntity`、Editorのオブジェクト選択と同じ仕組み)で指定した敵へ初撃→所持チャージを
+  全消費し、チャージ1個につき2回、近くの敵(直前の対象は除外)へ次々ワープ攻撃する
+  (近くに対象がいなくなった時点で残り回数は打ち切り＝チャージの無駄撃ち、明示的な仕様)。
+  新規`eWeaponType::FlickerStrike`、パーク経由で取得。既存の手動入力2枠(Attack/Attack2)は
+  使用済みのため新規`"FlickerStrike"`アクション(Rキー/PadY)を追加し、
+  `PlayerAimComponent::WantsToFireTertiary`で受ける。ワープはUltimateと同じ
+  `TransformDirtyTag`方式でテレポートし、演出中は無敵化・最後にワープした場所に留まる
+  (元の座標には戻さない、PoE準拠)。
+  - **アーキテクチャ改善**: 既存の`IsPlayerUltimateActive()`ガードが15箇所に散らばっていたが、
+    2つ目の排他スキルを追加するにあたり同じガードを重複させず、新規`ecs::IsPlayerActionLocked()`
+    (`system/Player/PlayerActionLock.h`)に統合。該当15箇所全てをこちらへ差し替えた
+    (将来3つ目の排他スキルが増えても1箇所の追記で済む)。
+  - **重複コード解消**: Chain LightningがPrivateで持っていた「近くの未処理の敵を探す」ロジックを
+    `App/src/system/Enemy/EnemyTargetUtil.h/.cpp`へ切り出し、Chain LightningとFlicker Strike
+    両方から共有するようリファクタ。
+  - db.dbへ`flicker_strike_weapons`新規テーブルを同期済み。新規作成した9ファイルもBOM無しで
+    保存されREFLECT_FIELDマクロが壊れる既知の問題が再発したため、BOM付きへ再保存して解消。
+    Debug/Release両方ビルド成功、実機起動でエラーなし確認済み。
+  - 実機での手動プレイ確認(パーク選択でのランダム出現→取得→カーソルで敵を指定してRキーで
+    発動→ワープ演出・ダメージ・パワーチャージの消費確認)はまだ未実施。
+
+- **バグ調査+対策: エフェクトが一瞬四角形ポリゴンになる**（ユーザー報告。FireBolt/IceSpike/
+  FrostOrb等の既存エフェクトで発生、新武器4種(Void Beam/Bone Spear/Cleave/Flicker Strike)を
+  同一プレイ中に発動した後に起きたとのこと）。調査の結果、新武器4種の新規プレースホルダー
+  素材自体はバージョン(1710、対応範囲内)・参照テクスチャ(Texture/Parts配下に実在)とも
+  問題なし。ただし各エフェクトはこれまで`ecs::effectutil::PlayOneShotCombined`等の
+  実際の発動時に初めて`EffekseerManager::GetEffect()`で遅延読み込みされる設計だったため、
+  新武器をプレイ中に初めて発動した瞬間にテクスチャ読み込みが走り、その間の数フレームだけ
+  他の再生中エフェクトの描画が乱れた可能性が高いと判断（確定はできていないが、状況・
+  タイミングと整合する）。
+  対策として、新規`ecs::effectutil::PreloadEffect()`と`GameScene::PreloadWeaponEffects()`を
+  追加し、ロード画面中(`LoadResource()`直後)に全武器・必殺技のエフェクト素材をまとめて
+  先読みするようにした。新しい武器種別を追加した場合は`PreloadWeaponEffects()`にも
+  追記が必要(コメントで明示済み)。Debug/Release両方ビルド確認済み、起動時の
+  プリロードでエラーなし確認済み。
+  **状況更新**: ユーザーから追加報告あり。先読み対応後も症状継続。「ずっとではなく
+  一定周期で一瞬・一部だけ」「FrostOrbの周回オーブ・IceSpikeでも発生、他のエフェクトも
+  怪しい」とのことで、初回読み込み時のもたつき(先読みで対策済み)とは別の、周期的な
+  現象と判明。継続的にループ再生されるエフェクト(オーブ等)に絡む症状の可能性が高いが、
+  静的なコード確認だけでは原因を特定できておらず未解決。EffekseerのHandle管理・
+  EffectObject::Play()でのStop→Play(ハンドル再発行)まわりを疑っているが未検証。
+  実機の映像(録画等)が無いと以降の切り分けが難しい状況。
+
+- **Flicker Strikeの仕様変更（ユーザー指示）**。(1) 対象指定方式を、マウスカーソルの
+  レイキャスト指定から狙い方向(PlayerAimComponent::Direction、他の武器と同じ基準)ベースに
+  変更。狙い方向へInitialTargetMaxRange・InitialSearchWidthで定義される直線範囲内の
+  最も近い敵を探し、いなければ何も起きない(クールダウン消費なし)。
+  `FlickerStrikeWeaponSystem::PickDirectionalTarget`(VoidBeamWeaponSystemと同様の
+  線分投影+垂線距離の数式)を新設、カーソルレイキャスト版の`PickInitialTarget`は削除。
+  (2) ワープ演出中に他の手動スキル(Attack/Attack2/Ultimate)の入力があった場合、
+  プレイヤーの操作意思を優先してその時点でシーケンスを打ち切るようにした
+  (`UpdateActiveSequence`冒頭で`InputManager::IsActionPressed`を直接ポーリング、
+  `PlayerAimComponent`経由ではなく生入力を見ることで、`IsPlayerActionLocked()`による
+  入力ロック中でも中断を検知できるようにした)。チャージ消費の計算式(0個→1回、
+  3個→7回、5個→11回)自体は変更なし。`FlickerStrikeWeaponData`へ`InitialSearchWidth`
+  列を追加(スキーマ変更のためdb.dbをDROP→再同期済み)。Debug/Release両方ビルド・
+  起動確認済み。
+  (3) バランス調整（ユーザー指示）。ゲーム開始時のパワーチャージ所持数を0→3個に変更。
+  `FlickerStrikeWeaponData`へ`InitialCharge`(デフォルト3)を新設し、
+  `GameSceneFactory::CreatePlayer`が`PlayerPowerChargeComponent`生成時にこの値を
+  読んで初期値として設定するようにした(MaxChargeと同じくデータ駆動)。
+  火力は「序盤の雑魚敵を一撃」の要求を受け、`BaseDamage`を10→15に変更(雑魚敵の
+  Lv1時点のMaxHp目安10前後を確実に一撃で倒せる値、FireBolt等の既存武器の調整方針を踏襲)。
+  スキーマ変更のためdb.dbを再度DROP→再同期済み。Debug/Release両方ビルド・起動確認済み。
+  実機での操作感・バランス確認はまだ。
+  (4) 追加調整（ユーザー指示）。2発目以降のワープ先探索範囲(WarpSearchRadius)が
+  狭いとの指摘を受け40→200(5倍)に変更。命中エフェクト(HitEffectPath)は
+  既に毎ヒット再生する実装済みだったが、素材をLight4.efk(光/ビーム系)から
+  AttackHit.efkへ変更(Chain Lightning等で実績のある、より打撃感の分かりやすい素材)。
+  値の変更のみ(スキーマ変更なし)のためdb.dbはDROP不要、SaveCsvToDbのみで同期済み。
+  Debug/Release両方ビルド・起動確認済み。
 
 ## 次にやるべきこと
 - 敵の出現率向上・Meteor武器・強化確認ダイアログの実機手動操作確認（スポーン間隔が

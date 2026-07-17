@@ -2,14 +2,14 @@
 #include "ProjectileMovementSystem.h"
 
 #include"ProjectileComponent.h"
-#include<system/Player/Ultimate/PlayerUltimateComponent.h>
+#include<system/Player/PlayerActionLock.h>
 
 namespace ecs
 {
 	void ProjectileMovementSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
 		// 必殺技演出中は既存の弾の移動も一時停止させる
-		if (ecs::IsPlayerUltimateActive(registry)) return;
+		if (ecs::IsPlayerActionLocked(registry)) return;
 
 		std::vector<entt::entity> expired;
 

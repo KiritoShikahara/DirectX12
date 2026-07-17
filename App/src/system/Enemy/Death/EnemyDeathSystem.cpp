@@ -4,11 +4,14 @@
 #include<system/Enemy/Status/EnemyStatusComponent.h>
 #include<system/Player/Level/PlayerLevelComponent.h>
 #include<system/Player/Ultimate/PlayerUltimateComponent.h>
+#include<system/Player/PowerCharge/PlayerPowerChargeComponent.h>
+#include<Data/Weapon/FlickerStrikeWeaponData.h>
 #include<Scene/Game/State/GameState.h>
 #include<Tag/EntityTag.h>
 #include<Data/Save/PlayerSaveData.h>
 
 #include<cmath>
+#include<algorithm>
 
 namespace ecs
 {
@@ -42,6 +45,7 @@ namespace ecs
 		if (!dead.empty())
 		{
 			AwardUltimateCharge(registry, static_cast<int>(dead.size()));
+			AwardPowerCharge(registry, static_cast<int>(dead.size()));
 		}
 
 		for (entt::entity entity : dead)
@@ -96,5 +100,20 @@ namespace ecs
 		auto& saveMgr = data::ConfigRegistry::Get().GetManager<data::PlayerSaveData>();
 		saveMgr.Get().Gold += gold;
 		saveMgr.Save();
+	}
+
+	/// <summary>撃破数をパワーチャージへ加算する（FlickerStrikeWeaponData::MaxChargeで頭打ち）</summary>
+	void EnemyDeathSystem::AwardPowerCharge(entt::registry& registry, int killCount)
+	{
+		auto playerView = registry.view<PlayerTag, PlayerPowerChargeComponent>();
+		if (playerView.begin() == playerView.end()) return;
+
+		// パワーチャージの現状唯一の消費先であるFlickerStrikeWeaponDataからMaxChargeを取得する
+		// （所持しているかどうかに関わらずマスタデータとしては常にロードされている）
+		const auto* masterData = DATA_MGR(data::FlickerStrikeWeaponData).GetById(0);
+		const int maxCharge = masterData != nullptr ? masterData->MaxCharge : 0;
+
+		auto& charge = registry.get<PlayerPowerChargeComponent>(*playerView.begin());
+		charge.Count = std::min(maxCharge, charge.Count + killCount);
 	}
 }

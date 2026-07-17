@@ -13,6 +13,10 @@
 #include<system/Player/Weapon/VoidBeam/VoidBeamRuntimeComponent.h>
 #include<system/Player/Weapon/BoneSpear/BoneSpearRuntimeComponent.h>
 #include<system/Player/Weapon/Cleave/CleaveRuntimeComponent.h>
+#include<system/Player/Weapon/FlickerStrike/FlickerStrikeRuntimeComponent.h>
+#include<system/Player/Weapon/FlickerStrike/FlickerStrikeComponent.h>
+#include<system/Player/PowerCharge/PlayerPowerChargeComponent.h>
+#include<Data/Weapon/FlickerStrikeWeaponData.h>
 #include<system/Player/Ultimate/PlayerUltimateComponent.h>
 #include<Data/Ultimate/UltimateData.h>
 #include<system/Enemy/Status/EnemyStatusComponent.h>
@@ -115,6 +119,29 @@ namespace debug
 						ImGui::TextColored(ImVec4(0.3f, 1.0f, 0.3f, 1.0f), "  READY (Q / PadR1)");
 					}
 				});
+
+			registry.view<ecs::PlayerTag, ecs::PlayerPowerChargeComponent>().each(
+				[&](entt::entity playerEntity, ecs::PlayerPowerChargeComponent& charge)
+				{
+					const auto* masterData = DATA_MGR(data::FlickerStrikeWeaponData).GetById(0);
+					const int maxCharge = masterData != nullptr ? masterData->MaxCharge : 0;
+
+					ImGui::Text("Power Charge: %d / %d", charge.Count, maxCharge);
+					ImGui::SameLine();
+					if (ImGui::SmallButton("+1 Charge (Debug)"))
+					{
+						charge.Count = std::min(maxCharge, charge.Count + 1);
+					}
+
+					if (const auto* flicker = registry.try_get<ecs::PlayerFlickerStrikeComponent>(playerEntity))
+					{
+						if (flicker->IsActive)
+						{
+							ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.3f, 1.0f),
+								"  Flicker Strike ACTIVE (remaining hits: %d)", flicker->RemainingHits);
+						}
+					}
+				});
 		}
 
 		ImGui::Separator();
@@ -207,6 +234,14 @@ namespace debug
 						case ecs::eWeaponType::Cleave:
 							typeName = "Cleave";
 							if (auto* rt = registry.try_get<ecs::CleaveRuntimeComponent>(weaponEntity))
+							{
+								cooldownTimer = rt->CooldownTimer;
+								hasRuntime = true;
+							}
+							break;
+						case ecs::eWeaponType::FlickerStrike:
+							typeName = "FlickerStrike";
+							if (auto* rt = registry.try_get<ecs::FlickerStrikeRuntimeComponent>(weaponEntity))
 							{
 								cooldownTimer = rt->CooldownTimer;
 								hasRuntime = true;

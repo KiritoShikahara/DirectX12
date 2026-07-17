@@ -1,0 +1,2 @@
+Id,Name,FireInterval,BaseDamage,DamagePerLevel,ChargeHitCount,MaxCharge,InitialCharge,InitialTargetMaxRange,InitialSearchWidth,WarpSearchRadius,WarpInterval,TeleportOffset,HeightOffset,HitEffectPath,HitEffectScale
+0,FlickerStrike,1.2,15,2.5,2,5,3,60,6,200,0.08,3,30,Assets/Effect/AttackHit.efk,1

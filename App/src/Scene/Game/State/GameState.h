@@ -42,7 +42,7 @@ namespace ecs
         // 未消化のレベルアップ回数。1回のXP付与で複数レベル分の閾値を同時に超えた場合も
         // レベルアップした回数分だけパーク選択を連続で提示するため、bool ではなく回数で持つ
         // (EnemyDeathSystemが加算、GameStateSystemがPerkSelect 1回完了ごとに1減算する)。
-        // 必殺技演出中(IsActive)はIsPlayerUltimateActive()でInGame→PerkSelectの遷移を保留する。
+        // 必殺技/Flicker Strike演出中はIsPlayerActionLocked()でInGame→PerkSelectの遷移を保留する。
         int PendingLevelUpCount = 0; // InGame → PerkSelect
         bool PerkSelectDone = false; // PerkSelect → InGame (もしくはPerkSelectのまま次の1回へ)
         bool GameClearRequested = false; // InGame → Result(Clear)

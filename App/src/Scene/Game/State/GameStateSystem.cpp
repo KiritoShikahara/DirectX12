@@ -3,7 +3,7 @@
 
 #include"GameState.h"
 #include<Scene/Game/Factory/GameSceneFactory.h>
-#include<system/Player/Ultimate/PlayerUltimateComponent.h>
+#include<system/Player/PlayerActionLock.h>
 
 namespace sys
 {
@@ -53,8 +53,8 @@ namespace sys
                 break;
             }
 
-            // レベルアップ → パーク選択（必殺技演出中は演出が終わるまで遷移を保留する）
-            if (controller.PendingLevelUpCount > 0 && !::ecs::IsPlayerUltimateActive(registry))
+            // レベルアップ → パーク選択（必殺技/Flicker Strike演出中は演出が終わるまで遷移を保留する）
+            if (controller.PendingLevelUpCount > 0 && !::ecs::IsPlayerActionLocked(registry))
             {
                 // UI生成・入力・効果適用は PerkSelectSystem が状態を見て自律的に行う
                 // （GameStateSystem はステート遷移のみを担当し、パーク固有の知識を持たない）

@@ -93,4 +93,12 @@ namespace ecs::effectutil
             outEntities.push_back(entity);
         }
     }
+
+    void PreloadEffect(const std::string& delimitedPaths)
+    {
+        for (const auto& path : SplitPaths(delimitedPaths))
+        {
+            graphics::EffekseerManager::Get().GetEffect(path);
+        }
+    }
 }

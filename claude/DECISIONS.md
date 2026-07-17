@@ -121,6 +121,35 @@
   必ず直後にBOMバイト(`ef bb bf`)を確認する。Edit toolによる部分編集は既存のバイト列を
   保持するため対象外（新規ファイルはWriteでしか作れないため必ず要確認）。
 
+## 2026-07-17 排他的な演出中フラグはIsPlayerActionLocked()に一本化する
+- 内容: 必殺技(Ultimate)発動中は他の武器の発動・プレイヤー操作・パーク選択への遷移を
+  一時停止するため`ecs::IsPlayerUltimateActive(registry)`というガードを15箇所
+  (各武器System、GameStateSystem等)で個別に呼んでいた。Flicker Strike(2つ目の同種の
+  排他スキル、ワープ攻撃シーケンス中も同様に他を止める必要がある)を追加するにあたり、
+  同じガードをもう1系統分15箇所へ重複して書き並べるのではなく、
+  `ecs::IsPlayerActionLocked(registry)`(`App/src/system/Player/PlayerActionLock.h`、
+  内部で`IsPlayerUltimateActive() || IsPlayerFlickerStrikeActive()`を判定)へ統合し、
+  該当15箇所全ての呼び出しをこちらへ差し替えた。
+- 理由: 排他スキルが2つ以上になった時点で個別ガードの並記は重複コードであり、
+  3つ目が増えるたびに15箇所以上への追記が発生し続けるのは保守性を損なう。
+  各武器/状態System側は「今、排他的な演出中かどうか」だけを知っていればよく、
+  具体的にどのスキルが原因かを知る必要はない(疎結合)。
+- 対応方針: 今後3つ目以降の同種の排他スキル(プレイヤー操作をロックし他の攻撃を止める演出)を
+  追加する場合、各Systemへ個別のガードを追加するのではなく、
+  `IsPlayerActionLocked()`の内部条件に1行追加する形で対応すること。
+
+## 2026-07-17 「近くの未処理の敵を1体探す」ロジックはEnemyTargetUtilに共通化する
+- 内容: Chain Lightningが跳躍先(JumpRadius内の未命中の敵)を探すために持っていた
+  private staticメソッド`FindNearestExcluding`を、`App/src/system/Enemy/EnemyTargetUtil.h/.cpp`
+  (`ecs::targetutil::FindNearestExcluding`)へ切り出した。Flicker Strikeのワープ先探索
+  (直前の対象を除いた近くの敵)でも全く同じロジックが必要になったため。
+- 対応方針: 「候補のうち、特定の除外リストに含まれない最も近い敵を1体選ぶ」系の
+  ロジックが新たに必要になった場合はこのユーティリティを使うこと。なお
+  `HomingMissileSteeringSystem::FindNearestEnemy`(除外リスト無しの単純な最近接探索、
+  Homing/VoidBeam/BoneSpearが利用)はまだ統合していない(役割が微妙に異なり、
+  統合の効果に対して影響範囲が広がるため保留。4つ目の類似ロジックが必要になった
+  タイミングで統合を検討する)。
+
 ## 2026-07-17 JsonSerializer::SaveToFileは保存前に親ディレクトリを作成する
 - 内容: `ConfigManager<T>::Save()`(`PlayerSaveData`が使用)が、保存先の`Assets/Bin/Save/`
   フォルダが存在しない状態で呼ばれ、`std::ofstream`が開けず`std::runtime_error`が

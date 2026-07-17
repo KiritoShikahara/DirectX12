@@ -28,6 +28,7 @@ namespace
         { "Void Beam",              ecs::eWeaponType::VoidBeam,    0, ecs::eWeaponControl::Auto },
         { "Bone Spear",             ecs::eWeaponType::BoneSpear,   0, ecs::eWeaponControl::Auto },
         { "Cleave",                 ecs::eWeaponType::Cleave,      0, ecs::eWeaponControl::Auto },
+        { "Flicker Strike",         ecs::eWeaponType::FlickerStrike, 0, ecs::eWeaponControl::Manual },
     };
 
     const char* WeaponTypeName(ecs::eWeaponType type)
@@ -44,6 +45,7 @@ namespace
         case ecs::eWeaponType::VoidBeam:    return "VoidBeam";
         case ecs::eWeaponType::BoneSpear:   return "BoneSpear";
         case ecs::eWeaponType::Cleave:      return "Cleave";
+        case ecs::eWeaponType::FlickerStrike: return "FlickerStrike";
         default:                            return "Unknown";
         }
     }

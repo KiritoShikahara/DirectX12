@@ -46,4 +46,13 @@ namespace ecs::effectutil
         entt::entity parentEntity,
         float scale,
         std::vector<entt::entity>& outEntities);
+
+    /// <summary>
+    /// ';'区切りの各エフェクトアセットをEffekseerManagerのキャッシュへ先読みする(再生はしない)。
+    /// 各武器の初回発動時(PlayOneShotCombined/PlayLoopingCombined)まで読み込みを遅延させると、
+    /// プレイ中に初めて発動した瞬間だけテクスチャ読み込みが走り、その間の1〜数フレームだけ
+    /// 他の再生中エフェクトの描画がちらつく可能性があるため、ロード画面中(GameScene::
+    /// LoadResource())にまとめて読み込んでおく。
+    /// </summary>
+    void PreloadEffect(const std::string& delimitedPaths);
 }

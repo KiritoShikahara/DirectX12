@@ -5,7 +5,7 @@
 #include<system/Physics/System/PhysicsSystem.h>
 #include<system/Enemy/Status/EnemyStatusComponent.h>
 #include<system/Player/Status/PlayerCombatUtil.h>
-#include<system/Player/Ultimate/PlayerUltimateComponent.h>
+#include<system/Player/PlayerActionLock.h>
 #include<Tag/EntityTag.h>
 
 namespace ecs
@@ -13,7 +13,7 @@ namespace ecs
 	void AreaAttackHazardSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
 		// 必殺技演出中は既存のハザードの継続ダメージも一時停止させる
-		if (ecs::IsPlayerUltimateActive(registry)) return;
+		if (ecs::IsPlayerActionLocked(registry)) return;
 
 		std::vector<entt::entity> expired;
 

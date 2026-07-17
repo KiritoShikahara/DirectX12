@@ -5,7 +5,7 @@
 #include<system/Player/Weapon/Inventory/WeaponInventoryComponent.h>
 #include<system/Player/Status/PlayerStatusComponent.h>
 #include<system/Player/Status/PlayerCombatUtil.h>
-#include<system/Player/Ultimate/PlayerUltimateComponent.h>
+#include<system/Player/PlayerActionLock.h>
 #include<system/Enemy/Status/EnemyStatusComponent.h>
 #include<Data/Weapon/MeteorWeaponData.h>
 #include<Scene/Game/State/GameState.h>
@@ -44,7 +44,7 @@ namespace ecs
 		if (stateView.begin() == stateView.end()) return;
 		if (registry.get<::ecs::GameStateComponent>(*stateView.begin()).GameState != ::sys::eGameState::InGame) return;
 		// 必殺技演出中は他の攻撃を発動させない
-		if (ecs::IsPlayerUltimateActive(registry)) return;
+		if (ecs::IsPlayerActionLocked(registry)) return;
 
 		registry.view<ecs::WeaponComponent, ecs::MeteorWeaponRuntimeComponent>().each(
 			[&](ecs::WeaponComponent& weapon, ecs::MeteorWeaponRuntimeComponent& runtime)

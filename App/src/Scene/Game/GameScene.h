@@ -28,6 +28,10 @@ namespace scene
 		// リソース読み込み
 		void LoadResource();
 
+		// 各武器/必殺技のEffekseerエフェクト素材をロード画面中に先読みする
+		// (プレイ中の初回発動時にテクスチャ読み込みが走り、他エフェクトが一瞬乱れるのを防ぐ)
+		void PreloadWeaponEffects();
+
 		// システムの登録
 		void CreateUserSystem();
 

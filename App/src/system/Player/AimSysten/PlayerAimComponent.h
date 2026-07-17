@@ -28,5 +28,11 @@ namespace ecs
         /// WantsToFire と同様、PlayerInputSystem が毎フレーム更新する。
         /// </summary>
         bool WantsToFireSecondary = false;
+
+        /// <summary>
+        /// 3つ目の攻撃入力（"FlickerStrike"アクション＝Rキー/PadY）がこのフレームで押されたか。
+        /// WantsToFire と同様、PlayerInputSystem が毎フレーム更新する。
+        /// </summary>
+        bool WantsToFireTertiary = false;
     };
 }

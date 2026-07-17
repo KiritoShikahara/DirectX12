@@ -2,7 +2,6 @@
 
 #include<DirectXMath.h>
 #include<entt/entt.hpp>
-#include<vector>
 #include<ecs/system/manager/IComponentSystem.h>
 
 namespace ecs { struct WeaponComponent; }
@@ -27,13 +26,6 @@ namespace ecs
             const ecs::WeaponComponent& weapon,
             const data::ChainLightningWeaponData& masterData,
             entt::entity initialTarget);
-
-        /// <summary>候補のうち、位置に最も近く除外リストに含まれない敵を返す（無ければentt::null）</summary>
-        static entt::entity FindNearestExcluding(
-            entt::registry& registry,
-            const std::vector<entt::entity>& candidates,
-            const DirectX::XMFLOAT3& position,
-            const std::vector<entt::entity>& excluded);
 
         /// <summary>命中位置にワンショットのヒットエフェクトを再生する</summary>
         static void SpawnHitEffect(

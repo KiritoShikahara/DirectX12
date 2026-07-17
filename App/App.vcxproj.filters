@@ -171,6 +171,12 @@
     <ClCompile Include="src\system\Enemy\Knockback\EnemyKnockbackSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeWeaponSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Enemy\EnemyTargetUtil.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="src\system\Player\Ultimate\PlayerUltimateSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -402,6 +408,27 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\Enemy\Knockback\EnemyKnockbackSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Data\Weapon\FlickerStrikeWeaponData.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeRuntimeComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeWeaponSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\PowerCharge\PlayerPowerChargeComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\PlayerActionLock.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Enemy\EnemyTargetUtil.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\Data\Ultimate\UltimateData.h">

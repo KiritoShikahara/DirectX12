@@ -30,6 +30,10 @@
 #include<system/Player/Weapon/VoidBeam/VoidBeamRuntimeComponent.h>
 #include<system/Player/Weapon/BoneSpear/BoneSpearRuntimeComponent.h>
 #include<system/Player/Weapon/Cleave/CleaveRuntimeComponent.h>
+#include<system/Player/Weapon/FlickerStrike/FlickerStrikeRuntimeComponent.h>
+#include<system/Player/Weapon/FlickerStrike/FlickerStrikeComponent.h>
+#include<system/Player/PowerCharge/PlayerPowerChargeComponent.h>
+#include<Data/Weapon/FlickerStrikeWeaponData.h>
 
 // 敵
 #include<system/Enemy/Move/EnemyChaseComponent.h>
@@ -149,6 +153,16 @@ namespace ecs
 		// 必殺技ゲージ（撃破数で蓄積、満タンで"Ultimate"アクションにより発動可能）
 		manager.AddComponent<::ecs::PlayerUltimateComponent>(player);
 
+		// パワーチャージ（撃破数で蓄積、Flicker Strike等のチャージ消費スキルで使用）。
+		// 開始時の所持数はFlickerStrikeWeaponData::InitialChargeに従う
+		// (パワーチャージの現状唯一の消費先のためここで管理する。MaxChargeと同じ方針)
+		auto& powerCharge = manager.AddComponent<::ecs::PlayerPowerChargeComponent>(player);
+		if (const auto* flickerStrikeData = DATA_MGR(data::FlickerStrikeWeaponData).GetById(0))
+		{
+			powerCharge.Count = flickerStrikeData->InitialCharge;
+		}
+		manager.AddComponent<::ecs::PlayerFlickerStrikeComponent>(player);
+
 		auto& fill = manager.AddComponent<::ecs::FillAmountLerp>(player);
 		fill.Speed = 0.5f;
 
@@ -223,6 +237,9 @@ namespace ecs
 			break;
 		case ::ecs::eWeaponType::Cleave:
 			manager.AddComponent<::ecs::CleaveRuntimeComponent>(weapon);
+			break;
+		case ::ecs::eWeaponType::FlickerStrike:
+			manager.AddComponent<::ecs::FlickerStrikeRuntimeComponent>(weapon);
 			break;
 		}
 

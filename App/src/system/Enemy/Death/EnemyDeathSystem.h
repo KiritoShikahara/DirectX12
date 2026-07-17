@@ -25,5 +25,8 @@ namespace ecs
 
 		/// <summary>撃破で得た合計ゴールドをPlayerSaveData(永続化データ)へ加算し即座に保存する</summary>
 		static void AwardGold(int gold);
+
+		/// <summary>撃破数をパワーチャージへ加算する（FlickerStrikeWeaponData::MaxChargeで頭打ち）</summary>
+		static void AwardPowerCharge(entt::registry& registry, int killCount);
 	};
 }

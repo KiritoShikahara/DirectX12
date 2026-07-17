@@ -10,7 +10,7 @@
 #include<system/Effect/EffectSpawnUtility.h>
 #include<system/Effect/TemporaryLifetimeComponent.h>
 #include<system/Player/Status/PlayerCombatUtil.h>
-#include<system/Player/Ultimate/PlayerUltimateComponent.h>
+#include<system/Player/PlayerActionLock.h>
 
 namespace
 {
@@ -28,7 +28,7 @@ namespace ecs
 	void ProjectileCollisionSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
 		// 必殺技演出中は既存の弾の命中判定も一時停止させる
-		if (ecs::IsPlayerUltimateActive(registry)) return;
+		if (ecs::IsPlayerActionLocked(registry)) return;
 
 		std::vector<entt::entity> hitProjectiles;
 

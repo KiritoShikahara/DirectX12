@@ -208,6 +208,8 @@
     <ClCompile Include="src\system\Player\Weapon\BoneSpear\BoneSpearWeaponSystem.cpp" />
     <ClCompile Include="src\system\Player\Weapon\Cleave\CleaveWeaponSystem.cpp" />
     <ClCompile Include="src\system\Enemy\Knockback\EnemyKnockbackSystem.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeWeaponSystem.cpp" />
+    <ClCompile Include="src\system\Enemy\EnemyTargetUtil.cpp" />
     <ClCompile Include="src\system\Player\Ultimate\PlayerUltimateSystem.cpp" />
     <ClCompile Include="src\system\Effect\EffectSpawnUtility.cpp" />
     <ClCompile Include="src\system\Effect\TemporaryLifetimeSystem.cpp" />
@@ -326,6 +328,13 @@
     <ClInclude Include="src\system\Player\Weapon\Cleave\CleaveWeaponSystem.h" />
     <ClInclude Include="src\system\Enemy\Knockback\EnemyKnockbackComponent.h" />
     <ClInclude Include="src\system\Enemy\Knockback\EnemyKnockbackSystem.h" />
+    <ClInclude Include="src\Data\Weapon\FlickerStrikeWeaponData.h" />
+    <ClInclude Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeRuntimeComponent.h" />
+    <ClInclude Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeComponent.h" />
+    <ClInclude Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeWeaponSystem.h" />
+    <ClInclude Include="src\system\Player\PowerCharge\PlayerPowerChargeComponent.h" />
+    <ClInclude Include="src\system\Player\PlayerActionLock.h" />
+    <ClInclude Include="src\system\Enemy\EnemyTargetUtil.h" />
     <ClInclude Include="src\Data\Ultimate\UltimateData.h" />
     <ClInclude Include="src\system\Player\Ultimate\PlayerUltimateComponent.h" />
     <ClInclude Include="src\system\Player\Ultimate\PlayerUltimateSystem.h" />
