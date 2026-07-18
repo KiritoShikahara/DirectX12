@@ -274,6 +274,7 @@
     <ClInclude Include="src\system\Editor\EditorUI.h" />
     <ClInclude Include="src\system\Window\Window.h" />
     <ClInclude Include="src\system\Time\Time.h" />
+    <ClInclude Include="src\system\Time\PerformanceMonitor.h" />
     <ClInclude Include="src\graphics\VertexBuffer\VertexBuffer.h" />
     <ClInclude Include="src\graphics\StructuredBuffer\StructuredBuffer.h" />
     <ClInclude Include="src\graphics\Texture\TextureManager.h" />
@@ -486,6 +487,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\system\Time\Time.cpp" />
+    <ClCompile Include="src\system\Time\PerformanceMonitor.cpp" />
     <ClCompile Include="src\graphics\VertexBuffer\VertexBuffer.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>

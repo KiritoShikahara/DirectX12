@@ -11,7 +11,11 @@ namespace sys
 {
     void LightSystem::Update(entt::registry& registry)
     {
-        std::vector<graphics::LightData> lights;
+        // 毎フレームのvector生成を避けるため、関数static変数として使い回す
+        // (LightSystemは全メンバがstaticなインスタンスを持たないユーティリティクラスのため、
+        // メンバ変数化ではなくfunction-static変数で対応する)
+        static std::vector<graphics::LightData> lights;
+        lights.clear();
         lights.reserve(16);
 
         // ── Directional Light ─────────────────────────────────────

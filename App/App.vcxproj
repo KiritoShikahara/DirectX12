@@ -149,6 +149,8 @@
     <ClCompile Include="src\system\Enemy\Status\EnemyStatusDebugPanel.cpp" />
     <ClCompile Include="src\system\Damage\PlayerContactDamage\PlayerContactDamageSystem.cpp" />
     <ClCompile Include="src\system\Player\Status\PlayerCombatUtil.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\WeaponUpdateUtil.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\WeaponTypeRegistry.cpp" />
     <ClCompile Include="src\system\Player\Status\PlayerRegenSystem.cpp" />
     <ClCompile Include="src\system\UI\DamageNumber\DamageNumberSystem.cpp" />
     <ClCompile Include="src\system\Player\UI\PlayerHpBarSystem.cpp" />
@@ -255,6 +257,8 @@
     <ClInclude Include="src\system\MoveDirection\MoveDirectionComponent.h" />
     <ClInclude Include="src\system\Player\Status\PlayerStatusComponent.h" />
     <ClInclude Include="src\system\Player\Status\PlayerCombatUtil.h" />
+    <ClInclude Include="src\system\Player\Weapon\WeaponUpdateUtil.h" />
+    <ClInclude Include="src\system\Player\Weapon\WeaponTypeRegistry.h" />
     <ClInclude Include="src\system\Player\Status\PlayerRegenSystem.h" />
     <ClInclude Include="src\system\UI\DamageNumber\DamageNumberComponent.h" />
     <ClInclude Include="src\system\UI\DamageNumber\DamageNumberSystem.h" />
@@ -266,6 +270,7 @@
     <ClInclude Include="src\system\Player\InputSystem\PlayerInputSystem.h" />
     <ClInclude Include="src\Scene\Game\Factory\GameSceneFactory.h" />
     <ClInclude Include="src\system\CameraFollow\CameraFollowOffsetComponent.h" />
+    <ClInclude Include="src\system\CameraFollow\CameraOverrideComponent.h" />
     <ClInclude Include="src\system\CameraFollow\CameraPlayerFollowSystem.h" />
     <ClInclude Include="src\Scene\Game\GameScene.h" />
     <ClInclude Include="src\system\MenuController\MenuControllerSystem.h" />

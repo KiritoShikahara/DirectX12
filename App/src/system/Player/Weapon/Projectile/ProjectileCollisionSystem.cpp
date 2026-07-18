@@ -4,7 +4,6 @@
 #include"ProjectileComponent.h"
 
 #include<system/Physics/System/PhysicsSystem.h>
-#include<system/Enemy/Status/EnemyStatusComponent.h>
 #include<ecs/component/Debug/DebugWireSphereComponent.h>
 #include<Tag/EntityTag.h>
 #include<system/Effect/EffectSpawnUtility.h>
@@ -31,23 +30,14 @@ namespace ecs
 		// 自動発動武器の弾も含むため、Flicker Strike中は止めない。PlayerActionLock.h参照)
 		if (ecs::IsPlayerUltimateActive(registry)) return;
 
-		std::vector<entt::entity> hitProjectiles;
+		mHitProjectiles.clear();
+		mHitResults.clear();
 
 		// 命中情報はここでは記録するだけにする。
 		// SpawnExplosionEffect() はエンティティ生成 + Transform コンポーネント追加を行うため、
 		// この view が走査中の Transform プールをその場で書き換えることになり、
 		// EnTT のイテレータを不正化する（走査中の残りの弾の判定が壊れる/クラッシュしうる）。
 		// そのため view.each() 内では登録のみ行い、実際の生成・破棄は走査完了後にまとめて行う。
-		struct HitResult
-		{
-			DirectX::XMFLOAT3 ImpactPos;
-			float             ExplosionRadius;
-			float             VisualRadius;
-			float             Damage;
-			std::string       ExplosionEffectPath;
-		};
-		std::vector<HitResult> hitResults;
-
 		registry.view<ecs::ProjectileComponent, ecs::SensorEnterEvent, ecs::Transform>().each(
 			[&](entt::entity entity,
 				ecs::ProjectileComponent& projectile,
@@ -64,7 +54,7 @@ namespace ecs
 
 				if (!hitEnemy) return;
 
-				hitResults.push_back({
+				mHitResults.push_back({
 					transform.GetPosition(),
 					projectile.ExplosionRadius,
 					projectile.VisualRadius,
@@ -79,18 +69,18 @@ namespace ecs
 				}
 				else
 				{
-					hitProjectiles.push_back(entity);
+					mHitProjectiles.push_back(entity);
 				}
 			});
 
 		// view 走査完了後にダメージ適用・エフェクト生成・弾の破棄を行う
-		for (const HitResult& hit : hitResults)
+		for (const HitResult& hit : mHitResults)
 		{
 			ApplyExplosionDamage(registry, hit.ImpactPos, hit.ExplosionRadius, hit.Damage);
 			SpawnExplosionEffect(registry, hit.ImpactPos, hit.ExplosionEffectPath, hit.ExplosionRadius, hit.VisualRadius);
 		}
 
-		for (entt::entity entity : hitProjectiles)
+		for (entt::entity entity : mHitProjectiles)
 		{
 			registry.destroy(entity);
 		}
@@ -103,24 +93,12 @@ namespace ecs
 		float radius,
 		float damage)
 	{
-		std::vector<entt::entity> overlapped;
-		::sys::PhysicsSystem::OverlapSphere(registry, center, radius, overlapped);
+		mOverlapped.clear();
+		::sys::PhysicsSystem::OverlapSphere(registry, center, radius, mOverlapped);
 
-		for (entt::entity entity : overlapped)
+		for (entt::entity entity : mOverlapped)
 		{
-			if (!registry.all_of<ecs::EnemyTag>(entity)) continue;
-
-			auto* status = registry.try_get<ecs::EnemyStatusComponent>(entity);
-			if (status == nullptr) continue;
-
-			// ノックバック等の物理的な反応はさせず、HPのみ減少させる
-			// （HPが0以下になった後の破棄は EnemyDeathSystem が担当する）
-			status->CurrentHp = std::max(0.0f, status->CurrentHp - damage);
-
-			if (const auto* enemyTransform = registry.try_get<ecs::Transform>(entity))
-			{
-				ecs::combatutil::SpawnDamageNumber(enemyTransform->GetPosition(), damage, false);
-			}
+			ecs::combatutil::ApplyDamageToEnemy(registry, entity, damage);
 		}
 	}
 

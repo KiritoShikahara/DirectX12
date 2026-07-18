@@ -121,9 +121,11 @@ namespace sys
         static JPH::EMotionType ToJoltMotionType(ecs::eMotionType motionType);
 
         /// <summary>
-        /// ecs::eMotionType から ObjectLayer を決定する
+        /// ecs::eMotionType から ObjectLayer を決定する。
+        /// disableSelfCollision(RigidBodyComponent::DisableSelfCollision)がtrueの場合、
+        /// 同じフラグを持つ他のBody同士(=敵同士)を衝突させないPhysicsLayer::EnemyMovingを返す
         /// </summary>
-        static JPH::ObjectLayer ToObjectLayer(ecs::eMotionType motionType, bool isSensor);
+        static JPH::ObjectLayer ToObjectLayer(ecs::eMotionType motionType, bool isSensor, bool disableSelfCollision);
 	};
 }
 

@@ -16,6 +16,11 @@
 #include <string>
 #include <vector>
 
+namespace ecs
+{
+    struct TextComponent;
+}
+
 namespace graphics
 {
     class DX12Device;
@@ -69,6 +74,12 @@ namespace graphics
             DirectX::XMFLOAT4 Color = {};
         };
 
+        // UpdateAndDraw() 内で収集する描画対象1件分
+        struct RenderItem
+        {
+            const ecs::TextComponent* Label = nullptr;
+        };
+
         bool BuildConstantBuffer(DX12Device& device, GDescriptorHeapManager& heapManager);
         bool BuildVertexBuffer(DX12Device& device);
 
@@ -100,6 +111,9 @@ namespace graphics
 
         std::vector<DrawCall> mDrawCalls;
         uint32_t              mVertexCursor = 0;
+
+        // UpdateAndDraw()の一時バッファ。毎フレームclear()して再利用する(毎フレームのvector生成禁止のため)
+        std::vector<RenderItem> mRenderItems;
 
         GDescriptorHeapManager* mHeapManager = nullptr;
         uint32_t mScreenW = 1280;

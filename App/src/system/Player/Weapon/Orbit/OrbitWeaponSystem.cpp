@@ -4,14 +4,11 @@
 #include"OrbitWeaponRuntimeComponent.h"
 #include"OrbitOrbComponent.h"
 #include<system/Player/Weapon/Inventory/WeaponInventoryComponent.h>
-#include<system/Enemy/Status/EnemyStatusComponent.h>
+#include<system/Player/Weapon/WeaponUpdateUtil.h>
 #include<system/Player/Status/PlayerCombatUtil.h>
-#include<system/Player/PlayerActionLock.h>
 #include<Data/Weapon/OrbitWeaponData.h>
-#include<Scene/Game/State/GameState.h>
 
 #include<ecs/component/Debug/DebugWireSphereComponent.h>
-#include<Tag/EntityTag.h>
 
 namespace
 {
@@ -24,13 +21,9 @@ namespace ecs
 {
 	void OrbitWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
-		// InGame中のみ動作する（PerkSelect/Result中に発動し続けないようにする）
-		auto stateView = registry.view<::ecs::GameStateComponent>();
-		if (stateView.begin() == stateView.end()) return;
-		if (registry.get<::ecs::GameStateComponent>(*stateView.begin()).GameState != ::sys::eGameState::InGame) return;
-		// 必殺技演出中は既存オーブの周回・当たり判定も一時停止させる(自動発動武器のため
-		// Flicker Strike中は止めない。PlayerActionLock.h参照)
-		if (ecs::IsPlayerUltimateActive(registry)) return;
+		// InGame中のみ動作する。必殺技演出中は既存オーブの周回・当たり判定も一時停止させる
+		// (自動発動武器のためFlicker Strike中は止めない設計。ecs::weaponutil::ShouldSkipAutoWeaponUpdate参照)
+		if (ecs::weaponutil::ShouldSkipAutoWeaponUpdate(registry)) return;
 
 		registry.view<ecs::WeaponComponent, ecs::OrbitWeaponRuntimeComponent>().each(
 			[&](ecs::WeaponComponent& weapon, ecs::OrbitWeaponRuntimeComponent& runtime)
@@ -38,7 +31,7 @@ namespace ecs
 				if (weapon.Type != ecs::eWeaponType::SelfDefense) return;
 				if (!registry.valid(weapon.Owner)) return;
 
-				const auto* masterData = DATA_MGR(data::OrbitWeaponData).GetById((weapon.WeaponID + 1) * 1000 + weapon.Level);
+				const auto* masterData = DATA_MGR(data::OrbitWeaponData).GetById(ecs::weaponutil::ComputeWeaponDataId(weapon));
 				if (masterData == nullptr) return;
 
 				// 発動トリガーの無い常時稼働の武器のため、初回Updateでオーブを生成する
@@ -174,17 +167,10 @@ namespace ecs
 		for (entt::entity other : stay->Visitors)
 		{
 			if (!registry.valid(other)) continue;
-			if (!registry.all_of<ecs::EnemyTag>(other)) continue;
 
-			auto* status = registry.try_get<ecs::EnemyStatusComponent>(other);
-			if (status == nullptr) continue;
-
-			status->CurrentHp = std::max(0.0f, status->CurrentHp - damage);
-			hitAny = true;
-
-			if (const auto* enemyTransform = registry.try_get<ecs::Transform>(other))
+			if (ecs::combatutil::ApplyDamageToEnemy(registry, other, damage))
 			{
-				ecs::combatutil::SpawnDamageNumber(enemyTransform->GetPosition(), damage, false);
+				hitAny = true;
 			}
 		}
 

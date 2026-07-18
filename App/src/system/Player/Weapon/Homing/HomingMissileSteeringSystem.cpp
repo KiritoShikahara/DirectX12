@@ -3,6 +3,7 @@
 
 #include<system/Player/Weapon/Projectile/ProjectileComponent.h>
 #include<system/Player/PlayerActionLock.h>
+#include<system/Enemy/EnemyTargetUtil.h>
 #include<Tag/EntityTag.h>
 
 #include<cmath>
@@ -26,7 +27,8 @@ namespace ecs
 
                 if (!targetAlive)
                 {
-                    projectile.Target = FindNearestEnemy(registry, transform.GetPosition(), projectile.HomingSearchRadius);
+                    projectile.Target = ecs::targetutil::FindNearestInRadius(
+                        registry, transform.GetPosition(), projectile.HomingSearchRadius);
                 }
 
                 if (!registry.valid(projectile.Target)) return; // 対象なしなら直進を維持
@@ -36,33 +38,6 @@ namespace ecs
 
                 SteerTowards(projectile.Direction, transform.GetPosition(), targetTransform->GetPosition(), projectile.TurnSpeed, deltaTime);
             });
-    }
-
-    /// <summary>指定範囲内で最も近い敵エンティティを探す（見つからなければentt::null）</summary>
-    entt::entity HomingMissileSteeringSystem::FindNearestEnemy(
-        entt::registry& registry,
-        const DirectX::XMFLOAT3& position,
-        float searchRadius)
-    {
-        entt::entity nearest = entt::null;
-        float nearestDistSq = searchRadius * searchRadius;
-
-        registry.view<ecs::EnemyTag, ecs::Transform>().each(
-            [&](entt::entity entity, const ecs::Transform& enemyTransform)
-            {
-                const DirectX::XMFLOAT3& enemyPos = enemyTransform.GetPosition();
-                const float dx = enemyPos.x - position.x;
-                const float dz = enemyPos.z - position.z;
-                const float distSq = dx * dx + dz * dz;
-
-                if (distSq < nearestDistSq)
-                {
-                    nearestDistSq = distSq;
-                    nearest = entity;
-                }
-            });
-
-        return nearest;
     }
 
     /// <summary>DirectionをtargetPos方向へTurnSpeed*deltaTimeの範囲内で回転させる（XZ平面のみ、Yは常に0）</summary>

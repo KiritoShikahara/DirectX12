@@ -12,7 +12,7 @@ namespace ecs
 		// 自動発動武器の弾も含むため、Flicker Strike中は止めない。PlayerActionLock.h参照)
 		if (ecs::IsPlayerUltimateActive(registry)) return;
 
-		std::vector<entt::entity> expired;
+		mExpired.clear();
 
 		registry.view<ecs::ProjectileComponent, ecs::RigidBodyComponent>().each(
 			[&](entt::entity entity, ecs::ProjectileComponent& projectile, ecs::RigidBodyComponent& rb)
@@ -25,12 +25,12 @@ namespace ecs
 				projectile.ElapsedTime += deltaTime;
 				if (projectile.ElapsedTime >= projectile.LifeTime)
 				{
-					expired.push_back(entity);
+					mExpired.push_back(entity);
 				}
 			});
 
 		// 何にも命中しなかった弾はここで消滅させる（衝突破棄は ProjectileCollisionSystem 側）
-		for (entt::entity entity : expired)
+		for (entt::entity entity : mExpired)
 		{
 			registry.destroy(entity);
 		}

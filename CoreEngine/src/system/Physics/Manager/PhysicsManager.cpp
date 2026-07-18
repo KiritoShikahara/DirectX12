@@ -52,6 +52,7 @@ namespace sys
         mObjectToBroadPhase[PhysicsLayer::NonMoving] = BroadPhaseLayer::NonMoving;
         mObjectToBroadPhase[PhysicsLayer::Moving] = BroadPhaseLayer::Moving;
         mObjectToBroadPhase[PhysicsLayer::Sensor] = BroadPhaseLayer::Moving; // センサーは Moving と同じ BP
+        mObjectToBroadPhase[PhysicsLayer::EnemyMoving] = BroadPhaseLayer::Moving; // 敵も Moving と同じ BP
     }
 
     uint32_t PhysicsManager::BroadPhaseLayerInterfaceImpl::GetNumBroadPhaseLayers() const
@@ -91,8 +92,9 @@ namespace sys
             // 静的オブジェクトは Moving とだけ衝突する
             return bpLayer == BroadPhaseLayer::Moving;
         case PhysicsLayer::Moving:
+        case PhysicsLayer::EnemyMoving:
         case PhysicsLayer::Sensor:
-            // 動的・センサーは全てと衝突する
+            // 動的・敵・センサーは全てと衝突する(細かい除外はObjectLayerPairFilterImpl側で行う)
             return true;
         default:
             JPH_ASSERT(false);
@@ -109,11 +111,16 @@ namespace sys
         switch (obj1)
         {
         case PhysicsLayer::NonMoving:
-            return obj2 == PhysicsLayer::Moving || obj2 == PhysicsLayer::Sensor;
+            return obj2 == PhysicsLayer::Moving || obj2 == PhysicsLayer::EnemyMoving || obj2 == PhysicsLayer::Sensor;
         case PhysicsLayer::Moving:
             return true; // Moving は全レイヤーと衝突
+        case PhysicsLayer::EnemyMoving:
+            // EnemyMoving同士(=敵同士)だけは衝突させない。敵が密集した際の接触解決コストを
+            // 抑えるため。地面(NonMoving)・プレイヤー等(Moving)・センサー(Sensor)とは
+            // 通常通り衝突する
+            return obj2 != PhysicsLayer::EnemyMoving;
         case PhysicsLayer::Sensor:
-            return obj2 == PhysicsLayer::Moving; // センサーは動的オブジェクトとのみ
+            return obj2 == PhysicsLayer::Moving || obj2 == PhysicsLayer::EnemyMoving; // センサーは動的オブジェクト全般とのみ
         default:
             JPH_ASSERT(false);
             return false;

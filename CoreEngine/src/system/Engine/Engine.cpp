@@ -47,6 +47,7 @@
 #include<ecs/entity/EntityManager.h>
 #include<ecs/system/manager/ComponentSystemManager.h>
 #include<system/Time/TimeManager.h>
+#include<system/Time/PerformanceMonitor.h>
 
 // Physics
 #include<system/Physics/System/PhysicsSystem.h>
@@ -160,6 +161,8 @@ namespace sys
         SpriteRenderer::Get().Finalize();
         ShapeRenderer::Get().Finalize();
         TransitionRenderer::Get().Finalize();
+
+        sys::PerformanceMonitor::Get().Finalize();
 
 #ifdef _DEBUG
         graphics::PhysicsDebugRenderer::Get().Finalize();
@@ -331,6 +334,8 @@ namespace sys
     {
         auto& registry = mEntityManager->GetRegistry();
         sys::LightSystem::DebugUI(registry);
+
+        sys::PerformanceMonitor::Get().Initialize();
     }
 
     void Engine::Update()
@@ -341,6 +346,8 @@ namespace sys
         auto& registry = ecs::EntityManager::Get().GetRegistry();
         auto  dt = time.GetDeltaTime();
         float rawDt = time.GetRawDeltaTime();
+
+        sys::PerformanceMonitor::Get().RecordFrame(rawDt);
 
 #ifdef _DEBUG
         // Editモード中はゲームロジック・物理・アニメ・エフェクトを一切動かさず、
@@ -367,8 +374,10 @@ namespace sys
         auto& time = GetTime();
 
         {
+            sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::GameplayUpdate);
             mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PreUpdate, registry, dt, rawDt);
             mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::Update, registry, dt, rawDt);
+            sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::GameplayUpdate);
 
             // Update フェーズの各システムが CollisionEnterEvent/SensorEnterEvent を読み終えた直後に
             // クリアする。これらのイベントは前フレームの物理ステップ(下の PhysicsSystem::Update)が
@@ -383,6 +392,7 @@ namespace sys
             // 同フレーム中にリクエストされたトランジションを 1フレーム遅延なく開始できるようにする。
             mSceneManager->Update(rawDt);
 
+            sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::Physics);
             sys::PhysicsSystem::BuildPendingBodies(registry);
             sys::PhysicsSystem::SyncFromTransform(registry);
 
@@ -392,8 +402,11 @@ namespace sys
                 sys::PhysicsSystem::Update(registry, time.GetFixedDeltaTime());
 
             sys::PhysicsSystem::SyncToTransform(registry);
+            sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::Physics);
 
+            sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::GameplayUpdate);
             mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PostUpdate, registry, dt, rawDt);
+            sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::GameplayUpdate);
         }
 
         {
@@ -403,7 +416,9 @@ namespace sys
             // ライト更新 (LightViewProj の計算も含む)
             sys::LightSystem::Update(registry);
 
+            sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::Effect);
             graphics::EffekseerManager::Get().Update(registry, dt);
+            sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::Effect);
         }
     }
 
@@ -499,35 +514,44 @@ namespace sys
                 //         （RestoreMainRenderTarget() は不要）。
                 [&]()
                 {
+                    sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::ShadowPass);
                     fbxRenderer.DrawShadowPass(
                         context->GetCommandList(eRenderChannel::Shadow));
+                    sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::ShadowPass);
                 },
                 // Scene: 通常描画パス（Shadow Map は SRV としてバインド済み）と Skybox
                 [&]()
                 {
+                    sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::ScenePass);
                     auto* cmdList = context->GetCommandList(eRenderChannel::Scene);
                     fbxRenderer.End(cmdList);
                     skyboxRenderer.End(cmdList, fbxRenderer.GetSceneBufferGpuHandle());
+                    sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::ScenePass);
                 },
                 // Sprite: 2D 描画（Sprite → Shape → Text の順）
                 [&]()
                 {
+                    sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::SpritePass);
                     auto* cmdList = context->GetCommandList(eRenderChannel::Sprite);
                     spriteRenderer.End(cmdList);
                     shapeRenderer.End(cmdList);
                     textRenderer.Flush(cmdList);
+                    sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::SpritePass);
                 },
             };
             mRenderThreadPool->Dispatch(parallelTasks, 3);
 
             // Effect: Effekseer はスレッドセーフでないため専用チャネルに隔離し、
             //         ワーカーと並行してメインスレッドで記録する。
+            sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::Effect);
             EffekseerManager::Get().Draw(
                 registry, context->GetCommandList(eRenderChannel::Effect));
+            sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::Effect);
 
             // Debug: デバッグ描画・トランジション・ImGui。
             //        いずれもスレッドセーフでないためメインスレッドで記録する。
             {
+                sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::Debug);
                 auto* cmdList = context->GetCommandList(eRenderChannel::Debug);
 
 #ifdef _DEBUG
@@ -540,6 +564,7 @@ namespace sys
 
                 // ImGui はスレッドセーフでないため Debug チャネル（メインスレッド）で記録する。
                 mImGuiManager->EndFrame(cmdList);
+                sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::Debug);
             }
 
             // Shadow / Scene / Sprite チャネルの記録完了を待つ。

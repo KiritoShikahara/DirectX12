@@ -2,6 +2,7 @@
 
 #include<entt/entt.hpp>
 #include<DirectXMath.h>
+#include<vector>
 #include<ecs/system/manager/IComponentSystem.h>
 
 namespace ecs
@@ -18,10 +19,15 @@ namespace ecs
 
 	private:
 		/// <summary>指定範囲内の敵にダメージを与える（敵タグ以外は無視する）</summary>
-		static void ApplyTickDamage(
+		void ApplyTickDamage(
 			entt::registry& registry,
 			const DirectX::XMFLOAT3& center,
 			float radius,
 			float damage);
+
+		// Update()内: 破棄対象の一時バッファ。毎回clear()して再利用する
+		std::vector<entt::entity> mExpired;
+		// ApplyTickDamage()のOverlapSphere結果の一時バッファ(ハザード1件ごとにclear()して再利用)
+		std::vector<entt::entity> mOverlapped;
 	};
 }

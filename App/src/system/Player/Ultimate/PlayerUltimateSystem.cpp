@@ -11,6 +11,7 @@
 #include<system/Effect/EffectSpawnUtility.h>
 
 #include<system/Camera/CameraSystem.h>
+#include<system/CameraFollow/CameraOverrideComponent.h>
 
 #include<cmath>
 #include<algorithm>
@@ -237,7 +238,12 @@ namespace ecs
         FinishAndExplode(registry, playerEntity, ultimate, status, masterData);
     }
 
-    /// <summary>プレイヤー背後・高い位置から見下ろす構図になるようカメラのTransformを直接更新する</summary>
+    /// <summary>
+    /// プレイヤー背後・高い位置から見下ろす構図になるよう、カメラエンティティへ
+    /// CameraOverrideComponentでリクエストを発行する(実際のTransform書き込みは
+    /// CameraPlayerFollowSystemが一元的に行う。カメラのTransformを直接書き換えないことで、
+    /// カメラ制御の責務をCameraPlayerFollowSystemへ集約している)。
+    /// </summary>
     void PlayerUltimateSystem::UpdateCamera(
         entt::registry& registry,
         entt::entity playerEntity,
@@ -247,32 +253,31 @@ namespace ecs
         const entt::entity cameraEntity = ::sys::CameraSystem::Get().GetMainCameraEntity();
         if (cameraEntity == entt::null || !registry.valid(cameraEntity)) return;
 
-        auto* cameraTransform = registry.try_get<ecs::Transform>(cameraEntity);
         const auto* playerTransform = registry.try_get<ecs::Transform>(playerEntity);
-        if (cameraTransform == nullptr || playerTransform == nullptr) return;
+        if (playerTransform == nullptr) return;
 
         const DirectX::XMFLOAT3& start = ultimate.StartPosition;
         const DirectX::XMFLOAT3& forward = ultimate.ForwardDir;
 
+        auto& cameraOverride = registry.get_or_emplace<ecs::CameraOverrideComponent>(cameraEntity);
+
         // 発動時に捕捉したプレイヤーの背後方向(-forward)へCameraDistance離れた、高い位置
         // (CameraHeight)から見下ろす構図にする。カメラ自体の位置は発動中ずっと固定で、
         // 追従はしない(LookAtだけが現在のプレイヤー座標へ追従する)。
-        const DirectX::XMFLOAT3 cameraPos =
+        cameraOverride.Position =
         {
             start.x - forward.x * masterData.CameraDistance,
             start.y + masterData.CameraHeight,
             start.z - forward.z * masterData.CameraDistance,
         };
-        cameraTransform->SetPosition(cameraPos);
 
         const DirectX::XMFLOAT3& playerPos = playerTransform->GetPosition();
-        const DirectX::XMFLOAT3 lookAt =
+        cameraOverride.LookAt =
         {
             playerPos.x,
             playerPos.y + masterData.CameraLookOffset,
             playerPos.z,
         };
-        cameraTransform->LookAt(lookAt);
     }
 
     /// <summary>メイン(main)終了後：プレイヤー座標・無敵状態を戻し、その場で全体ダメージを与える</summary>
@@ -286,6 +291,13 @@ namespace ecs
         // メイン(hougu_main)の再生が終わったので、非表示化していた他の武器のエフェクトを
         // 元に戻す（これ以降、各武器Systemの発動もIsPlayerUltimateActive()=falseになり再開する）
         SetOtherEffectsVisible(registry, true);
+
+        // カメラのリクエストを取り下げ、CameraPlayerFollowSystemの通常追従へ戻す
+        const entt::entity cameraEntity = ::sys::CameraSystem::Get().GetMainCameraEntity();
+        if (cameraEntity != entt::null && registry.valid(cameraEntity))
+        {
+            registry.remove<ecs::CameraOverrideComponent>(cameraEntity);
+        }
 
         // 5. プレイヤーの座標を瞬時に発動前の位置へ戻す(テレポート)。
         // Dynamic Bodyは物理側が位置の権威のため、Transformを直接書き換えただけでは

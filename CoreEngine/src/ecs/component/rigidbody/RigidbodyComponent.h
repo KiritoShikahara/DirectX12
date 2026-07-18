@@ -41,6 +41,12 @@ namespace ecs
         bool LockRotationY = true;
         bool LockRotationZ = true;
 
+        // true: 同じフラグを持つ他のDynamic Body同士(例: 敵同士)の衝突を無効化する
+        // (PhysicsLayer::EnemyMovingを使用)。地面・プレイヤー等・センサーとは通常通り衝突する。
+        // 大量の同種オブジェクトが密集すると、Joltの接触解決コストが敵の数に対して
+        // 急増するため、敵のように「互いに押し合う必要が薄い」オブジェクトに使う想定。
+        bool DisableSelfCollision = false;
+
         // 状態
         bool IsBodyCreated = false;
 

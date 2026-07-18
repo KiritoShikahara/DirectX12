@@ -3,6 +3,7 @@
 
 #include"../Tag/EntityTag.h"
 #include"CameraFollowOffsetComponent.h"
+#include"CameraOverrideComponent.h"
 
 #include<system/Camera/CameraSystem.h>
 
@@ -26,7 +27,7 @@ namespace ecs
 
     void CameraPlayerFollowSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
-        // PlayerTag ‚ğ‚ÂƒGƒ“ƒeƒBƒeƒB‚ğŒŸõ
+        // PlayerTag ï¿½ï¿½ï¿½ï¿½ï¿½ÂƒGï¿½ï¿½ï¿½eï¿½Bï¿½eï¿½Bï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         entt::entity playerEntity = entt::null;
         registry.view<ecs::Transform, ecs::PlayerTag>()
             .each([&](entt::entity entity, ecs::Transform&)
@@ -48,6 +49,17 @@ namespace ecs
                 ecs::CameraFollowOffsetComponent& follow)
                 {
                     if (entity == playerEntity) return;
+
+                    // If another system (e.g. PlayerUltimateSystem) requested an exclusive
+                    // camera position/lookAt via CameraOverrideComponent, apply that instead
+                    // of the normal follow-offset calculation. This system remains the sole
+                    // writer of the camera Transform; other systems only write the request.
+                    if (const auto* cameraOverride = registry.try_get<ecs::CameraOverrideComponent>(entity))
+                    {
+                        cameraTransform.SetPosition(cameraOverride->Position);
+                        cameraTransform.LookAt(cameraOverride->LookAt);
+                        return;
+                    }
 
                     const DirectX::XMFLOAT3& posOffset = follow.Offset;
                     const DirectX::XMFLOAT3& lookOffset = follow.LookAtOffset;

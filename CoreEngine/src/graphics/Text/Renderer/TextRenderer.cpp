@@ -94,28 +94,30 @@ namespace graphics
     {
         if (!mIsInitialized || !mAtlas->IsLoaded()) return;
 
-        struct RenderItem { const ecs::TextComponent* label; };
-        std::vector<RenderItem> items;
+        // 毎フレームのvector生成を避けるため、メンバ変数(mRenderItems)を使い回す
+        mRenderItems.clear();
+        auto view = registry.view<ecs::TextComponent>();
+        mRenderItems.reserve(view.size());
 
-        registry.view<ecs::TextComponent>().each([&](const ecs::TextComponent& label)
+        view.each([&](const ecs::TextComponent& label)
             {
                 if (!label.IsVisible || label.Text.empty()) return;
-                items.push_back({ &label });
+                mRenderItems.push_back({ &label });
             });
 
-        if (items.empty()) return;
+        if (mRenderItems.empty()) return;
 
-        std::sort(items.begin(), items.end(), [](const RenderItem& a, const RenderItem& b)
+        std::sort(mRenderItems.begin(), mRenderItems.end(), [](const RenderItem& a, const RenderItem& b)
             {
-                return a.label->Layer < b.label->Layer;
+                return a.Label->Layer < b.Label->Layer;
             });
 
-        for (const auto& item : items)
+        for (const auto& item : mRenderItems)
         {
-            Submit(item.label->Text,
-                item.label->X, item.label->Y,
-                item.label->Size,
-                item.label->Color);
+            Submit(item.Label->Text,
+                item.Label->X, item.Label->Y,
+                item.Label->Size,
+                item.Label->Color);
         }
     }
 

@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include<entt/entt.hpp>
+#include<vector>
 #include<ecs/system/manager/IComponentSystem.h>
 
 namespace data { struct CleaveWeaponData; }
@@ -24,9 +25,13 @@ namespace ecs
 
     private:
         /// <summary>発動: 狙い方向の扇状範囲内にいる敵全員へダメージ・ノックバックを与える</summary>
-        static void Swing(
+        void Swing(
             entt::registry& registry,
             const ecs::WeaponComponent& weapon,
             const data::CleaveWeaponData& masterData);
+
+        // Swing()のOverlapSphere結果の一時バッファ。毎回clear()して再利用する
+        // (毎フレーム相当のvector生成禁止のため。攻撃回数パークで1フレーム内に複数回呼ばれうる)
+        std::vector<entt::entity> mOverlapped;
     };
 }

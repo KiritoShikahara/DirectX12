@@ -174,37 +174,30 @@ namespace graphics
 	/// </summary>
 	void SpriteRenderer::UpdateAndDraw(entt::registry& registry)
 	{
-		// Transform + Sprite を持つエンティティを収集
+		// 毎フレームのvector生成を避けるため、メンバ変数(mRenderItems)を使い回す
+		mRenderItems.clear();
 		auto view = registry.view<ecs::Transform, ecs::Sprite>();
-
-		struct RenderItem
-		{
-			const ecs::Transform* transform;
-			const ecs::Sprite* sprite;
-		};
-
-		std::vector<RenderItem> items;
-		items.reserve(view.size_hint());
+		mRenderItems.reserve(view.size_hint());
 
 		view.each([&](auto, ecs::Transform& tr, ecs::Sprite& sp)
 			{
 				if (!sp.IsVisible || !sp.Texture) return;
-				items.push_back({ &tr, &sp });
+				mRenderItems.push_back({ &tr, &sp });
 			});
 
 		// Layer 昇順でソート（値が小さいほど手前＝後から描く）
-		std::sort(items.begin(), items.end(),
+		std::sort(mRenderItems.begin(), mRenderItems.end(),
 			[](const RenderItem& a, const RenderItem& b)
 			{
-				return a.sprite->Layer < b.sprite->Layer;
+				return a.Sprite->Layer < b.Sprite->Layer;
 			});
 
 		// ソート済み順で Draw を発行（バッチ化のためテクスチャ順が重要）
-		for (const auto& item : items)
+		for (const auto& item : mRenderItems)
 		{
 			const SpriteShaderData shaderData =
-				CalculateShaderData(*item.transform, *item.sprite);
-			Draw(shaderData, item.sprite->Texture->GetGpuHandle());
+				CalculateShaderData(*item.Transform, *item.Sprite);
+			Draw(shaderData, item.Sprite->Texture->GetGpuHandle());
 		}
 	}
 

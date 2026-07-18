@@ -103,6 +103,13 @@ namespace graphics
 		// 図形描画予約最大数
 		static constexpr uint32_t MAX_SHAPE_COUNT = 4096;
 
+		// UpdateAndDraw() 内で収集する描画対象1件分
+		struct RenderItem
+		{
+			const ecs::Transform* Transform = nullptr;
+			const ecs::Shape*     Shape = nullptr;
+		};
+
 		// GPU オブジェクト
 		std::unique_ptr<ShapePipeline>     mPipeline;
 		std::unique_ptr<StructuredBuffer>  mInstanceBuffer;
@@ -110,6 +117,9 @@ namespace graphics
 
 		// フレームデータ
 		std::vector<ShapeShaderData>       mReservedData;
+
+		// UpdateAndDraw()の一時バッファ。毎フレームclear()して再利用する(毎フレームのvector生成禁止のため)
+		std::vector<RenderItem>            mRenderItems;
 
 		// 依存オブジェクト
 		GDescriptorHeapManager* mHeapManager = nullptr;

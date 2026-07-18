@@ -2,6 +2,7 @@
 
 #include<entt/entt.hpp>
 #include<DirectXMath.h>
+#include<vector>
 #include<ecs/system/manager/IComponentSystem.h>
 
 namespace data { struct AreaAttackWeaponData; }
@@ -39,10 +40,13 @@ namespace ecs
 			const data::AreaAttackWeaponData& masterData);
 
 		/// <summary>狙い方向の範囲内から敵を検出し、各敵の座標へ氷柱(ハザード)を生成する</summary>
-		static void Fire(
+		void Fire(
 			entt::registry& registry,
 			const ecs::WeaponComponent& weapon,
 			const data::AreaAttackWeaponData& masterData);
+
+		// Fire()のOverlapSphere結果の一時バッファ。毎回clear()して再利用する
+		std::vector<entt::entity> mFound;
 
 		/// <summary>1体の敵の座標に氷柱(ハザード)エンティティを1体生成する</summary>
 		static void SpawnHazard(

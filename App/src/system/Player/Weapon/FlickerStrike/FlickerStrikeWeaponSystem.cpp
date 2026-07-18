@@ -4,6 +4,7 @@
 #include"FlickerStrikeRuntimeComponent.h"
 #include"FlickerStrikeComponent.h"
 #include<system/Player/Weapon/Inventory/WeaponInventoryComponent.h>
+#include<system/Player/Weapon/WeaponUpdateUtil.h>
 #include<system/Player/AimSysten/PlayerAimComponent.h>
 #include<system/Player/Status/PlayerStatusComponent.h>
 #include<system/Player/Status/PlayerCombatUtil.h>
@@ -12,7 +13,6 @@
 #include<system/Enemy/Status/EnemyStatusComponent.h>
 #include<system/Enemy/EnemyTargetUtil.h>
 #include<Data/Weapon/FlickerStrikeWeaponData.h>
-#include<Scene/Game/State/GameState.h>
 
 #include<system/Physics/System/PhysicsSystem.h>
 #include<ecs/component/Debug/DebugWireSphereComponent.h>
@@ -44,9 +44,7 @@ namespace ecs
         // 攻撃回数パークまで重ねて適用すると二重に増幅してしまうため。
 
         // InGame中のみ動作する（PerkSelect/Result中に発動し続けないようにする）
-        auto stateView = registry.view<::ecs::GameStateComponent>();
-        if (stateView.begin() == stateView.end()) return;
-        if (registry.get<::ecs::GameStateComponent>(*stateView.begin()).GameState != ::sys::eGameState::InGame) return;
+        if (!ecs::weaponutil::IsInGame(registry)) return;
 
         registry.view<ecs::WeaponComponent, ecs::FlickerStrikeRuntimeComponent>().each(
             [&](ecs::WeaponComponent& weapon, ecs::FlickerStrikeRuntimeComponent& runtime)
@@ -57,7 +55,7 @@ namespace ecs
                 auto* flicker = registry.try_get<ecs::PlayerFlickerStrikeComponent>(weapon.Owner);
                 if (flicker == nullptr) return;
 
-                const auto* masterData = DATA_MGR(data::FlickerStrikeWeaponData).GetById((weapon.WeaponID + 1) * 1000 + weapon.Level);
+                const auto* masterData = DATA_MGR(data::FlickerStrikeWeaponData).GetById(ecs::weaponutil::ComputeWeaponDataId(weapon));
                 if (masterData == nullptr) return;
 
                 // シーケンス中は新規発動の判定をせず、ワープの継続処理のみ行う
@@ -91,9 +89,7 @@ namespace ecs
 
                 StartSequence(registry, weapon, *flicker, target, *masterData);
 
-                const auto* ownerStatus = registry.try_get<ecs::PlayerStatusComponent>(weapon.Owner);
-                const float cooldownRate = ownerStatus != nullptr ? ownerStatus->Current.CooldownRate : 1.0f;
-                runtime.CooldownTimer = masterData->FireInterval * cooldownRate;
+                runtime.CooldownTimer = masterData->FireInterval * ecs::combatutil::GetCooldownRate(registry, weapon.Owner);
             });
     }
 
@@ -106,14 +102,14 @@ namespace ecs
         float maxRange,
         float width)
     {
-        std::vector<entt::entity> candidates;
-        ::sys::PhysicsSystem::OverlapSphere(registry, origin, maxRange, candidates);
+        mDirectionalCandidates.clear();
+        ::sys::PhysicsSystem::OverlapSphere(registry, origin, maxRange, mDirectionalCandidates);
 
         entt::entity nearest = entt::null;
         float nearestT = 0.0f;
         bool found = false;
 
-        for (entt::entity entity : candidates)
+        for (entt::entity entity : mDirectionalCandidates)
         {
             if (!registry.all_of<ecs::EnemyTag>(entity)) continue;
 
@@ -205,17 +201,17 @@ namespace ecs
             return;
         }
 
-        std::vector<entt::entity> candidates;
-        ::sys::PhysicsSystem::OverlapSphere(registry, playerTransform->GetPosition(), masterData.WarpSearchRadius, candidates);
+        mWarpCandidates.clear();
+        ::sys::PhysicsSystem::OverlapSphere(registry, playerTransform->GetPosition(), masterData.WarpSearchRadius, mWarpCandidates);
 
         // まず直前の対象を除外して探し、他に敵がいなければ直前の対象も含めて再探索する
         // (囲まれた敵が1体しかいない状況でもチャージを無駄にしないため)
         entt::entity next = ecs::targetutil::FindNearestExcluding(
-            registry, candidates, playerTransform->GetPosition(), { flicker.CurrentTarget });
+            registry, mWarpCandidates, playerTransform->GetPosition(), { flicker.CurrentTarget });
         if (!registry.valid(next))
         {
             next = ecs::targetutil::FindNearestExcluding(
-                registry, candidates, playerTransform->GetPosition(), {});
+                registry, mWarpCandidates, playerTransform->GetPosition(), {});
         }
 
         if (!registry.valid(next))
@@ -276,8 +272,7 @@ namespace ecs
         const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
         const float damage = masterData.Damage * atkMultiplier;
 
-        targetStatus->CurrentHp = std::max(0.0f, targetStatus->CurrentHp - damage);
-        ecs::combatutil::SpawnDamageNumber(targetPos, damage, false);
+        ecs::combatutil::ApplyDamageToEnemy(registry, target, damage);
 
         const DirectX::XMFLOAT3 effectPos = { targetPos.x, targetPos.y + masterData.HeightOffset, targetPos.z };
         // HitEffectPathは';'区切りで複数指定可能(ecs::effectutil::PlayOneShotCombined参照)。

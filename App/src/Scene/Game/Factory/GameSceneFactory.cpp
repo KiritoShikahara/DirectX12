@@ -22,17 +22,8 @@
 
 // 武器
 #include<system/Player/Weapon/Inventory/WeaponInventoryComponent.h>
-#include<system/Player/Weapon/SingleShot/SingleShotWeaponRuntimeComponent.h>
-#include<system/Player/Weapon/AreaAttack/AreaAttackWeaponRuntimeComponent.h>
+#include<system/Player/Weapon/WeaponTypeRegistry.h>
 #include<system/Player/Weapon/Orbit/OrbitWeaponRuntimeComponent.h>
-#include<system/Player/Weapon/Nova/NovaWeaponRuntimeComponent.h>
-#include<system/Player/Weapon/Homing/HomingMissileRuntimeComponent.h>
-#include<system/Player/Weapon/ChainLightning/ChainLightningRuntimeComponent.h>
-#include<system/Player/Weapon/Meteor/MeteorWeaponRuntimeComponent.h>
-#include<system/Player/Weapon/VoidBeam/VoidBeamRuntimeComponent.h>
-#include<system/Player/Weapon/BoneSpear/BoneSpearRuntimeComponent.h>
-#include<system/Player/Weapon/Cleave/CleaveRuntimeComponent.h>
-#include<system/Player/Weapon/FlickerStrike/FlickerStrikeRuntimeComponent.h>
 #include<system/Player/Weapon/FlickerStrike/FlickerStrikeComponent.h>
 #include<system/Player/PowerCharge/PlayerPowerChargeComponent.h>
 #include<Data/Weapon/FlickerStrikeWeaponData.h>
@@ -213,43 +204,9 @@ namespace ecs
 		weaponComp.Owner = player;
 		weaponComp.Control = control;
 
-		// 武器種別ごとのランタイムコンポーネントを付与する
-		switch (type)
-		{
-		case ::ecs::eWeaponType::SingleShot:
-			manager.AddComponent<::ecs::SingleShotWeaponRuntimeComponent>(weapon);
-			break;
-		case ::ecs::eWeaponType::AreaAttack:
-			manager.AddComponent<::ecs::AreaAttackWeaponRuntimeComponent>(weapon);
-			break;
-		case ::ecs::eWeaponType::SelfDefense:
-			manager.AddComponent<::ecs::OrbitWeaponRuntimeComponent>(weapon);
-			break;
-		case ::ecs::eWeaponType::Nova:
-			manager.AddComponent<::ecs::NovaWeaponRuntimeComponent>(weapon);
-			break;
-		case ::ecs::eWeaponType::Homing:
-			manager.AddComponent<::ecs::HomingMissileRuntimeComponent>(weapon);
-			break;
-		case ::ecs::eWeaponType::Chain:
-			manager.AddComponent<::ecs::ChainLightningRuntimeComponent>(weapon);
-			break;
-		case ::ecs::eWeaponType::Meteor:
-			manager.AddComponent<::ecs::MeteorWeaponRuntimeComponent>(weapon);
-			break;
-		case ::ecs::eWeaponType::VoidBeam:
-			manager.AddComponent<::ecs::VoidBeamRuntimeComponent>(weapon);
-			break;
-		case ::ecs::eWeaponType::BoneSpear:
-			manager.AddComponent<::ecs::BoneSpearRuntimeComponent>(weapon);
-			break;
-		case ::ecs::eWeaponType::Cleave:
-			manager.AddComponent<::ecs::CleaveRuntimeComponent>(weapon);
-			break;
-		case ::ecs::eWeaponType::FlickerStrike:
-			manager.AddComponent<::ecs::FlickerStrikeRuntimeComponent>(weapon);
-			break;
-		}
+		// 武器種別ごとのランタイムコンポーネントを付与する(WeaponTypeRegistry参照。
+		// 新しい武器種別を追加する場合はそちらのテーブルへ1行追記するだけでよい)
+		::ecs::weaponutil::AddWeaponRuntimeComponent(registry, type, weapon);
 
 		inventory->Weapons.push_back(weapon);
 		return weapon;
@@ -424,6 +381,10 @@ namespace ecs
 		auto& rigid = manager.AddComponent<ecs::RigidBodyComponent>(enemy, ecs::RigidBodyComponent::MakeDynamic());
 		rigid.GravityFactor = 0.0f;
 		rigid.LinearDamping = 10.0f;
+		// 敵同士は衝突させない(見た目上の押し合いはほぼ不要な一方、敵が密集すると
+		// Joltの接触解決コストが急増しFPS低下の主因になるため)。地面・プレイヤー・
+		// 各武器のセンサー判定とは通常通り衝突する
+		rigid.DisableSelfCollision = true;
 
 		// モデル（専用モデルが用意されるまではプレイヤーモデルを色違いで代用する）
 		auto& fbx = manager.AddComponent<ecs::FbxComponent>(enemy);

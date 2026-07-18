@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include<entt/entt.hpp>
+#include<vector>
 #include<ecs/system/manager/IComponentSystem.h>
 
 namespace ecs { struct WeaponComponent; }
@@ -19,9 +20,13 @@ namespace ecs
 
     private:
         /// <summary>発動: 所有者中心に球形ダメージを与え、ワンショットエフェクトを再生する</summary>
-        static void Pulse(
+        void Pulse(
             entt::registry& registry,
             const ecs::WeaponComponent& weapon,
             const data::NovaWeaponData& masterData);
+
+        // Pulse()のOverlapSphere結果の一時バッファ。毎回clear()して再利用する
+        // (毎フレーム相当のvector生成禁止のため。攻撃回数パークで1フレーム内に複数回呼ばれうる)
+        std::vector<entt::entity> mOverlapped;
     };
 }

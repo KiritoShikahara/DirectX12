@@ -3,6 +3,8 @@
 
 #include<system/Player/Status/PlayerStatusComponent.h>
 #include<system/UI/DamageNumber/DamageNumberComponent.h>
+#include<system/Enemy/Status/EnemyStatusComponent.h>
+#include<Tag/EntityTag.h>
 
 #include<cmath>
 #include<algorithm>
@@ -60,6 +62,12 @@ namespace ecs::combatutil
         };
     }
 
+    float GetCooldownRate(entt::registry& registry, entt::entity ownerEntity)
+    {
+        const auto* status = registry.try_get<ecs::PlayerStatusComponent>(ownerEntity);
+        return status != nullptr ? status->Current.CooldownRate : 1.0f;
+    }
+
     void SpawnDamageNumber(const DirectX::XMFLOAT3& worldPosition, float damage, bool isPlayerDamage)
     {
         auto& manager = ::ecs::EntityManager::Get();
@@ -75,5 +83,24 @@ namespace ecs::combatutil
         text.Size = kDamageNumberSize;
         text.Layer = 20;
         text.Color = isPlayerDamage ? kPlayerDamageColor : kEnemyDamageColor;
+    }
+
+    bool ApplyDamageToEnemy(entt::registry& registry, entt::entity targetEntity, float damage)
+    {
+        if (!registry.all_of<ecs::EnemyTag>(targetEntity)) return false;
+
+        auto* status = registry.try_get<ecs::EnemyStatusComponent>(targetEntity);
+        if (status == nullptr) return false;
+
+        // ノックバック等の物理的な反応はさせず、HPのみ減少させる
+        // （HPが0以下になった後の破棄は EnemyDeathSystem が担当する）
+        status->CurrentHp = std::max(0.0f, status->CurrentHp - damage);
+
+        if (const auto* transform = registry.try_get<ecs::Transform>(targetEntity))
+        {
+            SpawnDamageNumber(transform->GetPosition(), damage, false);
+        }
+
+        return true;
     }
 }

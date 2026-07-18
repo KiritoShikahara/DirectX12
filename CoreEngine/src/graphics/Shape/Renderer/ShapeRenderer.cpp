@@ -147,38 +147,31 @@ namespace graphics
 	/// </summary>
 	void ShapeRenderer::UpdateAndDraw(entt::registry& registry)
 	{
-		// Transform + Shape を持つエンティティを収集
+		// 毎フレームのvector生成を避けるため、メンバ変数(mRenderItems)を使い回す
+		mRenderItems.clear();
 		auto view = registry.view<ecs::Transform, ecs::Shape>();
-
-		struct RenderItem
-		{
-			const ecs::Transform* transform;
-			const ecs::Shape* shape;
-		};
-
-		std::vector<RenderItem> items;
-		items.reserve(view.size_hint());
+		mRenderItems.reserve(view.size_hint());
 
 		view.each([&](auto, ecs::Transform& tr, ecs::Shape& sp)
 			{
 				if (!sp.IsVisible) return;
-				items.push_back({ &tr, &sp });
+				mRenderItems.push_back({ &tr, &sp });
 			});
 
 		// Layer 昇順でソート（値が小さいほど手前＝後から描く）
 		// テクスチャ依存のバッチングが無いため、ソートは純粋に描画順保証のため。
-		std::sort(items.begin(), items.end(),
+		std::sort(mRenderItems.begin(), mRenderItems.end(),
 			[](const RenderItem& a, const RenderItem& b)
 			{
-				return a.shape->Layer < b.shape->Layer;
+				return a.Shape->Layer < b.Shape->Layer;
 			});
 
 		// SV_InstanceID はバッファ内の連続インデックスとして使われるため、
 		// ソート順 = mReservedData への追加順をそのまま反映させる。
-		for (const auto& item : items)
+		for (const auto& item : mRenderItems)
 		{
 			const ShapeShaderData shaderData =
-				CalculateShaderData(*item.transform, *item.shape);
+				CalculateShaderData(*item.Transform, *item.Shape);
 			Draw(shaderData);
 		}
 	}

@@ -2,6 +2,7 @@
 
 #include<entt/entt.hpp>
 #include<DirectXMath.h>
+#include<vector>
 #include<ecs/system/manager/IComponentSystem.h>
 
 namespace data { struct VoidBeamWeaponData; }
@@ -25,11 +26,15 @@ namespace ecs
 
     private:
         /// <summary>directionへ向けてBeamLength・BeamWidthの直線範囲内にいる敵全員へダメージを与える</summary>
-        static void Fire(
+        void Fire(
             entt::registry& registry,
             const ecs::WeaponComponent& weapon,
             const DirectX::XMFLOAT3& origin,
             const DirectX::XMFLOAT3& direction,
             const data::VoidBeamWeaponData& masterData);
+
+        // Fire()のOverlapSphere結果の一時バッファ。毎回clear()して再利用する
+        // (攻撃回数パークで1フレーム内に複数回呼ばれうる)
+        std::vector<entt::entity> mCandidates;
     };
 }

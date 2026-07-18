@@ -2,6 +2,7 @@
 #include "EnemyTargetUtil.h"
 
 #include<Tag/EntityTag.h>
+#include<system/Physics/System/PhysicsSystem.h>
 #include<algorithm>
 
 namespace ecs::targetutil
@@ -38,5 +39,17 @@ namespace ecs::targetutil
         }
 
         return nearest;
+    }
+
+    entt::entity FindNearestInRadius(
+        entt::registry& registry,
+        const DirectX::XMFLOAT3& position,
+        float radius,
+        const std::vector<entt::entity>& excluded)
+    {
+        std::vector<entt::entity> candidates;
+        ::sys::PhysicsSystem::OverlapSphere(registry, position, radius, candidates);
+
+        return FindNearestExcluding(registry, candidates, position, excluded);
     }
 }

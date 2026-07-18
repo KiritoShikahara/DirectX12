@@ -49,6 +49,15 @@ namespace graphics
             return false;
         }
 
+        // 意図的にLaunchWorkerThreads()を呼んでいない(=Effekseer内部のパーティクル更新は
+        // シングルスレッドのまま)。一度有効化を試したが、Manager::Create()のautoFlip
+        // (スレッド間のダブルバッファリング)の影響で内部状態が確定するまでのフレーム数が
+        // 変わるらしく、以前修正済みだった「ループエフェクトが再始動直後の1フレームだけ
+        // 素の四角形ポリゴンで見える」バグ(EffekseerManager::Update()のIsHiddenAfterLoopRestart
+        // 対策、1フレーム遅延を前提にした実装)が再発したため、確実性を優先して差し戻した。
+        // 再度有効化する場合は、IsHiddenAfterLoopRestartの遅延フレーム数をワーカースレッド
+        // 有効時の実際の遅延に合わせて調整する必要がある。
+
         // レンダラーの設定
         mManager->SetSpriteRenderer(mRenderer->CreateSpriteRenderer());
         mManager->SetRibbonRenderer(mRenderer->CreateRibbonRenderer());

@@ -5,7 +5,7 @@ REM Starts Claude Code in this script's folder.
 REM Example: start-claude-code.cmd --help
 cd /d "%~dp0"
 
-set "CLAUDE_EXE=C:\Users\koyo\.local\bin\claude.exe"
+set "CLAUDE_EXE=C:\Users\com\.local\bin\claude.exe"
 
 if not exist "%CLAUDE_EXE%" (
   echo Claude Code was not found:

@@ -135,6 +135,9 @@
     <ClInclude Include="src\system\Time\Time.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\system\Time\PerformanceMonitor.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="src\graphics\Texture\Texture.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -492,6 +495,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\system\Time\Time.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Time\PerformanceMonitor.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\Texture\Texture.cpp">

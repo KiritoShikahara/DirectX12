@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include<entt/entt.hpp>
+#include<vector>
 #include<ecs/system/manager/IComponentSystem.h>
 
 namespace ecs
@@ -14,5 +15,10 @@ namespace ecs
     {
     public:
         void Update(entt::registry& registry, float deltaTime, float rawDeltaTime) override;
+
+    private:
+        // Update()の一時バッファ(寿命切れの弾)。毎回clear()して再利用する
+        // (毎フレームのvector生成禁止のため)
+        std::vector<entt::entity> mExpired;
     };
 }

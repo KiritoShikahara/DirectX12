@@ -91,6 +91,13 @@ namespace graphics
 			uint32_t                    startIndex = 0;
 		};
 
+		// UpdateAndDraw() 内で収集する描画対象1件分
+		struct RenderItem
+		{
+			const ecs::Transform* Transform = nullptr;
+			const ecs::Sprite*    Sprite = nullptr;
+		};
+
 		// GPU オブジェクト
 		std::unique_ptr<SpritePipeline>    mPipeline;
 		std::unique_ptr<StructuredBuffer>  mInstanceBuffer;
@@ -99,6 +106,9 @@ namespace graphics
 		// フレームデータ
 		std::vector<SpriteShaderData>      mReservedData;
 		std::vector<DrawCall>              mDrawCalls;
+
+		// UpdateAndDraw()の一時バッファ。毎フレームclear()して再利用する(毎フレームのvector生成禁止のため)
+		std::vector<RenderItem>            mRenderItems;
 
 		// 依存オブジェクト
 		GDescriptorHeapManager* mHeapManager = nullptr;

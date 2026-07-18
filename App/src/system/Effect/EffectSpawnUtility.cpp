@@ -22,6 +22,23 @@ namespace
 
         return result;
     }
+
+    /// <summary>
+    /// PlayOneShotCombined()で生成したエンティティにのみ付与するタグ。同時に存在する
+    /// ワンショットエフェクト数を数えるためのもので、PlayLoopingCombined由来の
+    /// オーラ・軌跡等(間引きたくない、数も少ない)とは区別する。
+    /// </summary>
+    struct OneShotEffectTag {};
+
+    /// <summary>
+    /// 同時に存在してよいワンショットエフェクトエンティティ数の目安上限。これを超えている間は
+    /// 新規のワンショット演出(PlayOneShotCombined)の生成を間引いて負荷を抑える
+    /// (ダメージ判定は各武器側で既に適用済みのため、間引かれるのは見た目の演出のみ)。
+    /// 攻撃回数パーク×複数武器×大量の敵が同時に絡むと、個々の武器側の上限
+    /// (VoidBeamWeaponData::MaxHitEffects等)だけでは防ぎきれない組み合わせ的な増加が
+    /// 起きうるため、ここで全体の安全弁を設ける。
+    /// </summary>
+    constexpr size_t kMaxConcurrentOneShotEffects = 300;
 }
 
 namespace ecs::effectutil
@@ -33,6 +50,12 @@ namespace ecs::effectutil
         std::vector<entt::entity>* outEntities,
         const DirectX::XMFLOAT3& rotation)
     {
+        auto& registry = ecs::EntityManager::Get().GetRegistry();
+        if (registry.view<OneShotEffectTag>().size() >= kMaxConcurrentOneShotEffects)
+        {
+            return;
+        }
+
         for (const auto& path : SplitPaths(delimitedPaths))
         {
             auto& manager = ::ecs::EntityManager::Get();
@@ -46,6 +69,7 @@ namespace ecs::effectutil
             effect.IsLoop = false;
             effect.Scale = { scale, scale, scale };
             effect.Rotation = rotation;
+            registry.emplace<OneShotEffectTag>(entity);
             // autoDelete=true: 再生終了フレームでEffekseerManager::Updateがこのエンティティを破棄する
             effect.Effect.Play(effect.Asset, position, true);
             // Play()直後の1フレーム目は次のEffekseerManager::Updateまで反映されないため、

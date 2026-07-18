@@ -2,6 +2,7 @@
 
 #include<entt/entt.hpp>
 #include<DirectXMath.h>
+#include<vector>
 #include<ecs/system/manager/IComponentSystem.h>
 
 namespace data { struct FlickerStrikeWeaponData; }
@@ -30,7 +31,7 @@ namespace ecs
     private:
         /// <summary>originからdirection方向へInitialTargetMaxRange・InitialSearchWidthの
         /// 直線範囲内にいる、最も近い敵を返す(無ければentt::null)</summary>
-        static entt::entity PickDirectionalTarget(
+        entt::entity PickDirectionalTarget(
             entt::registry& registry,
             const DirectX::XMFLOAT3& origin,
             const DirectX::XMFLOAT3& direction,
@@ -47,7 +48,7 @@ namespace ecs
 
         /// <summary>シーケンス中の毎フレーム処理：他スキル入力による中断、ワープ間隔の消化、
         /// 次の対象探索、終了判定</summary>
-        static void UpdateActiveSequence(
+        void UpdateActiveSequence(
             entt::registry& registry,
             const ecs::WeaponComponent& weapon,
             ecs::PlayerFlickerStrikeComponent& flicker,
@@ -66,5 +67,10 @@ namespace ecs
             entt::registry& registry,
             entt::entity playerEntity,
             ecs::PlayerFlickerStrikeComponent& flicker);
+
+        // PickDirectionalTarget()のOverlapSphere結果の一時バッファ。毎回clear()して再利用する
+        std::vector<entt::entity> mDirectionalCandidates;
+        // UpdateActiveSequence()内: 次のワープ先探索の一時バッファ(ワープのたびにclear()して再利用)
+        std::vector<entt::entity> mWarpCandidates;
     };
 }

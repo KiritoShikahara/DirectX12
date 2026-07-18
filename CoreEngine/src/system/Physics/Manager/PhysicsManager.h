@@ -24,7 +24,12 @@ namespace sys
 		static constexpr JPH::ObjectLayer NonMoving = 0; // 静的コライダー
 		static constexpr JPH::ObjectLayer Moving = 1; // 動的・キネマティック
 		static constexpr JPH::ObjectLayer Sensor = 2; // センサー（トリガー）
-		static constexpr JPH::ObjectLayer Count = 3;
+		// 動的だが「同じレイヤー同士(=他の敵)」とは衝突しないオブジェクト用。
+		// 敵同士の押し合いは見た目上ほぼ不要な一方、敵が密集するとJoltの接触解決コストが
+		// 急増するため、敵をこのレイヤーにすることで負荷を抑える(地面・プレイヤー・
+		// センサーとは通常通り衝突する。RigidBodyComponent::DisableSelfCollision参照)
+		static constexpr JPH::ObjectLayer EnemyMoving = 3;
+		static constexpr JPH::ObjectLayer Count = 4;
 	}
 
 	/// <summary>

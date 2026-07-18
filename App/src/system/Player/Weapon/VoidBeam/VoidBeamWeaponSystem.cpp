@@ -3,13 +3,10 @@
 
 #include"VoidBeamRuntimeComponent.h"
 #include<system/Player/Weapon/Inventory/WeaponInventoryComponent.h>
-#include<system/Player/Weapon/Homing/HomingMissileSteeringSystem.h>
-#include<system/Player/Status/PlayerStatusComponent.h>
+#include<system/Player/Weapon/WeaponUpdateUtil.h>
 #include<system/Player/Status/PlayerCombatUtil.h>
-#include<system/Player/PlayerActionLock.h>
-#include<system/Enemy/Status/EnemyStatusComponent.h>
+#include<system/Enemy/EnemyTargetUtil.h>
 #include<Data/Weapon/VoidBeamWeaponData.h>
-#include<Scene/Game/State/GameState.h>
 
 #include<system/Physics/System/PhysicsSystem.h>
 #include<Tag/EntityTag.h>
@@ -19,13 +16,9 @@ namespace ecs
 {
     void VoidBeamWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
     {
-        // InGame中のみ発動する（PerkSelect/Result中に発動し続けないようにする）
-        auto stateView = registry.view<::ecs::GameStateComponent>();
-        if (stateView.begin() == stateView.end()) return;
-        if (registry.get<::ecs::GameStateComponent>(*stateView.begin()).GameState != ::sys::eGameState::InGame) return;
-        // 必殺技演出中は他の攻撃を発動させない(自動発動武器のためFlicker Strike中は止めない。
-        // 手動攻撃のみをIsPlayerActionLocked()で止める設計。PlayerActionLock.h参照)
-        if (ecs::IsPlayerUltimateActive(registry)) return;
+        // InGame中のみ発動する。必殺技演出中は他の攻撃を発動させない(自動発動武器のため
+        // Flicker Strike中は止めない設計。ecs::weaponutil::ShouldSkipAutoWeaponUpdate参照)
+        if (ecs::weaponutil::ShouldSkipAutoWeaponUpdate(registry)) return;
 
         registry.view<ecs::WeaponComponent, ecs::VoidBeamRuntimeComponent>().each(
             [&](ecs::WeaponComponent& weapon, ecs::VoidBeamRuntimeComponent& runtime)
@@ -39,7 +32,7 @@ namespace ecs
                 }
                 if (runtime.CooldownTimer > 0.0f) return;
 
-                const auto* masterData = DATA_MGR(data::VoidBeamWeaponData).GetById((weapon.WeaponID + 1) * 1000 + weapon.Level);
+                const auto* masterData = DATA_MGR(data::VoidBeamWeaponData).GetById(ecs::weaponutil::ComputeWeaponDataId(weapon));
                 if (masterData == nullptr) return;
 
                 const auto* ownerTransform = registry.try_get<ecs::Transform>(weapon.Owner);
@@ -49,7 +42,7 @@ namespace ecs
 
                 // SearchRadius内に敵がいなければクールダウンを消費せず待機する
                 // （狙う相手がいない状態で空撃ちしないため、Homing/Chainと同じ方針）
-                const entt::entity target = ecs::HomingMissileSteeringSystem::FindNearestEnemy(
+                const entt::entity target = ecs::targetutil::FindNearestInRadius(
                     registry, ownerPos, masterData->SearchRadius);
                 if (!registry.valid(target)) return;
 
@@ -76,9 +69,7 @@ namespace ecs
                     Fire(registry, weapon, ownerPos, shotDirection, *masterData);
                 }
 
-                const auto* ownerStatus = registry.try_get<ecs::PlayerStatusComponent>(weapon.Owner);
-                const float cooldownRate = ownerStatus != nullptr ? ownerStatus->Current.CooldownRate : 1.0f;
-                runtime.CooldownTimer = masterData->FireInterval * cooldownRate;
+                runtime.CooldownTimer = masterData->FireInterval * ecs::combatutil::GetCooldownRate(registry, weapon.Owner);
             });
     }
 
@@ -96,10 +87,15 @@ namespace ecs
 
         // ビーム全体を包含する球でまず候補を集め、線分への垂線距離で直線上の敵だけに絞り込む
         // （新規の物理クエリ形状(カプセル等)を増やさず、既存のOverlapSphere+数式フィルタで完結させる）。
-        std::vector<entt::entity> candidates;
-        ::sys::PhysicsSystem::OverlapSphere(registry, origin, masterData.BeamLength, candidates);
+        mCandidates.clear();
+        ::sys::PhysicsSystem::OverlapSphere(registry, origin, masterData.BeamLength, mCandidates);
 
-        for (entt::entity entity : candidates)
+        // ダメージは貫通ヒットする全員に入れるが、ヒットエフェクトはMaxHitEffects体分までしか
+        // 再生しない(敵が密集していると1回のビームで数十体に同時ヒットしうるため、
+        // Effekseerエフェクトの同時生成数を抑える)
+        int spawnedEffects = 0;
+
+        for (entt::entity entity : mCandidates)
         {
             if (!registry.all_of<ecs::EnemyTag>(entity)) continue;
 
@@ -120,15 +116,14 @@ namespace ecs
             const float perpDistSq = perpX * perpX + perpZ * perpZ;
             if (perpDistSq > masterData.BeamWidth * masterData.BeamWidth) continue;
 
-            auto* status = registry.try_get<ecs::EnemyStatusComponent>(entity);
-            if (status == nullptr) continue;
+            if (!ecs::combatutil::ApplyDamageToEnemy(registry, entity, damage)) continue;
 
-            status->CurrentHp = std::max(0.0f, status->CurrentHp - damage);
+            if (spawnedEffects >= masterData.MaxHitEffects) continue;
+            ++spawnedEffects;
 
             const DirectX::XMFLOAT3 effectPos = { enemyPos.x, enemyPos.y + masterData.HeightOffset, enemyPos.z };
             // HitEffectPathは';'区切りで複数指定可能(ecs::effectutil::PlayOneShotCombined参照)。
             ecs::effectutil::PlayOneShotCombined(masterData.HitEffectPath, effectPos, masterData.HitEffectScale);
-            ecs::combatutil::SpawnDamageNumber(enemyPos, damage, false);
         }
     }
 }

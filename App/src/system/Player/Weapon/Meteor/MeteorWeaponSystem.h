@@ -3,6 +3,7 @@
 #include<entt/entt.hpp>
 #include<ecs/system/manager/IComponentSystem.h>
 #include<DirectXMath.h>
+#include<vector>
 
 namespace ecs { struct WeaponComponent; }
 namespace data { struct MeteorWeaponData; }
@@ -23,18 +24,24 @@ namespace ecs
 		/// それぞれの座標へ隕石(範囲ダメージ+エフェクト)を落とす。
 		/// 戻り値: 対象が1体も見つからず不発だった場合はfalse
 		/// （クールダウンを消費せず待機させるため、呼び出し側が判定に使う）</summary>
-		static bool Fire(
+		bool Fire(
 			entt::registry& registry,
 			const ecs::WeaponComponent& weapon,
 			const data::MeteorWeaponData& masterData);
 
 		/// <summary>1体分の隕石落下：範囲ダメージを与えワンショットエフェクトを再生する</summary>
-		static void Strike(
+		void Strike(
 			entt::registry& registry,
 			const DirectX::XMFLOAT3& position,
 			float hitRadius,
 			float damage,
 			float visualRadius,
 			const data::MeteorWeaponData& masterData);
+
+		// Fire()のOverlapSphere結果/敵フィルタ結果の一時バッファ。毎回clear()して再利用する
+		std::vector<entt::entity> mFound;
+		std::vector<entt::entity> mEnemies;
+		// Strike()のOverlapSphere結果の一時バッファ(隕石1発ごとにclear()して再利用)
+		std::vector<entt::entity> mOverlapped;
 	};
 }

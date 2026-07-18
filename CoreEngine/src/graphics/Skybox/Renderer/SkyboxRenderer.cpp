@@ -50,31 +50,31 @@ namespace graphics
 
 	void SkyboxRenderer::UpdateAndDraw(entt::registry& registry)
 	{
-        struct Entry
-        {
-            int                          Priority;
-            float                        Weight;
-            const std::filesystem::path* TexturePath;
-        };
-
-        std::vector<Entry> entries;
-        entries.reserve(8);
+        // 毎フレームのvector生成を避けるため、メンバ変数(mEntries)を使い回す
+        mEntries.clear();
 
         registry.view<ecs::SkyboxComponent>().each(
             [&](const ecs::SkyboxComponent& comp)
             {
-                entries.push_back({ comp.Priority, comp.Weight, &comp.TexturePath });
+                mEntries.push_back({ comp.Priority, comp.Weight, &comp.TexturePath });
             });
 
-        if (entries.empty()) return;
+        if (mEntries.empty()) return;
 
-        std::sort(entries.begin(), entries.end(),
+        std::sort(mEntries.begin(), mEntries.end(),
             [](const Entry& a, const Entry& b) { return a.Priority > b.Priority; });
 
         auto& texMgr = TextureManager::Get();
 
-        // A 側 (最高優先度)
-        const Texture* texA = texMgr.GetOrLoad(*entries[0].TexturePath);
+        // A 側 (最高優先度)。パスが前フレームと同じならGetOrLoad()自体を呼ばない
+        // (absolute()によるパス解決+文字列生成コストを避けるため)
+        const std::filesystem::path& pathA = *mEntries[0].TexturePath;
+        if (mCachedTexA == nullptr || pathA != mCachedPathA)
+        {
+            mCachedTexA = texMgr.GetOrLoad(pathA);
+            mCachedPathA = pathA;
+        }
+        const Texture* texA = mCachedTexA;
         if (!texA || !texA->IsValid())
         {
             DEBUG_LOG(sys::eLogLevel::Warning, "SkyboxRenderer: Texture A is invalid, skip draw.");
@@ -85,13 +85,19 @@ namespace graphics
         const Texture* texB = texA;
         float          weight = 0.0f;
 
-        if (entries.size() >= 2)
+        if (mEntries.size() >= 2)
         {
-            const Texture* candidate = texMgr.GetOrLoad(*entries[1].TexturePath);
-            if (candidate && candidate->IsValid())
+            const std::filesystem::path& pathB = *mEntries[1].TexturePath;
+            if (mCachedTexB == nullptr || pathB != mCachedPathB)
             {
-                texB = candidate;
-                weight = std::clamp(entries[1].Weight, 0.0f, 1.0f);
+                mCachedTexB = texMgr.GetOrLoad(pathB);
+                mCachedPathB = pathB;
+            }
+
+            if (mCachedTexB && mCachedTexB->IsValid())
+            {
+                texB = mCachedTexB;
+                weight = std::clamp(mEntries[1].Weight, 0.0f, 1.0f);
             }
         }
 

@@ -234,64 +234,25 @@ namespace scene
 	/// 遅延させると、プレイ中に初めて発動した瞬間にテクスチャ読み込みが走り、その間の
 	/// 数フレームだけ他の再生中エフェクトの描画が乱れる(四角形のポリゴンが一瞬見える等)
 	/// ことがあるため、事前に読み込んでおくことでこれを避ける。
-	/// 新しい武器種別やエフェクトパスを持つデータを追加した場合はここにも追記すること。
+	/// ecs::effectutil::PreloadAllEffectPathFields<T>()がリフレクション(REFLECT_FIELD)経由で
+	/// "EffectPath"で終わる文字列フィールドを自動的に見つけて読み込むため、既存フィールドへの
+	/// エフェクトパス追加はここへの追記が不要。新しい武器種別(マスタデータ型)を追加した場合のみ
+	/// 1行追記すること。
 	/// </summary>
 	void GameScene::PreloadWeaponEffects()
 	{
-		for (const auto& d : DATA_MGR(data::SingleShotWeaponData).GetAll())
-		{
-			ecs::effectutil::PreloadEffect(d.ProjectileEffectPath);
-			ecs::effectutil::PreloadEffect(d.ExplosionEffectPath);
-		}
-		for (const auto& d : DATA_MGR(data::AreaAttackWeaponData).GetAll())
-		{
-			ecs::effectutil::PreloadEffect(d.EffectPath);
-		}
-		for (const auto& d : DATA_MGR(data::OrbitWeaponData).GetAll())
-		{
-			ecs::effectutil::PreloadEffect(d.OrbEffectPath);
-			ecs::effectutil::PreloadEffect(d.HitEffectPath);
-		}
-		for (const auto& d : DATA_MGR(data::NovaWeaponData).GetAll())
-		{
-			ecs::effectutil::PreloadEffect(d.EffectPath);
-		}
-		for (const auto& d : DATA_MGR(data::HomingMissileWeaponData).GetAll())
-		{
-			ecs::effectutil::PreloadEffect(d.ProjectileEffectPath);
-			ecs::effectutil::PreloadEffect(d.ExplosionEffectPath);
-		}
-		for (const auto& d : DATA_MGR(data::ChainLightningWeaponData).GetAll())
-		{
-			ecs::effectutil::PreloadEffect(d.HitEffectPath);
-		}
-		for (const auto& d : DATA_MGR(data::MeteorWeaponData).GetAll())
-		{
-			ecs::effectutil::PreloadEffect(d.EffectPath);
-		}
-		for (const auto& d : DATA_MGR(data::VoidBeamWeaponData).GetAll())
-		{
-			ecs::effectutil::PreloadEffect(d.HitEffectPath);
-		}
-		for (const auto& d : DATA_MGR(data::BoneSpearWeaponData).GetAll())
-		{
-			ecs::effectutil::PreloadEffect(d.ProjectileEffectPath);
-			ecs::effectutil::PreloadEffect(d.ExplosionEffectPath);
-		}
-		for (const auto& d : DATA_MGR(data::CleaveWeaponData).GetAll())
-		{
-			ecs::effectutil::PreloadEffect(d.EffectPath);
-		}
-		for (const auto& d : DATA_MGR(data::FlickerStrikeWeaponData).GetAll())
-		{
-			ecs::effectutil::PreloadEffect(d.HitEffectPath);
-		}
-		for (const auto& d : DATA_MGR(data::UltimateData).GetAll())
-		{
-			ecs::effectutil::PreloadEffect(d.AuraEffectPath);
-			ecs::effectutil::PreloadEffect(d.BeamEffectPath);
-			ecs::effectutil::PreloadEffect(d.ActivationEffectPath);
-		}
+		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::SingleShotWeaponData).GetAll());
+		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::AreaAttackWeaponData).GetAll());
+		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::OrbitWeaponData).GetAll());
+		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::NovaWeaponData).GetAll());
+		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::HomingMissileWeaponData).GetAll());
+		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::ChainLightningWeaponData).GetAll());
+		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::MeteorWeaponData).GetAll());
+		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::VoidBeamWeaponData).GetAll());
+		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::BoneSpearWeaponData).GetAll());
+		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::CleaveWeaponData).GetAll());
+		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::FlickerStrikeWeaponData).GetAll());
+		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::UltimateData).GetAll());
 	}
 
 	void GameScene::CreateUserSystem()
@@ -329,11 +290,12 @@ namespace scene
 		// ダメージ計算(Update)が終わった後にHP0の敵をまとめて破棄する
 		manager.AddUserSystem<::ecs::EnemyDeathSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::ecs::RotateToMoveSystem>(::ecs::eUpdatePhase::PostUpdate);
+		// PlayerUltimateSystemは必殺技演出中、CameraOverrideComponentへカメラ位置のリクエストを
+		// 書き込むだけ(Transformは直接書き換えない)。そのリクエストを同一フレーム内で反映するため、
+		// リクエストを消費して実際にTransformへ書き込むCameraPlayerFollowSystemより前段に置く
+		manager.AddUserSystem<::ecs::PlayerUltimateSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::ecs::CameraPlayerFollowSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::ecs::DamageNumberSystem>(::ecs::eUpdatePhase::PostUpdate);
-		// 必殺技演出中はCameraPlayerFollowSystemの通常追従をこの後で上書きする必要があるため、
-		// 必ずCameraPlayerFollowSystemの後段に置く
-		manager.AddUserSystem<::ecs::PlayerUltimateSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::sys::GameStateSystem>(::ecs::eUpdatePhase::PostUpdate);
 		// GameStateSystemの後段に置くことで、PerkSelect/Resultへ遷移した同一フレームでUIを生成できる
 		manager.AddUserSystem<::ecs::PerkSelectSystem>(::ecs::eUpdatePhase::PostUpdate);

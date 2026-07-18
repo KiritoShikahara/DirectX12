@@ -3,14 +3,11 @@
 
 #include"CleaveRuntimeComponent.h"
 #include<system/Player/Weapon/Inventory/WeaponInventoryComponent.h>
+#include<system/Player/Weapon/WeaponUpdateUtil.h>
 #include<system/Player/AimSysten/PlayerAimComponent.h>
-#include<system/Player/Status/PlayerStatusComponent.h>
 #include<system/Player/Status/PlayerCombatUtil.h>
-#include<system/Player/PlayerActionLock.h>
-#include<system/Enemy/Status/EnemyStatusComponent.h>
 #include<system/Enemy/Knockback/EnemyKnockbackComponent.h>
 #include<Data/Weapon/CleaveWeaponData.h>
-#include<Scene/Game/State/GameState.h>
 
 #include<system/Physics/System/PhysicsSystem.h>
 #include<ecs/component/Debug/DebugWireSphereComponent.h>
@@ -35,13 +32,9 @@ namespace ecs
 {
     void CleaveWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
     {
-        // InGame中のみ発動する（PerkSelect/Result中に発動し続けないようにする）
-        auto stateView = registry.view<::ecs::GameStateComponent>();
-        if (stateView.begin() == stateView.end()) return;
-        if (registry.get<::ecs::GameStateComponent>(*stateView.begin()).GameState != ::sys::eGameState::InGame) return;
-        // 必殺技演出中は他の攻撃を発動させない(自動発動武器のためFlicker Strike中は止めない。
-        // 手動攻撃のみをIsPlayerActionLocked()で止める設計。PlayerActionLock.h参照)
-        if (ecs::IsPlayerUltimateActive(registry)) return;
+        // InGame中のみ発動する。必殺技演出中は他の攻撃を発動させない(自動発動武器のため
+        // Flicker Strike中は止めない設計。ecs::weaponutil::ShouldSkipAutoWeaponUpdate参照)
+        if (ecs::weaponutil::ShouldSkipAutoWeaponUpdate(registry)) return;
 
         registry.view<ecs::WeaponComponent, ecs::CleaveRuntimeComponent>().each(
             [&](ecs::WeaponComponent& weapon, ecs::CleaveRuntimeComponent& runtime)
@@ -55,7 +48,7 @@ namespace ecs
                 }
                 if (runtime.CooldownTimer > 0.0f) return;
 
-                const auto* masterData = DATA_MGR(data::CleaveWeaponData).GetById((weapon.WeaponID + 1) * 1000 + weapon.Level);
+                const auto* masterData = DATA_MGR(data::CleaveWeaponData).GetById(ecs::weaponutil::ComputeWeaponDataId(weapon));
                 if (masterData == nullptr) return;
 
                 // 攻撃回数パーク(AttackCountUp)分だけ発動を繰り返す
@@ -65,9 +58,7 @@ namespace ecs
                     Swing(registry, weapon, *masterData);
                 }
 
-                const auto* ownerStatus = registry.try_get<ecs::PlayerStatusComponent>(weapon.Owner);
-                const float cooldownRate = ownerStatus != nullptr ? ownerStatus->Current.CooldownRate : 1.0f;
-                runtime.CooldownTimer = masterData->FireInterval * cooldownRate;
+                runtime.CooldownTimer = masterData->FireInterval * ecs::combatutil::GetCooldownRate(registry, weapon.Owner);
             });
     }
 
@@ -91,10 +82,10 @@ namespace ecs
         const float hitRadius = radius * masterData.HitRadiusMultiplier;
         const float coneHalfAngleRad = DirectX::XMConvertToRadians(masterData.ConeAngleDegrees);
 
-        std::vector<entt::entity> overlapped;
-        ::sys::PhysicsSystem::OverlapSphere(registry, ownerPos, hitRadius, overlapped);
+        mOverlapped.clear();
+        ::sys::PhysicsSystem::OverlapSphere(registry, ownerPos, hitRadius, mOverlapped);
 
-        for (entt::entity entity : overlapped)
+        for (entt::entity entity : mOverlapped)
         {
             if (!registry.all_of<ecs::EnemyTag>(entity)) continue;
 
@@ -115,11 +106,7 @@ namespace ecs
             const float angle = std::acos(dot);
             if (angle > coneHalfAngleRad) continue;
 
-            auto* status = registry.try_get<ecs::EnemyStatusComponent>(entity);
-            if (status == nullptr) continue;
-
-            status->CurrentHp = std::max(0.0f, status->CurrentHp - damage);
-            ecs::combatutil::SpawnDamageNumber(enemyPos, damage, false);
+            if (!ecs::combatutil::ApplyDamageToEnemy(registry, entity, damage)) continue;
 
             // EnemyChaseSystemはEnemyKnockbackComponent保持中の敵への追従移動をスキップするため、
             // ここで速度・持続時間を設定するだけで安全に吹き飛ばせる

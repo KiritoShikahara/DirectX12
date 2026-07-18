@@ -36,8 +36,20 @@ namespace sys
         static constexpr float FIXED_DELTA_TIME = 1.0f / 60.0f;
 
         /// <summary>
+        /// Update()1回あたりに許容する固定ステップの最大実行回数。
+        /// フレームレートが大きく落ち込むと、蓄積時間(MAX_DELTA_TIME=0.1秒分まで)を
+        /// 追いつかせようとして物理ステップを連続実行することになるが、物理ステップ自体が
+        /// 重い場合、これがさらにフレームを重くし、フレームレートの悪化を加速させてしまう
+        /// (いわゆるspiral of death)。この上限に達したら、追いつききれなかった時間は
+        /// (次フレームへ持ち越さず)そのフレームでは諦める＝物理がやや遅れて見えることを
+        /// 許容し、フレームレートの底割れを防ぐことを優先する。
+        /// </summary>
+        static constexpr int MAX_FIXED_STEPS_PER_UPDATE = 3;
+
+        /// <summary>
         /// 固定更新のステップを実行すべきか判定し、実行する場合はTrueを返し時間を消費する。
         /// while(time.AccumulateFixedStep()) { ... } のように使用する。
+        /// MAX_FIXED_STEPS_PER_UPDATEに達した場合はfalseを返す(Update()内でリセットされる)。
         /// </summary>
         bool AccumulateFixedStep();
 
@@ -57,5 +69,9 @@ namespace sys
 
         // ⚡ 物理用の時間蓄積バッファ
         float mPhysicsAccumulator = 0.0f;
+
+        // 今回のUpdate()で既に実行した固定ステップの回数(MAX_FIXED_STEPS_PER_UPDATEとの比較用、
+        // Update()の先頭で0にリセットする)
+        int mFixedStepsThisUpdate = 0;
     };
 }

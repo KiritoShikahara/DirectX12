@@ -2,26 +2,20 @@
 #include "HomingMissileWeaponSystem.h"
 
 #include"HomingMissileRuntimeComponent.h"
-#include"HomingMissileSteeringSystem.h"
 #include<system/Player/Weapon/Inventory/WeaponInventoryComponent.h>
+#include<system/Player/Weapon/WeaponUpdateUtil.h>
 #include<system/Player/Weapon/Projectile/ProjectileComponent.h>
-#include<system/Player/Status/PlayerStatusComponent.h>
 #include<system/Player/Status/PlayerCombatUtil.h>
-#include<system/Player/PlayerActionLock.h>
+#include<system/Enemy/EnemyTargetUtil.h>
 #include<Data/Weapon/HomingMissileWeaponData.h>
-#include<Scene/Game/State/GameState.h>
 
 namespace ecs
 {
     void HomingMissileWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
     {
-        // InGame中のみ発動する（PerkSelect/Result中に発動し続けないようにする）
-        auto stateView = registry.view<::ecs::GameStateComponent>();
-        if (stateView.begin() == stateView.end()) return;
-        if (registry.get<::ecs::GameStateComponent>(*stateView.begin()).GameState != ::sys::eGameState::InGame) return;
-        // 必殺技演出中は他の攻撃を発動させない(自動発動武器のためFlicker Strike中は止めない。
-        // 手動攻撃のみをIsPlayerActionLocked()で止める設計。PlayerActionLock.h参照)
-        if (ecs::IsPlayerUltimateActive(registry)) return;
+        // InGame中のみ発動する。必殺技演出中は他の攻撃を発動させない(自動発動武器のため
+        // Flicker Strike中は止めない設計。ecs::weaponutil::ShouldSkipAutoWeaponUpdate参照)
+        if (ecs::weaponutil::ShouldSkipAutoWeaponUpdate(registry)) return;
 
         registry.view<ecs::WeaponComponent, ecs::HomingMissileRuntimeComponent>().each(
             [&](ecs::WeaponComponent& weapon, ecs::HomingMissileRuntimeComponent& runtime)
@@ -35,7 +29,7 @@ namespace ecs
                 }
                 if (runtime.CooldownTimer > 0.0f) return;
 
-                const auto* masterData = DATA_MGR(data::HomingMissileWeaponData).GetById((weapon.WeaponID + 1) * 1000 + weapon.Level);
+                const auto* masterData = DATA_MGR(data::HomingMissileWeaponData).GetById(ecs::weaponutil::ComputeWeaponDataId(weapon));
                 if (masterData == nullptr) return;
 
                 const auto* ownerTransform = registry.try_get<ecs::Transform>(weapon.Owner);
@@ -43,7 +37,7 @@ namespace ecs
 
                 // SearchRadius内に敵がいなければクールダウンを消費せず待機する
                 // （対象なしで直進するだけの弾を無駄撃ちしないため）
-                const entt::entity target = ecs::HomingMissileSteeringSystem::FindNearestEnemy(
+                const entt::entity target = ecs::targetutil::FindNearestInRadius(
                     registry, ownerTransform->GetPosition(), masterData->SearchRadius);
                 if (!registry.valid(target)) return;
 
@@ -55,9 +49,7 @@ namespace ecs
                     Fire(registry, weapon, target, *masterData, i, attackCount);
                 }
 
-                const auto* ownerStatus = registry.try_get<ecs::PlayerStatusComponent>(weapon.Owner);
-                const float cooldownRate = ownerStatus != nullptr ? ownerStatus->Current.CooldownRate : 1.0f;
-                runtime.CooldownTimer = masterData->FireInterval * cooldownRate;
+                runtime.CooldownTimer = masterData->FireInterval * ecs::combatutil::GetCooldownRate(registry, weapon.Owner);
             });
     }
 

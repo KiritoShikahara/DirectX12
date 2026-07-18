@@ -4,12 +4,10 @@
 #include"AreaAttackWeaponRuntimeComponent.h"
 #include"AreaAttackHazardComponent.h"
 #include<system/Player/Weapon/Inventory/WeaponInventoryComponent.h>
+#include<system/Player/Weapon/WeaponUpdateUtil.h>
 #include<system/Player/AimSysten/PlayerAimComponent.h>
-#include<system/Player/Status/PlayerStatusComponent.h>
 #include<system/Player/Status/PlayerCombatUtil.h>
-#include<system/Player/PlayerActionLock.h>
 #include<Data/Weapon/AreaAttackWeaponData.h>
-#include<Scene/Game/State/GameState.h>
 
 #include<system/Physics/System/PhysicsSystem.h>
 #include<ecs/component/Debug/DebugWireSphereComponent.h>
@@ -26,12 +24,9 @@ namespace ecs
 {
 	void AreaAttackWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
-		// InGame中のみ発動する（PerkSelect/Result中に発動し続けないようにする）
-		auto stateView = registry.view<::ecs::GameStateComponent>();
-		if (stateView.begin() == stateView.end()) return;
-		if (registry.get<::ecs::GameStateComponent>(*stateView.begin()).GameState != ::sys::eGameState::InGame) return;
-		// 必殺技演出中は他の攻撃を発動させない
-		if (ecs::IsPlayerActionLocked(registry)) return;
+		// InGame中のみ発動する。必殺技演出中は他の攻撃を発動させない
+		// (手動発動武器のためIsPlayerActionLocked()を使う。ecs::weaponutil::ShouldSkipManualWeaponUpdate参照)
+		if (ecs::weaponutil::ShouldSkipManualWeaponUpdate(registry)) return;
 
 		registry.view<ecs::WeaponComponent, ecs::AreaAttackWeaponRuntimeComponent>().each(
 			[&](entt::entity weaponEntity, ecs::WeaponComponent& weapon, ecs::AreaAttackWeaponRuntimeComponent& runtime)
@@ -39,7 +34,7 @@ namespace ecs
 				if (weapon.Type != ecs::eWeaponType::AreaAttack) return;
 				if (!registry.valid(weapon.Owner)) return;
 
-				const auto* masterData = DATA_MGR(data::AreaAttackWeaponData).GetById((weapon.WeaponID + 1) * 1000 + weapon.Level);
+				const auto* masterData = DATA_MGR(data::AreaAttackWeaponData).GetById(ecs::weaponutil::ComputeWeaponDataId(weapon));
 				if (masterData == nullptr) return;
 
 				// 探索範囲(センサー)の可視化は発動可否・クールダウンに関係なく毎フレーム更新する
@@ -70,9 +65,7 @@ namespace ecs
 					Fire(registry, weapon, *masterData);
 				}
 
-				const auto* ownerStatus = registry.try_get<ecs::PlayerStatusComponent>(weapon.Owner);
-				const float cooldownRate = ownerStatus != nullptr ? ownerStatus->Current.CooldownRate : 1.0f;
-				runtime.CooldownTimer = masterData->FireInterval * cooldownRate;
+				runtime.CooldownTimer = masterData->FireInterval * ecs::combatutil::GetCooldownRate(registry, weapon.Owner);
 			});
 	}
 
@@ -135,8 +128,8 @@ namespace ecs
 			ownerPos.z + direction.z * masterData.ForwardOffset,
 		};
 
-		std::vector<entt::entity> found;
-		::sys::PhysicsSystem::OverlapSphere(registry, searchCenter, masterData.SearchRadius, found);
+		mFound.clear();
+		::sys::PhysicsSystem::OverlapSphere(registry, searchCenter, masterData.SearchRadius, mFound);
 
 		// AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
 		const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
@@ -144,7 +137,7 @@ namespace ecs
 		const float radius = masterData.Radius;
 
 		int spawned = 0;
-		for (entt::entity entity : found)
+		for (entt::entity entity : mFound)
 		{
 			if (spawned >= masterData.MaxTargets) break;
 			if (!registry.all_of<ecs::EnemyTag>(entity)) continue;
@@ -156,7 +149,7 @@ namespace ecs
 			++spawned;
 		}
 
-		DEBUG_LOG(sys::eLogLevel::Log, "AreaAttackWeaponSystem: found={} spawned={}", found.size(), spawned);
+		DEBUG_LOG(sys::eLogLevel::Log, "AreaAttackWeaponSystem: found={} spawned={}", mFound.size(), spawned);
 	}
 
 	/// <summary>1体の敵の座標に氷柱(ハザード)エンティティを1体生成する</summary>

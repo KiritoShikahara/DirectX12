@@ -101,10 +101,11 @@ namespace sys
     /// <summary>
     /// ecs::eMotionType から ObjectLayer を決定する
     /// </summary>
-    JPH::ObjectLayer PhysicsSystem::ToObjectLayer(ecs::eMotionType motionType, bool isSensor)
+    JPH::ObjectLayer PhysicsSystem::ToObjectLayer(ecs::eMotionType motionType, bool isSensor, bool disableSelfCollision)
     {
         if (isSensor)              return PhysicsLayer::Sensor;
         if (motionType == ecs::eMotionType::Static) return PhysicsLayer::NonMoving;
+        if (disableSelfCollision)  return PhysicsLayer::EnemyMoving;
         return PhysicsLayer::Moving;
     }
 
@@ -144,7 +145,7 @@ namespace sys
                     ToJolt(pos),
                     ToJoltQuat(rot),
                     ToJoltMotionType(rb.MotionType),
-                    ToObjectLayer(rb.MotionType, isSensor));
+                    ToObjectLayer(rb.MotionType, isSensor, rb.DisableSelfCollision));
 
                 settings.mFriction = rb.Friction;
                 settings.mRestitution = rb.Restitution;

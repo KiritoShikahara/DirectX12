@@ -2,6 +2,7 @@
 
 #include<DirectXMath.h>
 #include<entt/entt.hpp>
+#include<Data/Storage/Reflection.h>
 #include<string>
 #include<vector>
 
@@ -55,4 +56,45 @@ namespace ecs::effectutil
     /// LoadResource())にまとめて読み込んでおく。
     /// </summary>
     void PreloadEffect(const std::string& delimitedPaths);
+
+    namespace detail
+    {
+        /// <summary>
+        /// PreloadAllEffectPathFields<T>()の実装用ビジター。フィールド名が"EffectPath"で
+        /// 終わる文字列フィールドだけをPreloadEffect()へ渡す(命名規約: XxxEffectPath)。
+        /// </summary>
+        class EffectPathPreloadVisitor : public data::IFieldVisitor
+        {
+        public:
+            void OnInt(const std::string&, int&, data::eFieldFlag) override {}
+            void OnFloat(const std::string&, float&, data::eFieldFlag) override {}
+            void OnBool(const std::string&, bool&, data::eFieldFlag) override {}
+            void OnString(const std::string& name, std::string& value, data::eFieldFlag) override
+            {
+                constexpr std::string_view kSuffix = "EffectPath";
+                if (name.size() >= kSuffix.size() &&
+                    name.compare(name.size() - kSuffix.size(), kSuffix.size(), kSuffix) == 0)
+                {
+                    PreloadEffect(value);
+                }
+            }
+        };
+    }
+
+    /// <summary>
+    /// rowsの各要素をリフレクション(data::VisitFields)で走査し、フィールド名が"EffectPath"で
+    /// 終わる文字列フィールド(命名規約: XxxEffectPath)を全てPreloadEffect()へ渡す。
+    /// GameScene::PreloadWeaponEffects()が武器/必殺技マスタデータごとに個別のエフェクトパス
+    /// フィールド名を列挙していた重複を解消するために追加した。新しいエフェクトパスフィールドを
+    /// 追加した場合、命名規約に従っていれば自動的に先読み対象になる(呼び出し側の追記は不要)。
+    /// </summary>
+    template<typename T>
+    void PreloadAllEffectPathFields(const std::vector<T>& rows)
+    {
+        detail::EffectPathPreloadVisitor visitor;
+        for (const auto& row : rows)
+        {
+            data::VisitFields(row, visitor);
+        }
+    }
 }

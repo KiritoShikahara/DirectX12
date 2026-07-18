@@ -3,16 +3,12 @@
 
 #include"NovaWeaponRuntimeComponent.h"
 #include<system/Player/Weapon/Inventory/WeaponInventoryComponent.h>
-#include<system/Player/Status/PlayerStatusComponent.h>
+#include<system/Player/Weapon/WeaponUpdateUtil.h>
 #include<system/Player/Status/PlayerCombatUtil.h>
-#include<system/Player/PlayerActionLock.h>
-#include<system/Enemy/Status/EnemyStatusComponent.h>
 #include<Data/Weapon/NovaWeaponData.h>
-#include<Scene/Game/State/GameState.h>
 
 #include<system/Physics/System/PhysicsSystem.h>
 #include<ecs/component/Debug/DebugWireSphereComponent.h>
-#include<Tag/EntityTag.h>
 #include<system/Effect/EffectSpawnUtility.h>
 #include<system/Effect/TemporaryLifetimeComponent.h>
 
@@ -30,13 +26,9 @@ namespace ecs
 {
     void NovaWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
     {
-        // InGame中のみ発動する（PerkSelect/Result中に発動し続けないようにする）
-        auto stateView = registry.view<::ecs::GameStateComponent>();
-        if (stateView.begin() == stateView.end()) return;
-        if (registry.get<::ecs::GameStateComponent>(*stateView.begin()).GameState != ::sys::eGameState::InGame) return;
-        // 必殺技演出中は他の攻撃を発動させない(自動発動武器のためFlicker Strike中は止めない。
-        // 手動攻撃のみをIsPlayerActionLocked()で止める設計。PlayerActionLock.h参照)
-        if (ecs::IsPlayerUltimateActive(registry)) return;
+        // InGame中のみ発動する。必殺技演出中は他の攻撃を発動させない(自動発動武器のため
+        // Flicker Strike中は止めない設計。ecs::weaponutil::ShouldSkipAutoWeaponUpdate参照)
+        if (ecs::weaponutil::ShouldSkipAutoWeaponUpdate(registry)) return;
 
         registry.view<ecs::WeaponComponent, ecs::NovaWeaponRuntimeComponent>().each(
             [&](ecs::WeaponComponent& weapon, ecs::NovaWeaponRuntimeComponent& runtime)
@@ -50,7 +42,7 @@ namespace ecs
                 }
                 if (runtime.CooldownTimer > 0.0f) return;
 
-                const auto* masterData = DATA_MGR(data::NovaWeaponData).GetById((weapon.WeaponID + 1) * 1000 + weapon.Level);
+                const auto* masterData = DATA_MGR(data::NovaWeaponData).GetById(ecs::weaponutil::ComputeWeaponDataId(weapon));
                 if (masterData == nullptr) return;
 
                 // 攻撃回数パーク(AttackCountUp)分だけ発動を繰り返す
@@ -60,9 +52,7 @@ namespace ecs
                     Pulse(registry, weapon, *masterData);
                 }
 
-                const auto* ownerStatus = registry.try_get<ecs::PlayerStatusComponent>(weapon.Owner);
-                const float cooldownRate = ownerStatus != nullptr ? ownerStatus->Current.CooldownRate : 1.0f;
-                runtime.CooldownTimer = masterData->PulseInterval * cooldownRate;
+                runtime.CooldownTimer = masterData->PulseInterval * ecs::combatutil::GetCooldownRate(registry, weapon.Owner);
             });
     }
 
@@ -84,24 +74,12 @@ namespace ecs
         const float radius = masterData.Radius;
         const float hitRadius = radius * masterData.HitRadiusMultiplier;
 
-        std::vector<entt::entity> overlapped;
-        ::sys::PhysicsSystem::OverlapSphere(registry, center, hitRadius, overlapped);
+        mOverlapped.clear();
+        ::sys::PhysicsSystem::OverlapSphere(registry, center, hitRadius, mOverlapped);
 
-        for (entt::entity entity : overlapped)
+        for (entt::entity entity : mOverlapped)
         {
-            if (!registry.all_of<ecs::EnemyTag>(entity)) continue;
-
-            auto* status = registry.try_get<ecs::EnemyStatusComponent>(entity);
-            if (status == nullptr) continue;
-
-            // ノックバック等の物理的な反応はさせず、HPのみ減少させる
-            // （HPが0以下になった後の破棄は EnemyDeathSystem が担当する）
-            status->CurrentHp = std::max(0.0f, status->CurrentHp - damage);
-
-            if (const auto* enemyTransform = registry.try_get<ecs::Transform>(entity))
-            {
-                ecs::combatutil::SpawnDamageNumber(enemyTransform->GetPosition(), damage, false);
-            }
+            ecs::combatutil::ApplyDamageToEnemy(registry, entity, damage);
         }
 
         // 実際の判定半径(hitRadius)を可視化する（ImGui「Physics Debug」→「Show Colliders」）。

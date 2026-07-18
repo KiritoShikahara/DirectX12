@@ -108,6 +108,12 @@
     <ClCompile Include="src\system\Player\Status\PlayerCombatUtil.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\system\Player\Weapon\WeaponUpdateUtil.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Player\Weapon\WeaponTypeRegistry.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="src\system\Player\Status\PlayerRegenSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -264,6 +270,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\CameraFollow\CameraFollowOffsetComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\CameraFollow\CameraOverrideComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\CameraFollow\CameraPlayerFollowSystem.h">
@@ -462,6 +471,12 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\Player\Status\PlayerCombatUtil.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\WeaponUpdateUtil.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\WeaponTypeRegistry.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\Player\Status\PlayerRegenSystem.h">

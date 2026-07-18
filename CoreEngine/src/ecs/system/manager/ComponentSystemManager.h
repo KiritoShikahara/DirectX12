@@ -3,6 +3,7 @@
 #include <entt/entt.hpp>
 #include <vector>
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <Utility/Export/Export.h>
 #include <Utility/Singleton/Singleton.hpp>
@@ -62,11 +63,33 @@ namespace ecs
         /// 登録済みの全ユーザーシステムを削除する
         /// </summary>
         void ClearUserSystems();
+
+        /// <summary>
+        /// System1つ分の直近の所要時間(指数移動平均で平滑化済み)
+        /// </summary>
+        struct SystemTiming
+        {
+            std::string Name;
+            float       SmoothedMs = 0.0f;
+        };
+
+        /// <summary>
+        /// 指定フェーズに登録されている各Systemの直近の所要時間を返す(登録順)。
+        /// _DEBUG または DEV_TOOL_ENABLED 時のみ計測しており、それ以外では常に空を返す
+        /// (Releaseビルドで計測コストを払わないため)。
+        /// </summary>
+        const std::vector<SystemTiming>& GetSystemTimings(eUpdatePhase phase) const;
+
 	private:
         /// <summary>
         /// フェーズごとに管理するユーザー定義システムのリスト
         /// </summary>
         std::unordered_map<eUpdatePhase, std::vector<std::unique_ptr<IUserSystem>>> mUserSystems;
+
+#if defined(_DEBUG) || defined(DEV_TOOL_ENABLED)
+        // フェーズごとのSystem所要時間計測値(mUserSystemsと同じ順序で対応する)
+        std::unordered_map<eUpdatePhase, std::vector<SystemTiming>> mSystemTimings;
+#endif
 	};
 }
 

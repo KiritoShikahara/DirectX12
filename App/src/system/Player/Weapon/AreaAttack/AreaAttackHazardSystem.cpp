@@ -3,10 +3,8 @@
 
 #include"AreaAttackHazardComponent.h"
 #include<system/Physics/System/PhysicsSystem.h>
-#include<system/Enemy/Status/EnemyStatusComponent.h>
 #include<system/Player/Status/PlayerCombatUtil.h>
 #include<system/Player/PlayerActionLock.h>
-#include<Tag/EntityTag.h>
 
 namespace ecs
 {
@@ -15,7 +13,7 @@ namespace ecs
 		// 必殺技演出中は既存のハザードの継続ダメージも一時停止させる
 		if (ecs::IsPlayerActionLocked(registry)) return;
 
-		std::vector<entt::entity> expired;
+		mExpired.clear();
 
 		registry.view<AreaAttackHazardComponent, Transform>().each(
 			[&](entt::entity entity, AreaAttackHazardComponent& hazard, Transform& transform)
@@ -23,7 +21,7 @@ namespace ecs
 				hazard.RemainingDuration -= deltaTime;
 				if (hazard.RemainingDuration <= 0.0f)
 				{
-					expired.push_back(entity);
+					mExpired.push_back(entity);
 					return;
 				}
 
@@ -36,7 +34,7 @@ namespace ecs
 			});
 
 		// view走査完了後にまとめて破棄する（走査中の破棄はイテレータを不正化しうるため避ける）
-		for (entt::entity entity : expired)
+		for (entt::entity entity : mExpired)
 		{
 			DEBUG_LOG(sys::eLogLevel::Log, "AreaAttackHazardSystem: hazard entity={} expired and destroyed",
 				entt::to_integral(entity));
@@ -51,22 +49,12 @@ namespace ecs
 		float radius,
 		float damage)
 	{
-		std::vector<entt::entity> overlapped;
-		::sys::PhysicsSystem::OverlapSphere(registry, center, radius, overlapped);
+		mOverlapped.clear();
+		::sys::PhysicsSystem::OverlapSphere(registry, center, radius, mOverlapped);
 
-		for (entt::entity entity : overlapped)
+		for (entt::entity entity : mOverlapped)
 		{
-			if (!registry.all_of<ecs::EnemyTag>(entity)) continue;
-
-			auto* status = registry.try_get<ecs::EnemyStatusComponent>(entity);
-			if (status == nullptr) continue;
-
-			status->CurrentHp = std::max(0.0f, status->CurrentHp - damage);
-
-			if (const auto* enemyTransform = registry.try_get<ecs::Transform>(entity))
-			{
-				ecs::combatutil::SpawnDamageNumber(enemyTransform->GetPosition(), damage, false);
-			}
+			ecs::combatutil::ApplyDamageToEnemy(registry, entity, damage);
 		}
 	}
 }

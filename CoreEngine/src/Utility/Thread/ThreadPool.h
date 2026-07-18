@@ -53,6 +53,9 @@ namespace utility
 		/// </summary>
 		void WaitAll();
 
+		/// <summary>ワーカースレッド数を返す(Dispatch()に渡せる最大タスク数)</summary>
+		size_t WorkerCount() const { return mTaskSlots.size(); }
+
 	private:
 		void WorkerLoop(size_t workerIndex);
 

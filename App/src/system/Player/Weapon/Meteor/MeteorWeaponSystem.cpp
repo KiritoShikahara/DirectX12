@@ -3,12 +3,9 @@
 
 #include"MeteorWeaponRuntimeComponent.h"
 #include<system/Player/Weapon/Inventory/WeaponInventoryComponent.h>
-#include<system/Player/Status/PlayerStatusComponent.h>
+#include<system/Player/Weapon/WeaponUpdateUtil.h>
 #include<system/Player/Status/PlayerCombatUtil.h>
-#include<system/Player/PlayerActionLock.h>
-#include<system/Enemy/Status/EnemyStatusComponent.h>
 #include<Data/Weapon/MeteorWeaponData.h>
-#include<Scene/Game/State/GameState.h>
 
 #include<system/Physics/System/PhysicsSystem.h>
 #include<ecs/component/Debug/DebugWireSphereComponent.h>
@@ -39,13 +36,9 @@ namespace ecs
 {
 	void MeteorWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
-		// InGame中のみ発動する（PerkSelect/Result中に発動し続けないようにする）
-		auto stateView = registry.view<::ecs::GameStateComponent>();
-		if (stateView.begin() == stateView.end()) return;
-		if (registry.get<::ecs::GameStateComponent>(*stateView.begin()).GameState != ::sys::eGameState::InGame) return;
-		// 必殺技演出中は他の攻撃を発動させない(自動発動武器のためFlicker Strike中は止めない。
-		// 手動攻撃のみをIsPlayerActionLocked()で止める設計。PlayerActionLock.h参照)
-		if (ecs::IsPlayerUltimateActive(registry)) return;
+		// InGame中のみ発動する。必殺技演出中は他の攻撃を発動させない(自動発動武器のため
+		// Flicker Strike中は止めない設計。ecs::weaponutil::ShouldSkipAutoWeaponUpdate参照)
+		if (ecs::weaponutil::ShouldSkipAutoWeaponUpdate(registry)) return;
 
 		registry.view<ecs::WeaponComponent, ecs::MeteorWeaponRuntimeComponent>().each(
 			[&](ecs::WeaponComponent& weapon, ecs::MeteorWeaponRuntimeComponent& runtime)
@@ -59,7 +52,7 @@ namespace ecs
 				}
 				if (runtime.CooldownTimer > 0.0f) return;
 
-				const auto* masterData = DATA_MGR(data::MeteorWeaponData).GetById((weapon.WeaponID + 1) * 1000 + weapon.Level);
+				const auto* masterData = DATA_MGR(data::MeteorWeaponData).GetById(ecs::weaponutil::ComputeWeaponDataId(weapon));
 				if (masterData == nullptr) return;
 
 				// SearchRadius内に敵が1体も見つからなければクールダウンを消費せず待機する
@@ -73,9 +66,7 @@ namespace ecs
 					Fire(registry, weapon, *masterData);
 				}
 
-				const auto* ownerStatus = registry.try_get<ecs::PlayerStatusComponent>(weapon.Owner);
-				const float cooldownRate = ownerStatus != nullptr ? ownerStatus->Current.CooldownRate : 1.0f;
-				runtime.CooldownTimer = masterData->FireInterval * cooldownRate;
+				runtime.CooldownTimer = masterData->FireInterval * ecs::combatutil::GetCooldownRate(registry, weapon.Owner);
 			});
 	}
 
@@ -89,23 +80,23 @@ namespace ecs
 		const auto* ownerTransform = registry.try_get<ecs::Transform>(weapon.Owner);
 		if (ownerTransform == nullptr) return false;
 
-		std::vector<entt::entity> found;
-		::sys::PhysicsSystem::OverlapSphere(registry, ownerTransform->GetPosition(), masterData.SearchRadius, found);
+		mFound.clear();
+		::sys::PhysicsSystem::OverlapSphere(registry, ownerTransform->GetPosition(), masterData.SearchRadius, mFound);
 
-		std::vector<entt::entity> enemies;
-		enemies.reserve(found.size());
-		for (entt::entity entity : found)
+		mEnemies.clear();
+		mEnemies.reserve(mFound.size());
+		for (entt::entity entity : mFound)
 		{
 			if (registry.all_of<ecs::EnemyTag>(entity) && registry.all_of<ecs::Transform>(entity))
 			{
-				enemies.push_back(entity);
+				mEnemies.push_back(entity);
 			}
 		}
-		if (enemies.empty()) return false;
+		if (mEnemies.empty()) return false;
 
 		// 重複無しでランダムにMeteorCount体まで選ぶ
-		std::shuffle(enemies.begin(), enemies.end(), GetRandomEngine());
-		const int count = std::min<int>(masterData.MeteorCount, static_cast<int>(enemies.size()));
+		std::shuffle(mEnemies.begin(), mEnemies.end(), GetRandomEngine());
+		const int count = std::min<int>(masterData.MeteorCount, static_cast<int>(mEnemies.size()));
 
 		// AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
 		const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
@@ -117,7 +108,7 @@ namespace ecs
 
 		for (int i = 0; i < count; ++i)
 		{
-			const auto& targetTransform = registry.get<ecs::Transform>(enemies[i]);
+			const auto& targetTransform = registry.get<ecs::Transform>(mEnemies[i]);
 			const DirectX::XMFLOAT3& targetPos = targetTransform.GetPosition();
 			const DirectX::XMFLOAT3 strikePos =
 			{
@@ -141,24 +132,12 @@ namespace ecs
 		float visualRadius,
 		const data::MeteorWeaponData& masterData)
 	{
-		std::vector<entt::entity> overlapped;
-		::sys::PhysicsSystem::OverlapSphere(registry, position, hitRadius, overlapped);
+		mOverlapped.clear();
+		::sys::PhysicsSystem::OverlapSphere(registry, position, hitRadius, mOverlapped);
 
-		for (entt::entity entity : overlapped)
+		for (entt::entity entity : mOverlapped)
 		{
-			if (!registry.all_of<ecs::EnemyTag>(entity)) continue;
-
-			auto* status = registry.try_get<ecs::EnemyStatusComponent>(entity);
-			if (status == nullptr) continue;
-
-			// ノックバック等の物理的な反応はさせず、HPのみ減少させる
-			// （HPが0以下になった後の破棄は EnemyDeathSystem が担当する）
-			status->CurrentHp = std::max(0.0f, status->CurrentHp - damage);
-
-			if (const auto* enemyTransform = registry.try_get<ecs::Transform>(entity))
-			{
-				ecs::combatutil::SpawnDamageNumber(enemyTransform->GetPosition(), damage, false);
-			}
+			ecs::combatutil::ApplyDamageToEnemy(registry, entity, damage);
 		}
 
 		// 実際の判定半径(hitRadius)を可視化する（ImGui「Physics Debug」→「Show Colliders」）。

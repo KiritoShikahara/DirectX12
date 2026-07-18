@@ -3,24 +3,19 @@
 
 #include"SingleShotWeaponRuntimeComponent.h"
 #include<system/Player/Weapon/Inventory/WeaponInventoryComponent.h>
+#include<system/Player/Weapon/WeaponUpdateUtil.h>
 #include<system/Player/Weapon/Projectile/ProjectileComponent.h>
 #include<system/Player/AimSysten/PlayerAimComponent.h>
-#include<system/Player/Status/PlayerStatusComponent.h>
 #include<system/Player/Status/PlayerCombatUtil.h>
-#include<system/Player/PlayerActionLock.h>
 #include<Data/Weapon/SingleShotWeaponData.h>
-#include<Scene/Game/State/GameState.h>
 
 namespace ecs
 {
 	void SingleShotWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
-		// InGame中のみ発射する（PerkSelect/Result中に撃ち続けないようにする）
-		auto stateView = registry.view<::ecs::GameStateComponent>();
-		if (stateView.begin() == stateView.end()) return;
-		if (registry.get<::ecs::GameStateComponent>(*stateView.begin()).GameState != ::sys::eGameState::InGame) return;
-		// 必殺技演出中は他の攻撃を発動させない
-		if (ecs::IsPlayerActionLocked(registry)) return;
+		// InGame中のみ発射する。必殺技演出中は他の攻撃を発動させない
+		// (手動発動武器のためIsPlayerActionLocked()を使う。ecs::weaponutil::ShouldSkipManualWeaponUpdate参照)
+		if (ecs::weaponutil::ShouldSkipManualWeaponUpdate(registry)) return;
 
 		registry.view<ecs::WeaponComponent, ecs::SingleShotWeaponRuntimeComponent>().each(
 			[&](ecs::WeaponComponent& weapon, ecs::SingleShotWeaponRuntimeComponent& runtime)
@@ -43,7 +38,7 @@ namespace ecs
 				}
 				if (!wantsToFire) return;
 
-				const auto* masterData = DATA_MGR(data::SingleShotWeaponData).GetById((weapon.WeaponID + 1) * 1000 + weapon.Level);
+				const auto* masterData = DATA_MGR(data::SingleShotWeaponData).GetById(ecs::weaponutil::ComputeWeaponDataId(weapon));
 				if (masterData == nullptr) return;
 
 				// 攻撃回数パーク(AttackCountUp)分だけ扇状に発射する
@@ -53,9 +48,7 @@ namespace ecs
 					Fire(registry, weapon, *masterData, i, attackCount);
 				}
 
-				const auto* ownerStatus = registry.try_get<ecs::PlayerStatusComponent>(weapon.Owner);
-				const float cooldownRate = ownerStatus != nullptr ? ownerStatus->Current.CooldownRate : 1.0f;
-				runtime.CooldownTimer = masterData->FireInterval * cooldownRate;
+				runtime.CooldownTimer = masterData->FireInterval * ecs::combatutil::GetCooldownRate(registry, weapon.Owner);
 			});
 	}
 

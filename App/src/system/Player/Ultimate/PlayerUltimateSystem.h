@@ -49,7 +49,8 @@ namespace ecs
             const data::UltimateData& masterData,
             float rawDeltaTime);
 
-        /// <summary>プレイヤー背後・高い位置から見下ろす構図になるようカメラのTransformを直接更新する</summary>
+        /// <summary>プレイヤー背後・高い位置から見下ろす構図になるようカメラへ位置リクエストを発行する
+        /// (実際のTransform書き込みはCameraPlayerFollowSystemが行う)</summary>
         static void UpdateCamera(
             entt::registry& registry,
             entt::entity playerEntity,
