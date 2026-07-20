@@ -164,7 +164,7 @@ namespace sys
 
         sys::PerformanceMonitor::Get().Finalize();
 
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
         graphics::PhysicsDebugRenderer::Get().Finalize();
         graphics::LightDebugRenderer::Get().Finalize();
         sys::EditorUI::Get().Finalize();
@@ -301,7 +301,7 @@ namespace sys
         // 物理
         SINGLETON_REF(sys::PhysicsManager, PhysicsManager);
         if (PhysicsManager.Initialize(mEntityManager->GetRegistry()) == false) return false;
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
         if (graphics::PhysicsDebugRenderer::Get().Initialize() == false) return false;
         if (graphics::LightDebugRenderer::Get().Initialize() == false) return false;
         if (sys::EditorUI::Get().Initialize(mEntityManager->GetRegistry()) == false) return false;
@@ -416,9 +416,9 @@ namespace sys
             // ライト更新 (LightViewProj の計算も含む)
             sys::LightSystem::Update(registry);
 
-            sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::Effect);
+            sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::EffectUpdate);
             graphics::EffekseerManager::Get().Update(registry, dt);
-            sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::Effect);
+            sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::EffectUpdate);
         }
     }
 
@@ -470,6 +470,8 @@ namespace sys
         // ── 収集フェーズ ──────────────────────────────────────────
         // registry の読み取りと GPU バッファへの転送はすべてここで完結させる。
         {
+            sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::RenderCollect);
+
             fbxRenderer.Begin();
             fbxRenderer.UpdateAndDraw(registry);
 
@@ -487,7 +489,7 @@ namespace sys
             textRenderer.Begin();
             textRenderer.UpdateAndDraw(registry);
 
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
             SINGLETON_REF(graphics::PhysicsDebugRenderer, physicsDebugRenderer);
             physicsDebugRenderer.Begin();
             physicsDebugRenderer.UpdateAndDraw(registry);
@@ -496,6 +498,8 @@ namespace sys
             lightDebugRenderer.Begin();
             lightDebugRenderer.UpdateAndDraw(registry);
 #endif
+
+            sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::RenderCollect);
         }
 
         // ── 記録フェーズ ──────────────────────────────────────────
@@ -543,10 +547,10 @@ namespace sys
 
             // Effect: Effekseer はスレッドセーフでないため専用チャネルに隔離し、
             //         ワーカーと並行してメインスレッドで記録する。
-            sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::Effect);
+            sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::EffectDraw);
             EffekseerManager::Get().Draw(
                 registry, context->GetCommandList(eRenderChannel::Effect));
-            sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::Effect);
+            sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::EffectDraw);
 
             // Debug: デバッグ描画・トランジション・ImGui。
             //        いずれもスレッドセーフでないためメインスレッドで記録する。
@@ -554,7 +558,7 @@ namespace sys
                 sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::Debug);
                 auto* cmdList = context->GetCommandList(eRenderChannel::Debug);
 
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
                 graphics::PhysicsDebugRenderer::Get().End(cmdList);
                 graphics::LightDebugRenderer::Get().End(cmdList);
 #endif

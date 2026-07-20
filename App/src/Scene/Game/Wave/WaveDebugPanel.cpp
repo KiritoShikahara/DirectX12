@@ -56,6 +56,7 @@ namespace debug
                 wave.SpawnCountPerTick = row->SpawnCountPerTick;
                 wave.SpawnMarginMin = row->SpawnMarginMin;
                 wave.SpawnMarginMax = row->SpawnMarginMax;
+                wave.MaxAliveEnemy = row->MaxAliveEnemy;
                 wave.StatGrowthPerSecond = row->StatGrowthPerSecond;
                 wave.BossSpawnTime = row->BossSpawnTime;
                 wave.ClearTime = row->ClearTime;

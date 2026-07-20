@@ -1,7 +1,7 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "ComponentSystemManager.h"
 
-#if defined(_DEBUG) || defined(DEV_TOOL_ENABLED)
+#if DEV_TOOL_ENABLED
 #include <chrono>
 #include <typeinfo>
 #endif
@@ -17,7 +17,7 @@ namespace ecs
 			return;
 		}
 
-#if defined(_DEBUG) || defined(DEV_TOOL_ENABLED)
+#if DEV_TOOL_ENABLED
 		// System単位の所要時間を計測する(Performanceデバッグウィンドウでの内訳表示用)。
 		// 登録済みSystem数が変わった場合(シーン切り替え等)のみ計測用配列を作り直す
 		auto& timings = mSystemTimings[phase];
@@ -52,14 +52,14 @@ namespace ecs
 	void ComponentSystemManager::ClearUserSystems()
 	{
 		mUserSystems.clear();
-#if defined(_DEBUG) || defined(DEV_TOOL_ENABLED)
+#if DEV_TOOL_ENABLED
 		mSystemTimings.clear();
 #endif
 	}
 
 	const std::vector<ComponentSystemManager::SystemTiming>& ComponentSystemManager::GetSystemTimings(eUpdatePhase phase) const
 	{
-#if defined(_DEBUG) || defined(DEV_TOOL_ENABLED)
+#if DEV_TOOL_ENABLED
 		const auto it = mSystemTimings.find(phase);
 		if (it != mSystemTimings.end())
 		{

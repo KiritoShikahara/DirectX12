@@ -136,6 +136,21 @@ namespace graphics
     };
 
     /// <summary>
+    /// キーフレーム1点分の変換をTRS(スケール・回転クォータニオン・平行移動)へ分解したもの。
+    ///
+    /// アニメーション補間はTRS空間で行う必要があるが、XMMatrixDecomposeは非常に高価で、
+    /// かつ分解結果は「クリップ・ボーン・フレーム」だけで決まりエンティティには依存しない。
+    /// 行列のまま持つと再生中のキャラクター1体ごとに毎フレーム同じ分解を繰り返すことになる
+    /// (同じモデルの敵が100体いれば100回の重複)ため、読み込み時に一度だけ分解して保持する。
+    /// </summary>
+    struct FbxKeyFrameTrs
+    {
+        DirectX::XMFLOAT4 Scale = { 1.f, 1.f, 1.f, 0.f };       // xyzのみ使用
+        DirectX::XMFLOAT4 Rotation = { 0.f, 0.f, 0.f, 1.f };    // クォータニオン
+        DirectX::XMFLOAT4 Translation = { 0.f, 0.f, 0.f, 1.f }; // xyzのみ使用
+    };
+
+    /// <summary>
     /// アニメーションクリップ（.anmのエントリ）
     /// </summary>
     struct ENGINE_API FbxAnimClip
@@ -147,6 +162,10 @@ namespace graphics
 
         // KeyFrames[BoneIndex][FrameIndex] = ローカル変換行列 (未転置)
         std::vector<std::vector<DirectX::XMFLOAT4X4>> KeyFrames;
+
+        // KeyFrameTrs[BoneIndex][FrameIndex] = 上記をTRS分解したもの(読み込み時に一度だけ構築)。
+        // 実行時の補間はこちらだけを参照し、XMMatrixDecomposeを一切呼ばない
+        std::vector<std::vector<FbxKeyFrameTrs>> KeyFrameTrs;
     };
 
     // カメラGPUデータ

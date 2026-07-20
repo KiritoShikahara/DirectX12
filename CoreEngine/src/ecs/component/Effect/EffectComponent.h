@@ -49,13 +49,33 @@ namespace ecs
         bool LastIsVisible = false;
 
         /// <summary>
-        /// ループ再生を再始動した直後で、1フレームだけ非表示にしている最中か
+        /// 再生開始直後に非表示のままにしておく残りフレーム数
         /// (EffekseerManager::Update専用の内部状態。他システムから触らないこと)。
+        ///
         /// 生成直後のインスタンスはビルボードの向き等、前フレームとの差分に依存する項目が
-        /// まだ確定しておらず、素の四角形に近い見た目で1フレーム描画されることがあるため、
-        /// その1フレームだけ隠して内部状態が整うのを待つ。
+        /// まだ確定しておらず、素の四角形に近い見た目で描画されてしまうことがあるため、
+        /// 内部状態が整うまで隠しておく。
+        ///
+        /// 【重要】以前は「次のUpdateでIsPlaying()がtrueになったら表示を戻す」という
+        /// 実装だったが、Effekseerのワーカースレッドを有効にすると内部状態が確定する
+        /// タイミングが変わり、そのまま破棄されて一度も表示されない・崩れた見た目のまま
+        /// 表示され続ける、という不具合になった。
+        /// 実行環境やスレッド構成に依存しないよう、明示的なフレーム数で管理する。
         /// </summary>
-        bool IsHiddenAfterLoopRestart = false;
+        int HiddenFramesRemaining = 0;
+
+        // ── 最後にEffekseerへ適用した変換(EffekseerManager::Update専用の内部状態) ──
+        // Effekseer側のSetLocation/SetRotation/SetScaleはいずれも呼ぶたびに
+        // Handleでのstd::map検索(count+operator[]で2回)と行列の再構築を行うため、
+        // 全エフェクトに毎フレーム無条件で呼ぶと同時再生数に比例した無視できない負荷になる。
+        // 実際には回転・スケールが変化しないエフェクトが大半のため、前回適用値と比較して
+        // 変化したものだけを呼び直す。
+        // HasAppliedTransform==falseの間は初回(またはPlay()による再始動直後で
+        // Effekseer側の変換がリセットされた状態)とみなし、比較せず必ず適用する。
+        DirectX::XMFLOAT3 LastAppliedLocation = { 0.f, 0.f, 0.f };
+        DirectX::XMFLOAT3 LastAppliedRotation = { 0.f, 0.f, 0.f };
+        DirectX::XMFLOAT3 LastAppliedScale = { 0.f, 0.f, 0.f };
+        bool HasAppliedTransform = false;
     };
 
 } // namespace ecs

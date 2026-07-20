@@ -16,6 +16,7 @@
 
 #include<system/Physics/System/PhysicsSystem.h>
 #include<ecs/component/Debug/DebugWireSphereComponent.h>
+#include<graphics/Line/Renderer/PhysicsDebugRenderer.h>
 #include<Tag/EntityTag.h>
 #include<system/Effect/EffectSpawnUtility.h>
 #include<system/Effect/TemporaryLifetimeComponent.h>
@@ -278,15 +279,19 @@ namespace ecs
         // HitEffectPathは';'区切りで複数指定可能(ecs::effectutil::PlayOneShotCombined参照)。
         ecs::effectutil::PlayOneShotCombined(masterData.HitEffectPath, effectPos, masterData.HitEffectScale);
 
-        // 次のワープ先探索範囲(WarpSearchRadius)を可視化する（ImGui「Physics Debug」→「Show Colliders」）
-        auto& manager = ::ecs::EntityManager::Get();
-        auto wireEntity = manager.CreateEntity();
-        auto& wireTransform = manager.AddComponent<ecs::Transform>(wireEntity);
-        wireTransform.SetPosition(warpPos);
-        auto& wire = manager.AddComponent<ecs::DebugWireSphereComponent>(wireEntity);
-        wire.Radius = masterData.WarpSearchRadius;
-        wire.Color = { 1.0f, 1.0f, 0.3f, 1.0f }; // フリッカーらしい黄色
-        manager.AddComponent<ecs::TemporaryLifetimeComponent>(wireEntity).RemainingTime = kDebugWireLifetime;
+        // 次のワープ先探索範囲(WarpSearchRadius)を可視化する（ImGui「Physics Debug」→「Show Colliders」）。
+        // トグルOFF中は描画されず無駄なため、ONの時だけ生成する。
+        if (graphics::PhysicsDebugRenderer::Get().IsEnabled())
+        {
+            auto& manager = ::ecs::EntityManager::Get();
+            auto wireEntity = manager.CreateEntity();
+            auto& wireTransform = manager.AddComponent<ecs::Transform>(wireEntity);
+            wireTransform.SetPosition(warpPos);
+            auto& wire = manager.AddComponent<ecs::DebugWireSphereComponent>(wireEntity);
+            wire.Radius = masterData.WarpSearchRadius;
+            wire.Color = { 1.0f, 1.0f, 0.3f, 1.0f }; // フリッカーらしい黄色
+            manager.AddComponent<ecs::TemporaryLifetimeComponent>(wireEntity).RemainingTime = kDebugWireLifetime;
+        }
     }
 
     /// <summary>シーケンスを終了する：無敵化解除、状態リセット</summary>

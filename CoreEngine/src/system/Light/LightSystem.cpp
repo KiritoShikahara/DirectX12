@@ -123,7 +123,7 @@ namespace sys
 
     void LightSystem::DebugUI(entt::registry& registry)
     {
-#if defined(_DEBUG) || defined(DEV_TOOL_ENABLED)
+#if DEV_TOOL_ENABLED
         sys::ImGuiManager::Get().AddDebugUI([&registry]()
             {
                 if (!ImGui::Begin("Light Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize))

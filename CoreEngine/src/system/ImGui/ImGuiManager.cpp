@@ -19,7 +19,12 @@ namespace sys
 	/// <returns>true:成功 false:失敗</returns>
 	bool ImGuiManager::Initialize(sys::Window& window, graphics::DX12Device& device, graphics::DX12Context& context, graphics::GDescriptorHeapManager& descriptorHeapManager)
 	{
-#if !defined(_DEBUG)
+		// 【重要】この条件は NewFrame()/Update()/EndFrame() 側と必ず一致させること。
+		// 以前ここだけが _DEBUG 判定で、描画側が DEV_TOOL_ENABLED 判定になっていたため、
+		// Develop相当(最適化あり+開発ツール有効)の構成にすると
+		// 「初期化されていないImGuiに対してNewFrame()を呼ぶ」状態になり、
+		// 起動直後にアクセス違反で落ちていた。
+#if !DEV_TOOL_ENABLED
 		mIsInitialized = false; // 初期化フラグはfalseのまま
 		return true;
 #endif
@@ -111,7 +116,7 @@ namespace sys
 	/// <summary>フレーム開始。BeginRendering の直後に呼ぶ。</summary>
 	void ImGuiManager::NewFrame()
 	{
-#if defined(_DEBUG) || DEV_TOOL_ENABLED
+#if DEV_TOOL_ENABLED
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
@@ -124,7 +129,7 @@ namespace sys
 	/// </summary>
 	void ImGuiManager::Update()
 	{
-#if defined(_DEBUG) || DEV_TOOL_ENABLED
+#if DEV_TOOL_ENABLED
 		// RemoveDebugUI が Update() 中のコールバック内から呼ばれる可能性があるため
 		// （例：UI 自身の「閉じる」ボタンが RemoveDebugUI を呼ぶケース）、
 		// イテレート用に keys をコピーしてから回す。
@@ -152,7 +157,7 @@ namespace sys
 	/// <param name="cmdList">記録先のコマンドリスト</param>
 	void ImGuiManager::EndFrame(ID3D12GraphicsCommandList* cmdList)
 	{
-#if defined(_DEBUG) || DEV_TOOL_ENABLED
+#if DEV_TOOL_ENABLED
 		if (!mIsInitialized || cmdList == nullptr) return;
 
 		// 描画データの確定
@@ -184,7 +189,7 @@ namespace sys
 	/// </summary>
 	void ImGuiManager::AddDebugUI(std::function<void()> guiFunc, const std::string& key)
 	{
-#if defined(_DEBUG) || DEV_TOOL_ENABLED
+#if DEV_TOOL_ENABLED
 		mDebugUIFunctions[key] = std::move(guiFunc);
 #endif
 	}
@@ -194,7 +199,7 @@ namespace sys
 	/// </summary>
 	void ImGuiManager::RemoveDebugUI(const std::string& key)
 	{
-#if defined(_DEBUG) || DEV_TOOL_ENABLED
+#if DEV_TOOL_ENABLED
 		mDebugUIFunctions.erase(key);
 #endif
 	}
@@ -204,7 +209,7 @@ namespace sys
 	/// </summary>
 	bool ImGuiManager::HasDebugUI(const std::string& key) const
 	{
-#if defined(_DEBUG) || DEV_TOOL_ENABLED
+#if DEV_TOOL_ENABLED
 		return mDebugUIFunctions.count(key) > 0;
 #else
 		return false;
@@ -216,7 +221,7 @@ namespace sys
 	/// </summary>
 	void ImGuiManager::ClearDebugUI()
 	{
-#if defined(_DEBUG) || DEV_TOOL_ENABLED
+#if DEV_TOOL_ENABLED
 		mDebugUIFunctions.clear();
 #endif
 	}

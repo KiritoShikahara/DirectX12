@@ -26,6 +26,12 @@ namespace ecs
         /// </summary>
         float SpawnMarginMin = 4.0f;
         float SpawnMarginMax = 12.0f;
+        /// <summary>
+        /// 同時に生存可能な敵の上限数。0以下で無制限（既定＝無効）。
+        /// 上限に達している間は通常スポーンを一時停止する（ボースは常に対象外）。
+        /// 性能対策ではなくゲームデザイン上の調整値（data::WaveData参照）。
+        /// </summary>
+        int MaxAliveEnemy = 0;
 
         // ── 難易度スケーリング ────────────────────────────────
         /// <summary>

@@ -62,6 +62,13 @@ namespace graphics
 		/// </summary>
 		void End(ID3D12GraphicsCommandList* cmdList);
 
+		/// <summary>
+		/// 「Show Colliders」がONかどうか。ヒット時のデバッグ可視化用エンティティ
+		/// （DebugWireSphereComponent）の生成要否を、各武器システム側から
+		/// 判定するために公開している（OFF中に生成しても描画されず無駄なため）。
+		/// </summary>
+		bool IsEnabled() const { return mEnabled; }
+
 	private:
 
 		/// <summary>ワイヤーフレーム頂点（Position + Color）</summary>
@@ -119,7 +126,16 @@ namespace graphics
 		graphics::GDescriptorHeapManager* mHeapManager = nullptr;
 		bool mIsInitialized = false;
 
+		// 全RigidBody+ColliderのJolt三角形抽出とライン構築を毎フレーム行うため、
+		// Releaseでは無効を既定にする（ImGuiトグル自体をReleaseから除外しているため、
+		// ここでOFFにしておかないと常時有効のまま切り替える手段がなくなる）。
+		// Debugでは開発中の当たり判定確認のため、従来通りデフォルトONのままにする
+		// （実測ではこの可視化自体はfps低下の主要因ではなかったため、開発体験を優先する）。
+#ifdef _DEBUG
 		bool              mEnabled = true;
+#else
+		bool              mEnabled = false;
+#endif
 		DirectX::XMFLOAT4 mDynamicColor = { 1.f, 0.f, 0.f, 1.f }; // 動的（赤）
 		DirectX::XMFLOAT4 mStaticColor = { 0.f, 1.f, 0.f, 1.f }; // 静的（緑）
 		DirectX::XMFLOAT4 mKinematicColor = { 0.f, 0.5f, 1.f, 1.f }; // キネマティック（青）

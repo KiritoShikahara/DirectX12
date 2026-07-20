@@ -236,6 +236,30 @@ namespace graphics
         }
 
         fclose(fp);
+
+        // 実行時のXMMatrixDecomposeを無くすため、ここで一度だけTRSへ分解しておく。
+        // 分解結果はエンティティに依存しないため、同じモデルを何体表示しても再利用できる
+        clip.KeyFrameTrs.resize(clip.KeyFrames.size());
+        for (size_t b = 0; b < clip.KeyFrames.size(); ++b)
+        {
+            const auto& track = clip.KeyFrames[b];
+            auto& trsTrack = clip.KeyFrameTrs[b];
+            trsTrack.resize(track.size());
+
+            for (size_t f = 0; f < track.size(); ++f)
+            {
+                DirectX::XMVECTOR scale, rotation, translation;
+                if (DirectX::XMMatrixDecompose(&scale, &rotation, &translation,
+                    DirectX::XMLoadFloat4x4(&track[f])))
+                {
+                    DirectX::XMStoreFloat4(&trsTrack[f].Scale, scale);
+                    DirectX::XMStoreFloat4(&trsTrack[f].Rotation, rotation);
+                    DirectX::XMStoreFloat4(&trsTrack[f].Translation, translation);
+                }
+                // 分解に失敗した場合(退化した行列など)は既定値(単位変換)のままにする
+            }
+        }
+
         mAnimClips.push_back(std::move(clip));
         return true;
     }

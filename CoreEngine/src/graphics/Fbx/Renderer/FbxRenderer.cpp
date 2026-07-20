@@ -91,12 +91,47 @@ namespace graphics
         mBoneData.reserve(MAX_TOTAL_BONES);
         mDrawCalls.reserve(MAX_FBX_INSTANCES * 4);
 
+        // 距離LODの切り替えUI(開発ツール有効時のみ。PhysicsDebugRendererと同じ流儀)
+#if DEV_TOOL_ENABLED
+        sys::ImGuiManager::Get().AddDebugUI([this]() { ImGuiWindow(); }, "FbxRenderer");
+#endif
+
         DEBUG_LOG(sys::eLogLevel::Log, "FbxRenderer: Initialized successfully.");
         return true;
     }
 
+    void FbxRenderer::ImGuiWindow()
+    {
+#if DEV_TOOL_ENABLED
+        if (ImGui::Begin("Rendering"))
+        {
+            ImGui::TextUnformatted("Skinned Animation LOD");
+            ImGui::Checkbox("Distance LOD", &mAnimationDistanceLodEnabled);
+
+            // このファイルはBOM無しのため、文字列リテラルに日本語を使うと
+            // コードページ932として誤解釈されコンパイルが壊れる。
+            // 既存のデバッグUI(PhysicsDebugRenderer等)と同じく表示は英語で統一する。
+            if (mAnimationDistanceLodEnabled)
+            {
+                ImGui::DragFloat("Update Distance (m)", &mAnimationUpdateDistance, 1.0f, 1.0f, 1000.0f);
+                ImGui::TextDisabled("Characters beyond this distance");
+                ImGui::TextDisabled("appear frozen (animation skipped).");
+            }
+            else
+            {
+                ImGui::TextDisabled("Disabled (default): all characters update.");
+            }
+        }
+        ImGui::End();
+#endif
+    }
+
     void FbxRenderer::Finalize()
     {
+#if DEV_TOOL_ENABLED
+        sys::ImGuiManager::Get().RemoveDebugUI("FbxRenderer");
+#endif
+
         mShadowMapSRV.Release();
         mShadowMapNullSRV.Release();
         mInstanceBuffer.reset();
@@ -267,7 +302,27 @@ namespace graphics
         {
             const bool hasAnimation = (item.Anim && item.Fbx->Resource->HasSkinning());
             if (hasAnimation)
-                item.Anim->CalcBoneMatrices(*item.Fbx->Resource);
+            {
+                // 距離LODが無効(既定)なら常に計算する。
+                // 有効時はカメラから遠いエンティティ(画面外含む)のボーン行列再計算を間引き、
+                // 最後に計算済みの姿勢のまま描画する。BoneMatricesが一度も計算されていない
+                // 場合(生成直後)は、Tポーズのまま描画されるのを避けるため必ず計算する。
+                bool needsCalc = true;
+
+                if (mAnimationDistanceLodEnabled && !item.Anim->BoneMatrices.empty())
+                {
+                    const XMFLOAT3& pos = item.Transform->GetPosition();
+                    const float dx = pos.x - scene.CameraPosition.x;
+                    const float dy = pos.y - scene.CameraPosition.y;
+                    const float dz = pos.z - scene.CameraPosition.z;
+                    const float distSq = dx * dx + dy * dy + dz * dz;
+
+                    needsCalc = (distSq <= mAnimationUpdateDistance * mAnimationUpdateDistance);
+                }
+
+                if (needsCalc)
+                    item.Anim->CalcBoneMatrices(*item.Fbx->Resource);
+            }
 
             XMFLOAT3 pivot = { 0.f, 0.f, 0.f };
             if (!hasAnimation)

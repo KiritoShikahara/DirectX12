@@ -11,6 +11,7 @@
 
 #include<system/Physics/System/PhysicsSystem.h>
 #include<ecs/component/Debug/DebugWireSphereComponent.h>
+#include<graphics/Line/Renderer/PhysicsDebugRenderer.h>
 #include<Tag/EntityTag.h>
 #include<system/Effect/EffectSpawnUtility.h>
 #include<system/Effect/TemporaryLifetimeComponent.h>
@@ -123,15 +124,19 @@ namespace ecs
         };
 
         // 実際の判定射程(hitRadius)を可視化する（ImGui「Physics Debug」→「Show Colliders」）。
-        // 球形での近似表示のため、実際の扇状範囲(ConeAngleDegrees)より広く見える点に注意
-        auto& manager = ::ecs::EntityManager::Get();
-        auto wireEntity = manager.CreateEntity();
-        auto& wireTransform = manager.AddComponent<ecs::Transform>(wireEntity);
-        wireTransform.SetPosition(ownerPos);
-        auto& wire = manager.AddComponent<ecs::DebugWireSphereComponent>(wireEntity);
-        wire.Radius = hitRadius;
-        wire.Color = { 0.9f, 0.6f, 0.1f, 1.0f }; // 近接武器らしい橙
-        manager.AddComponent<ecs::TemporaryLifetimeComponent>(wireEntity).RemainingTime = kDebugWireLifetime;
+        // 球形での近似表示のため、実際の扇状範囲(ConeAngleDegrees)より広く見える点に注意。
+        // トグルOFF中は描画されず無駄なため、ONの時だけ生成する。
+        if (graphics::PhysicsDebugRenderer::Get().IsEnabled())
+        {
+            auto& manager = ::ecs::EntityManager::Get();
+            auto wireEntity = manager.CreateEntity();
+            auto& wireTransform = manager.AddComponent<ecs::Transform>(wireEntity);
+            wireTransform.SetPosition(ownerPos);
+            auto& wire = manager.AddComponent<ecs::DebugWireSphereComponent>(wireEntity);
+            wire.Radius = hitRadius;
+            wire.Color = { 0.9f, 0.6f, 0.1f, 1.0f }; // 近接武器らしい橙
+            manager.AddComponent<ecs::TemporaryLifetimeComponent>(wireEntity).RemainingTime = kDebugWireLifetime;
+        }
 
         // 見た目のサイズは判定射程(hitRadius)ではなくradius(見た目基準)に合わせる。
         // EffectPathは';'区切りで複数指定可能(ecs::effectutil::PlayOneShotCombined参照)。

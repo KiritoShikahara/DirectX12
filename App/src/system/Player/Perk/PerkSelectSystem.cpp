@@ -7,6 +7,7 @@
 #include<system/Player/Perk/PlayerPerkLevelComponent.h>
 #include<system/Player/Level/PlayerLevelComponent.h>
 #include<Scene/Game/Factory/GameSceneFactory.h>
+#include<Scene/Game/Debug/GameDebugSettings.h>
 #include<Tag/EntityTag.h>
 
 #include<random>
@@ -18,15 +19,16 @@ namespace ecs
 		// プロセス全体で1つの乱数エンジンを使い回す（毎フレーム再生成しない）
 		std::mt19937& GetRandomEngine()
 		{
-			static std::mt19937 engine{ std::random_device{}() };
+			static std::mt19937 engine = ::debug::GameDebugSettings::Get().MakeRandomEngine();
 			return engine;
 		}
 
-		// レイアウト定数（仮想解像度1280x720基準、画面中央に3枠を横並び。個人開発プロトタイプの暫定値）
-		constexpr float kOptionY = 400.0f;
-		constexpr float kOptionSpacingX = 320.0f;
+		// レイアウト定数（仮想解像度1280x720基準。5択かつ名前が長い選択肢があるため縦並び。
+		// 個人開発プロトタイプの暫定値）
+		constexpr float kOptionY = 240.0f;
+		constexpr float kOptionSpacingY = 60.0f;
 		constexpr float kOptionCenterX = 640.0f;
-		constexpr float kOptionTextSize = 36.0f;
+		constexpr float kOptionTextSize = 32.0f;
 
 		const DirectX::XMFLOAT4 kNormalColor = { 0.7f, 0.7f, 0.7f, 1.0f };
 		const DirectX::XMFLOAT4 kSelectedColor = { 1.0f, 0.9f, 0.2f, 1.0f };
@@ -104,6 +106,60 @@ namespace ecs
 		HandleInput(registry, controllerEntity, *select);
 	}
 
+	int PerkSelectSystem::TakeByType(
+		std::vector<int>& candidates, const std::vector<PerkDefinition>& pool, ePerkEffectType type)
+	{
+		// 同じ種別が複数ある(新武器は武器ごとに1件ある)ため、その中からランダムに1つ選ぶ
+		std::vector<int> matched;
+		for (size_t i = 0; i < candidates.size(); ++i)
+		{
+			if (pool[candidates[i]].Type == type) matched.push_back(static_cast<int>(i));
+		}
+		if (matched.empty()) return -1;
+
+		std::uniform_int_distribution<size_t> dist(0, matched.size() - 1);
+		const int pickedPos = matched[dist(GetRandomEngine())];
+		const int pickedIndex = candidates[pickedPos];
+
+		// 重複提示を避けるため、選んだものは候補から取り除く
+		candidates.erase(candidates.begin() + pickedPos);
+		return pickedIndex;
+	}
+
+	int PerkSelectSystem::TakeWeighted(
+		std::vector<int>& candidates, const std::vector<PerkDefinition>& pool)
+	{
+		// 「その他」枠の抽選。1・2番目の枠で扱う武器系は対象外にする
+		// (それらは枠が固定されているため、ここで重複して出す必要がない)
+		float totalWeight = 0.0f;
+		for (int index : candidates)
+		{
+			const ePerkEffectType type = pool[index].Type;
+			if (type == ePerkEffectType::AcquireWeapon || type == ePerkEffectType::WeaponLevelUp) continue;
+			totalWeight += GetPerkWeight(type);
+		}
+		if (totalWeight <= 0.0f) return -1;
+
+		std::uniform_real_distribution<float> dist(0.0f, totalWeight);
+		float threshold = dist(GetRandomEngine());
+
+		for (size_t i = 0; i < candidates.size(); ++i)
+		{
+			const ePerkEffectType type = pool[candidates[i]].Type;
+			if (type == ePerkEffectType::AcquireWeapon || type == ePerkEffectType::WeaponLevelUp) continue;
+
+			threshold -= GetPerkWeight(type);
+			if (threshold <= 0.0f)
+			{
+				const int pickedIndex = candidates[i];
+				candidates.erase(candidates.begin() + i);
+				return pickedIndex;
+			}
+		}
+
+		return -1;
+	}
+
 	void PerkSelectSystem::EnterPerkSelect(entt::registry& registry, entt::entity controllerEntity)
 	{
 		const auto& pool = GetPerkPool();
@@ -135,16 +191,49 @@ namespace ecs
 		}
 		if (validIndices.empty()) return; // 提示できるパークが無い（現状のプールでは基本発生しない）
 
-		std::shuffle(validIndices.begin(), validIndices.end(), GetRandomEngine());
-
 		auto& select = registry.emplace<PerkSelectComponent>(controllerEntity);
 		select.SelectedIndex = 0;
 
-		const int choiceCount = std::min<int>(PerkSelectComponent::kChoiceCount, static_cast<int>(validIndices.size()));
+		// ── 枠ごとの役割に沿って選択肢を決める ──────────────────────
+		// 1番目: 新武器獲得(スロットが埋まっている等で出せなければ武器レベルアップ)
+		// 2番目: 武器レベルアップ
+		// 3番目以降: その他(PerkData::Weightによる重み付き抽選)
+		// いずれも該当が無ければ「その他」で埋める。
+		// 既に選んだものは除外し、同じ選択肢が重複して並ばないようにする
+		std::vector<int> remaining = validIndices;
+
+		select.ChoiceIndices[0] = TakeByType(remaining, pool, ePerkEffectType::AcquireWeapon);
+		if (select.ChoiceIndices[0] < 0)
+		{
+			select.ChoiceIndices[0] = TakeByType(remaining, pool, ePerkEffectType::WeaponLevelUp);
+		}
+
+		select.ChoiceIndices[1] = TakeByType(remaining, pool, ePerkEffectType::WeaponLevelUp);
+
+		for (int i = 2; i < PerkSelectComponent::kChoiceCount; ++i)
+		{
+			select.ChoiceIndices[i] = -1;
+		}
+
+		// 未確定の枠を「その他」から重み付きで埋める
 		for (int i = 0; i < PerkSelectComponent::kChoiceCount; ++i)
 		{
-			// 候補が3件未満の場合は循環して埋める（現状のプールでは基本発生しない保険）
-			select.ChoiceIndices[i] = validIndices[i % choiceCount];
+			if (select.ChoiceIndices[i] >= 0) continue;
+			select.ChoiceIndices[i] = TakeWeighted(remaining, pool);
+		}
+
+		// それでも埋まらない場合(候補が選択肢数より少ない)は、
+		// 既に提示済みのものを循環させて埋める
+		int fallbackSource = -1;
+		for (int i = 0; i < PerkSelectComponent::kChoiceCount; ++i)
+		{
+			if (select.ChoiceIndices[i] >= 0) { fallbackSource = select.ChoiceIndices[i]; break; }
+		}
+		if (fallbackSource < 0) return; // 1つも選べなかった(通常発生しない)
+
+		for (int i = 0; i < PerkSelectComponent::kChoiceCount; ++i)
+		{
+			if (select.ChoiceIndices[i] < 0) select.ChoiceIndices[i] = fallbackSource;
 		}
 
 		auto& manager = ENTITY_MANAGER;
@@ -155,8 +244,9 @@ namespace ecs
 			auto entity = manager.CreateEntity();
 			auto& text = manager.AddComponent<TextComponent>(entity);
 			text.Text = perk.Name;
-			text.X = kOptionCenterX + static_cast<float>(i - 1) * kOptionSpacingX - 100.0f;
-			text.Y = kOptionY;
+			// 5択かつ名前が長いもの(トレードオフ系)があるため、横並びではなく縦に並べる
+			text.X = kOptionCenterX - 260.0f;
+			text.Y = kOptionY + static_cast<float>(i) * kOptionSpacingY;
 			text.Size = kOptionTextSize;
 			text.Color = (i == select.SelectedIndex) ? kSelectedColor : kNormalColor;
 			text.Layer = 10;
@@ -169,11 +259,25 @@ namespace ecs
 	{
 		auto& input = ::sys::InputManager::Get();
 
-		if (input.IsActionPressed("MenuLeft"))
+		// 自動選択(性能計測の自動化用)。パーク選択中はTimeScale=0でゲームが停止するため、
+		// 入力しない限り永久に進まず、高負荷状態を継続して計測できない。
+		// 有効時は先頭の選択肢を即座に確定してゲームへ戻す
+		if (::debug::GameDebugSettings::Get().IsAutoSelectPerk())
+		{
+			const auto& autoPool = GetPerkPool();
+			const int autoIndex = select.ChoiceIndices[select.SelectedIndex];
+			ApplyPerk(registry, autoPool[autoIndex]);
+			IncrementPerkPickCount(registry, autoIndex);
+			ExitPerkSelect(registry, controllerEntity);
+			return;
+		}
+
+		// 縦並びのため上下で移動する(左右も同じ動作にして取りこぼしを防ぐ)
+		if (input.IsActionPressed("MenuUp") || input.IsActionPressed("MenuLeft"))
 		{
 			select.SelectedIndex = (select.SelectedIndex + PerkSelectComponent::kChoiceCount - 1) % PerkSelectComponent::kChoiceCount;
 		}
-		else if (input.IsActionPressed("MenuRight"))
+		else if (input.IsActionPressed("MenuDown") || input.IsActionPressed("MenuRight"))
 		{
 			select.SelectedIndex = (select.SelectedIndex + 1) % PerkSelectComponent::kChoiceCount;
 		}
@@ -237,6 +341,60 @@ namespace ecs
 			break;
 		case ePerkEffectType::HealHp:
 			status.CurrentHp = std::min(status.Current.MaxHp, status.CurrentHp + status.Current.MaxHp * perk.Magnitude);
+			break;
+		case ePerkEffectType::AllStatsUp:
+		{
+			// 攻撃間隔(CooldownRate)だけは「小さいほど速い」ため符号を反転して適用する
+			const float beforeMaxHp = status.Current.MaxHp;
+			status.Modifier.MulMaxHp += perk.Magnitude;
+			status.Modifier.MulMoveSpeed += perk.Magnitude;
+			status.Modifier.MulAtkPower += perk.Magnitude;
+			status.Modifier.MulDefense += perk.Magnitude;
+			status.Modifier.MulCooldownRate -= perk.Magnitude;
+			status.Recompute();
+			// MaxHpUpと同じく、増えた最大HP分は現在HPにも反映する
+			status.CurrentHp += (status.Current.MaxHp - beforeMaxHp);
+			break;
+		}
+		case ePerkEffectType::Revive:
+			// 死亡時にPlayerContactDamageSystemが1つ消費して全回復させる
+			status.ReviveCount += 1;
+			break;
+		case ePerkEffectType::GlassCannon:
+		{
+			status.Modifier.MulAtkPower += perk.Magnitude;
+			status.Recompute();
+
+			auto* level = registry.try_get<PlayerLevelComponent>(playerEntity);
+			if (level != nullptr)
+			{
+				// 経験値倍率が0以下になると一切レベルアップできなくなるためクランプする
+				constexpr float kMinExperienceGain = 0.1f;
+				level->MulExperienceGain = std::max(
+					kMinExperienceGain, level->MulExperienceGain - perk.TradeoffMagnitude);
+			}
+			break;
+		}
+		case ePerkEffectType::Berserk:
+		{
+			const float beforeMaxHp = status.Current.MaxHp;
+
+			status.Modifier.MulMoveSpeed += perk.Magnitude;
+			status.Modifier.MulCooldownRate -= perk.Magnitude;
+			status.Modifier.MulMaxHp -= perk.TradeoffMagnitude;
+			status.Recompute();
+
+			// 最大HPが減った分は現在HPからも引く。
+			// ただし0以下になると即死してしまうため、最低1は残す
+			const float maxHpDelta = status.Current.MaxHp - beforeMaxHp;
+			status.CurrentHp = std::max(1.0f, std::min(status.CurrentHp + maxHpDelta, status.Current.MaxHp));
+			break;
+		}
+		case ePerkEffectType::Reckless:
+			status.Modifier.MulAttackCount += perk.Magnitude;
+			// 防御力は0未満にすると被ダメージ計算(半減点方式)が破綻するためクランプする
+			status.Modifier.MulDefense = std::max(0.0f, status.Modifier.MulDefense - perk.TradeoffMagnitude);
+			status.Recompute();
 			break;
 		case ePerkEffectType::ExperienceGainUp:
 		{

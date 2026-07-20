@@ -80,6 +80,15 @@ namespace ecs
         void BuildSkinMatrices(
             const graphics::FbxResource& resource,
             const std::vector<DirectX::XMMATRIX>& localMats);
+
+        // ── CalcBoneMatrices()内の作業バッファ ──────────────────
+        // 敵を含む全FBXエンティティが毎フレーム呼ぶ経路のため、ローカル変数にすると
+        // 毎フレーム・毎エンティティでヒープ確保が発生してしまう。メンバとして
+        // 永続化し使い回す(resize()はボーン数が変化した場合のみ実質再確保される)。
+        std::vector<DirectX::XMMATRIX> mCurrLocal;
+        std::vector<DirectX::XMMATRIX> mPrevLocal;
+        std::vector<DirectX::XMMATRIX> mBlendedLocal;
+        std::vector<DirectX::XMMATRIX> mWorldMats;
     };
 
 } // namespace ecs

@@ -3,6 +3,8 @@
 #include<ecs/system/manager/IComponentSystem.h>
 #include<string>
 
+namespace data { struct StatUpgradeData; }
+
 namespace ecs
 {
 	struct StatusUpgradeComponent;
@@ -29,5 +31,21 @@ namespace ecs
 		static void TryOpenConfirm(StatusUpgradeComponent& upgrade);
 		static void ConfirmPurchase(StatusUpgradeComponent& upgrade);
 		static void ShowMessage(StatusUpgradeComponent& upgrade, std::wstring message);
+
+		/// <summary>
+		/// 選択中の項目を、所持ゴールドで買える範囲かつ最大レベルまで一気に強化する。
+		/// 1レベルずつ何度も確認ダイアログを挟むのが煩雑なため用意する。
+		/// </summary>
+		static void PurchaseMaxLevel(StatusUpgradeComponent& upgrade);
+
+		/// <summary>
+		/// 全ステータスの強化レベルを0へ戻し、消費したゴールドを全額払い戻す。
+		/// 振り直しができないと構成を試せないため用意する
+		/// (払い戻し額は購入時と同じ計算式で求めるため、損得は発生しない)。
+		/// </summary>
+		static void ResetAllUpgrades(StatusUpgradeComponent& upgrade);
+
+		/// <summary>指定項目を現在レベルから1つ上げるのに必要なゴールド</summary>
+		static int ComputeCost(const data::StatUpgradeData& upgradeData, int currentLevel);
 	};
 }

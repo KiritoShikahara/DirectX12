@@ -20,7 +20,7 @@ namespace ecs
         const float screenHeight = static_cast<float>(window.GetVirtualHeight());
         const DirectX::XMMATRIX viewProj = camera->GetViewProjectionMatrix();
 
-        std::vector<entt::entity> expired;
+        mExpired.clear();
 
         registry.view<ecs::DamageNumberComponent, ecs::TextComponent>().each(
             [&](entt::entity entity, ecs::DamageNumberComponent& number, ecs::TextComponent& text)
@@ -30,7 +30,7 @@ namespace ecs
 
                 if (number.RemainingTime <= 0.0f)
                 {
-                    expired.push_back(entity);
+                    mExpired.push_back(entity);
                     return;
                 }
 
@@ -51,7 +51,7 @@ namespace ecs
                 text.Color.w = alpha;
             });
 
-        for (entt::entity entity : expired)
+        for (entt::entity entity : mExpired)
         {
             registry.destroy(entity);
         }

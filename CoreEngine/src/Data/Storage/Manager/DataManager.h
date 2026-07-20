@@ -69,6 +69,9 @@ namespace data
         void LoadFromDb()
         {
             mDb->EnsureTable<T>();
+            // 構造体にフィールドを追加した際、DB側の列が不足したままSELECTして
+            // SQLite::Exceptionでクラッシュするのを防ぐ(SqliteManager::MigrateTable参照)
+            mDb->MigrateTable<T>();
             mItems = mDb->LoadAll<T>();
             RebuildIndex();
             mLastMessage = "[DB] Loaded " + std::to_string(mItems.size()) + " records.";

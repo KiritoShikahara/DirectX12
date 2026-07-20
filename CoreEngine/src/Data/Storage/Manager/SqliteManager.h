@@ -6,6 +6,7 @@
 #include<optional>
 #include<memory>
 #include<stdexcept>
+#include<algorithm>
 
 namespace data
 {
@@ -47,6 +48,54 @@ namespace data
         void OnFloat(const std::string&, float&, eFieldFlag) override { Types.push_back("REAL"); }
         void OnBool(const std::string&, bool&, eFieldFlag) override { Types.push_back("INTEGER"); }
         void OnString(const std::string&, std::string&, eFieldFlag) override { Types.push_back("TEXT"); }
+    };
+
+    /// <summary>
+    /// 列定義(名前・SQL型・既定値リテラル)を収集するビジター。
+    /// 既定値はデフォルト構築したインスタンスの値をそのまま使うため、
+    /// 後から追加した列にも構造体と同じ初期値が入る。
+    /// </summary>
+    class SqlColumnDefVisitor final : public IFieldVisitor
+    {
+    public:
+        struct Column
+        {
+            std::string Name;
+            std::string Type;
+            std::string DefaultLiteral;
+        };
+        std::vector<Column> Columns;
+
+        void OnInt(const std::string& n, int& v, eFieldFlag) override
+        {
+            Columns.push_back({ n, "INTEGER", std::to_string(v) });
+        }
+        void OnFloat(const std::string& n, float& v, eFieldFlag) override
+        {
+            Columns.push_back({ n, "REAL", std::to_string(v) });
+        }
+        void OnBool(const std::string& n, bool& v, eFieldFlag) override
+        {
+            Columns.push_back({ n, "INTEGER", v ? "1" : "0" });
+        }
+        void OnString(const std::string& n, std::string& v, eFieldFlag) override
+        {
+            Columns.push_back({ n, "TEXT", "'" + EscapeSqlLiteral(v) + "'" });
+        }
+
+    private:
+        /// <summary>SQL文字列リテラル用に単一引用符をエスケープする</summary>
+        static std::string EscapeSqlLiteral(const std::string& value)
+        {
+            std::string escaped;
+            escaped.reserve(value.size());
+            for (char c : value)
+            {
+                if (c == '\'') escaped += '\'';
+                escaped += c;
+            }
+            return escaped;
+        }
     };
 
     // 主キー名を取り出すビジター
@@ -94,6 +143,52 @@ namespace data
             }
             sql += ");";
             mDb.exec(sql);
+        }
+
+        /// <summary>
+        /// 既存テーブルに不足している列を追加する(前方互換のマイグレーション)。
+        ///
+        /// EnsureTable()のCREATE TABLE IF NOT EXISTSは既存テーブルの列構成を更新しないため、
+        /// 構造体へフィールドを1つ追加しただけで、以降LoadAll<T>()のSELECTが
+        /// 「no such column」でSQLite::Exceptionを投げ、Releaseビルドが起動直後に
+        /// クラッシュする(CSVを直接読むDebugビルドでは再現しない)という事故が起きる。
+        /// これを構造的に防ぐため、読み込み前に構造体の定義とDBの実列を突き合わせ、
+        /// 不足分をALTER TABLEで補う。
+        ///
+        /// 追加した列には構造体のデフォルト値が入る(既存行にも適用される)。
+        /// 列の削除・リネームは扱わない(SELECTは既知の列しか要求しないため、
+        /// DB側に余分な列が残っていても実害がない)。
+        /// </summary>
+        template<typename T>
+        void MigrateTable()
+        {
+            const char* table = TypeDescriptor<T>::TableName();
+
+            std::vector<std::string> existingColumns;
+            {
+                SQLite::Statement stmt(mDb, std::string("PRAGMA table_info(") + table + ");");
+                while (stmt.executeStep())
+                {
+                    existingColumns.push_back(stmt.getColumn(1).getString());
+                }
+            }
+
+            // テーブル自体が存在しない場合はEnsureTable()が正しい構成で作るため何もしない
+            if (existingColumns.empty()) return;
+
+            T dummy{};
+            SqlColumnDefVisitor visitor;
+            VisitFields(dummy, visitor);
+
+            for (const auto& column : visitor.Columns)
+            {
+                const bool exists = std::find(
+                    existingColumns.begin(), existingColumns.end(), column.Name) != existingColumns.end();
+                if (exists) continue;
+
+                mDb.exec("ALTER TABLE " + std::string(table) + " ADD COLUMN "
+                    + column.Name + " " + column.Type + " DEFAULT " + column.DefaultLiteral + ";");
+            }
         }
 
         // テーブルを削除する。CREATE TABLE IF NOT EXISTS(EnsureTable)は既存テーブルの列構成を

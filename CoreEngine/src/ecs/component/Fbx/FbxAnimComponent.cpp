@@ -144,26 +144,25 @@ namespace ecs
         const int   frame1 = (frame0 + 1) % clip.NumFrame;
         const float t = frameFull - static_cast<float>(static_cast<int>(frameFull));
 
-        const int activeBones = (int)clip.KeyFrames.size();
+        // TRSは読み込み時に分解済み(graphics::FbxAnimClip::KeyFrameTrs)。
+        // ここでXMMatrixDecomposeを呼ぶと、同じモデルを表示している全エンティティが
+        // 毎フレーム同一の分解を重複して行うことになるため、必ず分解済みの値を使う
+        const int activeBones = (int)clip.KeyFrameTrs.size();
         for (int i = 0; i < boneCount && i < activeBones; ++i)
         {
-            const auto& track = clip.KeyFrames[i];
+            const auto& track = clip.KeyFrameTrs[i];
             if (track.empty()) continue;
 
             const int f0 = std::min(frame0, (int)track.size() - 1);
             const int f1 = std::min(frame1, (int)track.size() - 1);
 
-            XMMATRIX m0 = XMLoadFloat4x4(&track[f0]);
-            XMMATRIX m1 = XMLoadFloat4x4(&track[f1]);
+            const auto& k0 = track[f0];
+            const auto& k1 = track[f1];
 
-            // TRS 分解 → 補間 → 再合成
-            XMVECTOR s0, r0, p0, s1, r1, p1;
-            XMMatrixDecompose(&s0, &r0, &p0, m0);
-            XMMatrixDecompose(&s1, &r1, &p1, m1);
-
-            const XMVECTOR s = XMVectorLerp(s0, s1, t);
-            const XMVECTOR p = XMVectorLerp(p0, p1, t);
-            const XMVECTOR r = XMQuaternionSlerp(r0, r1, t);
+            // 補間 → 再合成
+            const XMVECTOR s = XMVectorLerp(XMLoadFloat4(&k0.Scale), XMLoadFloat4(&k1.Scale), t);
+            const XMVECTOR p = XMVectorLerp(XMLoadFloat4(&k0.Translation), XMLoadFloat4(&k1.Translation), t);
+            const XMVECTOR r = XMQuaternionSlerp(XMLoadFloat4(&k0.Rotation), XMLoadFloat4(&k1.Rotation), t);
 
             outLocal[i] = XMMatrixScalingFromVector(s)
                 * XMMatrixRotationQuaternion(r)
@@ -183,21 +182,21 @@ namespace ecs
         const int   boneCount = (int)bones.size();
         BoneMatrices.resize(boneCount);
 
-        std::vector<XMMATRIX> worldMats(boneCount);
+        mWorldMats.resize(boneCount);
 
         for (int i = 0; i < boneCount; ++i)
         {
             const int parent = bones[i].ParentIndex;
             if (parent >= 0 && parent < boneCount)
-                worldMats[i] = localMats[i] * worldMats[parent];
+                mWorldMats[i] = localMats[i] * mWorldMats[parent];
             else
-                worldMats[i] = localMats[i];
+                mWorldMats[i] = localMats[i];
         }
 
         for (int i = 0; i < boneCount; ++i)
         {
             XMMATRIX bind = XMLoadFloat4x4(&bones[i].BindMatrix);
-            XMMATRIX skin = bind * worldMats[i];
+            XMMATRIX skin = bind * mWorldMats[i];
             XMStoreFloat4x4(&BoneMatrices[i], XMMatrixTranspose(skin));
         }
     }
@@ -209,40 +208,37 @@ namespace ecs
     {
         if (!resource.HasSkinning()) return;
 
-        std::vector<XMMATRIX> currLocal;
-        EvalLocalMats(resource, CurrentClipIndex, CurrentTime, currLocal);
-
+        EvalLocalMats(resource, CurrentClipIndex, CurrentTime, mCurrLocal);
 
         if (PrevClipIndex >= 0 && BlendDuration > 0.f)
         {
             // ── クロスフェード: TRS 空間でブレンドして BuildSkinMatrices ──
-            std::vector<XMMATRIX> prevLocal;
-            EvalLocalMats(resource, PrevClipIndex, PrevTime, prevLocal);
+            EvalLocalMats(resource, PrevClipIndex, PrevTime, mPrevLocal);
 
             const float alpha = GetBlendFactor();   // 0.0(前) → 1.0(現在)
-            const int   boneCount = (int)currLocal.size();
-            std::vector<XMMATRIX> blended(boneCount);
+            const int   boneCount = (int)mCurrLocal.size();
+            mBlendedLocal.resize(boneCount);
 
             for (int i = 0; i < boneCount; ++i)
             {
                 XMVECTOR sc, rc, pc, sp, rp, pp;
-                XMMatrixDecompose(&sc, &rc, &pc, currLocal[i]);
-                XMMatrixDecompose(&sp, &rp, &pp, prevLocal[i]);
+                XMMatrixDecompose(&sc, &rc, &pc, mCurrLocal[i]);
+                XMMatrixDecompose(&sp, &rp, &pp, mPrevLocal[i]);
 
                 const XMVECTOR s = XMVectorLerp(sp, sc, alpha);
                 const XMVECTOR p = XMVectorLerp(pp, pc, alpha);
                 const XMVECTOR r = XMQuaternionSlerp(rp, rc, alpha);
 
-                blended[i] = XMMatrixScalingFromVector(s)
+                mBlendedLocal[i] = XMMatrixScalingFromVector(s)
                     * XMMatrixRotationQuaternion(r)
                     * XMMatrixTranslationFromVector(p);
             }
 
-            BuildSkinMatrices(resource, blended);
+            BuildSkinMatrices(resource, mBlendedLocal);
         }
         else
         {
-            BuildSkinMatrices(resource, currLocal);
+            BuildSkinMatrices(resource, mCurrLocal);
         }
     }
 

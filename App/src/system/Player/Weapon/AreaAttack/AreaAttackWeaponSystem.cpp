@@ -11,6 +11,7 @@
 
 #include<system/Physics/System/PhysicsSystem.h>
 #include<ecs/component/Debug/DebugWireSphereComponent.h>
+#include<graphics/Line/Renderer/PhysicsDebugRenderer.h>
 #include<Tag/EntityTag.h>
 
 namespace
@@ -177,10 +178,14 @@ namespace ecs
 		hazard.TickTimer = 0.0f; // 0start: 生成した次のフレームで即座に1回目のダメージを与える
 		hazard.TickInterval = masterData.TickInterval;
 
-		// 実際の判定半径を可視化する（ImGui「Physics Debug」→「Show Colliders」）
-		auto& wire = manager.AddComponent<ecs::DebugWireSphereComponent>(entity);
-		wire.Radius = hitRadius;
-		wire.Color = { 0.4f, 0.8f, 1.0f, 1.0f }; // 氷らしい水色
+		// 実際の判定半径を可視化する（ImGui「Physics Debug」→「Show Colliders」）。
+		// トグルOFF中は描画されず無駄なため、ONの時だけ生成する。
+		if (graphics::PhysicsDebugRenderer::Get().IsEnabled())
+		{
+			auto& wire = manager.AddComponent<ecs::DebugWireSphereComponent>(entity);
+			wire.Radius = hitRadius;
+			wire.Color = { 0.4f, 0.8f, 1.0f, 1.0f }; // 氷らしい水色
+		}
 
 		if (!masterData.EffectPath.empty())
 		{

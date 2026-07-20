@@ -28,7 +28,7 @@ namespace sys
 		AddSink(std::make_unique<DebugOutputSink>());
 
 		// �R���\�[���V���N�̓f�o�b�O�r���h�̂�
-#if defined(_DEBUG) || ECSE_DEV_TOOL_ENABLED
+#if DEV_TOOL_ENABLED
 		AddSink(std::make_unique<ConsoleLogSink>(true));
 #endif
 

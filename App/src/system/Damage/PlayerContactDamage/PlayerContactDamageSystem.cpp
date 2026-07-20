@@ -7,6 +7,7 @@
 #include<system/Player/Status/PlayerCombatUtil.h>
 #include<system/Enemy/Status/EnemyStatusComponent.h>
 #include<Scene/Game/State/GameState.h>
+#include<Scene/Game/Debug/GameDebugSettings.h>
 #include<ecs/component/collider/ColliderComponent.h>
 #include<Tag/EntityTag.h>
 
@@ -52,6 +53,10 @@ namespace ecs
 		auto& playerStatus = registry.get<PlayerStatusComponent>(playerEntity);
 		if (playerStatus.IsInvincible) return; // invincible (e.g. during Ultimate): skip damage entirely
 
+		// デバッグ用の無敵(GUIまたは--godmodeで有効化)。
+		// IsInvincibleはウルト等が終了時にfalseへ戻すため、そちらは流用できない
+		if (::debug::GameDebugSettings::Get().IsPlayerInvincible()) return;
+
 		const auto& contact = *contactPtr;
 
 		// �h��v�Z
@@ -86,7 +91,16 @@ namespace ecs
 		// ���S���肩�烊�N�G�X�g�\��
 		if (playerStatus.CurrentHp <= 0.0f)
 		{
-			gameState.GameOverRequested = true;
+			// 復活パークを取得していれば、1回消費してHP全回復で死亡を取り消す
+			if (playerStatus.ReviveCount > 0)
+			{
+				playerStatus.ReviveCount -= 1;
+				playerStatus.CurrentHp = playerStatus.Current.MaxHp;
+			}
+			else
+			{
+				gameState.GameOverRequested = true;
+			}
 		}
 	}
 

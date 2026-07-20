@@ -68,6 +68,22 @@ namespace
 		}
 	}
 
+	/// <summary>PlayerSaveDataの指定インデックス(data::eStatUpgradeType)のレベルを設定する</summary>
+	void SetLevel(data::PlayerSaveData& save, int index, int level)
+	{
+		switch (static_cast<data::eStatUpgradeType>(index))
+		{
+		case data::eStatUpgradeType::MaxHp:        save.MaxHpLevel = level;       break;
+		case data::eStatUpgradeType::AtkPower:     save.AtkPowerLevel = level;    break;
+		case data::eStatUpgradeType::Defense:      save.DefenseLevel = level;     break;
+		case data::eStatUpgradeType::CooldownRate: save.CooldownRateLevel = level; break;
+		case data::eStatUpgradeType::MoveSpeed:    save.MoveSpeedLevel = level;    break;
+		case data::eStatUpgradeType::GoldGainRate: save.GoldGainRateLevel = level; break;
+		case data::eStatUpgradeType::HpRegen:      save.HpRegenLevel = level;     break;
+		case data::eStatUpgradeType::ExperienceGainRate: save.ExperienceGainRateLevel = level; break;
+		}
+	}
+
 	/// <summary>1行分の表示文字列を組み立てる(レベル上限ならコストの代わりにMAXを表示)</summary>
 	std::wstring BuildOptionText(int index, const data::StatUpgradeData* upgradeData, int level)
 	{
@@ -132,6 +148,18 @@ namespace ecs
 			if (input.IsActionPressed("Select"))
 			{
 				TryOpenConfirm(upgrade);
+			}
+			// 一括最大強化(MenuRight)。1レベルずつ確認を挟むのが煩雑なため、
+			// 買える範囲で最大レベルまで一気に購入する
+			else if (input.IsActionPressed("MenuRight"))
+			{
+				PurchaseMaxLevel(upgrade);
+			}
+			// 全リセット(Delete)。振り直しができないと構成を試せないため、
+			// 全レベルを0へ戻して消費ゴールドを全額払い戻す
+			else if (input.IsActionPressed("Delete"))
+			{
+				ResetAllUpgrades(upgrade);
 			}
 			else if (input.IsActionPressed("Cancel"))
 			{
@@ -205,6 +233,95 @@ namespace ecs
 		saveMgr.Save();
 
 		ShowMessage(upgrade, L"強化しました！");
+		PLAY_SE("Assets/Sound/SE/SE_Select.aud", false, 1, false);
+	}
+
+	int StatusUpgradeInputSystem::ComputeCost(const data::StatUpgradeData& upgradeData, int currentLevel)
+	{
+		const float cost = upgradeData.BaseCost
+			+ upgradeData.CostGrowthPerLevel * static_cast<float>(currentLevel);
+		return static_cast<int>(std::lround(cost));
+	}
+
+	void StatusUpgradeInputSystem::PurchaseMaxLevel(StatusUpgradeComponent& upgrade)
+	{
+		data::EnsurePlayerSaveDataLoaded();
+		auto& saveMgr = data::ConfigRegistry::Get().GetManager<data::PlayerSaveData>();
+		auto& save = saveMgr.Get();
+
+		const auto* upgradeData = DATA_MGR(data::StatUpgradeData).GetById(upgrade.SelectedIndex);
+		if (upgradeData == nullptr) return;
+
+		int level = GetLevel(save, upgrade.SelectedIndex);
+		if (level >= upgradeData->MaxLevel)
+		{
+			ShowMessage(upgrade, L"既に最大レベルです");
+			return;
+		}
+
+		// 買える分だけ1レベルずつ購入する。
+		// コストはレベルごとに変わるため、まとめて計算せず都度求める
+		int purchased = 0;
+		while (level < upgradeData->MaxLevel)
+		{
+			const int cost = ComputeCost(*upgradeData, level);
+			if (save.Gold < cost) break;
+
+			save.Gold -= cost;
+			++level;
+			++purchased;
+		}
+
+		if (purchased == 0)
+		{
+			ShowMessage(upgrade, L"ゴールドが足りません");
+			return;
+		}
+
+		SetLevel(save, upgrade.SelectedIndex, level);
+		saveMgr.Save();
+
+		ShowMessage(upgrade, L"Lv." + std::to_wstring(level) + L" まで強化しました！");
+		PLAY_SE("Assets/Sound/SE/SE_Select.aud", false, 1, false);
+	}
+
+	void StatusUpgradeInputSystem::ResetAllUpgrades(StatusUpgradeComponent& upgrade)
+	{
+		data::EnsurePlayerSaveDataLoaded();
+		auto& saveMgr = data::ConfigRegistry::Get().GetManager<data::PlayerSaveData>();
+		auto& save = saveMgr.Get();
+		auto& dataMgr = DATA_MGR(data::StatUpgradeData);
+
+		// 全項目のレベルを0へ戻し、購入時と同じ計算式で消費ゴールドを全額払い戻す
+		int refund = 0;
+		bool hasAnyLevel = false;
+
+		for (int i = 0; i < StatusUpgradeComponent::kOptionCount; ++i)
+		{
+			const auto* upgradeData = dataMgr.GetById(i);
+			if (upgradeData == nullptr) continue;
+
+			const int level = GetLevel(save, i);
+			if (level <= 0) continue;
+
+			hasAnyLevel = true;
+			for (int l = 0; l < level; ++l)
+			{
+				refund += ComputeCost(*upgradeData, l);
+			}
+			SetLevel(save, i, 0);
+		}
+
+		if (!hasAnyLevel)
+		{
+			ShowMessage(upgrade, L"強化されていません");
+			return;
+		}
+
+		save.Gold += refund;
+		saveMgr.Save();
+
+		ShowMessage(upgrade, std::to_wstring(refund) + L"G 払い戻しました");
 		PLAY_SE("Assets/Sound/SE/SE_Select.aud", false, 1, false);
 	}
 

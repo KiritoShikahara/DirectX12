@@ -63,6 +63,7 @@ namespace ecs
 			wave.SpawnCountPerTick = waveData->SpawnCountPerTick;
 			wave.SpawnMarginMin = waveData->SpawnMarginMin;
 			wave.SpawnMarginMax = waveData->SpawnMarginMax;
+			wave.MaxAliveEnemy = waveData->MaxAliveEnemy;
 			wave.StatGrowthPerSecond = waveData->StatGrowthPerSecond;
 			wave.BossSpawnTime = waveData->BossSpawnTime;
 			wave.ClearTime = waveData->ClearTime;

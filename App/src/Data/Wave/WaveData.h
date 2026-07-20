@@ -21,6 +21,15 @@ namespace data
         float BossSpawnTime = 90.0f;        // ボースが出現するまでの経過時間(秒)
         float ClearTime = 180.0f;           // この秒数生存するとクリアになる
 
+        // 敵の同時生存数上限。0以下で無制限（既定＝無効）。
+        // ボース出現はイベント性のため常に対象外。
+        //
+        // 元は性能対策として導入したが、Release/Develop構成での実測では敵の処理コストは
+        // 無視できる水準(GameplayUpdate・Physicsとも1フレームあたり0.1ms未満)であり、
+        // 性能上の必要性は無い。現在は「敵が増えすぎて画面が埋まるのを防ぐ」ための
+        // ゲームデザイン上の調整値として位置づけ、必要な場合のみ有効にする。
+        int MaxAliveEnemy = 0;
+
         REFLECT_BEGIN(WaveData, "wave_data")
             REFLECT_FIELD_ID(Id)
             REFLECT_FIELD_FLOAT(SpawnInterval)
@@ -30,6 +39,7 @@ namespace data
             REFLECT_FIELD_FLOAT(StatGrowthPerSecond)
             REFLECT_FIELD_FLOAT(BossSpawnTime)
             REFLECT_FIELD_FLOAT(ClearTime)
+            REFLECT_FIELD_INT(MaxAliveEnemy)
         REFLECT_END()
     };
 }

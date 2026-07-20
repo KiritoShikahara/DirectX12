@@ -158,9 +158,21 @@ namespace scene
 		{
 			auto entity = manager.CreateEntity();
 			auto& text = manager.AddComponent<::ecs::TextComponent>(entity);
-			text.Text = L"↑/↓:選択　Select:強化　Cancel:戻る";
-			text.X = centerX - 220.0f;
+			text.Text = L"↑/↓:選択　Select:強化　→:最大まで強化";
+			text.X = centerX - 260.0f;
 			text.Y = guideY;
+			text.Size = 26.0f;
+			text.Color = { 0.6f, 0.6f, 0.6f, 1.0f };
+			text.Layer = 10;
+		}
+
+		// 操作案内の2行目(一括強化・リセットは行が長くなるため分ける)
+		{
+			auto entity = manager.CreateEntity();
+			auto& text = manager.AddComponent<::ecs::TextComponent>(entity);
+			text.Text = L"Delete:全リセット(全額払い戻し)　Cancel:戻る";
+			text.X = centerX - 260.0f;
+			text.Y = guideY + 32.0f;
 			text.Size = 26.0f;
 			text.Color = { 0.6f, 0.6f, 0.6f, 1.0f };
 			text.Layer = 10;

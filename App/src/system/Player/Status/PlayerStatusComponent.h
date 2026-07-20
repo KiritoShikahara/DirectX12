@@ -72,6 +72,13 @@ namespace ecs
         bool           IsInvincible = false;
 
         /// <summary>
+        /// 残りの復活回数（パーク「復活」で加算される）。
+        /// HPが0になった際、1以上ならこれを1消費してHPを全回復し、死亡を取り消す
+        /// （PlayerContactDamageSystemが判定する）。
+        /// </summary>
+        int            ReviveCount = 0;
+
+        /// <summary>
         /// パーク適用後に呼ぶ：Base × Modifier → Current。
         /// 生成直後にも一度呼び、CurrentHp = Current.MaxHp で初期化すること。
         /// </summary>

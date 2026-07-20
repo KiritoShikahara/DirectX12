@@ -60,8 +60,11 @@ namespace graphics
             return false;
         }
 
-        // ImGui ウィンドウ登録
+        // ImGui ウィンドウ登録（Show Collidersのトグル自体がデバッグ専用機能のため、
+        // WaveDebugPanel等と同じ流儀でReleaseビルドには含めない）
+#ifdef _DEBUG
         sys::ImGuiManager::Get().AddDebugUI([this]() { ImGuiWindow(); }, "Physics");
+#endif
 
         mIsInitialized = true;
         DEBUG_LOG(sys::eLogLevel::Log, "PhysicsDebugRenderer: Initialized.");

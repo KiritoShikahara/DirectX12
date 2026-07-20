@@ -40,7 +40,13 @@ namespace ecs
 		// 各要素へ新しいラムダを代入するだけで使い回す(vector自体の再確保は発生しない)
 		std::vector<std::function<void()>> mChunkTasks;
 
-		// 敵数がこれ未満の場合はスレッド起床コストの方が大きいため逐次実行する
-		static constexpr size_t kParallelThreshold = 64;
+		// 敵数がこれ未満の場合はスレッド起床コストの方が大きいため逐次実行する。
+		// 実測により、Wave::MaxAliveEnemy上限(150)程度ではProcessOne自体の計算量が
+		// 自明(register.get x4 + ベクトル演算のみ)すぎて、ThreadPool::Dispatch/WaitAllの
+		// OS条件変数による起床・待機コストの方が支配的になり、System単体で6-7ms消費する
+		// 逆効果が確認された。現実的な敵数では並列化しない方が速いため、実際の敵数上限を
+		// 大きく超える値にして並列パスを事実上無効化する(将来的に敵数上限が大幅に増える、
+		// またはThreadPoolの起床コストが下がった場合は再検討すること)。
+		static constexpr size_t kParallelThreshold = 2000;
 	};
 }

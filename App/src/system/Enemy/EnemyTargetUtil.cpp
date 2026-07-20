@@ -47,7 +47,12 @@ namespace ecs::targetutil
         float radius,
         const std::vector<entt::entity>& excluded)
     {
-        std::vector<entt::entity> candidates;
+        // 呼び出しごとのヒープ確保を避けるため、関数内staticとして使い回す
+        // （EnemySpawnSystemの乱数エンジンと同じく、プロセス全体で1つを使い回す流儀）。
+        // 現状の唯一の呼び出し元(HomingMissileSteeringSystem::Update)は
+        // シングルスレッドのシステム更新のため、再入や並行呼び出しは発生しない。
+        static std::vector<entt::entity> candidates;
+        candidates.clear();
         ::sys::PhysicsSystem::OverlapSphere(registry, position, radius, candidates);
 
         return FindNearestExcluding(registry, candidates, position, excluded);

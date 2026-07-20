@@ -75,17 +75,10 @@
 #include<system/AssetPath/AssetPathManager.h>
 
 //// デバック用機能
-#if defined(_DEBUG)
-    // デバッグビルドならデフォルトで有効
-#define DEV_TOOL_ENABLED  (1)
-#define ENABLE_ASSERT     (1)
-#define DEBUG_DRAW_COLLISION (DEV_TOOL_ENABLED)
-#else
-    // リリースビルドでも開発ツールを使いたい場合はここを (1) にする
-#define DEV_TOOL_ENABLED  (0)
-#define ENABLE_ASSERT     (0)
-#define DEBUG_DRAW_COLLISION (0)
-#endif
+// 定義の実体はDebugConfig.hに集約している。ここで直接定義すると、このpch.hを
+// includeしないApp側の翻訳単位とマクロの見え方が食い違い、クラスのサイズが
+// 変わってODR違反(Releaseでのメモリ破壊)を起こすため(DebugConfig.hの説明を参照)。
+#include<Utility/config/DebugConfig.h>
 
 #endif //PCH_H
 

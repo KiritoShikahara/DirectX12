@@ -47,6 +47,7 @@
 
 // パーク
 #include<system/Player/Perk/PerkSelectSystem.h>
+#include<system/Options/OptionsMenuSystem.h>
 
 // リザルト
 #include<Scene/Game/Result/ResultSystem.h>
@@ -301,6 +302,9 @@ namespace scene
 		manager.AddUserSystem<::ecs::PerkSelectSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::ecs::ResultSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::ecs::SpriteGlowSystem>(::ecs::eUpdatePhase::PostUpdate);
+		// 設定メニュー(Escape / パッドのMenuボタンで開閉)。開いている間はTimeScaleを0にするため、
+		// 他システムが状態を更新し終えた後段に置く
+		manager.AddUserSystem<::ecs::OptionsMenuSystem>(::ecs::eUpdatePhase::PostUpdate);
 	}
 
 	void GameScene::CreateEntitys()
@@ -328,6 +332,7 @@ namespace scene
 		mEnemyStatusDebugPanel = std::make_unique<debug::EnemyStatusDebugPanel>();
 		mGameStatusDebugPanel = std::make_unique<debug::GameStatusDebugPanel>();
 		mWaveDebugPanel = std::make_unique<debug::WaveDebugPanel>();
+		mPerkDebugPanel = std::make_unique<debug::PerkDebugPanel>();
 		mSingleShotWeaponDebugPanel = std::make_unique<debug::SingleShotWeaponDebugPanel>();
 		mWeaponInventoryDebugPanel = std::make_unique<debug::WeaponInventoryDebugPanel>();
 		mUltimateDebugPanel = std::make_unique<debug::UltimateDebugPanel>();
@@ -339,6 +344,7 @@ namespace scene
 		mEnemyStatusDebugPanel.reset();
 		mGameStatusDebugPanel.reset();
 		mWaveDebugPanel.reset();
+		mPerkDebugPanel.reset();
 		mSingleShotWeaponDebugPanel.reset();
 		mWeaponInventoryDebugPanel.reset();
 		mUltimateDebugPanel.reset();

@@ -2,6 +2,7 @@
 
 #include<Utility/Export/Export.h>
 #include<Utility/Singleton/Singleton.hpp>
+#include<graphics/Effect/Manager/EffectManager.h>
 #include<chrono>
 #include<cstdint>
 #include<string>
@@ -18,12 +19,18 @@ namespace sys
     {
         GameplayUpdate, // ECS System実行(PreUpdate+Update+PostUpdate、物理を除く)
         Physics,        // 物理ステップ(BuildPendingBodies〜PhysicsSystem::Update〜SyncToTransform)
+        RenderCollect,  // 描画データの収集フェーズ(メインスレッド)。各レンダラーのUpdateAndDraw。
+                        // FBXのボーン行列計算(CalcBoneMatrices)もここに含まれるため、
+                        // キャラクター数が多い場合はここが支配的になりうる
         ShadowPass,     // FbxRenderer::DrawShadowPass(ワーカースレッド)
         ScenePass,      // FbxRenderer::End + SkyboxRenderer::End(ワーカースレッド。主にFBXのDrawCall記録)
         SpritePass,     // Sprite/Shape/Textの描画コマンド記録(ワーカースレッド)
-        Effect,         // Effekseerのパーティクル更新(UpdateGameplay内、Effekseer内部でワーカースレッドに
-                        // 並列化される)+描画コマンド記録(Render内、RenderRecordの一部として並行実行される)
-                        // の合計。2箇所のBegin/End区間の合算値になる
+        EffectUpdate,   // Effekseerのパーティクル更新(UpdateGameplay内、EffekseerManager::Update)。
+                        // 現状LaunchWorkerThreads()を呼んでいないため完全にシングルスレッドで実行される
+                        // (EffekseerManager::Initialize()のコメント参照)
+        EffectDraw,     // Effekseerの描画コマンド記録(Render内、EffekseerManager::Draw)。
+                        // Effekseerはスレッドセーフでないため他レンダラーのワーカースレッドとは
+                        // 並行実行されず、メインスレッドで専用チャネルとして記録される
         Debug,          // デバッグ描画・シーン遷移・ImGuiの描画コマンド記録(メインスレッド)
         Count
     };
@@ -63,6 +70,14 @@ namespace sys
     private:
         void RegisterImgui();
 
+#ifdef ECSE_PERF_TELEMETRY
+        /// <summary>
+        /// 計測値をCSVへ追記する(ECSE_PERF_TELEMETRY定義時のみ)。ImGuiのPerformanceウィンドウは
+        /// _DEBUGビルドにしか存在しないため、Release構成での性能計測手段として用意している。
+        /// </summary>
+        void DumpTelemetry();
+#endif
+
         // 直近kHistorySizeフレーム分のフレーム時間(ミリ秒)を保持するリングバッファ
         // (グラフ表示用。約2秒分@60FPS)
         static constexpr int kHistorySize = 120;
@@ -78,6 +93,19 @@ namespace sys
         float mDisplayedFrameTimeMs = 0.0f;
         float mMinFrameTimeMs = 0.0f;
         float mMaxFrameTimeMs = 0.0f;
+
+        // 1% Low FPS(遅い方から1%のフレームの平均から求めるFPS)。
+        // 平均FPSは一瞬のカクつきを均してしまい体感と一致しないため、
+        // 描画の安定性を見るにはこちらを主指標にする。
+        float mOnePercentLowFps = 0.0f;
+
+        // GPU側の所要時間(GpuProfilerから取得。CPUと同じ間隔で平滑化する)
+        float mDisplayedGpuMs = 0.0f;
+        float mGpuAccumMs = 0.0f;
+        int   mGpuAccumSamples = 0;
+
+        // 履歴の並べ替え用バッファ(1% Lowの算出に使う。毎フレームのvector生成を避けて使い回す)
+        std::vector<float> mSortedFrameTimes;
 
         struct SectionState
         {
@@ -99,5 +127,9 @@ namespace sys
             float       Ms = 0.0f;
         };
         std::vector<SystemTimingEntry> mSystemTimingEntries;
+
+        // 素材別エフェクト負荷の表示用一時バッファ(ソートするためコピーが要る)。
+        // mSystemTimingEntriesと同じくclear()して再利用する
+        std::vector<graphics::EffekseerManager::EffectStatEntry> mEffectStatEntries;
     };
 }

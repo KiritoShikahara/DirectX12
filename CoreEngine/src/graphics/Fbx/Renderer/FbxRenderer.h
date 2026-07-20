@@ -51,6 +51,32 @@ namespace graphics
         void UpdateAndDraw(entt::registry& registry);
 
         /// <summary>
+        /// アニメーション距離LODの有効/無効。既定は無効。
+        ///
+        /// 有効にすると、カメラからGetAnimationUpdateDistance()を超えた位置にある
+        /// スキニングエンティティのボーン行列再計算(CalcBoneMatrices)を間引き、
+        /// 最後に計算した姿勢のまま描画する。CalcBoneMatricesはボーンごとに
+        /// XMMatrixDecomposeを呼ぶ重い処理のため、多数のキャラクターが遠方に存在する
+        /// 状況でのCPU負荷を抑えられる。
+        ///
+        /// 既定で無効にしているのは、遠方のアニメーションが停止して見える副作用がある一方、
+        /// 現状のコンテンツ規模ではFBXの描画コストが実測0.1ms未満で効果が無いため。
+        /// キャラクター数が大幅に増えて実測でボトルネックになった場合にのみ有効化すること。
+        /// </summary>
+        void SetAnimationDistanceLodEnabled(bool enabled) { mAnimationDistanceLodEnabled = enabled; }
+        bool IsAnimationDistanceLodEnabled() const { return mAnimationDistanceLodEnabled; }
+
+        /// <summary>距離LOD有効時に、ボーン計算を打ち切るカメラからの距離(m)</summary>
+        void  SetAnimationUpdateDistance(float distance) { mAnimationUpdateDistance = distance; }
+        float GetAnimationUpdateDistance() const { return mAnimationUpdateDistance; }
+
+    private:
+        /// <summary>距離LODの切り替え用デバッグウィンドウ(開発ツール有効時のみ登録する)</summary>
+        void ImGuiWindow();
+
+    public:
+
+        /// <summary>
         /// Shadow Pass を実行する。
         /// BeginFrame の後、通常描画パスの前に呼ぶこと。
         /// CastShadow == true の Directional Light が存在しない場合は何もしない。
@@ -112,6 +138,13 @@ namespace graphics
         static constexpr uint32_t MAX_FBX_INSTANCES = 512u;
         static constexpr uint32_t MAX_TOTAL_BONES = 32768u;
         static constexpr uint32_t MAX_LIGHTS = 64u;
+
+        /// <summary>アニメーション距離LODを有効にした場合の既定の打ち切り距離(m)</summary>
+        static constexpr float DEFAULT_ANIMATION_UPDATE_DISTANCE = 60.0f;
+
+        // アニメーション距離LOD設定(既定は無効。SetAnimationDistanceLodEnabled参照)
+        bool  mAnimationDistanceLodEnabled = false;
+        float mAnimationUpdateDistance = DEFAULT_ANIMATION_UPDATE_DISTANCE;
 
         // ── GPU オブジェクト ──────────────────────────────────────
         std::unique_ptr<FbxPipeline>      mPipeline;

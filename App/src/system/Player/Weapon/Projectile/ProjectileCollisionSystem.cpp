@@ -5,6 +5,7 @@
 
 #include<system/Physics/System/PhysicsSystem.h>
 #include<ecs/component/Debug/DebugWireSphereComponent.h>
+#include<graphics/Line/Renderer/PhysicsDebugRenderer.h>
 #include<Tag/EntityTag.h>
 #include<system/Effect/EffectSpawnUtility.h>
 #include<system/Effect/TemporaryLifetimeComponent.h>
@@ -113,14 +114,18 @@ namespace ecs
 		// 実際の判定半径(hitRadius)を可視化する（ImGui「Physics Debug」→「Show Colliders」）。
 		// HitRadiusMultiplierにより見た目(visualRadius)より大きくなっているため、
 		// デバッグ表示は実際にダメージが及ぶ範囲(hitRadius)を優先して表示する。
-		auto& manager = ::ecs::EntityManager::Get();
-		auto wireEntity = manager.CreateEntity();
-		auto& transform = manager.AddComponent<ecs::Transform>(wireEntity);
-		transform.SetPosition(position);
-		auto& wire = manager.AddComponent<ecs::DebugWireSphereComponent>(wireEntity);
-		wire.Radius = hitRadius;
-		wire.Color = { 1.0f, 0.4f, 0.1f, 1.0f }; // 炎らしいオレンジ
-		manager.AddComponent<ecs::TemporaryLifetimeComponent>(wireEntity).RemainingTime = kDebugWireLifetime;
+		// トグルOFF中は描画されず無駄なため、ONの時だけ生成する。
+		if (graphics::PhysicsDebugRenderer::Get().IsEnabled())
+		{
+			auto& manager = ::ecs::EntityManager::Get();
+			auto wireEntity = manager.CreateEntity();
+			auto& transform = manager.AddComponent<ecs::Transform>(wireEntity);
+			transform.SetPosition(position);
+			auto& wire = manager.AddComponent<ecs::DebugWireSphereComponent>(wireEntity);
+			wire.Radius = hitRadius;
+			wire.Color = { 1.0f, 0.4f, 0.1f, 1.0f }; // 炎らしいオレンジ
+			manager.AddComponent<ecs::TemporaryLifetimeComponent>(wireEntity).RemainingTime = kDebugWireLifetime;
+		}
 
 		// 見た目のサイズは判定半径(hitRadius)ではなくvisualRadius基準で合わせる
 		// （HitRadiusMultiplierで判定だけ拡大しても見た目は変えないため）。

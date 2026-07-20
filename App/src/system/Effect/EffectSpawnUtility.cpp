@@ -1,12 +1,19 @@
 ﻿#include "apppch.h"
 #include "EffectSpawnUtility.h"
 
+#include<string_view>
+
 namespace
 {
-    /// <summary>';'区切りの文字列を空要素を除いてトークンへ分割する</summary>
-    std::vector<std::string> SplitPaths(const std::string& delimited)
+    /// <summary>
+    /// ';'区切りの文字列を空要素を除いてトークンへ分割し、1つずつfuncへ渡す。
+    /// ワンショット演出はヒットの度に呼ばれるため、std::vector<std::string>を
+    /// 返す実装（分割ごとにvector+string確保）を避け、string_viewをコールバックへ
+    /// 渡す方式にしてヒープ確保を発生させない。
+    /// </summary>
+    template<typename Func>
+    void ForEachPath(const std::string& delimited, Func&& func)
     {
-        std::vector<std::string> result;
         size_t start = 0;
 
         while (start <= delimited.size())
@@ -14,13 +21,11 @@ namespace
             size_t pos = delimited.find(';', start);
             if (pos == std::string::npos) pos = delimited.size();
 
-            std::string token = delimited.substr(start, pos - start);
-            if (!token.empty()) result.push_back(std::move(token));
+            const std::string_view token(delimited.data() + start, pos - start);
+            if (!token.empty()) func(token);
 
             start = pos + 1;
         }
-
-        return result;
     }
 
     /// <summary>
@@ -39,6 +44,22 @@ namespace
     /// 起きうるため、ここで全体の安全弁を設ける。
     /// </summary>
     constexpr size_t kMaxConcurrentOneShotEffects = 300;
+
+    /// <summary>
+    /// 同時に存在してよいパーティクルインスタンス数の目安上限。
+    ///
+    /// 上のエンティティ数上限(300)は「演出をいくつ再生中か」しか見ておらず、
+    /// 実際の負荷を決めるパーティクル数とは対応しない。1つの演出が何百個の
+    /// パーティクルを持つ素材もあるため、実測では300エンティティで
+    /// 18,000〜23,000インスタンスに達し、Effekseerの更新・頂点生成が
+    /// CPU時間の大半を占めていた(いずれもインスタンス数にほぼ比例する)。
+    ///
+    /// そこで負荷の実体であるインスタンス数そのものを予算として持ち、
+    /// 超過中は新規のワンショット演出を間引く。密集戦闘でのみ効き、
+    /// 通常時の見た目は変わらない(間引かれるのは演出だけで、ダメージ判定は
+    /// 各武器側で適用済みのためゲーム挙動には影響しない)。
+    /// </summary>
+    constexpr int32_t kMaxConcurrentParticleInstances = 12000;
 }
 
 namespace ecs::effectutil
@@ -56,7 +77,15 @@ namespace ecs::effectutil
             return;
         }
 
-        for (const auto& path : SplitPaths(delimitedPaths))
+        // 負荷の実体であるパーティクル数で間引く(kMaxConcurrentParticleInstances参照)。
+        // 直近フレームの実測値を使うため1フレーム遅れるが、
+        // 予算超過が続く間は抑制され続けるので制御としては十分
+        if (graphics::EffekseerManager::Get().GetLastInstanceCount() >= kMaxConcurrentParticleInstances)
+        {
+            return;
+        }
+
+        ForEachPath(delimitedPaths, [&](std::string_view path)
         {
             auto& manager = ::ecs::EntityManager::Get();
             auto entity = manager.CreateEntity();
@@ -75,9 +104,14 @@ namespace ecs::effectutil
             // Play()直後の1フレーム目は次のEffekseerManager::Updateまで反映されないため、
             // 生成直後から正しい向きで表示されるようここで先行して適用する
             effect.Effect.SetRotation(rotation);
+            // 生成直後のインスタンスはビルボードの向き等が未確定で、素の四角形に近い見た目で
+            // 描画されてしまうことがあるため、内部状態が整うまで非表示にしておく
+            // (解除はEffekseerManager::Updateがフレーム数を数えて行う)
+            effect.Effect.SetRenderingVisible(false);
+            effect.HiddenFramesRemaining = graphics::EffekseerManager::GetSpawnHiddenFrames();
 
             if (outEntities != nullptr) outEntities->push_back(entity);
-        }
+        });
     }
 
     bool AnyPlaying(entt::registry& registry, const std::vector<entt::entity>& entities)
@@ -102,7 +136,7 @@ namespace ecs::effectutil
         const auto* parentTransform = registry.try_get<ecs::Transform>(parentEntity);
         if (parentTransform == nullptr) return;
 
-        for (const auto& path : SplitPaths(delimitedPaths))
+        ForEachPath(delimitedPaths, [&](std::string_view path)
         {
             auto& manager = ::ecs::EntityManager::Get();
             auto entity = manager.CreateEntity();
@@ -113,16 +147,20 @@ namespace ecs::effectutil
             effect.IsLoop = true;
             effect.Scale = { scale, scale, scale };
             effect.Effect.Play(effect.Asset, parentTransform->GetPosition());
+            // PlayOneShotCombinedと同じ理由(初回生成時のビルボード向き未確定による
+            // 見た目崩れ)で、内部状態が整うまで非表示にしておく
+            effect.Effect.SetRenderingVisible(false);
+            effect.HiddenFramesRemaining = graphics::EffekseerManager::GetSpawnHiddenFrames();
 
             outEntities.push_back(entity);
-        }
+        });
     }
 
     void PreloadEffect(const std::string& delimitedPaths)
     {
-        for (const auto& path : SplitPaths(delimitedPaths))
+        ForEachPath(delimitedPaths, [](std::string_view path)
         {
             graphics::EffekseerManager::Get().GetEffect(path);
-        }
+        });
     }
 }

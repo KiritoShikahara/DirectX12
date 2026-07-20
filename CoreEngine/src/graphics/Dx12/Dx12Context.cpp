@@ -4,6 +4,7 @@
 #include "RenderContext.h"
 
 #include <graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeapManager.h>
+#include <graphics/Profiler/GpuProfiler.h>
 
 namespace graphics
 {
@@ -37,12 +38,19 @@ namespace graphics
         if (!InitializeDepthHeap(Width, Height)) return false;
         if (!InitializeFence())           return false;
 
+        // GPU計測はタイムスタンプ未対応環境では無効化されるだけなので、
+        // 失敗しても初期化全体は続行する
+        GpuProfiler::Get().Initialize(mDeviceService->GetDevice(), mCmdQueue.Get());
+
         return true;
     }
 
     bool DX12Context::Finalize()
     {
         WaitForGPU();
+
+        // GPUの完了を待った後に解放する(クエリヒープを実行中に破棄しないため)
+        GpuProfiler::Get().Finalize();
 
         if (mWaitForGPUEventHandle != nullptr)
         {
@@ -93,6 +101,10 @@ namespace graphics
             WaitForSingleObject(mWaitForGPUEventHandle, INFINITE);
         }
 
+        // 前フレーム分のGPU計測結果を回収する。直前のフェンス待機で
+        // このフレームインデックスのGPU完了は保証済みのため、追加の待機は発生しない
+        GpuProfiler::Get().BeginFrame(mFrameIndex);
+
         const D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = GetCurrentRtvHandle();
         const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = GetDsvHandle();
 
@@ -112,6 +124,9 @@ namespace graphics
             cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
             SetViewPort(cmdList,
                 static_cast<float>(mWidth), static_cast<float>(mHeight));
+
+            // チャネル先頭でGPUタイムスタンプを打つ(終了側はFlipで打つ)
+            GpuProfiler::Get().BeginChannel(cmdList, static_cast<eRenderChannel>(i));
         }
 
         // Pre チャネル: バックバッファを PRESENT → RENDER_TARGET へ遷移してクリアする
@@ -133,6 +148,18 @@ namespace graphics
         Barrier(GetCommandList(eRenderChannel::Post), frame.BackBuffer.Get(),
             D3D12_RESOURCE_STATE_RENDER_TARGET,
             D3D12_RESOURCE_STATE_PRESENT);
+
+        // 各チャネル末尾でGPUタイムスタンプを打つ。
+        // 記録は並列でも、この時点では全ワーカーの記録が完了している(呼び出し側でWaitAll済み)
+        auto& gpuProfiler = GpuProfiler::Get();
+        for (uint32_t i = 0; i < CHANNEL_COUNT; ++i)
+        {
+            gpuProfiler.EndChannel(frame.CmdLists[i].Get(), static_cast<eRenderChannel>(i));
+        }
+
+        // クエリ結果の書き出しは、全チャネルのタイムスタンプを打った後に
+        // 最後のチャネル(Post)へ積む(GPU実行順で最後になるため全結果が確定している)
+        gpuProfiler.ResolveFrame(GetCommandList(eRenderChannel::Post));
 
         // 全チャネルを確定する
         ID3D12CommandList* cmdLists[CHANNEL_COUNT] = {};

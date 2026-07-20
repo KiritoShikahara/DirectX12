@@ -2,6 +2,7 @@
 
 #include<entt/entt.hpp>
 #include<ecs/system/manager/IComponentSystem.h>
+#include<vector>
 
 namespace ecs
 {
@@ -15,5 +16,9 @@ namespace ecs
     {
     public:
         void Update(entt::registry& registry, float deltaTime, float rawDeltaTime) override;
+
+    private:
+        // 毎フレームのヒープ確保を避けるため、期限切れエンティティの一時リストを使い回す
+        std::vector<entt::entity> mExpired;
     };
 }

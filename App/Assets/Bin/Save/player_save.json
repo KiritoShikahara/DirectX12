@@ -2,10 +2,10 @@
     "AtkPowerLevel": 10,
     "CooldownRateLevel": 10,
     "DefenseLevel": 10,
-    "ExperienceGainRateLevel": 0,
-    "Gold": 40770,
-    "GoldGainRateLevel": 0,
-    "HpRegenLevel": 0,
+    "ExperienceGainRateLevel": 10,
+    "Gold": 91560,
+    "GoldGainRateLevel": 10,
+    "HpRegenLevel": 10,
     "MaxHpLevel": 10,
-    "MoveSpeedLevel": 0
+    "MoveSpeedLevel": 10
 }

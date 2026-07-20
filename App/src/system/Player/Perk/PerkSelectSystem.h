@@ -22,6 +22,23 @@ namespace ecs
 		void Update(entt::registry& registry, float deltaTime, float rawDeltaTime) override;
 
 	private:
+		/// <summary>
+		/// candidatesから指定種別のものを1つランダムに取り出す(取り出した要素は削除する)。
+		/// 該当が無ければ-1を返す。枠が固定されている1・2番目の選択肢に使う。
+		/// </summary>
+		static int TakeByType(
+			std::vector<int>& candidates,
+			const std::vector<PerkDefinition>& pool,
+			ePerkEffectType type);
+
+		/// <summary>
+		/// candidatesから武器系以外を1つ、PerkData::Weightの重み付きで取り出す
+		/// (取り出した要素は削除する)。該当が無ければ-1を返す。「その他」枠に使う。
+		/// </summary>
+		static int TakeWeighted(
+			std::vector<int>& candidates,
+			const std::vector<PerkDefinition>& pool);
+
 		static void EnterPerkSelect(entt::registry& registry, entt::entity controllerEntity);
 		static void HandleInput(entt::registry& registry, entt::entity controllerEntity, PerkSelectComponent& select);
 		static void ApplyPerk(entt::registry& registry, const PerkDefinition& perk);

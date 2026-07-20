@@ -4,6 +4,7 @@
 #include"WaveComponent.h"
 #include<Scene/Game/State/GameState.h>
 #include<Scene/Game/Factory/GameSceneFactory.h>
+#include<Scene/Game/Debug/GameDebugSettings.h>
 #include<system/Enemy/Status/EnemyStatusComponent.h>
 #include<Tag/EntityTag.h>
 #include<system/Camera/CameraSystem.h>
@@ -28,7 +29,7 @@ namespace ecs
 		// プロセス全体で1つの乱数エンジンを使い回す（毎フレーム再生成しない）
 		std::mt19937& GetRandomEngine()
 		{
-			static std::mt19937 engine{ std::random_device{}() };
+			static std::mt19937 engine = ::debug::GameDebugSettings::Get().MakeRandomEngine();
 			return engine;
 		}
 
@@ -74,10 +75,19 @@ namespace ecs
 		// 通常の敵の継続スポーン（1回のタイミングでSpawnCountPerTick体まとめて湧かせる。
 		// 重なって湧かないよう、1体ごとに独立してランダムな位置を求める。
 		// 敵の種類もdata::EnemyDataに登録されている中からランダムに選ぶ）
+		// MaxAliveEnemyが有効(1以上)な場合のみ、生存数が上限に達している間は
+		// スポーンを間引く。0以下は「上限なし」を意味する(ecs::WaveComponent参照)
 		wave.SpawnTimer -= deltaTime;
 		if (wave.SpawnTimer <= 0.0f)
 		{
-			const int spawnCount = std::max(1, wave.SpawnCountPerTick);
+			int spawnCount = std::max(1, wave.SpawnCountPerTick);
+			if (wave.MaxAliveEnemy > 0)
+			{
+				const int aliveCount = static_cast<int>(registry.view<::ecs::EnemyTag>().size());
+				const int spawnCapacity = std::max(0, wave.MaxAliveEnemy - aliveCount);
+				spawnCount = std::min(spawnCount, spawnCapacity);
+			}
+
 			for (int i = 0; i < spawnCount; ++i)
 			{
 				const XMFLOAT3 spawnPos = ComputeSpawnPosition(

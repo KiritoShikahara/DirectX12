@@ -7,6 +7,10 @@
 #include <unordered_map>
 #include <Utility/Export/Export.h>
 #include <Utility/Singleton/Singleton.hpp>
+// mSystemTimingsの有無をDEV_TOOL_ENABLEDで切り替えるため、このヘッダをincludeする
+// 全翻訳単位で同じ値が見えるようDebugConfig.hを直接includeする(pch.h任せにすると
+// pch.hを使わないApp側とクラスのサイズが食い違いODR違反になる)
+#include <Utility/config/DebugConfig.h>
 #include "IComponentSystem.h"
 
 namespace ecs
@@ -86,7 +90,7 @@ namespace ecs
         /// </summary>
         std::unordered_map<eUpdatePhase, std::vector<std::unique_ptr<IUserSystem>>> mUserSystems;
 
-#if defined(_DEBUG) || defined(DEV_TOOL_ENABLED)
+#if DEV_TOOL_ENABLED
         // フェーズごとのSystem所要時間計測値(mUserSystemsと同じ順序で対応する)
         std::unordered_map<eUpdatePhase, std::vector<SystemTiming>> mSystemTimings;
 #endif

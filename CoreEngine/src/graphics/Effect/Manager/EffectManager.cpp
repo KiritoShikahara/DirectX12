@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include"EffectManager.h"
 
 #include <graphics/Dx12/Dx12Device.h>
@@ -7,6 +7,22 @@
 #include <ecs/component/transform/TransformComponent.h>
 #include<system/Camera/CameraSystem.h>
 #include<ecs/component/camera/CameraComponent.h>
+
+#include<algorithm>
+#include<thread>
+
+namespace
+{
+    /// <summary>
+    /// EffekseerへのSetLocation/SetScale/SetRotation呼び出しを間引くための一致判定。
+    /// 比較対象は毎フレーム同一の入力から算出される値のため、変化がなければビット単位で
+    /// 一致する。許容誤差を設けると微小な移動が反映されなくなるため厳密比較にする。
+    /// </summary>
+    bool IsSameFloat3(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT3& b)
+    {
+        return a.x == b.x && a.y == b.y && a.z == b.z;
+    }
+}
 
 namespace graphics
 {
@@ -41,7 +57,7 @@ namespace graphics
             return false;
         }
 
-        mManager = Effekseer::Manager::Create(MAX_SQUARES);
+        mManager = Effekseer::Manager::Create(MAX_INSTANCES);
         if (mManager == nullptr)
         {
             DEBUG_LOG(sys::eLogLevel::Error,
@@ -49,14 +65,23 @@ namespace graphics
             return false;
         }
 
-        // 意図的にLaunchWorkerThreads()を呼んでいない(=Effekseer内部のパーティクル更新は
-        // シングルスレッドのまま)。一度有効化を試したが、Manager::Create()のautoFlip
-        // (スレッド間のダブルバッファリング)の影響で内部状態が確定するまでのフレーム数が
-        // 変わるらしく、以前修正済みだった「ループエフェクトが再始動直後の1フレームだけ
-        // 素の四角形ポリゴンで見える」バグ(EffekseerManager::Update()のIsHiddenAfterLoopRestart
-        // 対策、1フレーム遅延を前提にした実装)が再発したため、確実性を優先して差し戻した。
-        // 再度有効化する場合は、IsHiddenAfterLoopRestartの遅延フレーム数をワーカースレッド
-        // 有効時の実際の遅延に合わせて調整する必要がある。
+        // パーティクル更新(Manager::Update)をワーカースレッドへ分散する。
+        //
+        // 過去に一度有効化して表示崩れ(素の四角形で描画される/一度も表示されない)が出たが、
+        // 原因は非同期化そのものではなく、非表示解除をIsPlaying()のタイミングに依存させて
+        // いた当時の実装にあった。現在はフレーム数で管理しており環境非依存になっている
+        // (ecs::EffectComponent::HiddenFramesRemaining参照)。
+        //
+        // Update()はSyncUpdate=true(既定)のため、ワーカーでの計算完了を待って返る。
+        // 呼び出し側から見た同期点は単一スレッド時と同一で、余分な遅延やフレーム跨ぎの
+        // 状態ずれは発生しない。並列化はDoUpdate内のインスタンス分割に対して効く。
+        if constexpr (EFFECT_WORKER_THREAD_COUNT > 0)
+        {
+            mManager->LaunchWorkerThreads(EFFECT_WORKER_THREAD_COUNT);
+            DEBUG_LOG(sys::eLogLevel::Log,
+                "EffekseerManager: Launched {} worker threads for particle update.",
+                EFFECT_WORKER_THREAD_COUNT);
+        }
 
         // レンダラーの設定
         mManager->SetSpriteRenderer(mRenderer->CreateSpriteRenderer());
@@ -111,8 +136,24 @@ namespace graphics
     {
         if (!mIsInitialized) return;
 
+        // 素材別の負荷内訳は「どの.efkを削れば効くか」の判断材料。集計自体もコストのため
+        // デバッグUIが存在するビルドでのみ行う(PerformanceMonitor::Initializeと同じ条件)
+#if DEV_TOOL_ENABLED
+        mEffectStats.clear();
+        constexpr bool kCollectEffectStats = true;
+#else
+        constexpr bool kCollectEffectStats = false;
+#endif
+
         registry.view<ecs::EffectComponent>().each([&](entt::entity entity, ecs::EffectComponent& effect)
             {
+                if constexpr (kCollectEffectStats)
+                {
+                    // 非表示・再生終了の分岐で早期returnする前に集計する
+                    // (GetTotalInstanceCount()の値と内訳が一致するようにするため)
+                    AccumulateEffectStat(effect);
+                }
+
                 // 表示状態の変更を反映
                 if (effect.IsVisible != effect.LastIsVisible)
                 {
@@ -140,24 +181,39 @@ namespace graphics
                         targetTrans->GetPosition().z + effect.Offset.z }
                     : effect.Offset;
 
+                // 再生開始直後の非表示期間を進める。
+                // IsPlaying()の状態に依存せずフレーム数だけで判定するため、
+                // ワーカースレッドの有無で内部状態の確定タイミングが変わっても破綻しない
+                if (effect.HiddenFramesRemaining > 0)
+                {
+                    --effect.HiddenFramesRemaining;
+                    if (effect.HiddenFramesRemaining == 0)
+                    {
+                        effect.Effect.SetRenderingVisible(true);
+                    }
+                }
+
                 // 再生終了していたら
                 if (!effect.Effect.IsPlaying())
                 {
-                    if (effect.IsLoop== true && effect.Asset != nullptr)
+                    if (effect.IsLoop == true && effect.Asset != nullptr)
                     {
                         // ループ: 現在の追従先座標から再スタートする。
-                        // 生成直後のインスタンスはビルボードの向き等、前フレームとの差分に
-                        // 依存する項目がまだ確定しておらず、素の四角形に近い見た目で1フレームだけ
-                        // 描画されてしまうことがある(周期的に「一瞬四角形になる」症状の原因と推測。
-                        // FrostOrbの周回オーブ・IceSpike・各種投射武器のトレイル等、IsLoop=trueで
-                        // 素材自体の長さより長く表示し続けたい場合にこの再始動が発生する)。
-                        // SetRenderingVisible(false)はSetVisibleと異なりPauseしないため、
-                        // 内部シミュレーションは1フレーム分進む。次のUpdateでIsPlaying()==trueに
-                        // なった時点(=内部状態が1tick進んだ後)で表示を戻すことで、その1フレームを
-                        // 隠しつつ実害(ゲームロジック上の再生継続)は出さないようにしている。
+                        // 再始動直後も新規生成と同じく内部状態が未確定のため、同じ猶予を与える
+                        // (FrostOrbの周回オーブ・IceSpike・各種投射武器のトレイル等、
+                        // IsLoop=trueで素材自体の長さより長く表示し続けたい場合に発生する)。
                         effect.Effect.Play(effect.Asset, worldPos, effect.Effect.ShouldDestroy());
                         effect.Effect.SetRenderingVisible(false);
-                        effect.IsHiddenAfterLoopRestart = true;
+                        effect.HiddenFramesRemaining = GetSpawnHiddenFrames();
+                        // Play()でEffekseer側の変換行列がリセットされるため、
+                        // 差分チェックを無効化して下の適用処理で必ず再適用させる
+                        effect.HasAppliedTransform = false;
+                    }
+                    else if (effect.HiddenFramesRemaining > 0)
+                    {
+                        // 生成直後の猶予中はIsPlaying()がまだfalseを返しうる。
+                        // ここで破棄すると「一度も表示されずに消えるエフェクト」になるため、
+                        // 猶予が明けるまでは破棄しない
                     }
                     else
                     {
@@ -167,32 +223,40 @@ namespace graphics
                         return;
                     }
                 }
-                else if (effect.IsHiddenAfterLoopRestart)
+
+                // スケール = Transform.Scale * EffectComponent.Scale
+                const DirectX::XMFLOAT3 worldScale = targetTrans
+                    ? DirectX::XMFLOAT3{
+                        targetTrans->GetScale().x * effect.Scale.x,
+                        targetTrans->GetScale().y * effect.Scale.y,
+                        targetTrans->GetScale().z * effect.Scale.z }
+                    : effect.Scale;
+
+                // Effekseer側の各Setterはstd::map検索と行列再構築を伴うため、
+                // 前回適用値から変化したものだけを呼ぶ(EffectComponentのLastApplied*参照)。
+                // 値は毎フレーム同じ入力から算出されるため、変化がなければビット単位で
+                // 一致する。epsilon比較は不要かつ「わずかな移動が反映されない」不具合の元になる。
+                const bool forceApply = !effect.HasAppliedTransform;
+
+                if (forceApply || !IsSameFloat3(worldPos, effect.LastAppliedLocation))
                 {
-                    // 再始動直後の1フレームが経過し、内部状態が進んだので表示を戻す
-                    effect.Effect.SetRenderingVisible(true);
-                    effect.IsHiddenAfterLoopRestart = false;
+                    effect.Effect.SetLocation(worldPos);
+                    effect.LastAppliedLocation = worldPos;
                 }
 
-                effect.Effect.SetLocation(worldPos);
-
-                if (targetTrans)
+                if (forceApply || !IsSameFloat3(worldScale, effect.LastAppliedScale))
                 {
-                    // スケール = Transform.Scale * EffectComponent.Scale
-                    const auto& trScale = targetTrans->GetScale();
-                    effect.Effect.SetScale({
-                        trScale.x * effect.Scale.x,
-                        trScale.y * effect.Scale.y,
-                        trScale.z * effect.Scale.z
-                        });
-                }
-                else
-                {
-                    effect.Effect.SetScale(effect.Scale);
+                    effect.Effect.SetScale(worldScale);
+                    effect.LastAppliedScale = worldScale;
                 }
 
-                effect.Effect.SetRotation(effect.Rotation);
+                if (forceApply || !IsSameFloat3(effect.Rotation, effect.LastAppliedRotation))
+                {
+                    effect.Effect.SetRotation(effect.Rotation);
+                    effect.LastAppliedRotation = effect.Rotation;
+                }
 
+                effect.HasAppliedTransform = true;
             });
 
         // Effekseer 内部更新（秒 → フレーム換算、60fps 基準）
@@ -221,9 +285,19 @@ namespace graphics
         EffekseerRendererDX12::BeginCommandList(mCmdList, cmdList);
         mRenderer->SetCommandList(mCmdList);
 
+        // 描画呼び出し数・頂点数はそれぞれ専用のReset関数を呼ばない限りアプリ起動からの
+        // 累積値のまま増え続ける(ResetDrawCallCount()は頂点数側をリセットしない)ため、
+        // 両方を毎フレームリセットしてから計測する(PerformanceMonitorでの負荷診断用)
+        mRenderer->ResetDrawCallCount();
+        mRenderer->ResetDrawVertexCount();
+
         mRenderer->BeginRendering();
         mManager->Draw();
         mRenderer->EndRendering();
+
+        mLastDrawCallCount = mRenderer->GetDrawCallCount();
+        mLastDrawVertexCount = mRenderer->GetDrawVertexCount();
+        mLastInstanceCount = mManager->GetTotalInstanceCount();
 
         mRenderer->SetCommandList(nullptr);
         EffekseerRendererDX12::EndCommandList(mCmdList);
@@ -251,7 +325,44 @@ namespace graphics
         }
 
         mEffectCache.emplace(key, effect);
+        // 素材別の負荷集計(AccumulateEffectStat)で表示するため、フルパスではなく
+        // ファイル名だけを控えておく
+        mEffectNames.emplace(effect.Get(), filePath.filename().string());
         return effect;
+    }
+
+    // -----------------------------------------------------------------------
+    //  素材別の負荷集計
+    // -----------------------------------------------------------------------
+    void EffekseerManager::AccumulateEffectStat(const ecs::EffectComponent& effect)
+    {
+        if (effect.Asset == nullptr) return;
+
+        const Effekseer::Handle handle = effect.Effect.GetHandle();
+        if (handle < 0) return;
+
+        const int32_t instances = mManager->GetInstanceCount(handle);
+        if (instances <= 0) return;
+
+        const Effekseer::Effect* key = effect.Asset.Get();
+
+        // 素材数は多くても数十のため線形探索で十分(mapを毎フレーム構築するより安い)
+        for (auto& entry : mEffectStats)
+        {
+            if (entry.Asset == key)
+            {
+                entry.HandleCount += 1;
+                entry.InstanceCount += instances;
+                return;
+            }
+        }
+
+        const auto nameIt = mEffectNames.find(key);
+        mEffectStats.push_back(EffectStatEntry{
+            key,
+            nameIt != mEffectNames.end() ? &nameIt->second : nullptr,
+            1,
+            instances });
     }
 
     // -----------------------------------------------------------------------

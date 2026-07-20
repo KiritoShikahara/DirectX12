@@ -21,7 +21,7 @@ namespace graphics
 
 	bool DX12Device::Initialize()
 	{
-#if defined(_DEBUG) || ECSE_DEV_TOOL_ENABLED 
+#if DEV_TOOL_ENABLED 
 		//	デバック時だけリソース検知などを有効に
 		DebugLayerOn();
 #endif
@@ -88,7 +88,7 @@ namespace graphics
 		mMAAllocator.Reset();
 		mFactory.Reset();
 
-#if defined(_DEBUG) || ECSE_DEV_TOOL_ENABLED
+#if DEV_TOOL_ENABLED
 		if (mDebugDevice != nullptr)
 		{
 			mDebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL | D3D12_RLDO_IGNORE_INTERNAL);
@@ -343,7 +343,7 @@ namespace graphics
 			return false;
 		}
 
-#if defined(_DEBUG) || ECSE_DEV_TOOL_ENABLED
+#if DEV_TOOL_ENABLED
 		if (FAILED(mDevice.As(&mDebugDevice)))
 		{
 			// TODO:ログ出力
