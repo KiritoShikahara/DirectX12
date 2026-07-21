@@ -581,6 +581,20 @@ namespace sys
         // 全チャネルを Close し、宣言順に ExecuteCommandLists → Present。
         {
             mDX12Renderer->EndFrame();
+
+            // 【2026-07-21】EffekseerRendererLLGIの頂点リングバッファ(VertexBuffer::Unlock/
+            // GetNextBuffer)にはGPU側の完了確認が無く、"nextIndex_"という単純なカウンタを
+            // 描画バッチ(Unlock呼び出し)ごとに回しているだけ(ベンダーコード自身に
+            // "TODO make correct ring buffer"というコメントあり、未完成の実装)。
+            // このカウンタは「フレーム単位」ではなく「バッチ単位」で進むため、エンジン側で
+            // フレーム単位のフェンス追跡(EffekseerManager::OnFrameSubmitted、現在は不使用)を
+            // 行ってもバッチ数がフレームごとに変動する限り正しく保護できない
+            // (試したが再発を確認済み)。CPUがGPUより先行しすぎる環境(Develop/Releaseの高fps)では
+            // GPUがまだ読んでいるリング領域をCPUが上書きし、パーティクルがノイズ状に崩れる。
+            // 正しく直すにはベンダーコード側にバッチ単位のフェンス管理を追加する必要があり
+            // リスクが大きいため、確実性を優先してここで毎フレーム完全同期する。
+            // パフォーマンスコストとの兼ね合いは要測定(PerformanceMonitor参照)。
+            mDX12Renderer->WaitForGPU();
         }
     }
 

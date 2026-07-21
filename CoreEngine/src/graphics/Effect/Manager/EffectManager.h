@@ -97,18 +97,28 @@ namespace graphics
         ///
         /// 無効化したい場合はここを0にすること(以前ワーカースレッド有効化時に
         /// エフェクトの表示崩れが発生した経緯があるため、切り分け用に残している)。
+        ///
+        /// 【2026-07-21】Develop/Releaseでパーティクルがノイズ状に崩れる不具合の原因切り分けで
+        /// 一時的に0にして検証したが無関係と判明済み(実際の原因はEffekseerRendererLLGIの
+        /// 頂点リングバッファにGPU完了確認が無いこと。Engine::Render()末尾のWaitForGPU()参照)。
         /// </summary>
         static constexpr uint32_t EFFECT_WORKER_THREAD_COUNT = 8;
 
         /// <summary>
-        /// 再生開始直後にエフェクトを非表示にしておくフレーム数。
+        /// 再生開始直後にエフェクトを非表示にしておくシミュレーション時間(60fps基準tick数)。
         /// 生成直後はビルボードの向き等が未確定で素の四角形に見えるため、その間を隠す。
-        /// ワーカースレッド有効時は内部状態の確定が1フレーム余分にかかりうるため多めに取る
+        /// ワーカースレッド有効時は内部状態の確定が1tick余分にかかりうるため多めに取る
         /// (ecs::EffectComponent::HiddenFramesRemaining参照)。
+        ///
+        /// 【重要】単位はレンダーフレーム数ではなくtick数(dt*60.f換算)にすること。
+        /// 以前はレンダーフレーム数で管理しており、VSync環境ではDebugビルドが重く
+        /// fpsが低い(dtが大きい)ほど実質的な猶予時間が長くなる一方、軽量な
+        /// Develop/Releaseビルド(fpsが高い=dtが小さい)では同じフレーム回数でも
+        /// 猶予時間が短くなり、素の四角形が見える不具合が環境依存で再発していた。
         /// </summary>
-        static constexpr int GetSpawnHiddenFrames()
+        static constexpr float GetSpawnHiddenTicks()
         {
-            return (EFFECT_WORKER_THREAD_COUNT > 0) ? 2 : 1;
+            return (EFFECT_WORKER_THREAD_COUNT > 0) ? 2.0f : 1.0f;
         }
 
         /// <summary>
@@ -116,7 +126,8 @@ namespace graphics
         ///
         /// 生成直後のインスタンスはビルボードの向き等が未確定で素の四角形に近い見た目で
         /// 描画されてしまうため、内部状態が整うまで非表示にする(SetRenderingVisible(false)
-        /// + HiddenFramesRemaining設定。解除はEffekseerManager::Updateがフレーム数を数えて行う)。
+        /// + HiddenFramesRemaining設定。解除はEffekseerManager::Updateがtick数(dt*60.f)を
+        /// 積算して行うため、fpsに依存せず一定のシミュレーション時間だけ隠される)。
         ///
         /// 【重要】以前はこの2行を呼び出し側ごとに個別に書かせていたが、EffectSpawnUtility以外の
         /// 武器システム(SingleShot/Homing/BoneSpearの弾道トレイル、Orbitの周回・命中エフェクト、

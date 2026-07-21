@@ -182,13 +182,17 @@ namespace graphics
                     : effect.Offset;
 
                 // 再生開始直後の非表示期間を進める。
-                // IsPlaying()の状態に依存せずフレーム数だけで判定するため、
-                // ワーカースレッドの有無で内部状態の確定タイミングが変わっても破綻しない
-                if (effect.HiddenFramesRemaining > 0)
+                // IsPlaying()の状態に依存せずtick数(dt*60.f)だけで判定するため、
+                // ワーカースレッドの有無で内部状態の確定タイミングが変わっても破綻しない。
+                // レンダーフレーム数ではなくtick数で減らすことで、VSync環境でfpsが変動しても
+                // (Debugビルドで低fps・Develop/Releaseで高fpsになっても)常に同じ
+                // シミュレーション時間だけ隠される(fps依存で猶予不足になる不具合を回避)。
+                if (effect.HiddenFramesRemaining > 0.f)
                 {
-                    --effect.HiddenFramesRemaining;
-                    if (effect.HiddenFramesRemaining == 0)
+                    effect.HiddenFramesRemaining -= dt * 60.f;
+                    if (effect.HiddenFramesRemaining <= 0.f)
                     {
+                        effect.HiddenFramesRemaining = 0.f;
                         effect.Effect.SetRenderingVisible(true);
                     }
                 }
@@ -208,7 +212,7 @@ namespace graphics
                         // 差分チェックを無効化して下の適用処理で必ず再適用させる
                         effect.HasAppliedTransform = false;
                     }
-                    else if (effect.HiddenFramesRemaining > 0)
+                    else if (effect.HiddenFramesRemaining > 0.f)
                     {
                         // 生成直後の猶予中はIsPlaying()がまだfalseを返しうる。
                         // ここで破棄すると「一度も表示されずに消えるエフェクト」になるため、
@@ -235,6 +239,10 @@ namespace graphics
                 // 前回適用値から変化したものだけを呼ぶ(EffectComponentのLastApplied*参照)。
                 // 値は毎フレーム同じ入力から算出されるため、変化がなければビット単位で
                 // 一致する。epsilon比較は不要かつ「わずかな移動が反映されない」不具合の元になる。
+                //
+                // 【2026-07-21】この間引きを一時的に無効化してパーティクルのノイズ状の崩れとの
+                // 関連を検証したが無関係と判明済み(実際の原因はEffekseerRendererLLGIの頂点リング
+                // バッファにGPU完了確認が無いこと。Engine::Render()末尾のWaitForGPU()参照)。
                 const bool forceApply = !effect.HasAppliedTransform;
 
                 if (forceApply || !IsSameFloat3(worldPos, effect.LastAppliedLocation))
@@ -336,7 +344,7 @@ namespace graphics
     void EffekseerManager::MarkSpawnHidden(ecs::EffectComponent& effect)
     {
         effect.Effect.SetRenderingVisible(false);
-        effect.HiddenFramesRemaining = GetSpawnHiddenFrames();
+        effect.HiddenFramesRemaining = GetSpawnHiddenTicks();
     }
 
     // -----------------------------------------------------------------------
