@@ -139,6 +139,7 @@ namespace ecs
             // ここを Offset のまま渡すと、次フレームの EffekseerManager::Update による
             // Transform追従が効くまでの1フレームだけ原点に表示されてしまう。
             effect.Effect.Play(effect.Asset, spawnPos);
+            graphics::EffekseerManager::MarkSpawnHidden(effect);
         }
     }
 }

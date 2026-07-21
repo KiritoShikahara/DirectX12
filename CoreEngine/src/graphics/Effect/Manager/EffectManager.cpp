@@ -203,8 +203,7 @@ namespace graphics
                         // (FrostOrbの周回オーブ・IceSpike・各種投射武器のトレイル等、
                         // IsLoop=trueで素材自体の長さより長く表示し続けたい場合に発生する)。
                         effect.Effect.Play(effect.Asset, worldPos, effect.Effect.ShouldDestroy());
-                        effect.Effect.SetRenderingVisible(false);
-                        effect.HiddenFramesRemaining = GetSpawnHiddenFrames();
+                        MarkSpawnHidden(effect);
                         // Play()でEffekseer側の変換行列がリセットされるため、
                         // 差分チェックを無効化して下の適用処理で必ず再適用させる
                         effect.HasAppliedTransform = false;
@@ -329,6 +328,15 @@ namespace graphics
         // ファイル名だけを控えておく
         mEffectNames.emplace(effect.Get(), filePath.filename().string());
         return effect;
+    }
+
+    // -----------------------------------------------------------------------
+    //  生成直後の非表示化
+    // -----------------------------------------------------------------------
+    void EffekseerManager::MarkSpawnHidden(ecs::EffectComponent& effect)
+    {
+        effect.Effect.SetRenderingVisible(false);
+        effect.HiddenFramesRemaining = GetSpawnHiddenFrames();
     }
 
     // -----------------------------------------------------------------------

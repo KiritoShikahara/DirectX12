@@ -201,6 +201,7 @@ namespace ecs
 			const float scale = radius / kEffectReferenceRadius;
 			effect.Scale = { scale, scale, scale };
 			effect.Effect.Play(effect.Asset, position);
+			graphics::EffekseerManager::MarkSpawnHidden(effect);
 		}
 
 		DEBUG_LOG(sys::eLogLevel::Log, "AreaAttackWeaponSystem: hazard entity={} spawned at ({}, {}, {}) hitRadius={} visualRadius={}",

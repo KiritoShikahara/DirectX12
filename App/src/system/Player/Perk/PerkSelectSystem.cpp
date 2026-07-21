@@ -23,8 +23,8 @@ namespace ecs
 			return engine;
 		}
 
-		// レイアウト定数（仮想解像度1280x720基準。5択かつ名前が長い選択肢があるため縦並び。
-		// 個人開発プロトタイプの暫定値）
+		// レイアウト定数（仮想解像度1280x720基準。名前が長い選択肢(トレードオフ系)があるため
+		// 横並びではなく縦並び。個人開発プロトタイプの暫定値）
 		constexpr float kOptionY = 240.0f;
 		constexpr float kOptionSpacingY = 60.0f;
 		constexpr float kOptionCenterX = 640.0f;
@@ -244,7 +244,6 @@ namespace ecs
 			auto entity = manager.CreateEntity();
 			auto& text = manager.AddComponent<TextComponent>(entity);
 			text.Text = perk.Name;
-			// 5択かつ名前が長いもの(トレードオフ系)があるため、横並びではなく縦に並べる
 			text.X = kOptionCenterX - 260.0f;
 			text.Y = kOptionY + static_cast<float>(i) * kOptionSpacingY;
 			text.Size = kOptionTextSize;

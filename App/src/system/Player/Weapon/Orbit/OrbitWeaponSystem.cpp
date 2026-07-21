@@ -106,6 +106,7 @@ namespace ecs
 				const float scale = masterData.HitRadius / kEffectReferenceRadius;
 				effect.Scale = { scale, scale, scale };
 				effect.Effect.Play(effect.Asset, DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f });
+				graphics::EffekseerManager::MarkSpawnHidden(effect);
 			}
 
 			runtime.Orbs.push_back(entity);
@@ -205,5 +206,6 @@ namespace ecs
 		effect.IsLoop = false;
 		// autoDelete=true: 再生終了フレームでEffekseerManager::Updateがこのエンティティを破棄する
 		effect.Effect.Play(effect.Asset, position, true);
+		graphics::EffekseerManager::MarkSpawnHidden(effect);
 	}
 }

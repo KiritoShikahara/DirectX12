@@ -16,7 +16,7 @@ namespace ecs
 		/// 1番目=新武器獲得、2番目=武器レベルアップ、3番目以降=その他、という
 		/// 枠の役割分担がある(PerkSelectSystem::EnterPerkSelect参照)。
 		/// </summary>
-		static constexpr int kChoiceCount = 5;
+		static constexpr int kChoiceCount = 3;
 
 		/// <summary>今回提示している選択肢(GetPerkPool()内のインデックス)</summary>
 		std::array<int, kChoiceCount> ChoiceIndices{};

@@ -112,6 +112,20 @@ namespace graphics
         }
 
         /// <summary>
+        /// effect.Effect.Play()の直後に必ず呼ぶこと。
+        ///
+        /// 生成直後のインスタンスはビルボードの向き等が未確定で素の四角形に近い見た目で
+        /// 描画されてしまうため、内部状態が整うまで非表示にする(SetRenderingVisible(false)
+        /// + HiddenFramesRemaining設定。解除はEffekseerManager::Updateがフレーム数を数えて行う)。
+        ///
+        /// 【重要】以前はこの2行を呼び出し側ごとに個別に書かせていたが、EffectSpawnUtility以外の
+        /// 武器システム(SingleShot/Homing/BoneSpearの弾道トレイル、Orbitの周回・命中エフェクト、
+        /// AreaAttackの着弾エフェクト等)で書き漏れが発生し、生成直後に素の四角形が見える不具合が
+        /// 再発した。Play()の直後は必ずこれを呼ぶ規約にして書き漏れを防ぐ。
+        /// </summary>
+        static void MarkSpawnHidden(ecs::EffectComponent& effect);
+
+        /// <summary>
         /// エフェクト素材(.efk)1種類あたりの負荷内訳。総インスタンス数だけでは
         /// 「どの素材を削れば効くか」が分からないため、素材単位で集計する。
         /// </summary>

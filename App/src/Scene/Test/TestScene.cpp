@@ -182,6 +182,7 @@ namespace scene
 		effect.Asset = graphics::EffekseerManager::Get().GetEffect("Assets/Effect/Light3.efk");
 		effect.IsLoop = true;
 		effect.Effect.Play(effect.Asset, effect.Offset);
+		graphics::EffekseerManager::MarkSpawnHidden(effect);
 	}
 	void TestScene::CreateSkybox()
 	{

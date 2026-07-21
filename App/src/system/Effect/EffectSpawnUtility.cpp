@@ -104,11 +104,7 @@ namespace ecs::effectutil
             // Play()直後の1フレーム目は次のEffekseerManager::Updateまで反映されないため、
             // 生成直後から正しい向きで表示されるようここで先行して適用する
             effect.Effect.SetRotation(rotation);
-            // 生成直後のインスタンスはビルボードの向き等が未確定で、素の四角形に近い見た目で
-            // 描画されてしまうことがあるため、内部状態が整うまで非表示にしておく
-            // (解除はEffekseerManager::Updateがフレーム数を数えて行う)
-            effect.Effect.SetRenderingVisible(false);
-            effect.HiddenFramesRemaining = graphics::EffekseerManager::GetSpawnHiddenFrames();
+            graphics::EffekseerManager::MarkSpawnHidden(effect);
 
             if (outEntities != nullptr) outEntities->push_back(entity);
         });
@@ -147,10 +143,7 @@ namespace ecs::effectutil
             effect.IsLoop = true;
             effect.Scale = { scale, scale, scale };
             effect.Effect.Play(effect.Asset, parentTransform->GetPosition());
-            // PlayOneShotCombinedと同じ理由(初回生成時のビルボード向き未確定による
-            // 見た目崩れ)で、内部状態が整うまで非表示にしておく
-            effect.Effect.SetRenderingVisible(false);
-            effect.HiddenFramesRemaining = graphics::EffekseerManager::GetSpawnHiddenFrames();
+            graphics::EffekseerManager::MarkSpawnHidden(effect);
 
             outEntities.push_back(entity);
         });
