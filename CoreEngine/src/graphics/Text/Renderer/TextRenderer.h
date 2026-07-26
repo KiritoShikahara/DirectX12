@@ -64,6 +64,9 @@ namespace graphics
             DirectX::XMFLOAT4 color = { 1.f, 1.f, 1.f, 1.f });
         void Flush(ID3D12GraphicsCommandList* cmdList);
 
+        /// <summary>指定テキストをsize基準で描画したときの幅(px)を実際に描画せず計算する</summary>
+        float MeasureWidth(const std::wstring& text, float size) const;
+
         void OnResize(uint32_t w, uint32_t h);
 
     private:

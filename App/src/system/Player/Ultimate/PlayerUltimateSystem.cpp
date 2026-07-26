@@ -193,9 +193,11 @@ namespace ecs
                 beamPosition.z,
             };
 
+            // ビームは必殺技演出の進行(このフェーズの完了待ち)に必須のため、負荷間引きを無視して
+            // 必ず生成する(bypassBudget=true)。間引かれると即座に次フェーズへ飛んで演出が破綻する。
             ecs::effectutil::PlayOneShotCombined(
                 masterData.BeamEffectPath, beamSpawnPosition, masterData.BeamScale,
-                &ultimate.BeamEffectEntities, beamRotation);
+                &ultimate.BeamEffectEntities, beamRotation, true);
             return;
         }
 
@@ -222,9 +224,11 @@ namespace ecs
                 mainPosition.z,
             };
 
+            // メインも必殺技演出の必須要素のため間引きを無視して必ず生成する(bypassBudget=true)。
+            // rotationは既定のまま。省略引数の先にあるbypassBudgetへ届かせるため明示的に既定値を渡す。
             ecs::effectutil::PlayOneShotCombined(
                 masterData.ActivationEffectPath, mainSpawnPosition, masterData.ActivationScale,
-                &ultimate.MainEffectEntities);
+                &ultimate.MainEffectEntities, { 0.0f, 0.0f, 0.0f }, true);
             return;
         }
 

@@ -7,6 +7,7 @@
 #include<system/Player/Weapon/Projectile/ProjectileComponent.h>
 #include<system/Player/AimSysten/PlayerAimComponent.h>
 #include<system/Player/Status/PlayerCombatUtil.h>
+#include<system/Effect/EffectSpawnUtility.h>
 #include<Data/Weapon/SingleShotWeaponData.h>
 
 namespace ecs
@@ -110,14 +111,15 @@ namespace ecs
 		projectile.Damage = damage;
 		projectile.ExplosionRadius = hitRadius;
 		projectile.VisualRadius = radius;
-		projectile.ExplosionEffectPath = masterData.ExplosionEffectPath;
+		projectile.ExplosionEffectPath = ecs::effectutil::ResolveEffectIds(masterData.ExplosionEffectIds);
 		projectile.LifeTime = masterData.ProjectileLifeTime;
 		projectile.Owner = weapon.Owner;
 
-		if (!masterData.ProjectileEffectPath.empty())
+		const std::string projectileEffectPath = ecs::effectutil::ResolveEffectIds(masterData.ProjectileEffectIds);
+		if (!projectileEffectPath.empty())
 		{
 			auto& effect = manager.AddComponent<ecs::EffectComponent>(entity);
-			effect.Asset = graphics::EffekseerManager::Get().GetEffect(masterData.ProjectileEffectPath);
+			effect.Asset = graphics::EffekseerManager::Get().GetEffect(projectileEffectPath);
 			effect.IsLoop = true;
 			// effect.Offset(常に原点)ではなく実際の発射位置を渡す。
 			// ここを Offset のまま渡すと、次フレームの EffekseerManager::Update による

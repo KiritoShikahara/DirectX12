@@ -1,16 +1,16 @@
-#pragma once
+﻿#pragma once
 
 namespace ecs
 {
 	/// <summary>
-	/// プレイヤーに向かって追従にする敵のパラメーター
+	/// 繝励Ξ繧､繝､繝ｼ縺ｫ蜷代°縺｣縺ｦ霑ｽ蠕薙↓縺吶ｋ謨ｵ縺ｮ繝代Λ繝｡繝ｼ繧ｿ繝ｼ
 	/// </summary>
 	struct EnemyChaseComponent
 	{
-		/// <summary>追尾移動速度</summary>
+		/// <summary>霑ｽ蟆ｾ遘ｻ蜍暮溷ｺｦ</summary>
 		float MoveSpeed = 0.0f;
 
-		/// <summary>この距離内は移動処理をしない</summary>
+		/// <summary>縺薙・霍晞屬蜀・・遘ｻ蜍募・逅・ｒ縺励↑縺・/summary>
 		float StopDistance = 0.0f;
 
 	};

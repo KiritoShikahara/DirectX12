@@ -1,5 +1,6 @@
-#include "apppch.h"
+﻿#include "apppch.h"
 #include "EnemyStatusDebugPanel.h"
+#include <Utility/config/DebugConfig.h> // DEV_TOOL_ENABLED(Debug/Develop荳｡譁ｹ縺ｧ譛牙柑)繧貞盾辣ｧ縺吶ｋ縺溘ａ逶ｴ謗･include
 
 #include"EnemyStatusComponent.h"
 #include<Data/Enemy/EnemyData.h>
@@ -9,7 +10,7 @@ namespace debug
     EnemyStatusDebugPanel::EnemyStatusDebugPanel(std::string debugKey)
         : mDebugKey(std::move(debugKey))
     {
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
         auto& mgr = data::DataRegistry::Get().GetManager<data::EnemyData>();
         mInspector = std::make_unique<data::DataInspector<data::EnemyData>>(mgr);
 
@@ -19,18 +20,18 @@ namespace debug
 
     EnemyStatusDebugPanel::~EnemyStatusDebugPanel()
     {
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
         sys::ImGuiManager::Get().RemoveDebugUI(mDebugKey);
 #endif
     }
 
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
     void EnemyStatusDebugPanel::Draw()
     {
-        // �����e�[�u���G�f�B�^�iLoad/Save CSV�EDB�AAdd Row�AId�܂ޑS�Z���ҏW�APK�d���n�C���C�g�j
+        // ・ｽ・ｽ・ｽ・ｽ・ｽe・ｽ[・ｽu・ｽ・ｽ・ｽG・ｽf・ｽB・ｽ^・ｽiLoad/Save CSV・ｽEDB・ｽAAdd Row・ｽAId・ｽﾜむ全・ｽZ・ｽ・ｽ・ｽﾒ集・ｽAPK・ｽd・ｽ・ｽ・ｽn・ｽC・ｽ・ｽ・ｽC・ｽg・ｽj
         mInspector->Draw("Enemy Master");
 
-        // �ҏW���ʂ𐶑����̓G�֍ēK�p���邽�߂̑���E�B���h�E
+        // ・ｽﾒ集・ｽ・ｽ・ｽﾊを生托ｿｽ・ｽ・ｽ・ｽﾌ敵・ｽﾖ再適・ｽp・ｽ・ｽ・ｽ驍ｽ・ｽﾟの托ｿｽ・ｽ・ｽE・ｽB・ｽ・ｽ・ｽh・ｽE
         if (ImGui::Begin("Enemy Apply"))
         {
 
@@ -66,8 +67,8 @@ namespace debug
                 st.Base.ExperienceValue = static_cast<float>(row.Exp);
                 st.Base.GoldValue = row.GoldValue;
 
-                st.Recompute();                    // Base �~ WaveMod �� Current
-                st.CurrentHp = st.Current.MaxHp;   // HP���^���ɖ߂�
+                st.Recompute();                    // Base ・ｽ~ WaveMod ・ｽ・ｽ Current
+                st.CurrentHp = st.Current.MaxHp;   // HP・ｽ・ｽ・ｽ^・ｽ・ｽ・ｽﾉ戻ゑｿｽ
             });
     }
 #else

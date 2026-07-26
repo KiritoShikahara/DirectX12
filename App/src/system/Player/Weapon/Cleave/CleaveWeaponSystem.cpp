@@ -139,8 +139,9 @@ namespace ecs
         }
 
         // 見た目のサイズは判定射程(hitRadius)ではなくradius(見た目基準)に合わせる。
-        // EffectPathは';'区切りで複数指定可能(ecs::effectutil::PlayOneShotCombined参照)。
+        // EffectIdsは';'区切りの素材ID列で複数指定可能(ecs::effectutil::ResolveEffectIds/PlayOneShotCombined参照)。
         const float scale = radius / kEffectReferenceRadius;
-        ecs::effectutil::PlayOneShotCombined(masterData.EffectPath, effectPos, scale);
+        const std::string effectPath = ecs::effectutil::ResolveEffectIds(masterData.EffectIds);
+        ecs::effectutil::PlayOneShotCombined(effectPath, effectPos, scale);
     }
 }

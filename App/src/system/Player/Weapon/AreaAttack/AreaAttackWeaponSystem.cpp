@@ -7,6 +7,7 @@
 #include<system/Player/Weapon/WeaponUpdateUtil.h>
 #include<system/Player/AimSysten/PlayerAimComponent.h>
 #include<system/Player/Status/PlayerCombatUtil.h>
+#include<system/Effect/EffectSpawnUtility.h>
 #include<Data/Weapon/AreaAttackWeaponData.h>
 
 #include<system/Physics/System/PhysicsSystem.h>
@@ -16,8 +17,7 @@
 
 namespace
 {
-	// エフェクト素材は概ねこの半径感で作られている想定の暫定値。
-	// 実際の判定半径とのズレ(見た目は小さいのに判定は大きい/その逆)を軽減するための概算スケール。
+	// エフェクト素材のだいたいの基準半径。見た目のスケール計算に使う
 	constexpr float kEffectReferenceRadius = 2.0f;
 }
 
@@ -25,8 +25,7 @@ namespace ecs
 {
 	void AreaAttackWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
-		// InGame中のみ発動する。必殺技演出中は他の攻撃を発動させない
-		// (手動発動武器のためIsPlayerActionLocked()を使う。ecs::weaponutil::ShouldSkipManualWeaponUpdate参照)
+		// InGame中のみ発動。必殺技演出中は撃たせない
 		if (ecs::weaponutil::ShouldSkipManualWeaponUpdate(registry)) return;
 
 		registry.view<ecs::WeaponComponent, ecs::AreaAttackWeaponRuntimeComponent>().each(
@@ -161,8 +160,7 @@ namespace ecs
 		float damage,
 		const data::AreaAttackWeaponData& masterData)
 	{
-		// 当たり判定半径は見た目基準半径(radius)とは別にHitRadiusMultiplierで拡大する。
-		// エフェクトの見た目サイズは従来通りradius基準のままにするため、ここで分離する。
+		// 判定半径は見た目のradiusとは別にHitRadiusMultiplierで拡大する
 		const float hitRadius = radius * masterData.HitRadiusMultiplier;
 
 		auto& manager = ::ecs::EntityManager::Get();
@@ -187,17 +185,14 @@ namespace ecs
 			wire.Color = { 0.4f, 0.8f, 1.0f, 1.0f }; // 氷らしい水色
 		}
 
-		if (!masterData.EffectPath.empty())
+		const std::string effectPath = ecs::effectutil::ResolveEffectIds(masterData.EffectIds);
+		if (!effectPath.empty())
 		{
 			auto& effect = manager.AddComponent<ecs::EffectComponent>(entity);
-			effect.Asset = graphics::EffekseerManager::Get().GetEffect(masterData.EffectPath);
-			// IsLoop=trueだと、素材の再生時間がDuration(5秒)より短い場合に「1回終わったら
-			// 同じ場所にもう1発出た」ように見えてしまう(EffekseerManager::Updateが自動で再Play()する)。
-			// 見た目は着弾時に1回だけ再生し、当たり判定(ダメージ反復)はAreaAttackHazardSystemが
-			// Durationの間ずっと別途継続する（見た目の再生時間と判定の持続時間を分離する）。
+			effect.Asset = graphics::EffekseerManager::Get().GetEffect(effectPath);
+			// 見た目は着弾時に1回だけ。判定側の継続ダメージはAreaAttackHazardSystemが別に担う
 			effect.IsLoop = false;
-			// 見た目のサイズは判定半径(hitRadius)ではなくradius(見た目基準)で合わせる
-			// （HitRadiusMultiplierで判定だけ拡大しても見た目は変えないため）
+			// 見た目のスケールはradius基準(判定だけ拡大しても見た目は変えない)
 			const float scale = radius / kEffectReferenceRadius;
 			effect.Scale = { scale, scale, scale };
 			effect.Effect.Play(effect.Asset, position);

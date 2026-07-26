@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include<memory>
 #include<string>
@@ -12,15 +12,15 @@ namespace data
 namespace debug
 {
     /// <summary>
-    /// “Gƒ}ƒXƒ^(EnemyData)‚ÌƒfƒoƒbƒOƒpƒlƒ‹B
-    /// Šù‘¶ DataInspector ‚É‚æ‚éƒe[ƒuƒ‹•ÒW(CSV/DBEIdŠÜ‚Ş‘SƒtƒB[ƒ‹ƒh)‚É‰Á‚¦A
-    /// •ÒW“à—e‚ğ¶‘¶’†‚Ì“G(EnemyStatusComponent)‚ÖÄ“K—p‚·‚é‹@”\‚ğ‚ÂB
-    /// IUserSystem ‚ÍŒp³‚¹‚¸A¶¬‚É ImGuiManager ‚Ö“o˜^E”jŠü‚É‰ğœ‚·‚éB
+    /// è¬¨ï½µç¹æ§­ã›ç¹§ï½¿(EnemyData)ç¸ºï½®ç¹ãƒ»ãƒ°ç¹ãƒ»ã’ç¹ä»£ãƒ­ç¹ï½«ç¸²ãƒ»
+    /// è­Œï½¢èŸ„ãƒ»DataInspector ç¸ºï½«ç¹§åŒ»ï½‹ç¹ãƒ»ãƒ»ç¹æ‚¶Îé‚±ï½¨é«®ãƒ»CSV/DBç¹ï½»Idèœ·ï½«ç¹§Â€èœˆï½¨ç¹è¼”ã…ç¹ï½¼ç¹ï½«ç¹ãƒ»ç¸ºï½«èœ‰ï£°ç¸ºåŒ»Â€ãƒ»
+    /// é‚±ï½¨é«®ãƒ»ãƒ»è³ï½¹ç¹§å ¤å‡½èŸ„å€…ï½¸ï½­ç¸ºï½®è¬¨ï½µ(EnemyStatusComponent)ç¸ºï½¸èœ€åŸ¼â†é€•ï½¨ç¸ºå¶ï½‹è®–æº¯ãƒ»ç¹§å‘ˆæˆŸç¸ºï½¤ç¸²ãƒ»
+    /// IUserSystem ç¸ºï½¯é‚¯å‘ä¾¡ç¸ºå¸™â˜…ç¸²âˆ«å‡½è¬Œå…ˆå‡¾ç¸ºï½« ImGuiManager ç¸ºï½¸é€‹ï½»éª­ï½²ç¹ï½»éï½´è­½ãƒ»å‡¾ç¸ºï½«éš—ï½£é«¯ï½¤ç¸ºå¶ï½‹ç¸²ãƒ»
     /// </summary>
     class EnemyStatusDebugPanel
     {
     public:
-        /// <param name="debugKey">ImGuiManager “o˜^E‰ğœ‚Ég‚¤ƒL[iƒV[ƒ“‚²‚Æ‚ÉˆêˆÓ‚É‚·‚é‚±‚Æj</param>
+        /// <param name="debugKey">ImGuiManager é€‹ï½»éª­ï½²ç¹ï½»éš—ï½£é«¯ï½¤ç¸ºï½«è´ï½¿ç¸ºãƒ»ãç¹ï½¼ãƒ»åŒ»ã™ç¹ï½¼ç¹ï½³ç¸ºæ–â†’ç¸ºï½«è³Â€è«¢ä¸Šâ†“ç¸ºå¶ï½‹ç¸ºè–™â†’ãƒ»ãƒ»/param>
         explicit EnemyStatusDebugPanel(std::string debugKey = "EnemyStatusDebug");
         ~EnemyStatusDebugPanel();
 
@@ -32,10 +32,10 @@ namespace debug
         void ApplyAllToEnemies();
         void ApplyRowToEnemies(const data::EnemyData& row);
 
-        // Šù‘¶‚Ìƒe[ƒuƒ‹ƒGƒfƒBƒ^iIdŠÜ‚Ş‘SƒtƒB[ƒ‹ƒh•ÒWECSV/DB‘€ì‚ğ“à•ïj
+        // è­Œï½¢èŸ„å€¥ãƒ»ç¹ãƒ»ãƒ»ç¹æ‚¶Îç¹§ï½¨ç¹ãƒ»ã…ç¹§ï½¿ãƒ»ãƒ»dèœ·ï½«ç¹§Â€èœˆï½¨ç¹è¼”ã…ç¹ï½¼ç¹ï½«ç¹è‡¥ï½·ï½¨é«®ãƒ»ãƒ»CSV/DBè¬«å ºï½½æ‡Šï½’èœ€ãƒ»æ¡ãƒ»ãƒ»
         std::unique_ptr<data::DataInspector<data::EnemyData>> mInspector;
 
-        // ImGuiManager “o˜^E‰ğœ‚Ég‚¤ƒL[
+        // ImGuiManager é€‹ï½»éª­ï½²ç¹ï½»éš—ï½£é«¯ï½¤ç¸ºï½«è´ï½¿ç¸ºãƒ»ãç¹ï½¼
         std::string mDebugKey;
     };
 }

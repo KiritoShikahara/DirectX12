@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include<ecs/system/manager/IComponentSystem.h>
 #include<entt/entt.hpp>
@@ -8,7 +8,7 @@ namespace ecs
 	struct PlayerStateComponent;
 
 	/// <summary>
-	/// ƒvƒŒƒCƒ„[‚Ìó‘ÔŠÇ—
+	/// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®çŠ¶æ…‹ç®¡ç†
 	/// </summary>
 	class PlayerStateSystem : public ecs::IUserSystem
 	{

@@ -1,0 +1,7 @@
+#pragma once
+
+namespace ecs
+{
+    struct GlowAnimation
+    {
+        float BaseIntensity = 1.0f;  // 陜難ｽｺ雋・じ竊堤ｸｺ・ｪ郢ｧ蛹ｺ

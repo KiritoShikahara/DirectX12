@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <string>
 #include <vector>
 #include <functional>
@@ -6,9 +6,7 @@
 
 namespace data
 {
-	/*
-	* フィールド属性フラグ
-	*/
+
 	enum class eFieldFlag : uint32_t
 	{
 		None = 0,
@@ -23,9 +21,6 @@ namespace data
 		return (static_cast<uint32_t>(flags) & static_cast<uint32_t>(bit)) != 0;
 	}
 
-	/// <summary>
-	/// 各システム登録用
-	/// </summary>
 	class IFieldVisitor
 	{
 	public:
@@ -34,8 +29,6 @@ namespace data
 		virtual void OnFloat(const std::string& name, float& value, eFieldFlag flags) = 0;
 		virtual void OnBool(const std::string& name, bool& value, eFieldFlag flags) = 0;
 		virtual void OnString(const std::string& name, std::string& value, eFieldFlag flags) = 0;
-		// 将来の型拡張例：
-		// virtual void OnVec3(const std::string& name, Vector3& value, eFieldFlag flags) {}
 	};
 
 	struct FieldInfo
@@ -45,10 +38,6 @@ namespace data
 		std::function<void(void* inst, IFieldVisitor& visitor)> Accept;
 	};
 
-	/// <summary>
-	/// TypeDescriptor<T>  マクロで特殊化する
-	/// </summary>
-	/// <typeparam name="T"></typeparam>
 	template<typename T>
 	struct TypeDescriptor
 	{
@@ -56,10 +45,6 @@ namespace data
 		static const std::vector<FieldInfo>& Fields();
 	};
 
-	/*
-	* VisitFields  ユーティリティ
-	* TypeDescriptor<T>::Fields() を回してビジターを適用する。
-	*/
 	template<typename T>
 		void VisitFields(T& obj, IFieldVisitor& visitor)
 	{
@@ -70,12 +55,10 @@ namespace data
 	template<typename T>
 	void VisitFields(const T& obj, IFieldVisitor& visitor)
 	{
-		// const → mutable キャスト（visitor は読み取り専用として使う場合）
 		for (const auto& field : TypeDescriptor<T>::Fields())
 			field.Accept(const_cast<T*>(&obj), visitor);
 	}
 
-	// 主キーフィールドのインデックスを返す（無ければ -1）
 	template<typename T>
 	int FindPrimaryKeyIndex()
 	{
@@ -103,9 +86,6 @@ namespace data
 		using _T = Type;                                                                 \
 		static std::vector<data::FieldInfo> sFields = {
 
-// 通常フィールド（型自動判別）
-
-
 #define REFLECT_FIELD(FieldName)                                                         \
 			data::FieldInfo {                                                            \
 				#FieldName,                                                              \
@@ -121,7 +101,6 @@ namespace data
 				}                                                                        \
 			},
 
-// 主キーフィールド（int 専用）
 #define REFLECT_FIELD_ID(FieldName)                                                      \
 			data::FieldInfo {                                                            \
 				#FieldName,                                                              \
@@ -133,7 +112,6 @@ namespace data
 				}                                                                        \
 			},
 
-// 型別明示マクロ（型推論が効かないケース用）
 #define REFLECT_FIELD_INT(FieldName)                                                     \
 			data::FieldInfo { #FieldName, data::eFieldFlag::None,                        \
 				[](void* inst, data::IFieldVisitor& v) {                                 \
@@ -159,7 +137,6 @@ namespace data
 		return sFields;                                                                  \
 	}
 
-// TypeDescriptor 特殊化（構造体定義直後・名前空間外）
 #define REFLECT_REGISTER(Type)                                                           \
 	namespace data {                                                                     \
 	template<> inline const char* TypeDescriptor<Type>::TableName()                     \

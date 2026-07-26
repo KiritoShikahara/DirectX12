@@ -3,9 +3,13 @@
 
 #include <Data/Settings/GameSettingsData.h>
 #include <system/Scene/Manager/SceneManager.h>
+#include <system/Input/InputGuideLabels.h>
+#include <system/UI/UiPanelUtility.h>
+#include <graphics/Text/Renderer/TextRenderer.h>
 #include <Scene/Title/TitleScene.h>
 
 #include <algorithm>
+#include <limits>
 #include <string>
 
 namespace ecs
@@ -48,9 +52,13 @@ namespace ecs
 
 	int OptionsMenuSystem::GetItemCount() const
 	{
-		return (mPage == ePage::Root)
-			? static_cast<int>(eRootItem::Count)
-			: static_cast<int>(eSettingsItem::Count);
+		switch (mPage)
+		{
+		case ePage::Root:     return static_cast<int>(eRootItem::Count);
+		case ePage::Settings: return static_cast<int>(eSettingsItem::Count);
+		case ePage::Controls: return 1; // 選択可能な項目は「戻る」のみ(一覧は選択不可の固定表示)
+		}
+		return 0;
 	}
 
 	void OptionsMenuSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
@@ -81,6 +89,7 @@ namespace ecs
 
 		BuildUi();
 		RefreshLabels();
+		BuildBackgroundPanel();
 	}
 
 	void OptionsMenuSystem::Close(entt::registry& registry)
@@ -104,6 +113,7 @@ namespace ecs
 
 		BuildUi();
 		RefreshLabels();
+		BuildBackgroundPanel();
 	}
 
 	void OptionsMenuSystem::DestroyUi(entt::registry& registry)
@@ -123,7 +133,9 @@ namespace ecs
 		{
 			auto entity = manager.CreateEntity();
 			auto& text = manager.AddComponent<TextComponent>(entity);
-			text.Text = (mPage == ePage::Root) ? L"MENU" : L"SETTINGS";
+			if (mPage == ePage::Root) text.Text = L"MENU";
+			else if (mPage == ePage::Controls) text.Text = L"CONTROLS";
+			else text.Text = L"SETTINGS";
 			text.X = kItemX;
 			text.Y = kTitleY;
 			text.Size = kTitleSize;
@@ -144,6 +156,91 @@ namespace ecs
 			text.Layer = kUiLayer;
 			mUiEntities.push_back(entity);
 		}
+
+		if (mPage == ePage::Controls)
+		{
+			BuildControlsInfoLines();
+		}
+	}
+
+	void OptionsMenuSystem::BuildControlsInfoLines()
+	{
+		// 選択項目("戻る"、itemCount=1件)より下に、選択不可の操作方法一覧を並べる。
+		// mUiEntitiesの末尾に追加するだけなのでRefreshLabels(0..itemCount-1しか触らない)の
+		// 対象外になり、DestroyUiでは他のUIエンティティと同様にまとめて破棄される。
+		auto& manager = ENTITY_MANAGER;
+		const ::sys::eInputDevice device = ::sys::InputManager::Get().GetLastInputDevice();
+
+		const std::wstring lines[] =
+		{
+			L"移動: " + std::wstring(::ecs::inputguide::GetGameplayMoveLabel(device)),
+			L"照準: " + std::wstring(::ecs::inputguide::GetAimLabel(device)),
+			L"メイン攻撃: " + std::wstring(::ecs::inputguide::GetAttackLabel(device)),
+			L"サブ攻撃: " + std::wstring(::ecs::inputguide::GetAttack2Label(device)),
+			L"必殺技: " + std::wstring(::ecs::inputguide::GetUltimateLabel(device)),
+			L"フリッカーストライク: " + std::wstring(::ecs::inputguide::GetFlickerStrikeLabel(device)),
+			L"ポーズメニュー: " + std::wstring(::ecs::inputguide::GetOptionLabel(device)),
+		};
+
+		constexpr float kInfoStartY = kFirstItemY + kItemSpacingY; // 「戻る」(1件)の次の行から
+		constexpr float kInfoSize = 28.0f;
+		const DirectX::XMFLOAT4 kInfoColor = { 0.85f, 0.85f, 0.85f, 1.0f };
+
+		for (size_t i = 0; i < sizeof(lines) / sizeof(lines[0]); ++i)
+		{
+			auto entity = manager.CreateEntity();
+			auto& text = manager.AddComponent<TextComponent>(entity);
+			text.Text = lines[i];
+			text.X = kItemX;
+			text.Y = kInfoStartY + static_cast<float>(i) * kItemSpacingY;
+			text.Size = kInfoSize;
+			text.Color = kInfoColor;
+			text.Layer = kUiLayer;
+			mUiEntities.push_back(entity);
+		}
+	}
+
+	void OptionsMenuSystem::BuildBackgroundPanel()
+	{
+		// ゲーム画面(一時停止中の背景)の上に文字が直接乗ると読みづらいため、黒半透明の板を
+		// メニュー全体の下に敷く。ページごとに行数・文字幅が変わる(Controlsページは操作方法
+		// 一覧の分だけ縦に長い)ため、生成済みテキストの実測範囲から動的にサイズを決める
+		// (呼び出しはRefreshLabelsで文字列が確定した後であること)。
+		auto& registry = ENTITY_MANAGER.GetRegistry();
+		auto& textRenderer = ::graphics::TextRenderer::Get();
+
+		float minX = (std::numeric_limits<float>::max)();
+		float maxX = (std::numeric_limits<float>::lowest)();
+		float minY = (std::numeric_limits<float>::max)();
+		float maxY = (std::numeric_limits<float>::lowest)();
+
+		for (entt::entity entity : mUiEntities)
+		{
+			const auto* text = registry.try_get<TextComponent>(entity);
+			if (text == nullptr) continue;
+
+			minX = std::min(minX, text->X);
+			maxX = std::max(maxX, text->X + textRenderer.MeasureWidth(text->Text, text->Size));
+			minY = std::min(minY, text->Y);
+			maxY = std::max(maxY, text->Y + text->Size);
+		}
+
+		if (minX > maxX) return; // テキストが1件も無い場合の保険(理論上起きない)
+
+		constexpr float kPanelPadX = 60.0f;
+		constexpr float kPanelPadTop = 30.0f;
+		constexpr float kPanelPadBottom = 30.0f;
+
+		const float left = minX - kPanelPadX;
+		const float right = maxX + kPanelPadX;
+		const float top = minY - kPanelPadTop;
+		const float bottom = maxY + kPanelPadBottom;
+
+		auto panelEntity = ::ecs::uiutil::CreateTranslucentPanel(
+			(left + right) * 0.5f, (top + bottom) * 0.5f,
+			right - left, bottom - top,
+			0);
+		mUiEntities.push_back(panelEntity);
 	}
 
 	void OptionsMenuSystem::HandleInput(entt::registry& registry)
@@ -152,10 +249,10 @@ namespace ecs
 		const int itemCount = GetItemCount();
 
 		// Option / Cancel での戻る操作。
-		// Settingsページからは1階層戻るだけにして、いきなり閉じないようにする
+		// Root以外のページからは1階層戻るだけにして、いきなり閉じないようにする
 		if (input.IsActionPressed("Option") || input.IsActionPressed("Cancel"))
 		{
-			if (mPage == ePage::Settings)
+			if (mPage != ePage::Root)
 			{
 				ChangePage(registry, ePage::Root);
 			}
@@ -208,6 +305,10 @@ namespace ecs
 				ChangePage(registry, ePage::Settings);
 				break;
 
+			case eRootItem::Controls:
+				ChangePage(registry, ePage::Controls);
+				break;
+
 			case eRootItem::ReturnToTitle:
 				// シーン遷移前に設定を保存し、停止したTimeScaleを必ず戻す
 				// (戻し忘れると遷移先が止まったままになる)
@@ -225,6 +326,13 @@ namespace ecs
 			default:
 				break;
 			}
+			return;
+		}
+
+		// Controlsページ: 選択可能な項目は「戻る」の1件のみ
+		if (mPage == ePage::Controls)
+		{
+			ChangePage(registry, ePage::Root);
 			return;
 		}
 
@@ -286,10 +394,17 @@ namespace ecs
 				switch (static_cast<eRootItem>(i))
 				{
 				case eRootItem::Settings:      text->Text = L"設定"; break;
+				case eRootItem::Controls:      text->Text = L"操作案内"; break;
 				case eRootItem::ReturnToTitle: text->Text = L"タイトルへ"; break;
 				case eRootItem::Resume:        text->Text = L"戻る"; break;
 				default: break;
 				}
+			}
+			else if (mPage == ePage::Controls)
+			{
+				// 選択可能な項目は「戻る」の1件のみ(操作方法の一覧はBuildControlsInfoLinesが
+				// 選択対象外の固定表示として別途生成している)
+				if (i == 0) text->Text = L"戻る";
 			}
 			else if (settings != nullptr)
 			{

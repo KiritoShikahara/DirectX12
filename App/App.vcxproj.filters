@@ -66,6 +66,12 @@
     <ClCompile Include="src\system\Player\InputSystem\PlayerInputSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\system\Light\DirLightFollowSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Animation\LocomotionAnimationSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="src\system\Player\MovementSystem\PlayerMovementSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -102,6 +108,9 @@
     <ClCompile Include="src\system\Player\UI\PlayerHpBarSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\system\Player\UI\PlayerUltimateGaugeSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="src\system\Damage\PlayerContactDamage\PlayerContactDamageSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -114,10 +123,22 @@
     <ClCompile Include="src\system\Player\Weapon\WeaponTypeRegistry.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\system\Player\Weapon\WeaponCooldownRegistry.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Player\Weapon\WeaponIconRegistry.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Player\UI\WeaponIconBarSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="src\system\Player\Status\PlayerRegenSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\system\UI\DamageNumber\DamageNumberSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\UI\UiPanelUtility.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\system\Enemy\Status\EnemyStatusDebugPanel.cpp">
@@ -180,6 +201,9 @@
     <ClCompile Include="src\system\Enemy\Knockback\EnemyKnockbackSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\system\Enemy\Status\EnemySlowStatusSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeWeaponSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -236,6 +260,9 @@
     <ClInclude Include="src\system\StatusUpgrade\StatusUpgradeComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\system\StatusUpgrade\StatusUpgradeLabels.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="src\Data\Save\PlayerSaveData.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -260,6 +287,12 @@
     <ClInclude Include="src\system\MenuController\MenuControllerComp.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\system\MenuController\WeaponSelectVisuals.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Input\InputGuideLabels.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="src\system\MenuController\MenuControllerSystem.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -267,6 +300,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\Scene\Game\Factory\GameSceneFactory.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Scene\Game\Factory\FieldConstants.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\CameraFollow\CameraFollowOffsetComponent.h">
@@ -288,6 +324,15 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\Player\MovementSystem\PlayerMovementComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Light\DirLightFollowSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Animation\LocomotionAnimationSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Animation\ActionAnimLockComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\Player\MovementSystem\PlayerMovementSystem.h">
@@ -425,6 +470,12 @@
     <ClInclude Include="src\system\Enemy\Knockback\EnemyKnockbackSystem.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\system\Enemy\Status\EnemySlowStatusComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Enemy\Status\EnemySlowStatusSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="src\Data\Weapon\FlickerStrikeWeaponData.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -479,6 +530,15 @@
     <ClInclude Include="src\system\Player\Weapon\WeaponTypeRegistry.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\WeaponCooldownRegistry.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\WeaponIconRegistry.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\UI\WeaponIconBarSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="src\system\Player\Status\PlayerRegenSystem.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -486,6 +546,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\UI\DamageNumber\DamageNumberSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\UI\UiPanelUtility.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\Scene\Game\State\GameState.h">
@@ -557,6 +620,9 @@
     <ClInclude Include="src\system\Player\UI\PlayerHpBarSystem.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\system\Player\UI\PlayerUltimateGaugeSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="src\system\Player\UI\FillAmountLerp.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -573,6 +639,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\Data\Enemy\EnemyData.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Data\Enemy\BossData.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\Player\AimSysten\PlayerAimComponent.h">

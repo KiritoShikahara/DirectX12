@@ -1,4 +1,4 @@
-#include<Windows.h>
+﻿#include<Windows.h>
 
 #if _DEBUG
 #define _CRTDBG_MAP_ALLOC 
@@ -22,12 +22,12 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 {
 	sys::SceneFactory::Get().SetDefaultSceneName(START_SCENE_NAME);
 
-	// 性能計測を自動化する際、GUI操作なしで条件を再現できるようにするため、
-	// デバッグ設定はエンジン初期化より前にコマンドラインから読み込む
+	// 諤ｧ閭ｽ險域ｸｬ繧定・蜍募喧縺吶ｋ髫帙；UI謫堺ｽ懊↑縺励〒譚｡莉ｶ繧貞・迴ｾ縺ｧ縺阪ｋ繧医≧縺ｫ縺吶ｋ縺溘ａ縲・
+	// 繝・ヰ繝・げ險ｭ螳壹・繧ｨ繝ｳ繧ｸ繝ｳ蛻晄悄蛹悶ｈ繧雁燕縺ｫ繧ｳ繝槭Φ繝峨Λ繧､繝ｳ縺九ｉ隱ｭ縺ｿ霎ｼ繧
 	auto& debugSettings = debug::GameDebugSettings::Get();
 	debugSettings.ParseCommandLine(lpCmdLine);
 
-	// システム初期化
+	// 繧ｷ繧ｹ繝・Β蛻晄悄蛹・
 	auto& engine = sys::Engine::Get();
 	if (engine.Initialize() == false)
 	{
@@ -36,15 +36,15 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 	debugSettings.Initialize();
 
-	// 音量などのユーザー設定を読み込んでAudioManagerへ反映する。
-	// タイトルを含む全シーンで有効にするため、シーンではなくここで一度だけ行う
+	// 髻ｳ驥上↑縺ｩ縺ｮ繝ｦ繝ｼ繧ｶ繝ｼ險ｭ螳壹ｒ隱ｭ縺ｿ霎ｼ繧薙〒AudioManager縺ｸ蜿肴丐縺吶ｋ縲・
+	// 繧ｿ繧､繝医Ν繧貞性繧蜈ｨ繧ｷ繝ｼ繝ｳ縺ｧ譛牙柑縺ｫ縺吶ｋ縺溘ａ縲√す繝ｼ繝ｳ縺ｧ縺ｯ縺ｪ縺上％縺薙〒荳蠎ｦ縺縺題｡後≧
 	data::EnsureGameSettingsLoaded();
 
-	// --autoexit=SECONDS 指定時に使う開始時刻(自動計測を一定時間で打ち切るため)
+	// --autoexit=SECONDS 謖・ｮ壽凾縺ｫ菴ｿ縺・幕蟋区凾蛻ｻ(閾ｪ蜍戊ｨ域ｸｬ繧剃ｸ螳壽凾髢薙〒謇薙■蛻・ｋ縺溘ａ)
 	const float autoExitSeconds = debugSettings.GetAutoExitSeconds();
 	const auto  startTime = std::chrono::steady_clock::now();
 
-	// ループ
+	// 繝ｫ繝ｼ繝・
 	while (engine.Run())
 	{
 		if (autoExitSeconds > 0.0f)
@@ -57,7 +57,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
 
 	debugSettings.Finalize();
 
-	// ファイナライズ
+	// 繝輔ぃ繧､繝翫Λ繧､繧ｺ
 	engine.Finalize();
 
 	return 0;

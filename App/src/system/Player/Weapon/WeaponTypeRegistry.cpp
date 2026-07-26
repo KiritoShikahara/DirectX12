@@ -21,11 +21,8 @@ namespace
 {
     using AddRuntimeComponentFn = std::function<void(entt::registry&, entt::entity)>;
 
-    /// <summary>
-    /// 武器種別→ランタイムコンポーネント付与関数のテーブル。関数内staticにすることで
-    /// 構築順序に依存しない(Meyerのシングルトンパターン、static初期化順序問題を回避)。
-    /// 新しい武器種別を追加する場合はここへ1行追記する。
-    /// </summary>
+    /// <summary>武器種別→ランタイムコンポーネント付与関数のテーブル。新しい武器種別を
+    /// 追加する場合はここへ1行追記する</summary>
     const std::unordered_map<ecs::eWeaponType, AddRuntimeComponentFn>& GetRegistry()
     {
         static const std::unordered_map<ecs::eWeaponType, AddRuntimeComponentFn> table =

@@ -1,6 +1,8 @@
-#include "apppch.h"
+﻿#include "apppch.h"
 #include "TitleInputSystem.h"
 #include <Scene/Hub/HubScene.h>
+#include <system/Input/InputGuideLabels.h>
+#include <graphics/Text/Renderer/TextRenderer.h> // 操作案内テキストの水平中央揃えに使う
 
 void sys::TitleInputSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 {
@@ -19,4 +21,15 @@ void sys::TitleInputSystem::Update(entt::registry& registry, float deltaTime, fl
 	// 終了のシステムは全画面で共通できるように別システムとして存在。
 	// 専用のコンポーネントの存在で処理分岐をするようにする。
 
+	// 操作案内(「PUSH TO START」画像の下のボタン名)。最後に使われた入力デバイスに応じて更新する
+	const ::sys::eInputDevice device = input.GetLastInputDevice();
+	const float screenCenterX = static_cast<float>(::sys::Window::Get().GetVirtualWidth()) * 0.5f;
+	auto& textRenderer = ::graphics::TextRenderer::Get();
+	registry.view<::ecs::TitleGuideUiTag, ::ecs::TextComponent>().each(
+		[device, screenCenterX, &textRenderer](::ecs::TextComponent& text)
+		{
+			text.Text = std::wstring(L"[") + ::ecs::inputguide::GetSelectLabel(device) + L"]";
+			const float textWidth = textRenderer.MeasureWidth(text.Text, text.Size);
+			text.X = screenCenterX - textWidth * 0.5f;
+		});
 }

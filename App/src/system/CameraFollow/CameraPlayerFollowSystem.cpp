@@ -1,5 +1,6 @@
-#include "apppch.h"
+﻿#include "apppch.h"
 #include "CameraPlayerFollowSystem.h"
+#include <Utility/config/DebugConfig.h> // DEV_TOOL_ENABLED(Debug/Develop荳｡譁ｹ縺ｧ譛牙柑)繧貞盾辣ｧ縺吶ｋ縺溘ａ逶ｴ謗･include
 
 #include"../Tag/EntityTag.h"
 #include"CameraFollowOffsetComponent.h"
@@ -11,7 +12,7 @@ namespace ecs
 {
     CameraPlayerFollowSystem::CameraPlayerFollowSystem()
     {
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
         ::sys::ImGuiManager::Get().AddDebugUI([this]()
             {
                 this->RegisterImgui();
@@ -20,14 +21,14 @@ namespace ecs
     }
     CameraPlayerFollowSystem::~CameraPlayerFollowSystem()
     {
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
         ::sys::ImGuiManager::Get().RemoveDebugUI("CameraFollowOffset");
 #endif // _DEBUG
     }
 
     void CameraPlayerFollowSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
-        // PlayerTag �����G���e�B�e�B������
+        // PlayerTag ・ｽ・ｽ・ｽ・ｽ・ｽﾂエ・ｽ・ｽ・ｽe・ｽB・ｽe・ｽB・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ
         entt::entity playerEntity = entt::null;
         registry.view<ecs::Transform, ecs::PlayerTag>()
             .each([&](entt::entity entity, ecs::Transform&)

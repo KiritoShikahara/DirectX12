@@ -100,6 +100,13 @@ namespace ecs
 			{ ePerkEffectType::DefenseUp,     L"防御力 + 15%",    0.15f },
 			{ ePerkEffectType::AttackCountUp, L"同時攻撃数 + 100%", 1.0f },
 			{ ePerkEffectType::WeaponLevelUp, L"武器レベルアップ", 0.0f },
+
+			// MenuScene(初期武器選択)で選ばなかった側もここで拾えるようにする
+			// (HasWeaponで既所持分は自動的に除外されるため、選んだ1種は出ない)。
+			{ ePerkEffectType::AcquireWeapon, L"新武器: Fire",      0.0f, eWeaponType::SingleShot, 0 },
+			{ ePerkEffectType::AcquireWeapon, L"新武器: Lightning", 0.0f, eWeaponType::AreaAttack, 0 },
+			{ ePerkEffectType::AcquireWeapon, L"新武器: Orb",       0.0f, eWeaponType::SelfDefense, 0 },
+
 			{ ePerkEffectType::AcquireWeapon, L"新武器: Nova",    0.0f, eWeaponType::Nova, 0 },
 			{ ePerkEffectType::AcquireWeapon, L"新武器: Homing Missile", 0.0f, eWeaponType::Homing, 0 },
 			{ ePerkEffectType::AcquireWeapon, L"新武器: Chain Lightning", 0.0f, eWeaponType::Chain, 0 },

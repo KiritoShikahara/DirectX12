@@ -1,5 +1,6 @@
 ﻿#include "apppch.h"
 #include "SingleShotWeaponDebugPanel.h"
+#include <Utility/config/DebugConfig.h> // DEV_TOOL_ENABLED(Debug/Develop両方で有効)を参照するため直接include
 
 #include<Data/Weapon/SingleShotWeaponData.h>
 
@@ -8,7 +9,7 @@ namespace debug
     SingleShotWeaponDebugPanel::SingleShotWeaponDebugPanel(std::string debugKey)
         : mDebugKey(std::move(debugKey))
     {
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
         auto& mgr = data::DataRegistry::Get().GetManager<data::SingleShotWeaponData>();
         mInspector = std::make_unique<data::DataInspector<data::SingleShotWeaponData>>(mgr);
 
@@ -18,12 +19,12 @@ namespace debug
 
     SingleShotWeaponDebugPanel::~SingleShotWeaponDebugPanel()
     {
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
         sys::ImGuiManager::Get().RemoveDebugUI(mDebugKey);
 #endif
     }
 
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
     void SingleShotWeaponDebugPanel::Draw()
     {
         mInspector->Draw("SingleShot Weapon Master");

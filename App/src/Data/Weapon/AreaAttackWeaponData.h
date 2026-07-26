@@ -38,7 +38,9 @@ namespace data
 
         float       ForwardOffset = 3.0f;    // 探索範囲の中心を、プレイヤーの向いている方向へどれだけ離すか(m)
 
-        std::string EffectPath;              // 発生時エフェクト(.efk)
+        // エフェクト素材ID(';'区切りで複数指定可、data::EffectAssetData参照)。
+        // ecs::effectutil::ResolveEffectIds()でパス文字列へ解決してから使うこと。
+        std::string EffectIds;               // 発生時エフェクト
 
         REFLECT_BEGIN(AreaAttackWeaponData, "area_attack_weapons")
             REFLECT_FIELD_ID(Id)
@@ -52,7 +54,7 @@ namespace data
             REFLECT_FIELD_FLOAT(Duration)
             REFLECT_FIELD_FLOAT(TickInterval)
             REFLECT_FIELD_FLOAT(ForwardOffset)
-            REFLECT_FIELD_STR(EffectPath)
+            REFLECT_FIELD_STR(EffectIds)
         REFLECT_END()
     };
 }

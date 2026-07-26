@@ -1,0 +1,5 @@
+#pragma once
+
+#include<ecs/system/manager/IComponentSystem.h>
+
+// 郢ｧ・ｷ郢ｧ・ｹ郢

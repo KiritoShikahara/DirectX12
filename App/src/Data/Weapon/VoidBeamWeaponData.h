@@ -33,7 +33,9 @@ namespace data
 
         float       HeightOffset = 30.0f;    // ヒットエフェクトの再生高さ = 対象のY座標 + この値(m)
 
-        std::string HitEffectPath;           // 命中のたびに1回だけ再生するエフェクト(.efk)
+        // エフェクト素材ID(';'区切りで複数指定可、data::EffectAssetData参照)。
+        // ecs::effectutil::ResolveEffectIds()でパス文字列へ解決してから使うこと。
+        std::string HitEffectIds;           // 命中のたびに1回だけ再生するエフェクト
         float       HitEffectScale = 1.0f;   // ヒットエフェクトの見た目倍率
 
         // ヒットエフェクトを再生する最大数(1回の発動あたり)。ダメージは貫通ヒットする全員に
@@ -51,7 +53,7 @@ namespace data
             REFLECT_FIELD_FLOAT(BeamLength)
             REFLECT_FIELD_FLOAT(BeamWidth)
             REFLECT_FIELD_FLOAT(HeightOffset)
-            REFLECT_FIELD_STR(HitEffectPath)
+            REFLECT_FIELD_STR(HitEffectIds)
             REFLECT_FIELD_FLOAT(HitEffectScale)
             REFLECT_FIELD_INT(MaxHitEffects)
         REFLECT_END()

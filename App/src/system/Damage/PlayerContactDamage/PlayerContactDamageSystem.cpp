@@ -1,4 +1,4 @@
-#include "apppch.h"
+ï»¿#include "apppch.h"
 #include "PlayerContactDamageSystem.h"
 
 #include<system/Enemy/Attack/EnemyAttackComponent.h>
@@ -21,7 +21,7 @@ namespace ecs
 		auto& gameState = registry.get<GameStateComponent>(*stateView.begin());
 		if (gameState.GameState != ::sys::eGameState::InGame) return;
 
-		// ï¿½Gï¿½Sï¿½Ì‚ÌƒNï¿½[ï¿½ï¿½ï¿½^ï¿½Cï¿½ï¿½ï¿½ï¿½iï¿½ß‚ï¿½B
+		// “G‘S‘Ì‚ÌƒN[ƒ‹ƒ^ƒCƒ€‚ği‚ß‚é
 		registry.view<EnemyAttackComponent>().each(
 			[&](EnemyAttackComponent& atk)
 			{
@@ -31,49 +31,49 @@ namespace ecs
 				}
 			});
 
-		// ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®å–å¾—
-		// size_hint() ã¯è¤‡æ•°ã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆãƒ“ãƒ¥ãƒ¼ã§ã¯æœ€å°ãƒ—ãƒ¼ãƒ«ã®ã‚µã‚¤ã‚ºã‚’è¿”ã™ã ã‘ã§ã€
-		// å®Ÿéš›ã«å…¨æ¡ä»¶ã‚’æº€ãŸã™ã‚¨ãƒ³ãƒ†ã‚£ãƒ†ã‚£ãŒå­˜åœ¨ã™ã‚‹ä¿è¨¼ã«ã¯ãªã‚‰ãªã„
-		// ï¼ˆCollisionStayEvent ã¯æ•µåŒå£«ã®æ¥è§¦ã§ã‚‚ç™ºè¡Œã•ã‚Œã‚‹ãŸã‚ã€ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼è‡ªèº«ã¯
-		// ä½•ã«ã‚‚è§¦ã‚Œã¦ã„ãªã„ãƒ•ãƒ¬ãƒ¼ãƒ ã§ã‚‚ size_hint() ãŒé0ã‚’è¿”ã—ã†ã‚‹ã€‚
-		// ãã®çŠ¶æ…‹ã§ *playerView.begin() ã™ã‚‹ã¨ end() ã‚’å‚ç…§ã—ã¦ã‚¯ãƒ©ãƒƒã‚·ãƒ¥ã™ã‚‹ï¼‰ã€‚
-		// ãã®ãŸã‚ PlayerTag + PlayerStatusComponent ã ã‘ã§å®‰å…¨ã«ãƒ—ãƒ¬ã‚¤ãƒ¤ãƒ¼ã‚’å–å¾—ã—ã€
-		// CollisionStayEvent ã¯ try_get ã§æœ‰ç„¡ã‚’ç¢ºèªã™ã‚‹ã€‚
+		// ƒvƒŒƒCƒ„[‚Ìæ“¾
+		// size_hint() ‚Í•¡”ƒRƒ“ƒ|[ƒlƒ“ƒgƒrƒ…[‚Å‚ÍÅ¬ƒv[ƒ‹‚ÌƒTƒCƒY‚ğ•Ô‚·‚¾‚¯‚ÅA
+		// ÀÛ‚É‘SğŒ‚ğ–‚½‚·ƒGƒ“ƒeƒBƒeƒB‚ª‘¶İ‚·‚é•ÛØ‚É‚Í‚È‚ç‚È‚¢
+		// iCollisionStayEvent ‚Í“G“¯m‚ÌÚG‚Å‚à”­s‚³‚ê‚é‚½‚ßAƒvƒŒƒCƒ„[©g‚Í
+		// ‰½‚É‚àG‚ê‚Ä‚¢‚È‚¢ƒtƒŒ[ƒ€‚Å‚à size_hint() ‚ª”ñ0‚ğ•Ô‚µ‚¤‚éB
+		// ‚»‚Ìó‘Ô‚Å *playerView.begin() ‚·‚é‚Æ end() ‚ğQÆ‚µ‚ÄƒNƒ‰ƒbƒVƒ…‚·‚éjB
+		// ‚»‚Ì‚½‚ß PlayerTag + PlayerStatusComponent ‚¾‚¯‚ÅˆÀ‘S‚ÉƒvƒŒƒCƒ„[‚ğæ“¾‚µA
+		// CollisionStayEvent ‚Í try_get ‚Å—L–³‚ğŠm”F‚·‚éB
 		auto playerView = registry.view<PlayerTag, PlayerStatusComponent>();
 		if (playerView.begin() == playerView.end()) return;
 
 		const entt::entity playerEntity = *playerView.begin();
 
-		// è¡çªãŒç¶™ç¶šã—ã¦ã„ã‚‹é–“ã‚‚æ¯ãƒ•ãƒ¬ãƒ¼ãƒ æ¤œçŸ¥ã™ã‚‹å¿…è¦ãŒã‚ã‚‹ãŸã‚ CollisionStayEvent ã‚’ä½¿ã†
-		// ï¼ˆCollisionEnterEvent ã¯è¡çªé–‹å§‹ãƒ•ãƒ¬ãƒ¼ãƒ ã«ã—ã‹ç™ºè¡Œã•ã‚Œãªã„ãŸã‚ã€
-		// å¯†ç€ã—ãŸã¾ã¾ã ã¨ã‚¯ãƒ¼ãƒ«ãƒ€ã‚¦ãƒ³ãŒæ˜ã‘ã¦ã‚‚å†ãƒ€ãƒ¡ãƒ¼ã‚¸ãŒåˆ¤å®šã§ããªããªã‚‹ï¼‰
+		// Õ“Ë‚ªŒp‘±‚µ‚Ä‚¢‚éŠÔ‚à–ˆƒtƒŒ[ƒ€ŒŸ’m‚·‚é•K—v‚ª‚ ‚é‚½‚ß CollisionStayEvent ‚ğg‚¤
+		// iCollisionEnterEvent ‚ÍÕ“ËŠJnƒtƒŒ[ƒ€‚É‚µ‚©”­s‚³‚ê‚È‚¢‚½‚ßA
+		// –§’…‚µ‚½‚Ü‚Ü‚¾‚ÆƒN[ƒ‹ƒ_ƒEƒ“‚ª–¾‚¯‚Ä‚àÄƒ_ƒ[ƒW‚ª”»’è‚Å‚«‚È‚­‚È‚éj
 		const auto* contactPtr = registry.try_get<CollisionStayEvent>(playerEntity);
-		if (contactPtr == nullptr) return; // ã“ã®ãƒ•ãƒ¬ãƒ¼ãƒ ã¯ä½•ã«ã‚‚è§¦ã‚Œã¦ã„ãªã„
+		if (contactPtr == nullptr) return; // ‚±‚ÌƒtƒŒ[ƒ€‚Í‰½‚É‚àG‚ê‚Ä‚¢‚È‚¢
 
 		auto& playerStatus = registry.get<PlayerStatusComponent>(playerEntity);
 		if (playerStatus.IsInvincible) return; // invincible (e.g. during Ultimate): skip damage entirely
 
-		// ãƒ‡ãƒãƒƒã‚°ç”¨ã®ç„¡æ•µ(GUIã¾ãŸã¯--godmodeã§æœ‰åŠ¹åŒ–)ã€‚
-		// IsInvincibleã¯ã‚¦ãƒ«ãƒˆç­‰ãŒçµ‚äº†æ™‚ã«falseã¸æˆ»ã™ãŸã‚ã€ãã¡ã‚‰ã¯æµç”¨ã§ããªã„
+		// ƒfƒoƒbƒO—p‚Ì–³“G(GUI‚Ü‚½‚Í--godmode‚Å—LŒø‰»)B
+		// IsInvincible‚ÍƒEƒ‹ƒg“™‚ªI—¹‚Éfalse‚Ö–ß‚·‚½‚ßA‚»‚¿‚ç‚Í—¬—p‚Å‚«‚È‚¢
 		if (::debug::GameDebugSettings::Get().IsPlayerInvincible()) return;
 
 		const auto& contact = *contactPtr;
 
-		// ï¿½hï¿½ï¿½vï¿½Z
+		// –hŒä—Í‚©‚ç”íƒ_ƒ[ƒWŒyŒ¸—¦‚ğŒvZ
 		const float defense = playerStatus.Current.Defense;
 		const float mitigation = kDefenseHalfPoint / (kDefenseHalfPoint + defense);
 
-		// ï¿½ÚGï¿½ï¿½ï¿½ï¿½ï¿½Gï¿½ï¿½ï¿½Æ‚Éƒ_ï¿½ï¿½ï¿½[ï¿½Wï¿½ï¿½ï¿½ï¿½
+		// ÚG‚µ‚Ä‚¢‚é“G‚²‚Æ‚Éƒ_ƒ[ƒW‚ğ—^‚¦‚é
 		for (entt::entity other : contact.OtherEntities)
 		{
 			if (!registry.valid(other)) continue;
 			if (!registry.all_of<EnemyTag>(other)) continue;
-			
+
 			auto* atk = registry.try_get<EnemyAttackComponent>(other);
 			auto* enemyStatus = registry.try_get<EnemyStatusComponent>(other);
 			if (!atk || !enemyStatus) continue;
 
-			// ï¿½Nï¿½[ï¿½ï¿½ï¿½^ï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½Íƒ_ï¿½ï¿½ï¿½[ï¿½Wï¿½ï¿½^ï¿½ï¿½ï¿½È‚ï¿½
+			// ƒN[ƒ‹ƒ^ƒCƒ€’†‚Íƒ_ƒ[ƒW‚ğ—^‚¦‚È‚¢
 			if (atk->CooldownTimer > 0.0f) continue;
 
 			const float damage = enemyStatus->Current.AtkPower * mitigation;
@@ -88,10 +88,10 @@ namespace ecs
 			atk->CooldownTimer = atk->AttackInterval;
 		}
 
-		// ï¿½ï¿½ï¿½Sï¿½ï¿½ï¿½è‚©ï¿½çƒŠï¿½Nï¿½Gï¿½Xï¿½gï¿½\ï¿½ï¿½
+		// HP‚ªs‚«‚½‚çƒQ[ƒ€ƒI[ƒo[‚ğ—v‹‚·‚é
 		if (playerStatus.CurrentHp <= 0.0f)
 		{
-			// å¾©æ´»ãƒ‘ãƒ¼ã‚¯ã‚’å–å¾—ã—ã¦ã„ã‚Œã°ã€1å›æ¶ˆè²»ã—ã¦HPå…¨å›å¾©ã§æ­»äº¡ã‚’å–ã‚Šæ¶ˆã™
+			// •œŠˆƒp[ƒN‚ğæ“¾‚µ‚Ä‚¢‚ê‚ÎA1‰ñÁ”ï‚µ‚ÄHP‘S‰ñ•œ‚Å€–S‚ğæ‚èÁ‚·
 			if (playerStatus.ReviveCount > 0)
 			{
 				playerStatus.ReviveCount -= 1;

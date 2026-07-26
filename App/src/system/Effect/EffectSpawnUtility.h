@@ -22,12 +22,19 @@ namespace ecs::effectutil
     /// AnyPlaying()を使う。rotationは素材の既定の向き(オイラー角、ラジアン)からの回転で、
     /// 省略時{0,0,0}は素材の既定の向きのまま再生する。
     /// </summary>
+    /// <summary>
+    /// bypassBudget=true にすると同時演出数・パーティクル数による間引き(kMaxConcurrentOneShotEffects/
+    /// kMaxConcurrentParticleInstances)を無視して必ず生成する。必殺技のビーム/メインのような
+    /// 「絶対に再生されなければ演出フローが破綻する」必須シネマティック演出に使う
+    /// (通常のヒット演出は間引かれてもゲーム挙動に影響しないためfalseのままにする)。
+    /// </summary>
     void PlayOneShotCombined(
         const std::string& delimitedPaths,
         const DirectX::XMFLOAT3& position,
         float scale,
         std::vector<entt::entity>* outEntities = nullptr,
-        const DirectX::XMFLOAT3& rotation = { 0.f, 0.f, 0.f });
+        const DirectX::XMFLOAT3& rotation = { 0.f, 0.f, 0.f },
+        bool bypassBudget = false);
 
     /// <summary>
     /// entitiesのうち、有効かつ再生中(EffectComponent::Effect.IsPlaying())のものが
@@ -57,11 +64,26 @@ namespace ecs::effectutil
     /// </summary>
     void PreloadEffect(const std::string& delimitedPaths);
 
+    /// <summary>
+    /// ';'区切りのエフェクト素材ID列(例:"201;202")を、data::EffectAssetDataで解決した
+    /// パスの';'区切り文字列(例:"Assets/Effect/LightningStrike.efk;Assets/Effect/chain_hit.efk")
+    /// へ変換する。数値変換に失敗したトークンや、EffectAssetDataに未登録のIDは
+    /// 結果から除く(その素材だけ無かったことになる。呼び出し側の追加対応は不要)。
+    ///
+    /// 各武器システムはマスタデータ取得直後にこれを1回呼び、戻り値を以降は従来通り
+    /// (PlayOneShotCombined/GetEffect等への)パス文字列として扱う。
+    /// </summary>
+    std::string ResolveEffectIds(const std::string& idsCsv);
+
     namespace detail
     {
         /// <summary>
-        /// PreloadAllEffectPathFields<T>()の実装用ビジター。フィールド名が"EffectPath"で
-        /// 終わる文字列フィールドだけをPreloadEffect()へ渡す(命名規約: XxxEffectPath)。
+        /// PreloadAllEffectPathFields<T>()の実装用ビジター。文字列フィールドの名前のサフィックスで
+        /// 値の意味を判別し、それぞれPreloadEffect()へ渡す:
+        ///   ・"EffectPath"で終わる(命名規約: XxxEffectPath) … 値がそのままパス文字列
+        ///     (data::UltimateData等、Id=0の単一行しか持たずレベル重複問題が無いデータ用)
+        ///   ・"EffectIds"で終わる(命名規約: XxxEffectIds) … 値がエフェクト素材ID列(';'区切り)
+        ///     (data::XxxWeaponData等、レベル数だけ行を持つデータ用。ResolveEffectIdsでパスへ解決してから渡す)
         /// </summary>
         class EffectPathPreloadVisitor : public data::IFieldVisitor
         {
@@ -71,21 +93,33 @@ namespace ecs::effectutil
             void OnBool(const std::string&, bool&, data::eFieldFlag) override {}
             void OnString(const std::string& name, std::string& value, data::eFieldFlag) override
             {
-                constexpr std::string_view kSuffix = "EffectPath";
-                if (name.size() >= kSuffix.size() &&
-                    name.compare(name.size() - kSuffix.size(), kSuffix.size(), kSuffix) == 0)
+                constexpr std::string_view kPathSuffix = "EffectPath";
+                constexpr std::string_view kIdsSuffix = "EffectIds";
+
+                if (HasSuffix(name, kPathSuffix))
                 {
                     PreloadEffect(value);
                 }
+                else if (HasSuffix(name, kIdsSuffix))
+                {
+                    PreloadEffect(ResolveEffectIds(value));
+                }
+            }
+
+        private:
+            static bool HasSuffix(const std::string& name, std::string_view suffix)
+            {
+                return name.size() >= suffix.size() &&
+                    name.compare(name.size() - suffix.size(), suffix.size(), suffix) == 0;
             }
         };
     }
 
     /// <summary>
-    /// rowsの各要素をリフレクション(data::VisitFields)で走査し、フィールド名が"EffectPath"で
-    /// 終わる文字列フィールド(命名規約: XxxEffectPath)を全てPreloadEffect()へ渡す。
-    /// GameScene::PreloadWeaponEffects()が武器/必殺技マスタデータごとに個別のエフェクトパス
-    /// フィールド名を列挙していた重複を解消するために追加した。新しいエフェクトパスフィールドを
+    /// rowsの各要素をリフレクション(data::VisitFields)で走査し、フィールド名が"EffectPath"/
+    /// "EffectIds"で終わる文字列フィールド(命名規約: XxxEffectPath / XxxEffectIds)を
+    /// 全てPreloadEffect()へ渡す。GameScene::PreloadWeaponEffects()が武器/必殺技マスタデータ
+    /// ごとに個別のフィールド名を列挙していた重複を解消するために追加した。新しいフィールドを
     /// 追加した場合、命名規約に従っていれば自動的に先読み対象になる(呼び出し側の追記は不要)。
     /// </summary>
     template<typename T>

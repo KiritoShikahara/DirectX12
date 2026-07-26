@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include<system/Scene/IScene.h>
 
@@ -11,34 +11,34 @@ namespace scene
 		virtual void Finalize()override;
 
 	private:
-		// リソース読み込み
+		// 繝ｪ繧ｽ繝ｼ繧ｹ隱ｭ縺ｿ霎ｼ縺ｿ
 		void LoadResource();
 
-		// 画像
+		// 逕ｻ蜒・
 		void CreateSprite();
 
 		// Fbx
 		void CreateFbx();
 
-		// BGMとSE
+		// BGM縺ｨSE
 		void CreateSound();
 
-		// メインカメラ
+		// 繝｡繧､繝ｳ繧ｫ繝｡繝ｩ
 		void CreateCamera();
 
-		// ディレクションライト
+		// 繝・ぅ繝ｬ繧ｯ繧ｷ繝ｧ繝ｳ繝ｩ繧､繝・
 		void CreateLight();
 
-		// フィールド
+		// 繝輔ぅ繝ｼ繝ｫ繝・
 		void CreateField();
 
-		// 文字
+		// 譁・ｭ・
 		void CreateText();
 
-		// エフェクト
+		// 繧ｨ繝輔ぉ繧ｯ繝・
 		void CreateEffect();
 
-		// スカイボックス
+		// 繧ｹ繧ｫ繧､繝懊ャ繧ｯ繧ｹ
 		void CreateSkybox();
 
 		// Shape

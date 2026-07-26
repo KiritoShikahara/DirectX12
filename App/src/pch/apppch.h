@@ -1,11 +1,11 @@
-#pragma once
+﻿#pragma once
 
-// ecs
+
+
 #include<ecs/entity/EntityManager.h>
 #include<ecs/system/manager/IComponentSystem.h>
 #include<ecs/system/manager/ComponentSystemManager.h>
 
-// コンポーネント
 #include<ecs/component/transform/TransformComponent.h>
 #include<ecs/component/sprite/SpriteComponent.h>
 #include<ecs/component/sprite/SpriteAnimationComponent.h>
@@ -20,18 +20,15 @@
 #include<ecs/component/skybox/SkyboxComponent.h>
 #include<ecs/component/Effect/EffectComponent.h>
 
-// リソース管理
 #include<graphics/Texture/Texture.h>
 #include<graphics/Texture/TextureManager.h>
 #include<graphics/Fbx/Resource/FbxResourceManager.h>
 #include<graphics/Effect/Manager/EffectManager.h>
 #include<graphics/PrimitiveModel/Resource/PrimitiveResourceManager.h>
 
-// オーディオ
 #include<audio/Resource/AudioResourceManager.h>
 #include<audio/Manager/AudioManager.h>
 
-// システム
 #include<system/AssetPath/AssetPathManager.h>
 #include<system/Logger/Logger.h>
 #include<system/Scene/Factory/SceneFactory.h>
@@ -42,15 +39,12 @@
 #include<system/ImGui/ImGuiManager.h>
 #include<system/Time/TimeManager.h>
 
-// データ
 #include<Data/Storage/Registry/DataRegistry.h>
 #include<Data/Storage/Registry/ConfigRegistry.h>
 #include<Data/Storage/Inspector/DataInspector.h>
 
-// 汎用
 #include<Utility/Singleton/Singleton.hpp>
 
-// STD
 #include<cmath>
 #include<vector>
 #include<string>

@@ -35,19 +35,36 @@ namespace ecs
 
         // ── 難易度スケーリング ────────────────────────────────
         /// <summary>
-        /// 経過時間1秒あたりの敵ステータス(HP/攻撃力)成長率。0.004 = 1秒ごとに+0.4%。
-        /// 序盤(最初の数十秒)は武器2発で倒せる程度になるよう、緩やかな値にしてある。
+        /// 敵ステータス(HP/攻撃力)強化ステップの間隔(秒)。滑らかな連続成長ではなく、
+        /// この秒数が経過するたびにStatGrowthPerStep分だけ段階的に強くなる階段状にする
+        /// (EnemySpawnSystem::ComputeWaveModifier参照)。
         /// </summary>
-        float StatGrowthPerSecond = 0.004f;
+        float StatGrowthStepInterval = 120.0f;
+        /// <summary>1ステップごとの成長倍率の増分(0.4=+40%)</summary>
+        float StatGrowthPerStep = 0.4f;
 
-        // ── ボース ────────────────────────────────────────────
-        /// <summary>ボースが出現するまでの経過時間(秒)</summary>
-        float BossSpawnTime = 90.0f;
-        /// <summary>ボースを既にスポーンしたか</summary>
-        bool BossSpawned = false;
+        // ── ボース(3階級、data::BossData参照) ──────────────────
+        /// <summary>小ボースが最初に出現するまでの経過時間(秒)</summary>
+        float MiniBossFirstSpawnTime = 180.0f;
+        /// <summary>以後、小ボースが繰り返し出現する間隔(秒)</summary>
+        float MiniBossInterval = 180.0f;
+        /// <summary>次回小ボースが出現する基準時刻(ElapsedTime基準、秒)。
+        /// 出現のたびにMiniBossIntervalずつ加算する(GameSceneFactory::CreateStateControllerで
+        /// MiniBossFirstSpawnTimeへ初期化する)</summary>
+        float NextMiniBossSpawnTime = 180.0f;
+
+        /// <summary>中ボースが出現するまでの経過時間(秒、1回だけ)</summary>
+        float MidBossSpawnTime = 480.0f;
+        /// <summary>中ボースを既にスポーンしたか</summary>
+        bool MidBossSpawned = false;
+
+        /// <summary>最強ボースが出現するまでの経過時間(秒、1回だけ)</summary>
+        float FinalBossSpawnTime = 800.0f;
+        /// <summary>最強ボースを既にスポーンしたか</summary>
+        bool FinalBossSpawned = false;
 
         // ── クリア条件 ────────────────────────────────────────
         /// <summary>この秒数生存するとクリアになる</summary>
-        float ClearTime = 180.0f;
+        float ClearTime = 900.0f;
     };
 }

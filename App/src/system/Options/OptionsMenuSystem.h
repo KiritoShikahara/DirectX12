@@ -29,14 +29,16 @@ namespace ecs
 		/// </summary>
 		enum class ePage
 		{
-			Root,     // 設定 / タイトルへ / 戻る
+			Root,     // 設定 / 操作方法 / タイトルへ / 戻る
 			Settings, // 音量など(将来の画質設定もここへ追加する)
+			Controls, // 操作方法(読み取り専用の一覧 + 戻る)
 		};
 
 		/// <summary>Rootページの項目</summary>
 		enum class eRootItem : int
 		{
 			Settings = 0,
+			Controls,
 			ReturnToTitle,
 			Resume,
 			Count
@@ -72,6 +74,14 @@ namespace ecs
 
 		/// <summary>現在のページの項目に合わせてUIエンティティを作る</summary>
 		void BuildUi();
+
+		/// <summary>Controlsページ専用: 選択不可の操作方法一覧テキストを作る(mUiEntitiesの末尾に追加、
+		/// RefreshLabelsが触る選択項目の範囲外なので固定表示のままになる)</summary>
+		void BuildControlsInfoLines();
+
+		/// <summary>ゲーム画面に文字が直接乗ると読みづらいため、生成済みテキストの実測範囲から
+		/// 黒半透明の板を動的にサイズして敷く(RefreshLabelsで文字列確定後に呼ぶこと)</summary>
+		void BuildBackgroundPanel();
 
 		/// <summary>現在の設定値から各項目の表示文字列を作り直す</summary>
 		void RefreshLabels();

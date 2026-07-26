@@ -6,6 +6,8 @@
 #include<system/Player/Weapon/Inventory/WeaponInventoryComponent.h>
 #include<system/Player/Weapon/WeaponUpdateUtil.h>
 #include<system/Player/Status/PlayerCombatUtil.h>
+#include<system/Effect/EffectSpawnUtility.h>
+#include<system/Enemy/Status/EnemySlowStatusComponent.h>
 #include<Data/Weapon/OrbitWeaponData.h>
 
 #include<ecs/component/Debug/DebugWireSphereComponent.h>
@@ -34,11 +36,8 @@ namespace ecs
 				const auto* masterData = DATA_MGR(data::OrbitWeaponData).GetById(ecs::weaponutil::ComputeWeaponDataId(weapon));
 				if (masterData == nullptr) return;
 
-				// 発動トリガーの無い常時稼働の武器のため、初回Updateでオーブを生成する
-				if (runtime.Orbs.empty())
-				{
-					SpawnOrbs(registry, runtime, *masterData);
-				}
+				UpdatePhase(registry, runtime, *masterData, deltaTime);
+				if (!runtime.IsActive) return; // Cooldown中はオーブが存在しないため周回・判定をスキップ
 
 				const auto* ownerTransform = registry.try_get<ecs::Transform>(weapon.Owner);
 				if (ownerTransform == nullptr) return;
@@ -65,7 +64,37 @@ namespace ecs
 			});
 	}
 
-	/// <summary>OrbCount個のオーブエンティティを均等配置で生成する（初回のみ）</summary>
+	/// <summary>
+	/// Active/Cooldownのフェーズ残り時間を進め、尽きていればフェーズを切り替える。
+	/// IsActive初期値falseとPhaseTimer初期値0(OrbitWeaponRuntimeComponent参照)の組み合わせにより、
+	/// 装備直後の初回Updateはこの関数内でCooldown満了 → SpawnOrbs()が呼ばれ即座にActive化する。
+	/// </summary>
+	void OrbitWeaponSystem::UpdatePhase(
+		entt::registry& registry,
+		ecs::OrbitWeaponRuntimeComponent& runtime,
+		const data::OrbitWeaponData& masterData,
+		float deltaTime)
+	{
+		runtime.PhaseTimer -= deltaTime;
+		if (runtime.PhaseTimer > 0.0f) return;
+
+		if (runtime.IsActive)
+		{
+			// Active時間が終了：オーブを全消滅させ、Cooldownへ移行
+			DespawnOrbs(registry, runtime);
+			runtime.IsActive = false;
+			runtime.PhaseTimer = masterData.CooldownDuration;
+		}
+		else
+		{
+			// Cooldownが終了：オーブを生成し、Activeへ移行
+			SpawnOrbs(registry, runtime, masterData);
+			runtime.IsActive = true;
+			runtime.PhaseTimer = masterData.ActiveDuration;
+		}
+	}
+
+	/// <summary>OrbCount個のオーブエンティティを均等配置で生成する</summary>
 	void OrbitWeaponSystem::SpawnOrbs(
 		entt::registry& registry,
 		ecs::OrbitWeaponRuntimeComponent& runtime,
@@ -97,10 +126,11 @@ namespace ecs
 			wire.Radius = masterData.HitRadius;
 			wire.Color = { 0.6f, 1.0f, 0.8f, 1.0f }; // 氷の欠片らしい淡い水色
 
-			if (!masterData.OrbEffectPath.empty())
+			const std::string orbEffectPath = ecs::effectutil::ResolveEffectIds(masterData.OrbEffectIds);
+			if (!orbEffectPath.empty())
 			{
 				auto& effect = manager.AddComponent<ecs::EffectComponent>(entity);
-				effect.Asset = graphics::EffekseerManager::Get().GetEffect(masterData.OrbEffectPath);
+				effect.Asset = graphics::EffekseerManager::Get().GetEffect(orbEffectPath);
 				effect.IsLoop = true; // 周回中はずっと表示し続ける持続エフェクト
 				// 見た目のサイズを実際の判定半径に概算で合わせる（素材は概ね kEffectReferenceRadius 相当と仮定）
 				const float scale = masterData.HitRadius / kEffectReferenceRadius;
@@ -114,6 +144,20 @@ namespace ecs
 
 		DEBUG_LOG(sys::eLogLevel::Log, "OrbitWeaponSystem: spawned {} orbs (orbitRadius={}, hitRadius={})",
 			orbCount, masterData.OrbitRadius, masterData.HitRadius);
+	}
+
+	/// <summary>周回中のオーブエンティティを全て破棄する(Cooldown移行時)。
+	/// EffectComponentはEffectObjectのデストラクタでEffekseerハンドルを自動停止するため、
+	/// ここでエフェクト停止を個別に呼ぶ必要はない(registry.destroyだけでよい)。</summary>
+	void OrbitWeaponSystem::DespawnOrbs(
+		entt::registry& registry,
+		ecs::OrbitWeaponRuntimeComponent& runtime)
+	{
+		for (entt::entity orb : runtime.Orbs)
+		{
+			if (registry.valid(orb)) registry.destroy(orb);
+		}
+		runtime.Orbs.clear();
 	}
 
 	/// <summary>周回角度を進め、中心座標を基準にオーブの位置を更新する</summary>
@@ -143,7 +187,7 @@ namespace ecs
 		registry.emplace_or_replace<ecs::TransformDirtyTag>(orbEntity);
 	}
 
-	/// <summary>SensorStayEventとヒットクールダウンを見て、接触中の敵全員にダメージを与える</summary>
+	/// <summary>SensorStayEventとヒットクールダウンを見て、接触中の敵全員にダメージ+減速を与える</summary>
 	void OrbitWeaponSystem::ProcessOrbHit(
 		entt::registry& registry,
 		entt::entity orbEntity,
@@ -172,6 +216,15 @@ namespace ecs
 			if (ecs::combatutil::ApplyDamageToEnemy(registry, other, damage))
 			{
 				hitAny = true;
+
+				// Frost効果：命中した敵を減速させる(emplace_or_replaceで多重付与ではなく更新にする。
+				// HitInterval毎の再命中で持続時間が更新され続けるため、密着中はほぼ減速し続ける)
+				if (masterData.SlowMultiplier < 1.0f && masterData.SlowDuration > 0.0f)
+				{
+					registry.emplace_or_replace<ecs::EnemySlowStatusComponent>(
+						other,
+						ecs::EnemySlowStatusComponent{ masterData.SlowMultiplier, masterData.SlowDuration });
+				}
 			}
 		}
 
@@ -182,10 +235,11 @@ namespace ecs
 		DEBUG_LOG(sys::eLogLevel::Log, "OrbitWeaponSystem: orb entity={} hit, damage={}",
 			entt::to_integral(orbEntity), damage);
 
-		if (!masterData.HitEffectPath.empty())
+		const std::string hitEffectPath = ecs::effectutil::ResolveEffectIds(masterData.HitEffectIds);
+		if (!hitEffectPath.empty())
 		{
 			const auto& orbTransform = registry.get<ecs::Transform>(orbEntity);
-			SpawnHitEffect(registry, orbTransform.GetPosition(), masterData.HitEffectPath);
+			SpawnHitEffect(registry, orbTransform.GetPosition(), hitEffectPath);
 		}
 	}
 

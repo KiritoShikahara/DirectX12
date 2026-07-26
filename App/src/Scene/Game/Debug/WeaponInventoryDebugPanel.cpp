@@ -1,5 +1,6 @@
 ﻿#include "apppch.h"
 #include "WeaponInventoryDebugPanel.h"
+#include <Utility/config/DebugConfig.h> // DEV_TOOL_ENABLED(Debug/Develop両方で有効)を参照するため直接include
 
 #include<system/Player/Weapon/Inventory/WeaponInventoryComponent.h>
 #include<Scene/Game/Factory/GameSceneFactory.h>
@@ -56,19 +57,19 @@ namespace debug
     WeaponInventoryDebugPanel::WeaponInventoryDebugPanel(std::string debugKey)
         : mDebugKey(std::move(debugKey))
     {
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
         sys::ImGuiManager::Get().AddDebugUI([this]() { Draw(); }, mDebugKey);
 #endif
     }
 
     WeaponInventoryDebugPanel::~WeaponInventoryDebugPanel()
     {
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
         sys::ImGuiManager::Get().RemoveDebugUI(mDebugKey);
 #endif
     }
 
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
     void WeaponInventoryDebugPanel::Draw()
     {
         if (!ImGui::Begin("Weapon Inventory Debug"))

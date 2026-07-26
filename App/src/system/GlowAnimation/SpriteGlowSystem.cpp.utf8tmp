@@ -1,0 +1,7 @@
+#include "apppch.h"
+#include "SpriteGlowSystem.h"
+#include"GlowAnimationComp.h"
+
+void ecs::SpriteGlowSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
+{
+	// 郢ｧ・ｿ郢ｧ・､郢晏現ﾎ晉ｸｺ・ｯ雎・ｽ｢郢ｧ竏夲ｽ狗ｸｺ阮吮・邵ｺ・ｪ邵ｺ

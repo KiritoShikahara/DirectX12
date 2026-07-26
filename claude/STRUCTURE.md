@@ -122,11 +122,14 @@ Effect/Parts/   Effekseer用パーツテクスチャ群
   明示的に渡す設計 (複数モデル同時描画時の取り違え防止のため)。
 - シャドウは Directional Light 1灯・カスケードなし・固定2048解像度のみ対応
   (`FbxRenderer::SHADOW_MAP_SIZE`)。
-- Editor機能 (`system/Editor/EditorSystem`, `EditorManager`, `EditorUI`) は Debugビルドの
-  Editモードでのみ動作 (`Engine.cpp` の `#ifdef _DEBUG` 分岐、Playモードでは通常のゲームループ)。
+- Editor機能 (`system/Editor/EditorSystem`, `EditorManager`, `EditorUI`) は
+  `DEV_TOOL_ENABLED`(Debug/Develop)ビルドのEditモードでのみ動作
+  (`Engine.cpp` の `#if DEV_TOOL_ENABLED` 分岐、Playモードでは通常のゲームループ。Releaseのみ無効)。
   - ImGuiの「Editor」パネルからBox/Sphere/PointLightを配置 → クリック選択(Joltレイキャスト、
     Collider必須) → 選択中に左クリック(Selectアクション)ドラッグでXZ平面移動。
   - 選択中に Delete キー、または Inspector パネルの「Delete Object」ボタンで削除
     (`PlaceableTag`が付いたエンティティのみ削除可能)。
   - 配置物はすべて `PlaceableTag` が付く。Save/Load Layout(JSON) と Play/Stopのスナップショット
     復元もこのタグを対象にする。
+  - Editorパネル末尾に `DrawScenePanel()`(シーン切り替えUI)がある。`SceneFactory::GetRegisteredNames()`
+    で登録済みシーンを列挙し、ボタンで `SceneManager::ChangeSceneWithTransition()` を呼ぶ。

@@ -1,5 +1,6 @@
 ﻿#include "apppch.h"
 #include "GameStatusDebugPanel.h"
+#include <Utility/config/DebugConfig.h> // DEV_TOOL_ENABLED(Debug/Develop両方で有効)を参照するため直接include
 
 #include<system/Player/Status/PlayerStatusComponent.h>
 #include<system/Player/Level/PlayerLevelComponent.h>
@@ -27,19 +28,19 @@ namespace debug
 	GameStatusDebugPanel::GameStatusDebugPanel(std::string debugKey)
 		: mDebugKey(std::move(debugKey))
 	{
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
 		sys::ImGuiManager::Get().AddDebugUI([this]() { Draw(); }, mDebugKey);
 #endif
 	}
 
 	GameStatusDebugPanel::~GameStatusDebugPanel()
 	{
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
 		sys::ImGuiManager::Get().RemoveDebugUI(mDebugKey);
 #endif
 	}
 
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
 	void GameStatusDebugPanel::Draw()
 	{
 		if (!ImGui::Begin("Game Status"))
@@ -57,13 +58,22 @@ namespace debug
 				{
 					ImGui::Text("Elapsed: %.1f s", wave.ElapsedTime);
 					ImGui::Text("Next spawn in: %.1f s", wave.SpawnTimer);
-					if (wave.BossSpawned)
+					ImGui::Text("Next mini boss in: %.1f s", wave.NextMiniBossSpawnTime - wave.ElapsedTime);
+					if (wave.MidBossSpawned)
 					{
-						ImGui::Text("Boss: spawned");
+						ImGui::Text("Mid boss: spawned");
 					}
 					else
 					{
-						ImGui::Text("Boss in: %.1f s", wave.BossSpawnTime - wave.ElapsedTime);
+						ImGui::Text("Mid boss in: %.1f s", wave.MidBossSpawnTime - wave.ElapsedTime);
+					}
+					if (wave.FinalBossSpawned)
+					{
+						ImGui::Text("Final boss: spawned");
+					}
+					else
+					{
+						ImGui::Text("Final boss in: %.1f s", wave.FinalBossSpawnTime - wave.ElapsedTime);
 					}
 					ImGui::Text("Clear in: %.1f s", wave.ClearTime - wave.ElapsedTime);
 				});

@@ -1,5 +1,6 @@
 ﻿#include "apppch.h"
 #include "WaveDebugPanel.h"
+#include <Utility/config/DebugConfig.h> // DEV_TOOL_ENABLED(Debug/Develop両方で有効)を参照するため直接include
 
 #include"WaveComponent.h"
 #include<Data/Wave/WaveData.h>
@@ -9,7 +10,7 @@ namespace debug
     WaveDebugPanel::WaveDebugPanel(std::string debugKey)
         : mDebugKey(std::move(debugKey))
     {
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
         auto& mgr = data::DataRegistry::Get().GetManager<data::WaveData>();
         mInspector = std::make_unique<data::DataInspector<data::WaveData>>(mgr);
 
@@ -19,12 +20,12 @@ namespace debug
 
     WaveDebugPanel::~WaveDebugPanel()
     {
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
         sys::ImGuiManager::Get().RemoveDebugUI(mDebugKey);
 #endif
     }
 
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
     void WaveDebugPanel::Draw()
     {
         // 唯一のテーブルエディタ（Load/Save CSV・DB、Id含む全セル編集）
@@ -57,8 +58,12 @@ namespace debug
                 wave.SpawnMarginMin = row->SpawnMarginMin;
                 wave.SpawnMarginMax = row->SpawnMarginMax;
                 wave.MaxAliveEnemy = row->MaxAliveEnemy;
-                wave.StatGrowthPerSecond = row->StatGrowthPerSecond;
-                wave.BossSpawnTime = row->BossSpawnTime;
+                wave.StatGrowthStepInterval = row->StatGrowthStepInterval;
+                wave.StatGrowthPerStep = row->StatGrowthPerStep;
+                wave.MiniBossFirstSpawnTime = row->MiniBossFirstSpawnTime;
+                wave.MiniBossInterval = row->MiniBossInterval;
+                wave.MidBossSpawnTime = row->MidBossSpawnTime;
+                wave.FinalBossSpawnTime = row->FinalBossSpawnTime;
                 wave.ClearTime = row->ClearTime;
             });
     }

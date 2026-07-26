@@ -12,14 +12,10 @@ namespace ecs
 	struct WeaponComponent;
 
 	/// <summary>
-	/// AreaAttack型武器(WeaponComponent::Type == AreaAttack)の発動ロジック。
-	/// 所有者(Owner)の PlayerAimComponent::Direction（マウス座標/右スティックでの狙い方向。
-	/// SingleShotと同じ基準）へ ForwardOffset だけ離れた地点を中心に、SearchRadius内から
-	/// 敵を最大MaxTargets体まで検出し、各敵の座標へ個別に氷柱(ハザード)を生成する。
-	/// 氷柱自体の持続時間管理・ダメージ反復適用は AreaAttackHazardSystem が担当する
-	/// （発動時の対象選定と、個々のハザードのライフサイクルを分離する設計）。
-	///
-	/// SingleShotと同じ初期武器のため、右クリック("Attack2"アクション)で発動するManual制御。
+	/// AreaAttack型武器の発動ロジック。狙い方向へForwardOffset離れた地点を中心に
+	/// SearchRadius内の敵を最大MaxTargets体検出し、各敵の座標へ氷柱(ハザード)を生成する。
+	/// 氷柱の持続時間管理・ダメージ反復はAreaAttackHazardSystemが担当する。
+	/// 右クリック("Attack2")で発動するManual制御(SingleShotと対の初期武器)。
 	/// </summary>
 	class AreaAttackWeaponSystem : public ecs::IUserSystem
 	{
@@ -27,12 +23,7 @@ namespace ecs
 		void Update(entt::registry& registry, float deltaTime, float rawDeltaTime) override;
 
 	private:
-		/// <summary>
-		/// 探索範囲(センサー)を毎フレーム可視化する。発動の成否・クールダウンに関わらず、
-		/// 「どこまでが検出範囲か」を常に表示する(ImGui「Physics Debug」→「Show Colliders」)。
-		/// 武器エンティティ自体にTransform/DebugWireSphereComponentを持たせ、狙い方向に
-		/// 追従させる（武器エンティティは本来Transformを持たないため、初回のみemplaceする）。
-		/// </summary>
+		/// <summary>探索範囲(センサー)を毎フレーム可視化する(Physics Debug表示用)</summary>
 		static void UpdateSearchAreaVisual(
 			entt::registry& registry,
 			entt::entity weaponEntity,

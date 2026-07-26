@@ -5,6 +5,7 @@
 #include<system/Player/Level/PlayerLevelComponent.h>
 #include<system/Player/Ultimate/PlayerUltimateComponent.h>
 #include<system/Player/PowerCharge/PlayerPowerChargeComponent.h>
+#include<system/Effect/EffectSpawnUtility.h>
 #include<Scene/Game/State/GameState.h>
 #include<Tag/EntityTag.h>
 #include<Data/Save/PlayerSaveData.h>
@@ -12,6 +13,13 @@
 
 #include<cmath>
 #include<algorithm>
+
+namespace
+{
+	// 敵撃破時の消滅演出。毎撃破ごとに発生する高頻度イベントのため小さく軽量なものを使う
+	// (PlayOneShotCombinedの同時再生数/パーティクル数上限で暴走はしない)
+	constexpr const char* kDeathEffectPath = "Assets/Effect/AttackHit.efk";
+}
 
 namespace ecs
 {
@@ -60,6 +68,10 @@ namespace ecs
 
 		for (entt::entity entity : dead)
 		{
+			if (const auto* transform = registry.try_get<Transform>(entity))
+			{
+				ecs::effectutil::PlayOneShotCombined(kDeathEffectPath, transform->GetPosition(), 1.0f);
+			}
 			registry.destroy(entity);
 		}
 	}

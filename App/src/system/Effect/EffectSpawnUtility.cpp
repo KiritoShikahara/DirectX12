@@ -1,7 +1,10 @@
 ﻿#include "apppch.h"
 #include "EffectSpawnUtility.h"
 
+#include<Data/Effect/EffectAssetData.h>
+
 #include<string_view>
+#include<charconv>
 
 namespace
 {
@@ -69,20 +72,29 @@ namespace ecs::effectutil
         const DirectX::XMFLOAT3& position,
         float scale,
         std::vector<entt::entity>* outEntities,
-        const DirectX::XMFLOAT3& rotation)
+        const DirectX::XMFLOAT3& rotation,
+        bool bypassBudget)
     {
         auto& registry = ecs::EntityManager::Get().GetRegistry();
-        if (registry.view<OneShotEffectTag>().size() >= kMaxConcurrentOneShotEffects)
-        {
-            return;
-        }
 
-        // 負荷の実体であるパーティクル数で間引く(kMaxConcurrentParticleInstances参照)。
-        // 直近フレームの実測値を使うため1フレーム遅れるが、
-        // 予算超過が続く間は抑制され続けるので制御としては十分
-        if (graphics::EffekseerManager::Get().GetLastInstanceCount() >= kMaxConcurrentParticleInstances)
+        // bypassBudget=true の演出(必殺技のビーム/メイン等の必須シネマティック)は間引かない。
+        // 通常のヒット演出は負荷対策で間引くが、必殺技演出は「発動時に他エフェクトを一時停止
+        // (破棄ではない)する」ため、それらのインスタンスがGetLastInstanceCountに残り続け、
+        // 戦闘中は容易に上限超過して必須演出まで弾かれてしまう。必須演出は必ず再生させる。
+        if (!bypassBudget)
         {
-            return;
+            if (registry.view<OneShotEffectTag>().size() >= kMaxConcurrentOneShotEffects)
+            {
+                return;
+            }
+
+            // 負荷の実体であるパーティクル数で間引く(kMaxConcurrentParticleInstances参照)。
+            // 直近フレームの実測値を使うため1フレーム遅れるが、
+            // 予算超過が続く間は抑制され続けるので制御としては十分
+            if (graphics::EffekseerManager::Get().GetLastInstanceCount() >= kMaxConcurrentParticleInstances)
+            {
+                return;
+            }
         }
 
         ForEachPath(delimitedPaths, [&](std::string_view path)
@@ -155,5 +167,23 @@ namespace ecs::effectutil
         {
             graphics::EffekseerManager::Get().GetEffect(path);
         });
+    }
+
+    std::string ResolveEffectIds(const std::string& idsCsv)
+    {
+        std::string result;
+        ForEachPath(idsCsv, [&](std::string_view idToken)
+        {
+            int id = 0;
+            const auto parseResult = std::from_chars(idToken.data(), idToken.data() + idToken.size(), id);
+            if (parseResult.ec != std::errc()) return; // 数値変換失敗はスキップ
+
+            const auto* asset = DATA_MGR(data::EffectAssetData).GetById(id);
+            if (asset == nullptr) return; // 未登録IDはスキップ
+
+            if (!result.empty()) result += ';';
+            result += asset->Path;
+        });
+        return result;
     }
 }

@@ -17,8 +17,7 @@ namespace ecs
 {
     void ChainLightningWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
     {
-        // InGame中のみ発動する。必殺技演出中は他の攻撃を発動させない(自動発動武器のため
-        // Flicker Strike中は止めない設計。ecs::weaponutil::ShouldSkipAutoWeaponUpdate参照)
+        // InGame中のみ発動。必殺技演出中は止める
         if (ecs::weaponutil::ShouldSkipAutoWeaponUpdate(registry)) return;
 
         registry.view<ecs::WeaponComponent, ecs::ChainLightningRuntimeComponent>().each(
@@ -39,8 +38,7 @@ namespace ecs
                 const auto* ownerTransform = registry.try_get<ecs::Transform>(weapon.Owner);
                 if (ownerTransform == nullptr) return;
 
-                // SearchRadius内に敵がいなければクールダウンを消費せず待機する
-                // （対象なしで空撃ちしないため）
+                // 敵がいなければクールダウンを消費せず待機する
                 mFound.clear();
                 ::sys::PhysicsSystem::OverlapSphere(registry, ownerTransform->GetPosition(), masterData->SearchRadius, mFound);
                 const entt::entity initialTarget = ecs::targetutil::FindNearestExcluding(registry, mFound, ownerTransform->GetPosition(), {});
@@ -106,8 +104,7 @@ namespace ecs
     {
         const DirectX::XMFLOAT3 effectPos = { position.x, position.y + masterData.HeightOffset, position.z };
 
-        // 代用素材(AttackHit.efk)は視認しづらいため、HitEffectScaleで見た目を拡大する。
-        // HitEffectPathは';'区切りで複数指定可能(ecs::effectutil::PlayOneShotCombined参照)。
-        ecs::effectutil::PlayOneShotCombined(masterData.HitEffectPath, effectPos, masterData.HitEffectScale);
+        const std::string hitEffectPath = ecs::effectutil::ResolveEffectIds(masterData.HitEffectIds);
+        ecs::effectutil::PlayOneShotCombined(hitEffectPath, effectPos, masterData.HitEffectScale);
     }
 }

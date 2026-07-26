@@ -1,4 +1,4 @@
-#include "apppch.h"
+ï»¿#include "apppch.h"
 #include "PlayerStateSystem.h"
 
 #include"PlayerStateComponent.h"
@@ -22,14 +22,14 @@ namespace ecs
 			return;
 		};
 
-		// ƒŠƒNƒGƒXƒg‚Ì—Dæ“x‚ÉŠî‚Ã‚¢‚Äƒ\[ƒg
+		// ãƒªã‚¯ã‚¨ã‚¹ãƒˆã®å„ªå…ˆåº¦ã«åŸºã¥ã„ã¦ã‚½ãƒ¼ãƒˆ
 		std::sort(state.Requests.begin(), state.Requests.end(),
 			[](const ecs::PlayerStateRequest& a, const ecs::PlayerStateRequest& b)
 			{
 				return a.Priority > b.Priority;
 			});
 
-		// —Dæ“x‚Ì‚‚¢ƒŠƒNƒGƒXƒg‚©‚ç‡‚Éˆ—
+		// å„ªå…ˆåº¦ã®é«˜ã„ãƒªã‚¯ã‚¨ã‚¹ãƒˆã‹ã‚‰é †ã«å‡¦ç†
 		for (const auto& request : state.Requests)
 		{
 			if (state.CurrentState == request.State)

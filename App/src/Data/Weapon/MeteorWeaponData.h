@@ -34,7 +34,9 @@ namespace data
 
 		float       HeightOffset = 0.0f;     // 着弾位置のY座標オフセット(m)
 
-		std::string EffectPath;              // 着弾エフェクト(.efk、';'区切りで複数指定可)
+		// エフェクト素材ID(';'区切りで複数指定可、data::EffectAssetData参照)。
+		// ecs::effectutil::ResolveEffectIds()でパス文字列へ解決してから使うこと。
+		std::string EffectIds;               // 着弾エフェクト
 
 		REFLECT_BEGIN(MeteorWeaponData, "meteor_weapons")
 			REFLECT_FIELD_ID(Id)
@@ -46,7 +48,7 @@ namespace data
 			REFLECT_FIELD_FLOAT(SearchRadius)
 			REFLECT_FIELD_INT(MeteorCount)
 			REFLECT_FIELD_FLOAT(HeightOffset)
-			REFLECT_FIELD_STR(EffectPath)
+			REFLECT_FIELD_STR(EffectIds)
 		REFLECT_END()
 	};
 }

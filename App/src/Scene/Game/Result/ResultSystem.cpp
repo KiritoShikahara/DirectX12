@@ -4,6 +4,11 @@
 #include<Scene/Title/TitleScene.h>
 #include<Scene/Game/GameScene.h>
 #include<system/Window/Window.h>
+#include<system/UI/UiPanelUtility.h>
+#include<graphics/Text/Renderer/TextRenderer.h>
+
+#include<limits>
+#include<vector>
 
 namespace ecs
 {
@@ -60,8 +65,13 @@ namespace ecs
 
 		auto& manager = ENTITY_MANAGER;
 		auto& window = ::sys::Window::Get();
+		auto& textRenderer = ::graphics::TextRenderer::Get();
 		const float centerX = static_cast<float>(window.GetVirtualWidth()) * 0.5f;
 		const float centerY = static_cast<float>(window.GetVirtualHeight()) * 0.5f;
+
+		// 背景(ゲーム画面)の上に文字が直接乗ると読みづらいため、生成したテキストの実測範囲から
+		// 黒半透明の板を動的にサイズして下へ敷く(OptionsMenuSystemと同じ手法)
+		std::vector<entt::entity> textEntities;
 
 		// タイトル文言(GAME CLEAR / GAME OVER)
 		{
@@ -73,6 +83,7 @@ namespace ecs
 			text.Size = kTitleTextSize;
 			text.Color = kTitleColor;
 			text.Layer = 10;
+			textEntities.push_back(entity);
 		}
 
 		if (resultType == ::sys::eResultType::Clear)
@@ -86,6 +97,7 @@ namespace ecs
 			text.Size = kOptionTextSize;
 			text.Color = kNormalColor;
 			text.Layer = 10;
+			textEntities.push_back(entity);
 		}
 		else
 		{
@@ -105,7 +117,38 @@ namespace ecs
 				text.Layer = 10;
 
 				registry.emplace<ResultOptionUiTag>(entity, i);
+				textEntities.push_back(entity);
 			}
+		}
+
+		{
+			float minX = (std::numeric_limits<float>::max)();
+			float maxX = (std::numeric_limits<float>::lowest)();
+			float minY = (std::numeric_limits<float>::max)();
+			float maxY = (std::numeric_limits<float>::lowest)();
+
+			for (entt::entity entity : textEntities)
+			{
+				const auto& text = registry.get<TextComponent>(entity);
+				minX = std::min(minX, text.X);
+				maxX = std::max(maxX, text.X + textRenderer.MeasureWidth(text.Text, text.Size));
+				minY = std::min(minY, text.Y);
+				maxY = std::max(maxY, text.Y + text.Size);
+			}
+
+			constexpr float kPanelPadX = 80.0f;
+			constexpr float kPanelPadTop = 50.0f;
+			constexpr float kPanelPadBottom = 50.0f;
+
+			const float left = minX - kPanelPadX;
+			const float right = maxX + kPanelPadX;
+			const float top = minY - kPanelPadTop;
+			const float bottom = maxY + kPanelPadBottom;
+
+			::ecs::uiutil::CreateTranslucentPanel(
+				(left + right) * 0.5f, (top + bottom) * 0.5f,
+				right - left, bottom - top,
+				0);
 		}
 	}
 

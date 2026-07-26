@@ -42,8 +42,10 @@ namespace data
 
         float       HeightOffset = 30.0f;    // 発射位置のY座標 = Owner.Position.y + この値(m)
 
-        std::string ProjectileEffectPath;    // 飛翔中エフェクト(.efk)
-        std::string ExplosionEffectPath;     // 命中時エフェクト(.efk)
+        // エフェクト素材ID(';'区切りで複数指定可、data::EffectAssetData参照)。
+        // ecs::effectutil::ResolveEffectIds()でパス文字列へ解決してから使うこと。
+        std::string ProjectileEffectIds;    // 飛翔中エフェクト
+        std::string ExplosionEffectIds;     // 命中時エフェクト
 
         REFLECT_BEGIN(BoneSpearWeaponData, "bone_spear_weapons")
             REFLECT_FIELD_ID(Id)
@@ -57,8 +59,8 @@ namespace data
             REFLECT_FIELD_FLOAT(ProjectileLifeTime)
             REFLECT_FIELD_FLOAT(SearchRadius)
             REFLECT_FIELD_FLOAT(HeightOffset)
-            REFLECT_FIELD_STR(ProjectileEffectPath)
-            REFLECT_FIELD_STR(ExplosionEffectPath)
+            REFLECT_FIELD_STR(ProjectileEffectIds)
+            REFLECT_FIELD_STR(ExplosionEffectIds)
         REFLECT_END()
     };
 }

@@ -20,6 +20,7 @@
 #include<Tag/EntityTag.h>
 #include<system/Effect/EffectSpawnUtility.h>
 #include<system/Effect/TemporaryLifetimeComponent.h>
+#include<system/Animation/ActionAnimLockComponent.h>
 
 namespace
 {
@@ -166,6 +167,27 @@ namespace ecs
             status->IsInvincible = true;
         }
 
+        // 発動の瞬間にAttack_Aを1回再生する(連続ワープのたびに再始動すると0.08秒間隔で
+        // アニメが千切れて見えるため、シーケンス開始時のみ)。ActionAnimLockComponentで
+        // LocomotionAnimationSystemによるIdle/Runへの自動復帰を、クリップの長さだけ止める。
+        if (auto* fbx = registry.try_get<ecs::FbxComponent>(weapon.Owner))
+        {
+            if (auto* anim = registry.try_get<ecs::FbxAnimComponent>(weapon.Owner))
+            {
+                if (fbx->Resource != nullptr)
+                {
+                    const int clipIndex = fbx->Resource->FindClipIndex("Attack_A");
+                    if (clipIndex >= 0)
+                    {
+                        anim->CrossFade(clipIndex, 0.1f, false);
+                        const float clipDuration = fbx->Resource->GetAnimClips()[clipIndex].Duration;
+                        registry.emplace_or_replace<ecs::ActionAnimLockComponent>(
+                            weapon.Owner, ecs::ActionAnimLockComponent{ clipDuration });
+                    }
+                }
+            }
+        }
+
         WarpAndHit(registry, weapon, initialTarget, masterData);
         flicker.CurrentTarget = initialTarget;
     }
@@ -276,8 +298,9 @@ namespace ecs
         ecs::combatutil::ApplyDamageToEnemy(registry, target, damage);
 
         const DirectX::XMFLOAT3 effectPos = { targetPos.x, targetPos.y + masterData.HeightOffset, targetPos.z };
-        // HitEffectPathは';'区切りで複数指定可能(ecs::effectutil::PlayOneShotCombined参照)。
-        ecs::effectutil::PlayOneShotCombined(masterData.HitEffectPath, effectPos, masterData.HitEffectScale);
+        // HitEffectIdsは';'区切りの素材ID列で複数指定可能(ecs::effectutil::ResolveEffectIds/PlayOneShotCombined参照)。
+        const std::string hitEffectPath = ecs::effectutil::ResolveEffectIds(masterData.HitEffectIds);
+        ecs::effectutil::PlayOneShotCombined(hitEffectPath, effectPos, masterData.HitEffectScale);
 
         // 次のワープ先探索範囲(WarpSearchRadius)を可視化する（ImGui「Physics Debug」→「Show Colliders」）。
         // トグルOFF中は描画されず無駄なため、ONの時だけ生成する。

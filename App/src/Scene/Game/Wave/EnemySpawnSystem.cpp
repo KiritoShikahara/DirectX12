@@ -4,6 +4,7 @@
 #include"WaveComponent.h"
 #include<Scene/Game/State/GameState.h>
 #include<Scene/Game/Factory/GameSceneFactory.h>
+#include<Scene/Game/Factory/FieldConstants.h>
 #include<Scene/Game/Debug/GameDebugSettings.h>
 #include<system/Enemy/Status/EnemyStatusComponent.h>
 #include<Tag/EntityTag.h>
@@ -70,7 +71,7 @@ namespace ecs
 		}
 
 		const ecs::EnemyWaveModifier waveModifier =
-			ComputeWaveModifier(wave.ElapsedTime, wave.StatGrowthPerSecond);
+			ComputeWaveModifier(wave.ElapsedTime, wave.StatGrowthStepInterval, wave.StatGrowthPerStep);
 
 		// 通常の敵の継続スポーン（1回のタイミングでSpawnCountPerTick体まとめて湧かせる。
 		// 重なって湧かないよう、1体ごとに独立してランダムな位置を求める。
@@ -92,18 +93,35 @@ namespace ecs
 			{
 				const XMFLOAT3 spawnPos = ComputeSpawnPosition(
 					registry, playerPos, wave.SpawnMarginMin, wave.SpawnMarginMax);
-				::ecs::GameSceneFactory::CreateEnemy(spawnPos, waveModifier, false, PickRandomEnemyId());
+				::ecs::GameSceneFactory::CreateEnemy(spawnPos, waveModifier, ecs::eBossTier::None, PickRandomEnemyId());
 			}
 			wave.SpawnTimer = wave.SpawnInterval;
 		}
 
-		// ボース出現（1回だけ、通常の敵よりさらに奥から出す。種類は常にId=0の強化版）
-		if (!wave.BossSpawned && wave.ElapsedTime >= wave.BossSpawnTime)
+		// ボース出現（通常の敵よりさらに奥から出す。種類は常にId=0の強化版、階級の倍率はdata::BossData）。
+		// 小ボースは周期的に繰り返し、中ボース・最強ボースはそれぞれ1回だけ出現する。
+		if (wave.ElapsedTime >= wave.NextMiniBossSpawnTime)
 		{
 			const XMFLOAT3 spawnPos = ComputeSpawnPosition(
 				registry, playerPos, wave.SpawnMarginMax + 5.0f, wave.SpawnMarginMax + 15.0f);
-			::ecs::GameSceneFactory::CreateEnemy(spawnPos, waveModifier, true, 0);
-			wave.BossSpawned = true;
+			::ecs::GameSceneFactory::CreateEnemy(spawnPos, waveModifier, ecs::eBossTier::Mini, 0);
+			wave.NextMiniBossSpawnTime += std::max(wave.MiniBossInterval, 1.0f); // 0除算/連続スポーン防止
+		}
+
+		if (!wave.MidBossSpawned && wave.ElapsedTime >= wave.MidBossSpawnTime)
+		{
+			const XMFLOAT3 spawnPos = ComputeSpawnPosition(
+				registry, playerPos, wave.SpawnMarginMax + 5.0f, wave.SpawnMarginMax + 15.0f);
+			::ecs::GameSceneFactory::CreateEnemy(spawnPos, waveModifier, ecs::eBossTier::Mid, 0);
+			wave.MidBossSpawned = true;
+		}
+
+		if (!wave.FinalBossSpawned && wave.ElapsedTime >= wave.FinalBossSpawnTime)
+		{
+			const XMFLOAT3 spawnPos = ComputeSpawnPosition(
+				registry, playerPos, wave.SpawnMarginMax + 5.0f, wave.SpawnMarginMax + 15.0f);
+			::ecs::GameSceneFactory::CreateEnemy(spawnPos, waveModifier, ecs::eBossTier::Final, 0);
+			wave.FinalBossSpawned = true;
 		}
 	}
 
@@ -121,12 +139,20 @@ namespace ecs
 		const float angle = angleDist(GetRandomEngine());
 		const float radius = visibleRadius + marginDist(GetRandomEngine());
 
-		return
-		{
-			playerPos.x + std::cos(angle) * radius,
-			kSpawnGroundY,
-			playerPos.z + std::sin(angle) * radius,
-		};
+		float x = playerPos.x + std::cos(angle) * radius;
+		float z = playerPos.z + std::sin(angle) * radius;
+
+		// プレイヤー相対の計算だけだと、プレイヤーがフィールド境界(見えない壁、
+		// FieldConstants::kPlayableHalfExtent)付近にいる場合、外側方向への抽選で
+		// 壁の外にスポーンしてしまい、その敵が壁に阻まれて二度とフィールド内に
+		// 入れなくなる(=進行不能)不具合になっていた。壁の内側へ確実に収まるよう、
+		// 少し余裕を持たせてクランプする。
+		constexpr float kSpawnBoundaryMargin = 50.0f;
+		const float limit = FieldConstants::kPlayableHalfExtent - kSpawnBoundaryMargin;
+		x = std::clamp(x, -limit, limit);
+		z = std::clamp(z, -limit, limit);
+
+		return { x, kSpawnGroundY, z };
 	}
 
 	/// <summary>
@@ -168,12 +194,19 @@ namespace ecs
 		return anyHit ? std::sqrt(maxDistSq) : kFallbackRadius;
 	}
 
-	/// <summary>経過時間から現在の敵ステータス成長倍率を求める</summary>
-	ecs::EnemyWaveModifier EnemySpawnSystem::ComputeWaveModifier(float elapsedTime, float growthPerSecond)
+	/// <summary>
+	/// 経過時間から現在の敵ステータス成長倍率を求める。滑らかな連続成長ではなく、
+	/// stepInterval(秒)ごとにgrowthPerStep分だけ段階的に強くなる階段状にする
+	/// (例: 2分ごとに+40%なら、0-2分=等倍、2-4分=1.4倍、4-6分=1.8倍…と2分単位で跳ね上がる)。
+	/// </summary>
+	ecs::EnemyWaveModifier EnemySpawnSystem::ComputeWaveModifier(float elapsedTime, float stepInterval, float growthPerStep)
 	{
 		ecs::EnemyWaveModifier modifier;
 
-		const float growth = 1.0f + growthPerSecond * elapsedTime;
+		const float safeStepInterval = std::max(stepInterval, 1.0f); // 0除算防止
+		const float stepCount = std::floor(elapsedTime / safeStepInterval);
+		const float growth = 1.0f + growthPerStep * stepCount;
+
 		modifier.MulMaxHp = growth;
 		modifier.MulAtkPower = growth;
 

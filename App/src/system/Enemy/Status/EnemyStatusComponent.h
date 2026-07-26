@@ -1,27 +1,27 @@
-#pragma once
+﻿#pragma once
 
 #include<Utility/Export/Export.h>
 
 namespace ecs
 {
     /// <summary>
-    /// 敵の基礎ステータス（マスタデータ由来の不変値）。
-    /// ウェーブ強化前の素の値を保持する。
+    /// 謨ｵ縺ｮ蝓ｺ遉弱せ繝・・繧ｿ繧ｹ・医・繧ｹ繧ｿ繝・・繧ｿ逕ｱ譚･縺ｮ荳榊､牙､・峨・
+    /// 繧ｦ繧ｧ繝ｼ繝門ｼｷ蛹門燕縺ｮ邏縺ｮ蛟､繧剃ｿ晄戟縺吶ｋ縲・
     /// </summary>
     struct ENGINE_API EnemyBaseStatus
     {
-        float MaxHp = 10.0f;     // 最大HP
-        float MoveSpeed = 2.0f;  // 移動速度 m/s
-        float AtkPower = 1.0f;   // 接触ダメージ
-        float ExperienceValue = 1.0f; // 撃破時にプレイヤーへ与える経験値(EnemyData.csvのExpと対応)
-        float GoldValue = 3.0f;       // 撃破時にプレイヤーへ与えるゴールド(EnemyData.csvのGoldValueと
-                                       // 対応。ボースはGameSceneFactoryで倍率適用)
+        float MaxHp = 10.0f;     // 譛螟ｧHP
+        float MoveSpeed = 2.0f;  // 遘ｻ蜍暮溷ｺｦ m/s
+        float AtkPower = 1.0f;   // 謗･隗ｦ繝繝｡繝ｼ繧ｸ
+        float ExperienceValue = 1.0f; // 謦・ｴ譎ゅ↓繝励Ξ繧､繝､繝ｼ縺ｸ荳弱∴繧狗ｵ碁ｨ灘､(EnemyData.csv縺ｮExp縺ｨ蟇ｾ蠢・
+        float GoldValue = 3.0f;       // 謦・ｴ譎ゅ↓繝励Ξ繧､繝､繝ｼ縺ｸ荳弱∴繧九ざ繝ｼ繝ｫ繝・EnemyData.csv縺ｮGoldValue縺ｨ
+                                       // 蟇ｾ蠢懊ゅ・繝ｼ繧ｹ縺ｯGameSceneFactory縺ｧ蛟咲紫驕ｩ逕ｨ)
     };
 
     /// <summary>
-    /// ウェーブ進行による強化率（乗算のみ・1.0基準）。
-    /// プレイヤーのパーク強化と同様、ウェーブごとに加算合成する。
-    /// 例: 1ウェーブ +10% なら MulMaxHp += 0.1f を進行のたびに加算。
+    /// 繧ｦ繧ｧ繝ｼ繝夜ｲ陦後↓繧医ｋ蠑ｷ蛹也紫・井ｹ礼ｮ励・縺ｿ繝ｻ1.0蝓ｺ貅厄ｼ峨・
+    /// 繝励Ξ繧､繝､繝ｼ縺ｮ繝代・繧ｯ蠑ｷ蛹悶→蜷梧ｧ倥√え繧ｧ繝ｼ繝悶＃縺ｨ縺ｫ蜉邂怜粋謌舌☆繧九・
+    /// 萓・ 1繧ｦ繧ｧ繝ｼ繝・+10% 縺ｪ繧・MulMaxHp += 0.1f 繧帝ｲ陦後・縺溘・縺ｫ蜉邂励・
     /// </summary>
     struct ENGINE_API EnemyWaveModifier
     {
@@ -31,8 +31,8 @@ namespace ecs
     };
 
     /// <summary>
-    /// Base × WaveModifier の確定結果キャッシュ。
-    /// 毎フレーム計算せず、ウェーブ変化時の Recompute() でのみ更新する。
+    /// Base ﾃ・WaveModifier 縺ｮ遒ｺ螳夂ｵ先棡繧ｭ繝｣繝・す繝･縲・
+    /// 豈弱ヵ繝ｬ繝ｼ繝險育ｮ励○縺壹√え繧ｧ繝ｼ繝門､牙喧譎ゅ・ Recompute() 縺ｧ縺ｮ縺ｿ譖ｴ譁ｰ縺吶ｋ縲・
     /// </summary>
     struct ENGINE_API EnemyCurrentStatus
     {
@@ -42,27 +42,27 @@ namespace ecs
     };
 
     /// <summary>
-    /// 敵のステータスコンポーネント。
-    /// Base（不変） / WaveModifier（ウェーブ強化率） / Current（確定値） / CurrentHp（現在HP）。
+    /// 謨ｵ縺ｮ繧ｹ繝・・繧ｿ繧ｹ繧ｳ繝ｳ繝昴・繝阪Φ繝医・
+    /// Base・井ｸ榊､会ｼ・/ WaveModifier・医え繧ｧ繝ｼ繝門ｼｷ蛹也紫・・/ Current・育｢ｺ螳壼､・・/ CurrentHp・育樟蝨ｨHP・峨・
     /// </summary>
     struct ENGINE_API EnemyStatusComponent
     {
-		int EnemyId = 0; // 敵の種類ID。マスタデータのIDと対応する。
+		int EnemyId = 0; // 謨ｵ縺ｮ遞ｮ鬘曵D縲ゅ・繧ｹ繧ｿ繝・・繧ｿ縺ｮID縺ｨ蟇ｾ蠢懊☆繧九・
 
         EnemyBaseStatus    Base;
         EnemyWaveModifier  WaveMod;
         EnemyCurrentStatus Current;
 
-        /// <summary>現在HP。生成直後は Recompute() → CurrentHp = Current.MaxHp で初期化する。</summary>
+        /// <summary>迴ｾ蝨ｨHP縲ら函謌千峩蠕後・ Recompute() 竊・CurrentHp = Current.MaxHp 縺ｧ蛻晄悄蛹悶☆繧九・/summary>
         float CurrentHp = 10.0f;
 
-        /// <summary>必殺技の範囲ダメージを受けたか。EnemyDeathSystemがこれを見て、必殺技自身の
-        /// 撃破では必殺技ゲージ(PlayerUltimateComponent::KillCount)を加算しないようにする
-        /// (発動直後にゲージが再び貯まってしまう自己参照的な挙動を防ぐため)。
-        /// ゴールド・経験値・パワーチャージは通常の撃破と同様に加算される。</summary>
+        /// <summary>蠢・ｮｺ謚縺ｮ遽・峇繝繝｡繝ｼ繧ｸ繧貞女縺代◆縺九・nemyDeathSystem縺後％繧後ｒ隕九※縲∝ｿ・ｮｺ謚閾ｪ霄ｫ縺ｮ
+        /// 謦・ｴ縺ｧ縺ｯ蠢・ｮｺ謚繧ｲ繝ｼ繧ｸ(PlayerUltimateComponent::KillCount)繧貞刈邂励＠縺ｪ縺・ｈ縺・↓縺吶ｋ
+        /// (逋ｺ蜍慕峩蠕後↓繧ｲ繝ｼ繧ｸ縺悟・縺ｳ雋ｯ縺ｾ縺｣縺ｦ縺励∪縺・・蟾ｱ蜿ら・逧・↑謖吝虚繧帝亟縺舌◆繧・縲・
+        /// 繧ｴ繝ｼ繝ｫ繝峨・邨碁ｨ灘､繝ｻ繝代Ρ繝ｼ繝√Ε繝ｼ繧ｸ縺ｯ騾壼ｸｸ縺ｮ謦・ｴ縺ｨ蜷梧ｧ倥↓蜉邂励＆繧後ｋ縲・/summary>
         bool DamagedByUltimate = false;
 
-        /// <summary>Base × WaveModifier を計算して Current に反映する。</summary>
+        /// <summary>Base ﾃ・WaveModifier 繧定ｨ育ｮ励＠縺ｦ Current 縺ｫ蜿肴丐縺吶ｋ縲・/summary>
         void Recompute()
         {
             Current.MaxHp = Base.MaxHp * WaveMod.MulMaxHp;

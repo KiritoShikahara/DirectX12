@@ -1,10 +1,11 @@
-#include"apppch.h"
+﻿#include"apppch.h"
 #include "TitleScene.h"
 #include<ecs/system/manager/ComponentSystemManager.h>
 
 #include<system/GlowAnimation/GlowAnimationComp.h>
 #include<system/GlowAnimation/SpriteGlowSystem.h>
 #include<system/TitleInputSystem/TitleInputSystem.h>
+#include<system/UI/UiPanelUtility.h>
 
 #include"../macros.h"
 
@@ -12,10 +13,10 @@ namespace scene
 {
 	void TitleScene::Initialize()
 	{
-		// TimeScaleはプロセス全体で共有され、シーンを跨いでも持ち越される。
-		// GameOver/PerkSelect等でTimeScale=0.0のままResult→Titleへ遷移してくるケースがあるため、
-		// 一時停止の概念が無いTitleでは必ず1.0へ戻す
-		// （深く止めるとGlowAnimation等rawDeltaTime依存の演出しか動かなくなる）。
+		// TimeScale縺ｯ繝励Ο繧ｻ繧ｹ蜈ｨ菴薙〒蜈ｱ譛峨＆繧後√す繝ｼ繝ｳ繧定ｷｨ縺・〒繧よ戟縺｡雜翫＆繧後ｋ縲・
+		// GameOver/PerkSelect遲峨〒TimeScale=0.0縺ｮ縺ｾ縺ｾResult竊探itle縺ｸ驕ｷ遘ｻ縺励※縺上ｋ繧ｱ繝ｼ繧ｹ縺後≠繧九◆繧√・
+		// 荳譎ょ●豁｢縺ｮ讎ょｿｵ縺檎┌縺Уitle縺ｧ縺ｯ蠢・★1.0縺ｸ謌ｻ縺・
+		// ・域ｷｱ縺乗ｭ｢繧√ｋ縺ｨGlowAnimation遲詠awDeltaTime萓晏ｭ倥・貍泌・縺励°蜍輔°縺ｪ縺上↑繧具ｼ峨・
 		GetTime().SetTimeScale(1.0);
 
 		CreateCompSystem();
@@ -24,6 +25,7 @@ namespace scene
 		CreateBackground();
 		CreateLogo();
 		CreatePromptText();
+		CreateControlGuide();
 
 		DEBUG_LOG(::sys::eLogLevel::Log, "Title Scene.");
 	}
@@ -38,10 +40,10 @@ namespace scene
 	{
 		auto& manager = ::ecs::ComponentSystemManager::Get();
 
-		// 背景点滅
+		// 閭梧勹轤ｹ貊・
 		manager.AddUserSystem<::ecs::SpriteGlowSystem>(::ecs::eUpdatePhase::PostUpdate);
 
-		// 入力
+		// 蜈･蜉・
 		manager.AddUserSystem<::sys::TitleInputSystem>(::ecs::eUpdatePhase::PostUpdate);
 	}
 
@@ -72,7 +74,7 @@ namespace scene
 		glow.Frequency = 0.7;
 		glow.PhaseOffset = 0.0f;
 
-		// 音楽
+		// 髻ｳ讌ｽ
 		PLAY_BGM("Assets/Sound/BGM/BGM_Title.aud", true, 0.7);
 
 	}
@@ -127,6 +129,39 @@ namespace scene
 		glow.Frequency = 1.5;
 		glow.PhaseOffset = 0;
 
+	}
+
+	void TitleScene::CreateControlGuide()
+	{
+		// 縲訓USH TO START縲咲判蜒・蝗ｺ螳壹・闍ｱ隱樒判蜒上〒繝懊ち繝ｳ蜷阪∪縺ｧ縺ｯ遉ｺ縺帙↑縺・縺ｮ荳九↓縲・
+		// 螳滄圀縺ｫ謚ｼ縺吶∋縺阪・繧ｿ繝ｳ蜷阪ｒ陦ｨ遉ｺ縺吶ｋ縲ゅ郡elect縺｣縺ｦ菴輔・繧ｿ繝ｳ・溘阪→縺ｪ繧峨↑縺・ｈ縺・・
+		// 蜈･蜉帙ョ繝舌う繧ｹ縺ｫ蠢懊§縺溷・螳ｹ(Space/A繝懊ち繝ｳ遲・縺ｸTitleInputSystem縺梧ｯ弱ヵ繝ｬ繝ｼ繝譖ｴ譁ｰ縺吶ｋ
+		auto& manager = ::ecs::EntityManager::Get();
+		auto& registry = ENTT_REGISTRY;
+		auto& window = ::sys::Window::Get();
+
+		const float textY = static_cast<float>(window.GetVirtualHeight()) / 5.0f * 4.0f + 90.0f;
+		constexpr float kTextSize = 30.0f;
+
+		// 閭梧勹(繧ｿ繧､繝医Ν逕ｻ蜒・縺ｮ荳翫↓逶ｴ謗･荵励ｋ縺ｨ隱ｭ縺ｿ縺･繧峨＞縺溘ａ縲・ｻ貞濠騾乗・縺ｮ譚ｿ繧剃ｸ九↓謨ｷ縺・
+		// (PerkSelectSystem遲峨→蜷後§謇区ｳ輔ょ・騾壼喧縺ｯUiPanelUtility蜿ら・)
+		constexpr float kGuidePanelWidth = 260.0f;
+		constexpr float kGuidePanelPadY = 16.0f;
+		::ecs::uiutil::CreateTranslucentPanel(
+			static_cast<float>(window.GetVirtualWidth()) * 0.5f,
+			textY + kTextSize * 0.5f,
+			kGuidePanelWidth,
+			kTextSize + kGuidePanelPadY * 2.0f,
+			0);
+
+		auto entity = manager.CreateEntity();
+		auto& text = manager.AddComponent<::ecs::TextComponent>(entity);
+		text.Y = textY;
+		text.Size = kTextSize;
+		text.Color = { 0.85f, 0.9f, 1.0f, 1.0f };
+		text.Layer = 10;
+
+		registry.emplace<::ecs::TitleGuideUiTag>(entity);
 	}
 
 	REGISTER_SCENE_AS(TitleScene, TITLE_SCENE_NAME);

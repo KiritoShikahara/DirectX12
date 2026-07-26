@@ -20,4 +20,10 @@ namespace ecs
 		/// <summary>対応する選択肢インデックス(0..HubMenuComponent::kChoiceCount-1)</summary>
 		int OptionIndex = 0;
 	};
+
+	/// <summary>ハブ画面の操作案内テキストに付与するタグ。「Selectって何ボタン？」とならないよう、
+	/// HubMenuInputSystemが最後に使われた入力デバイスに応じて毎フレーム内容を更新する</summary>
+	struct HubGuideUiTag
+	{
+	};
 }

@@ -1,9 +1,9 @@
-#pragma once
+﻿#pragma once
 
 namespace sys
 {
     /// <summary>
-    /// ゲーム状態
+    /// 繧ｲ繝ｼ繝迥ｶ諷・
     /// </summary>
     enum class eGameState
     {
@@ -14,7 +14,7 @@ namespace sys
     };
 
     /// <summary>
-    /// リザルトの種別（Result 状態のときのみ有効）
+    /// 繝ｪ繧ｶ繝ｫ繝医・遞ｮ蛻･・・esult 迥ｶ諷九・縺ｨ縺阪・縺ｿ譛牙柑・・
     /// </summary>
     enum class eResultType
     {
@@ -27,26 +27,26 @@ namespace sys
 namespace ecs
 {
     /// <summary>
-    /// 状態管理コンポーネント
+    /// 迥ｶ諷狗ｮ｡逅・さ繝ｳ繝昴・繝阪Φ繝・
     /// </summary>
     struct GameStateComponent
     {
-        // 現在状態（GameStateSystem のみが書き換える）
+        // 迴ｾ蝨ｨ迥ｶ諷具ｼ・ameStateSystem 縺ｮ縺ｿ縺梧嶌縺肴鋤縺医ｋ・・
         ::sys::eGameState GameState = ::sys::eGameState::PreStart;
 
-        // リザルト種別（Result 進入時に GameStateSystem が確定させる）
+        // 繝ｪ繧ｶ繝ｫ繝育ｨｮ蛻･・・esult 騾ｲ蜈･譎ゅ↓ GameStateSystem 縺檎｢ｺ螳壹＆縺帙ｋ・・
         ::sys::eResultType ResultType = ::sys::eResultType::None;
 
-        // 遷移リクエスト
+        // 驕ｷ遘ｻ繝ｪ繧ｯ繧ｨ繧ｹ繝・
 
-        // 未消化のレベルアップ回数。1回のXP付与で複数レベル分の閾値を同時に超えた場合も
-        // レベルアップした回数分だけパーク選択を連続で提示するため、bool ではなく回数で持つ
-        // (EnemyDeathSystemが加算、GameStateSystemがPerkSelect 1回完了ごとに1減算する)。
-        // 必殺技/Flicker Strike演出中はIsPlayerActionLocked()でInGame→PerkSelectの遷移を保留する。
-        int PendingLevelUpCount = 0; // InGame → PerkSelect
-        bool PerkSelectDone = false; // PerkSelect → InGame (もしくはPerkSelectのまま次の1回へ)
-        bool GameClearRequested = false; // InGame → Result(Clear)
-        bool GameOverRequested = false; // InGame → Result(GameOver)
+        // 譛ｪ豸亥喧縺ｮ繝ｬ繝吶Ν繧｢繝・・蝗樊焚縲・蝗槭・XP莉倅ｸ弱〒隍・焚繝ｬ繝吶Ν蛻・・髢ｾ蛟､繧貞酔譎ゅ↓雜・∴縺溷ｴ蜷医ｂ
+        // 繝ｬ繝吶Ν繧｢繝・・縺励◆蝗樊焚蛻・□縺代ヱ繝ｼ繧ｯ驕ｸ謚槭ｒ騾｣邯壹〒謠千､ｺ縺吶ｋ縺溘ａ縲｜ool 縺ｧ縺ｯ縺ｪ縺丞屓謨ｰ縺ｧ謖√▽
+        // (EnemyDeathSystem縺悟刈邂励；ameStateSystem縺訓erkSelect 1蝗槫ｮ御ｺ・＃縺ｨ縺ｫ1貂帷ｮ励☆繧・縲・
+        // 蠢・ｮｺ謚/Flicker Strike貍泌・荳ｭ縺ｯIsPlayerActionLocked()縺ｧInGame竊単erkSelect縺ｮ驕ｷ遘ｻ繧剃ｿ晉蕗縺吶ｋ縲・
+        int PendingLevelUpCount = 0; // InGame 竊・PerkSelect
+        bool PerkSelectDone = false; // PerkSelect 竊・InGame (繧ゅ＠縺上・PerkSelect縺ｮ縺ｾ縺ｾ谺｡縺ｮ1蝗槭∈)
+        bool GameClearRequested = false; // InGame 竊・Result(Clear)
+        bool GameOverRequested = false; // InGame 竊・Result(GameOver)
     };
 
 }

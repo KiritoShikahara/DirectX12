@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include<Utility/Export/Export.h>
 #include<unordered_map>
@@ -9,18 +9,18 @@ namespace ecs
 {
 	enum class ePlayerState
 	{
-		Idle, // ‘Ò‹@
-		Move, // ˆÚ“®
+		Idle, // å¾…æ©Ÿ
+		Move, // ç§»å‹•
 	};
 
 	/// <summary>
-	/// ó‘Ô‘JˆÚ”»’è—p‚Ìƒ}ƒbƒv
-	/// key= ¡‚Ìó‘Ô value= ‘JˆÚ‰Â”\‚Èó‘Ô‚ÌƒŠƒXƒg
+	/// çŠ¶æ…‹é·ç§»åˆ¤å®šç”¨ã®ãƒãƒƒãƒ—
+	/// key= ä»Šã®çŠ¶æ…‹ value= é·ç§»å¯èƒ½ãªçŠ¶æ…‹ã®ãƒªã‚¹ãƒˆ
 	/// </summary>
 	using PlayerTransitionState = std::unordered_map<ePlayerState, std::vector<ePlayerState>>;
 
 	/// <summary>
-	/// ó‘Ô‘JˆÚƒŠƒNƒGƒXƒgB—Dæ“x‡‚É‘JˆÚ‰Â”\”»’è
+	/// çŠ¶æ…‹é·ç§»ãƒªã‚¯ã‚¨ã‚¹ãƒˆã€‚å„ªå…ˆåº¦é †ã«é·ç§»å¯èƒ½åˆ¤å®š
 	/// </summary>
 	struct PlayerStateRequest
 	{
@@ -30,26 +30,26 @@ namespace ecs
 
 	struct ENGINE_API PlayerStateComponent
 	{
-		// Œ»İ‚Ìó‘Ô
+		// ç¾åœ¨ã®çŠ¶æ…‹
 		ePlayerState CurrentState = ePlayerState::Idle;
 
 		/// <summary>
-		/// ó‘Ô‘JˆÚƒ}ƒbƒv
+		/// çŠ¶æ…‹é·ç§»ãƒãƒƒãƒ—
 		/// </summary>
 		PlayerTransitionState StateTransitionMap;
 
 		/// <summary>
-		/// ó‘Ô‘JˆÚƒŠƒNƒGƒXƒg‚ÌƒLƒƒƒbƒVƒ…
+		/// çŠ¶æ…‹é·ç§»ãƒªã‚¯ã‚¨ã‚¹ãƒˆã®ã‚­ãƒ£ãƒƒã‚·ãƒ¥
 		/// </summary>
 		std::vector<PlayerStateRequest> Requests;
 
 		bool CanTransition(ePlayerState next)
 		{
-			// “o˜^”»’è
+			// ç™»éŒ²åˆ¤å®š
 			const auto it = StateTransitionMap.find(CurrentState);
 			if (it == StateTransitionMap.end()) return false;
 
-			// ‘JˆÚæ
+			// é·ç§»å…ˆ
 			const auto& list = it->second;
 			return std::find(list.begin(), list.end(), next) != list.end();
 		}
@@ -64,7 +64,7 @@ namespace ecs
 		}
 
 		/// <summary>
-		/// ƒŠƒNƒGƒXƒg‚ğ’Ç‰Á‚·‚é
+		/// ãƒªã‚¯ã‚¨ã‚¹ãƒˆã‚’è¿½åŠ ã™ã‚‹
 		/// </summary>
 		void AddRequest(ePlayerState state, int priority)
 		{

@@ -9,6 +9,11 @@
 #include<Scene/Game/Factory/GameSceneFactory.h>
 #include<Scene/Game/Debug/GameDebugSettings.h>
 #include<Tag/EntityTag.h>
+#include<graphics/Text/Renderer/TextRenderer.h> // テキスト幅を測って画像中央へ揃えるため
+#include<system/Window/Window.h>                // 画面中心(仮想解像度)を基準に配置するため
+#include<system/Player/Weapon/WeaponIconRegistry.h> // 武器種別→アイコンの対応表(WeaponIconBarSystemと共通)
+#include<system/UI/UiPanelUtility.h>
+#include<system/Effect/EffectSpawnUtility.h>
 
 #include<random>
 
@@ -23,15 +28,69 @@ namespace ecs
 			return engine;
 		}
 
-		// レイアウト定数（仮想解像度1280x720基準。名前が長い選択肢(トレードオフ系)があるため
-		// 横並びではなく縦並び。個人開発プロトタイプの暫定値）
-		constexpr float kOptionY = 240.0f;
-		constexpr float kOptionSpacingY = 60.0f;
-		constexpr float kOptionCenterX = 640.0f;
-		constexpr float kOptionTextSize = 32.0f;
+		// レイアウト定数。テキスト/スプライトとも同一座標系(ウィンドウ仮想解像度・左上原点)で配置する。
+		// 選択肢は「大きめのアイコン画像の上にテキストを重ねたカード」を、画面中心を基準に横へ均等配置する
+		// (2つ目のカード中心が画面中心に一致)。名前が長いトレードオフ系は横幅に収まらず隣と重なりうるが、
+		// レイアウト要件として横並びを優先する。個人開発プロトタイプの暫定値。
+		constexpr float kOptionTextSize = 32.0f; // 選択肢テキストの文字高さ(px)
 
 		const DirectX::XMFLOAT4 kNormalColor = { 0.7f, 0.7f, 0.7f, 1.0f };
 		const DirectX::XMFLOAT4 kSelectedColor = { 1.0f, 0.9f, 0.2f, 1.0f };
+
+		// カード(アイコン画像 + その上に重ねるテキスト)のレイアウト。
+		constexpr float kCardSize = 180.0f;      // アイコン画像の表示サイズ(px、正方形)。元画像サイズに依らず一定
+		constexpr float kCardSpacingX = 300.0f;  // カード中心どうしの横間隔(px)。3つを横に均等配置するのに使う
+		constexpr float kIconTextGapY = 40.0f;   // アイコン画像の下端からテキスト(ベースライン)までの間隔(px)
+
+		// 選択肢全体を囲む黒半透明ウィンドウ(視認性向上用)のパラメータ。
+		// アイコンより奥へ敷く必要があるが、Shapeは描画順がSprite→Shape→Textでアイコン(Sprite)の
+		// 上に来てしまうため使えない。UiPanelUtility(白テクスチャをColorで黒+半透明に着色した
+		// Spriteで代用)で敷く。描画は「Layerが大きいほど前面」(painter順。SpriteRenderer参照)
+		// なので、ウィンドウは小さいLayer(奥)、アイコンは大きいLayer(手前)に置く。テキストは別パスで最前面。
+		constexpr float kWindowPadX = 200.0f;    // ウィンドウ左右の余白(px)。大きいほどウィンドウが横に広がる
+		constexpr float kWindowPadY = 130.0f;    // ウィンドウ上下の余白(px)。大きいほどウィンドウが縦に広がる
+
+		// 背景(タイトル画像)の不透明度。ほとんど見えない程度のうっすらした背景にする(0=透明,1=不透明)
+		constexpr float kBackgroundAlpha = 0.12f;
+
+		// パーク確定演出。低頻度イベントのため常時ヒットするエフェクトより多少リッチなものを使う
+		constexpr const char* kPerkConfirmEffectPath = "Assets/Effect/Herald.efk";
+
+		/// <summary>
+		/// パーク1件に対応する表示アイコンのパスを返す。
+		/// 専用アイコンが未作成のパークは代用アイコン(kFallbackIcon)を返す
+		/// (あとで専用アイコンを Assets/Icon に追加したら、ここの割り当てを差し替えるだけでよい)。
+		/// </summary>
+		const char* GetPerkIconPath(const PerkDefinition& perk)
+		{
+			// 未作成アイコンの代用(後で差し替える前提のプレースホルダ)
+			constexpr const char* kFallbackIcon = "Assets/Icon/loading.png";
+
+			switch (perk.Type)
+			{
+			case ePerkEffectType::MaxHpUp:          return "Assets/Icon/health.png";
+			case ePerkEffectType::AtkPowerUp:       return "Assets/Icon/attack_up.png";
+			case ePerkEffectType::DefenseUp:        return "Assets/Icon/defense.png";
+			case ePerkEffectType::HealHp:           return "Assets/Icon/heel.png";
+			case ePerkEffectType::Revive:           return "Assets/Icon/revive.png";
+			case ePerkEffectType::GlassCannon:      return "Assets/Icon/fire.png";      // 攻撃特化の暫定割当
+			case ePerkEffectType::MoveSpeedUp:      return "Assets/Icon/speed_up.png";
+			case ePerkEffectType::ExperienceGainUp: return "Assets/Icon/exp_up.png";
+			case ePerkEffectType::AllStatsUp:       return "Assets/Icon/all_status.png";
+
+			case ePerkEffectType::AttackCountUp:
+			case ePerkEffectType::Reckless:    return "Assets/Icon/attack_up.png"; // 攻撃回数系の暫定割当
+
+			case ePerkEffectType::AcquireWeapon:
+				// 所持武器バー(WeaponIconBarSystem)と同じ対応表を使い、選択画面とバーで
+				// アイコンが食い違わないようにする(WeaponIconRegistry参照)。
+				return ecs::weaponutil::GetWeaponIconPath(perk.AcquireWeaponType);
+
+			default:
+				// CooldownDown/WeaponLevelUp/Berserk は未作成
+				return kFallbackIcon;
+			}
+		}
 
 		/// <summary>プレイヤーの所持武器のうち、レベルアップ可能なものが1つでもあるか</summary>
 		bool HasUpgradableWeapon(entt::registry& registry)
@@ -236,21 +295,95 @@ namespace ecs
 			if (select.ChoiceIndices[i] < 0) select.ChoiceIndices[i] = fallbackSource;
 		}
 
+		// 画面中心(仮想解像度の中央)を基準に、3つの選択肢カードを横へ均等配置する。
+		// 中央インデックス(2つ目)のカード中心を画面中心に一致させ、各カードは
+		// 「アイコン画像(中心=画面中心の高さ) + その下にテキスト」で構成する。
+		const float screenCenterX = static_cast<float>(::sys::Window::Get().GetVirtualWidth()) * 0.5f;
+		const float screenCenterY = static_cast<float>(::sys::Window::Get().GetVirtualHeight()) * 0.5f;
+
 		auto& manager = ENTITY_MANAGER;
+		auto& textRenderer = ::graphics::TextRenderer::Get();
+
+		// アイコン画像の中心は画面中心の高さに、テキストはその下(アイコン下端 + 余白)に置く
+		const float iconCenterY = screenCenterY;
+		const float textBaselineY = iconCenterY + kCardSize * 0.5f + kIconTextGapY;
+
+		// ── 背景(タイトル画面の背景を流用)。黒ウィンドウのさらに奥に全画面で敷く ──
+		// パーク選択中は背後の3Dシーンの代わりにこの背景を見せ、メニュー画面らしくする。
+		// (スプライトチャンネルは3Dシーンより後に描画されるため、全画面スプライトでシーンを覆える)
+		{
+			auto bgEntity = manager.CreateEntity();
+			auto& bgTransform = manager.AddComponent<ecs::Transform>(bgEntity);
+			bgTransform.Set2DPosition(0.0f, 0.0f); // 左上原点(Pivot既定{0,0})で全画面を覆う
+
+			// TitleSceneと同じパス(Windowsは大小無視で実ファイルTX_TItleBG.pngに解決される)
+			auto bgTexture = ::graphics::TextureManager::Get().GetOrLoad("Assets/Texture/Title/TX_TitleBG.png");
+			auto& bgSprite = manager.AddComponent<ecs::Sprite>(bgEntity, bgTexture);
+			bgSprite.Size = { screenCenterX * 2.0f, screenCenterY * 2.0f };            // 仮想解像度全体
+			bgSprite.Color = ::graphics::Color(1.0f, 1.0f, 1.0f, kBackgroundAlpha);    // ほぼ透明(うっすら見える程度)
+			bgSprite.SetLayer(::ecs::SpriteLayer::UI, -1);                             // 黒ウィンドウ(offset0)より奥
+
+			// ExitPerkSelectでまとめて破棄させる。TextComponentを持たないためハイライト対象外。
+			registry.emplace<PerkOptionUiTag>(bgEntity, -1);
+		}
+
+		// ── 選択肢全体を囲む黒半透明ウィンドウ(アイコンより奥) ──
+		// 横: 左右端カードのさらに外側までpad。縦: アイコン上端からテキスト下端までpad。
+		{
+			const float windowWidth =
+				kCardSpacingX * static_cast<float>(PerkSelectComponent::kChoiceCount - 1)
+				+ kCardSize + kWindowPadX * 2.0f;
+			const float windowTop = iconCenterY - kCardSize * 0.5f - kWindowPadY;
+			const float windowBottom = textBaselineY + kOptionTextSize + kWindowPadY;
+
+			auto windowEntity = ::ecs::uiutil::CreateTranslucentPanel(
+				screenCenterX, (windowTop + windowBottom) * 0.5f,
+				windowWidth, windowBottom - windowTop,
+				0); // アイコン(offset4)より奥(小さいLayer)
+
+			// ExitPerkSelectでまとめて破棄させる。TextComponentを持たないためハイライト対象外。
+			registry.emplace<PerkOptionUiTag>(windowEntity, -1);
+		}
+
 		for (int i = 0; i < PerkSelectComponent::kChoiceCount; ++i)
 		{
 			const PerkDefinition& perk = pool[select.ChoiceIndices[i]];
 
-			auto entity = manager.CreateEntity();
-			auto& text = manager.AddComponent<TextComponent>(entity);
+			// カード中心X。iを「中央からのオフセット」に変換して横に均等配置(i=1が画面中心)。
+			const float indexFromCenter =
+				static_cast<float>(i) - static_cast<float>(PerkSelectComponent::kChoiceCount - 1) * 0.5f;
+			const float cardCenterX = screenCenterX + indexFromCenter * kCardSpacingX;
+
+			// 大きめのアイコン画像(中心=画面中心の高さ)。未作成アイコンはGetPerkIconPathが代用画像を返す。
+			auto iconEntity = manager.CreateEntity();
+			auto& iconTransform = manager.AddComponent<ecs::Transform>(iconEntity);
+			iconTransform.Set2DPosition(cardCenterX, iconCenterY);
+
+			auto iconTexture = ::graphics::TextureManager::Get().GetOrLoad(GetPerkIconPath(perk));
+			auto& iconSprite = manager.AddComponent<ecs::Sprite>(iconEntity, iconTexture);
+			iconSprite.Pivot = { 0.5f, 0.5f };              // Set2DPositionの座標を画像の中心に合わせる
+			iconSprite.Size = { kCardSize, kCardSize };     // 元画像サイズに依らず一定の大きさで表示
+			iconSprite.SetLayer(::ecs::SpriteLayer::UI, 4); // ウィンドウ(offset0)より手前
+
+			registry.emplace<PerkOptionUiTag>(iconEntity, i);
+
+			// テキスト(アイコンの下)。cardCenterXへ水平中央揃え(MeasureWidthで実幅を測る)。
+			// テキストは別パスで描画されるため、アイコン・ウィンドウより常に前面に出る。
+			const float textWidth = textRenderer.MeasureWidth(perk.Name, kOptionTextSize);
+
+			auto textEntity = manager.CreateEntity();
+			auto& text = manager.AddComponent<TextComponent>(textEntity);
 			text.Text = perk.Name;
-			text.X = kOptionCenterX - 260.0f;
-			text.Y = kOptionY + static_cast<float>(i) * kOptionSpacingY;
+			text.X = cardCenterX - textWidth * 0.5f;
+			text.Y = textBaselineY;
 			text.Size = kOptionTextSize;
 			text.Color = (i == select.SelectedIndex) ? kSelectedColor : kNormalColor;
 			text.Layer = 10;
 
-			registry.emplace<PerkOptionUiTag>(entity, i);
+			// 画像・テキストとも同じタグを付け、ExitPerkSelectでまとめて破棄されるようにする。
+			// ハイライト処理(HandleInput)は PerkOptionUiTag+TextComponent のみを見るため、
+			// TextComponentを持たないアイコンには影響しない(アイコンは常に通常色で表示)。
+			registry.emplace<PerkOptionUiTag>(textEntity, i);
 		}
 	}
 
@@ -306,6 +439,14 @@ namespace ecs
 
 		const entt::entity playerEntity = *playerView.begin();
 		auto& status = registry.get<PlayerStatusComponent>(playerEntity);
+
+		// パーク確定時の演出(自動選択デバッグ経由も含め、ApplyPerkが呼ばれる箇所すべてで発生する)。
+		// レベルアップ〜確定は低頻度のイベントのため、常時ヒットするエフェクトより多少リッチな
+		// ものを使う(Herald.efk)。PlayOneShotCombinedの同時再生数上限で暴走はしない
+		if (const auto* transform = registry.try_get<Transform>(playerEntity))
+		{
+			ecs::effectutil::PlayOneShotCombined(kPerkConfirmEffectPath, transform->GetPosition(), 1.0f);
+		}
 
 		switch (perk.Type)
 		{

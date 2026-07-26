@@ -5,6 +5,7 @@
 #include<Tag/EntityTag.h>
 #include"EnemyChaseComponent.h"
 #include<system/Enemy/Knockback/EnemyKnockbackComponent.h>
+#include<system/Enemy/Status/EnemySlowStatusComponent.h>
 
 using namespace DirectX;
 
@@ -133,8 +134,16 @@ namespace ecs
 		// 停止間合いより遠いときだけ移動速度を積む（dirのYは常に0のためvelocity.yも常に0）
 		if (dist > chase.StopDistance)
 		{
+			// スロウ効果中(EnemySlowStatusComponent)は移動速度を減速する
+			// (付与自体は各武器システム、現状OrbitWeaponSystemのみが行う)
+			float speed = chase.MoveSpeed;
+			if (const auto* slow = registry.try_get<EnemySlowStatusComponent>(entity))
+			{
+				speed *= slow->SpeedMultiplier;
+			}
+
 			XMFLOAT3 velocity;
-			XMStoreFloat3(&velocity, XMVectorScale(dir, chase.MoveSpeed));
+			XMStoreFloat3(&velocity, XMVectorScale(dir, speed));
 
 			rigidBody.MoveVelocity = velocity;
 			rigidBody.HasMoveRequest = true;

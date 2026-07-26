@@ -1,19 +1,19 @@
-#pragma once
+ï»¿#pragma once
 #include<Utility/Export/Export.h>
 
 namespace ecs
 {
 	/// <summary>
-	/// RigidBodyComponent::MoveVelocity ‚Ì…•½•ûŒü‚É‰‚¶‚Ä
-	/// Transform ‚ğ‰ñ“]‚³‚¹‚é‚½‚ß‚Ì”Ä—pƒRƒ“ƒ|[ƒlƒ“ƒgB
-	/// ƒvƒŒƒCƒ„[E“GA‹¤‚É—¬—p‰Â”\B
+	/// RigidBodyComponent::MoveVelocity ç¸ºï½®è±Œï½´èŸ·ï½³è­ï½¹èœ·ä»£â†“è ¢æ‡ŠÂ§ç¸ºï½¦
+	/// Transform ç¹§è²å±“éœ†ï½¢ç¸ºè¼”â—‹ç¹§ä¹â—†ç¹§âˆšãƒ»è±å®ˆç•‘ç¹§ï½³ç¹ï½³ç¹æ˜´ãƒ»ç¹é˜ªÎ¦ç¹åŒ»Â€ãƒ»
+	/// ç¹åŠ±Îç¹§ï½¤ç¹ï½¤ç¹ï½¼ç¹ï½»è¬¨ï½µç¸²âˆãƒ»ç¸ºï½«è±¬âˆ«ç•‘èœ¿ï½¯é–­ï½½ç¸²ãƒ»
 	/// </summary>
 	struct ENGINE_API RotateToMoveComponent
 	{
-		/// <summary>1•b‚ ‚½‚è‚Ì‰ñ“]‘¬“xi“xj</summary>
+		/// <summary>1é˜åµâ‰ ç¸ºæº˜ï½Šç¸ºï½®è—æ«ï½»ï½¢é¨¾æº·ï½ºï½¦ãƒ»äº¥ï½ºï½¦ãƒ»ãƒ»/summary>
 		float RotationSpeedDeg = 720.0f;
 
-		/// <summary>true: •âŠÔ‚¹‚¸‘¦À‚É–Ú•WŠp“x‚ÖŒü‚­</summary>
+		/// <summary>true: é™¬æ†ºä¿£ç¸ºå¸™â˜…èœŠï½³è ï½§ç¸ºï½«é€¶ï½®è®“å‘µï½§è²ï½ºï½¦ç¸ºï½¸èœ·ä»£ï¿¥</summary>
 		bool InstantRotate = false;
 	};
 }

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include<system/Scene/IScene.h>
 #include<entt/entt.hpp>
@@ -11,16 +11,16 @@ namespace scene
 		virtual void Initialize()override;
 		virtual void Finalize()override;
 	private:
-		// データ
+		// 繝・・繧ｿ
 		void LoadData();
 
-		// システムの追加
+		// 繧ｷ繧ｹ繝・Β縺ｮ霑ｽ蜉
 		void CreateUserSystem();
 
-		// 背景
+		// 閭梧勹
 		void CreateBG();
 
-		// スペルの作成
+		// 繧ｹ繝壹Ν縺ｮ菴懈・
 		void CreateSpells();
 
 	};

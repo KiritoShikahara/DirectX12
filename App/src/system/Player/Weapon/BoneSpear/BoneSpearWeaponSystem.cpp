@@ -7,14 +7,14 @@
 #include<system/Player/Weapon/Projectile/ProjectileComponent.h>
 #include<system/Player/Status/PlayerCombatUtil.h>
 #include<system/Enemy/EnemyTargetUtil.h>
+#include<system/Effect/EffectSpawnUtility.h>
 #include<Data/Weapon/BoneSpearWeaponData.h>
 
 namespace ecs
 {
     void BoneSpearWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
     {
-        // InGame中のみ発射する。必殺技演出中は他の攻撃を発動させない(自動発動武器のため
-        // Flicker Strike中は止めない設計。ecs::weaponutil::ShouldSkipAutoWeaponUpdate参照)
+        // InGame中のみ発射。必殺技演出中は止める
         if (ecs::weaponutil::ShouldSkipAutoWeaponUpdate(registry)) return;
 
         registry.view<ecs::WeaponComponent, ecs::BoneSpearRuntimeComponent>().each(
@@ -37,8 +37,7 @@ namespace ecs
 
                 const DirectX::XMFLOAT3& ownerPos = ownerTransform->GetPosition();
 
-                // SearchRadius内に敵がいなければクールダウンを消費せず待機する
-                // （対象なしで直進するだけの弾を無駄撃ちしないため、Homing Missileと同じ方針）
+                // 敵がいなければクールダウンを消費せず待機する(無駄撃ち防止)
                 const entt::entity target = ecs::targetutil::FindNearestInRadius(
                     registry, ownerPos, masterData->SearchRadius);
                 if (!registry.valid(target)) return;
@@ -95,8 +94,7 @@ namespace ecs
         const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
         const float damage = masterData.Damage * atkMultiplier;
         const float radius = masterData.ExplosionRadius;
-        // 当たり判定半径は見た目基準半径(radius)とは別にHitRadiusMultiplierで拡大する。
-        // エフェクトの見た目サイズは従来通りradius基準のままにするため、ここで分離する。
+        // 判定半径は見た目のradiusとは別にHitRadiusMultiplierで拡大する
         const float hitRadius = radius * masterData.HitRadiusMultiplier;
 
         auto& manager = ::ecs::EntityManager::Get();
@@ -117,19 +115,18 @@ namespace ecs
         projectile.Damage = damage;
         projectile.ExplosionRadius = hitRadius;
         projectile.VisualRadius = radius;
-        projectile.ExplosionEffectPath = masterData.ExplosionEffectPath;
+        projectile.ExplosionEffectPath = ecs::effectutil::ResolveEffectIds(masterData.ExplosionEffectIds);
         projectile.LifeTime = masterData.ProjectileLifeTime;
         projectile.Owner = weapon.Owner;
         projectile.PierceCount = masterData.PierceCount; // 誘導はしない(IsHoming=falseのまま)、貫通のみ設定
 
-        if (!masterData.ProjectileEffectPath.empty())
+        const std::string projectileEffectPath = ecs::effectutil::ResolveEffectIds(masterData.ProjectileEffectIds);
+        if (!projectileEffectPath.empty())
         {
             auto& effect = manager.AddComponent<ecs::EffectComponent>(entity);
-            effect.Asset = graphics::EffekseerManager::Get().GetEffect(masterData.ProjectileEffectPath);
+            effect.Asset = graphics::EffekseerManager::Get().GetEffect(projectileEffectPath);
             effect.IsLoop = true;
-            // effect.Offset(常に原点)ではなく実際の発射位置を渡す。
-            // ここを Offset のまま渡すと、次フレームの EffekseerManager::Update による
-            // Transform追従が効くまでの1フレームだけ原点に表示されてしまう。
+            // 原点(Offset)ではなく実際の発射位置を渡す(1フレーム目の表示ズレ防止)
             effect.Effect.Play(effect.Asset, spawnPos);
             graphics::EffekseerManager::MarkSpawnHidden(effect);
         }

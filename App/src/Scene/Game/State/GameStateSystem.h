@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include<ecs/system/manager/IComponentSystem.h>
 
@@ -15,7 +15,7 @@ namespace sys
 		void Update(entt::registry& registry, float deltaTime, float rawDeltaTime);
 
 	private:
-		// ここで各種遷移時のメソッド作成
+		// 縺薙％縺ｧ蜷・ｨｮ驕ｷ遘ｻ譎ゅ・繝｡繧ｽ繝・ラ菴懈・
 		void EnterResult(::ecs::GameStateComponent& controller);
 	};
 }

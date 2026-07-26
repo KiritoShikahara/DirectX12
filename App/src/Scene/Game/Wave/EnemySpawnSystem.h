@@ -33,7 +33,7 @@ namespace ecs
         /// </summary>
         static float ComputeVisibleRadius(entt::registry& registry, const DirectX::XMFLOAT3& playerPos);
 
-        /// <summary>経過時間から現在の敵ステータス成長倍率を求める</summary>
-        static ecs::EnemyWaveModifier ComputeWaveModifier(float elapsedTime, float growthPerSecond);
+        /// <summary>経過時間から現在の敵ステータス成長倍率を求める(stepInterval秒ごとにgrowthPerStep分、階段状に成長)</summary>
+        static ecs::EnemyWaveModifier ComputeWaveModifier(float elapsedTime, float stepInterval, float growthPerStep);
     };
 }

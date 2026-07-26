@@ -1,12 +1,12 @@
-#pragma once
+﻿#pragma once
 
 #include<ecs/system/manager/IComponentSystem.h>
 
 namespace ecs
 {
     /// <summary>
-    /// InGame ���A�G�ƃv���C���[�̐ڐG�Ńv���C���[�փ_���[�W��^����V�X�e���B
-    /// �G�̂��Ƃ̃N�[���^�C���ő��i�E�A���q�b�g��h���B
+    /// InGame 荳ｭ縲∵雰縺ｨ繝励Ξ繧､繝､繝ｼ縺ｮ謗･隗ｦ縺ｧ繝励Ξ繧､繝､繝ｼ縺ｸ繝繝｡繝ｼ繧ｸ繧剃ｸ弱∴繧九す繧ｹ繝・Β縲・
+    /// 謨ｵ蛟倶ｽ薙＃縺ｨ縺ｮ繧ｯ繝ｼ繝ｫ繧ｿ繧､繝縺ｧ螟壽ｮｵ繝ｻ騾｣邯壹ヲ繝・ヨ繧帝亟縺舌・
     /// </summary>
     class PlayerContactDamageSystem : public IUserSystem
     {

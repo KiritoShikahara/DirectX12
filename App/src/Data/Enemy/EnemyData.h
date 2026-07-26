@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include<string>
 #include<Data/Storage/Reflection.h>
@@ -6,19 +6,18 @@
 namespace data
 {
     /// <summary>
-    /// �G�̏����X�e�[�^�X �}�X�^�iCSV / DB�j�B
-    /// EnemyStatusComponent �� Base�iMaxHp / MoveSpeed / AtkPower�j�֑Ή�����B
-    /// CSV �w�b�_���͊e�t�B�[���h���Ɗ��S��v�����邱�ƁB
+    /// 敵の基礎ステータスのマスタデータ(CSV/DB)。EnemyStatusComponent::Baseへ対応する。
+    /// CSVヘッダー名は各フィールド名と一致させること。
     /// </summary>
     struct EnemyData
     {
-        int         Id = 0;     // �G��ID�i��L�[�BEnemyStatusComponent::EnemyId �ƑΉ��j
-        std::string Name;              // �\�����E�f�o�b�O�p
-        float       MaxHp = 10.0f; // �ő�HP
-        float       MoveSpeed = 2.0f;  // �ړ����x m/s
-        float       AtkPower = 1.0f;  // �ڐG�_���[�W
-        int         Exp = 3;     // ���j���̊l���o���l
-        float       GoldValue = 3.0f; // Gold awarded to the player on kill (EnemyDeathSystem::AwardGold)
+        int         Id = 0;            // 敵の種類ID(主キー。EnemyStatusComponent::EnemyIdと対応)
+        std::string Name;              // 表示・デバッグ用
+        float       MaxHp = 10.0f;     // 最大HP
+        float       MoveSpeed = 2.0f;  // 移動速度 m/s
+        float       AtkPower = 1.0f;   // 接触ダメージ
+        int         Exp = 3;           // 撃破時の獲得経験値
+        float       GoldValue = 3.0f;  // 撃破時に得られるゴールド(EnemyDeathSystem::AwardGold)
 
         REFLECT_BEGIN(EnemyData, "enemies")
             REFLECT_FIELD_ID(Id)

@@ -94,6 +94,8 @@ namespace ecs
         // 再生しない(敵が密集していると1回のビームで数十体に同時ヒットしうるため、
         // Effekseerエフェクトの同時生成数を抑える)
         int spawnedEffects = 0;
+        // ループ内で毎回ID解決しないよう、ヒットエフェクトのパスは事前に1回だけ解決しておく
+        const std::string hitEffectPath = ecs::effectutil::ResolveEffectIds(masterData.HitEffectIds);
 
         for (entt::entity entity : mCandidates)
         {
@@ -122,8 +124,7 @@ namespace ecs
             ++spawnedEffects;
 
             const DirectX::XMFLOAT3 effectPos = { enemyPos.x, enemyPos.y + masterData.HeightOffset, enemyPos.z };
-            // HitEffectPathは';'区切りで複数指定可能(ecs::effectutil::PlayOneShotCombined参照)。
-            ecs::effectutil::PlayOneShotCombined(masterData.HitEffectPath, effectPos, masterData.HitEffectScale);
+            ecs::effectutil::PlayOneShotCombined(hitEffectPath, effectPos, masterData.HitEffectScale);
         }
     }
 }

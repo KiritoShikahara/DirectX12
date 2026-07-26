@@ -1,4 +1,4 @@
-#include "apppch.h"
+﻿#include "apppch.h"
 #include "PlayerMovementSystem.h"
 
 #include"PlayerMovementComponent.h"
@@ -26,8 +26,8 @@ namespace ecs
 					return;
 				}
 
-				// PlayerStatusComponent::Current.MoveSpeed(パークで強化される値)は
-				// MaxSpeedとは単位が異なるため、Base比の比率として掛け合わせる
+				// PlayerStatusComponent::Current.MoveSpeed(繝代・繧ｯ縺ｧ蠑ｷ蛹悶＆繧後ｋ蛟､)縺ｯ
+				// MaxSpeed縺ｨ縺ｯ蜊倅ｽ阪′逡ｰ縺ｪ繧九◆繧√。ase豈斐・豈皮紫縺ｨ縺励※謗帙￠蜷医ｏ縺帙ｋ
 				float speedMultiplier = 1.0f;
 				if (const auto* status = registry.try_get<ecs::PlayerStatusComponent>(entity);
 					status != nullptr && status->Base.MoveSpeed > 0.0f)

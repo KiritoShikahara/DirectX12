@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include<DirectXMath.h>
 #include<Utility/Export/Export.h>
@@ -7,10 +7,10 @@ namespace ecs
 {
     struct ENGINE_API CameraFollowOffsetComponent
     {
-        /// <summary>ƒJƒƒ‰ˆÊ’u‚ÌƒvƒŒƒCƒ„[À•W‚©‚ç‚Ì‚¸‚ç‚µ—Ê</summary>
+        /// <summary>ç¹§ï½«ç¹ï½¡ç¹ï½©è´å’²ï½½ï½®ç¸ºï½®ç¹åŠ±Îç¹§ï½¤ç¹ï½¤ç¹ï½¼è ï½§è®“å¶Â°ç¹§å³¨ãƒ»ç¸ºå£¹ï½‰ç¸ºéˆ´ã¼</summary>
         DirectX::XMFLOAT3 Offset = { 0.f, 5.f, -10.f };
 
-        /// <summary>’‹“_‚ÌƒvƒŒƒCƒ„[À•W‚©‚ç‚Ì‚¸‚ç‚µ—Êi—áF“ª‚Ì‚‚³‚ğŒ©‚éj</summary>
+        /// <summary>è±•ï½¨éš•ä¹Ÿã›ç¸ºï½®ç¹åŠ±Îç¹§ï½¤ç¹ï½¤ç¹ï½¼è ï½§è®“å¶Â°ç¹§å³¨ãƒ»ç¸ºå£¹ï½‰ç¸ºéˆ´ã¼ãƒ»äº•ï½¾å…·ï½¼å¤ï£°ï½­ç¸ºï½®é¬®å€¥ï¼†ç¹§å®šï½¦ä¹ï½‹ãƒ»ãƒ»/summary>
         DirectX::XMFLOAT3 LookAtOffset = { 0.f, 1.5f, 0.f };
     };
 }

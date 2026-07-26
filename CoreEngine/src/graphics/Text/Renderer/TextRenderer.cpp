@@ -182,6 +182,38 @@ namespace graphics
         mDrawCalls.push_back({ startVertex, vertCount, color });
     }
 
+    float TextRenderer::MeasureWidth(const std::wstring& text, float size) const
+    {
+        if (!mIsInitialized || !mAtlas->IsLoaded()) return 0.0f;
+
+        const float scale = size;
+        float penX = 0.0f;
+        float maxWidth = 0.0f;
+
+        for (wchar_t wc : text)
+        {
+            const uint32_t cp = static_cast<uint32_t>(wc);
+
+            if (cp == L'\n')
+            {
+                maxWidth = std::max(maxWidth, penX);
+                penX = 0.0f;
+                continue;
+            }
+
+            const GlyphInfo* g = mAtlas->GetGlyph(cp);
+            if (!g)
+            {
+                if (auto* sp = mAtlas->GetGlyph(0x20)) penX += sp->advance * scale;
+                continue;
+            }
+
+            penX += g->advance * scale;
+        }
+
+        return std::max(maxWidth, penX);
+    }
+
     void TextRenderer::Flush(ID3D12GraphicsCommandList* cmdList)
     {
 

@@ -31,7 +31,9 @@ namespace data
 
         float       HeightOffset = 30.0f;    // 発生位置のY座標 = Owner.Position.y + この値(m)
 
-        std::string EffectPath;              // 発動時エフェクト(.efk)
+        // エフェクト素材ID(';'区切りで複数指定可、data::EffectAssetData参照)。
+        // ecs::effectutil::ResolveEffectIds()でパス文字列へ解決してから使うこと。
+        std::string EffectIds;               // 発動時エフェクト
 
         REFLECT_BEGIN(NovaWeaponData, "nova_weapons")
             REFLECT_FIELD_ID(Id)
@@ -41,7 +43,7 @@ namespace data
             REFLECT_FIELD_FLOAT(Radius)
             REFLECT_FIELD_FLOAT(HitRadiusMultiplier)
             REFLECT_FIELD_FLOAT(HeightOffset)
-            REFLECT_FIELD_STR(EffectPath)
+            REFLECT_FIELD_STR(EffectIds)
         REFLECT_END()
     };
 }

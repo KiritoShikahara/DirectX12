@@ -12,10 +12,8 @@ namespace data
 namespace debug
 {
 	/// <summary>
-	/// プレイヤーの永続的な進行状況(PlayerSaveData：所持ゴールド・ステータス強化レベル)の
-	/// デバッグパネル。data::ConfigEditor(Load/Save/Resetボタン+ドラッグ編集可能なフィールド一覧)
-	/// をそのまま使い、ImGui上でゴールドを直接いじれるようにする。
-	/// IUserSystemは継承せず、生成時にImGuiManagerへ登録・破棄時に解除する。
+	/// PlayerSaveData(所持ゴールド・ステータス強化レベル)を編集するデバッグパネル。
+	/// data::ConfigEditorをそのまま使う。生成時にImGuiManagerへ登録し、破棄時に解除する。
 	/// </summary>
 	class PlayerSaveDebugPanel
 	{

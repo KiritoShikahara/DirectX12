@@ -11,11 +11,9 @@ namespace ecs
     struct WeaponComponent;
 
     /// <summary>
-    /// BoneSpear型武器(WeaponComponent::Type == BoneSpear)の発射ロジック。
-    /// 発動トリガーが無く、FireInterval秒ごとにSearchRadius内の最も近い敵へ向けて
-    /// ProjectileComponent(IsHoming=false、PierceCount設定済み)を1体発射する
-    /// 完全自動の武器。発射後は誘導せず直進し、命中判定・貫通処理は既存のProjectile
-    /// 汎用パイプライン(ProjectileMovementSystem/ProjectileCollisionSystem)をそのまま再利用する。
+    /// BoneSpear型武器の発射ロジック。完全自動で、FireInterval秒ごとにSearchRadius内の
+    /// 最寄りの敵へ貫通弾(PierceCount設定済み)を1体撃つ。以降の移動・命中判定は
+    /// Projectile系の共通パイプラインに任せる。
     /// </summary>
     class BoneSpearWeaponSystem : public ecs::IUserSystem
     {

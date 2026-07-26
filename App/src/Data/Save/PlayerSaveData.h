@@ -7,10 +7,7 @@ namespace data
 {
 	/// <summary>
 	/// プレイヤーの永続的な進行状況（所持ゴールド・ステータス恒久強化レベル）。
-	/// アプリを再起動しても引き継がれる（ConfigManager&lt;T&gt;によるJSON自動保存/読込、
-	/// WindowConfigと同じ仕組み）。CSVで管理するマスタデータ(DataManager&lt;T&gt;)とは異なり、
-	/// プレイの結果によって書き換わるセーブデータそのものであるため、Debug/Releaseで
-	/// 挙動を分けず常に同じファイル(Assets/Bin/Save/player_save.json)を読み書きする。
+	/// ConfigManager&lt;T&gt;によりAssets/Bin/Save/player_save.jsonへ自動保存/読込する。
 	/// </summary>
 	struct PlayerSaveData
 	{

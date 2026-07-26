@@ -32,8 +32,10 @@ namespace data
                                               // デフォルトはプレイヤーの胸あたりの高さ
                                               // (プレイヤーのColliderComponent半径・y=30を目安とする)
 
-        std::string ProjectileEffectPath;    // 飛翔中エフェクト(.efk)
-        std::string ExplosionEffectPath;     // 着弾時の爆発エフェクト(.efk)
+        // エフェクト素材ID(';'区切りで複数指定可、data::EffectAssetData参照)。
+        // ecs::effectutil::ResolveEffectIds()でパス文字列へ解決してから使うこと。
+        std::string ProjectileEffectIds;    // 飛翔中エフェクト
+        std::string ExplosionEffectIds;     // 着弾時の爆発エフェクト
 
         REFLECT_BEGIN(SingleShotWeaponData, "single_shot_weapons")
             REFLECT_FIELD_ID(Id)
@@ -45,8 +47,8 @@ namespace data
             REFLECT_FIELD_FLOAT(HitRadiusMultiplier)
             REFLECT_FIELD_FLOAT(ProjectileLifeTime)
             REFLECT_FIELD_FLOAT(HeightOffset)
-            REFLECT_FIELD_STR(ProjectileEffectPath)
-            REFLECT_FIELD_STR(ExplosionEffectPath)
+            REFLECT_FIELD_STR(ProjectileEffectIds)
+            REFLECT_FIELD_STR(ExplosionEffectIds)
         REFLECT_END()
     };
 }

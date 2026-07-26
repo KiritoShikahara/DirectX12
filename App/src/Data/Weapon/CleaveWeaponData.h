@@ -37,7 +37,9 @@ namespace data
 
         float       HeightOffset = 30.0f;    // エフェクトの再生高さ = Owner.Position.y + この値(m)
 
-        std::string EffectPath;              // 発動時エフェクト(.efk)
+        // エフェクト素材ID(';'区切りで複数指定可、data::EffectAssetData参照)。
+        // ecs::effectutil::ResolveEffectIds()でパス文字列へ解決してから使うこと。
+        std::string EffectIds;               // 発動時エフェクト
 
         REFLECT_BEGIN(CleaveWeaponData, "cleave_weapons")
             REFLECT_FIELD_ID(Id)
@@ -50,7 +52,7 @@ namespace data
             REFLECT_FIELD_FLOAT(KnockbackForce)
             REFLECT_FIELD_FLOAT(KnockbackDuration)
             REFLECT_FIELD_FLOAT(HeightOffset)
-            REFLECT_FIELD_STR(EffectPath)
+            REFLECT_FIELD_STR(EffectIds)
         REFLECT_END()
     };
 }

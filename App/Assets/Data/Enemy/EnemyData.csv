@@ -1,5 +1,5 @@
 Id,Name,MaxHp,MoveSpeed,AtkPower,Exp,GoldValue
-0,Grunt,10,40,1,3,3
-1,Scout,6,55,1,3,3
-2,Brute,25,25,3,6,6
-3,Sprinter,4,65,1,2,2
+0,Grunt,10,60,5,3,3
+1,Scout,6,80,4,3,3
+2,Brute,25,38,12,6,6
+3,Sprinter,4,95,4,2,2

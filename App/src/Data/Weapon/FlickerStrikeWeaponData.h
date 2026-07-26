@@ -48,10 +48,11 @@ namespace data
 
         float       HeightOffset = 30.0f;    // ヒットエフェクトの再生高さ = 対象のY座標 + この値(m)
 
-        std::string HitEffectPath;           // 命中のたびに1回だけ再生する被弾エフェクト(.efk、
-                                              // ';'区切りで複数指定可)。雷を思わせる見た目にする
-                                              // ため、既定でLightningStrike.efk(雷本体)+
-                                              // Light4.efk(閃光)を組み合わせている
+        // エフェクト素材ID(';'区切りで複数指定可、data::EffectAssetData参照)。
+        // ecs::effectutil::ResolveEffectIds()でパス文字列へ解決してから使うこと。
+        // 雷を思わせる見た目にするため、既定でLightningStrike.efk(雷本体)+
+        // Light4.efk(閃光)を組み合わせている(201;302)。
+        std::string HitEffectIds;           // 命中のたびに1回だけ再生する被弾エフェクト
         float       HitEffectScale = 7.0f;   // ヒットエフェクトの見た目倍率(派手さの要望により拡大)
 
         REFLECT_BEGIN(FlickerStrikeWeaponData, "flicker_strike_weapons")
@@ -69,7 +70,7 @@ namespace data
             REFLECT_FIELD_FLOAT(WarpInterval)
             REFLECT_FIELD_FLOAT(TeleportOffset)
             REFLECT_FIELD_FLOAT(HeightOffset)
-            REFLECT_FIELD_STR(HitEffectPath)
+            REFLECT_FIELD_STR(HitEffectIds)
             REFLECT_FIELD_FLOAT(HitEffectScale)
         REFLECT_END()
     };

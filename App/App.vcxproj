@@ -209,9 +209,14 @@
     <ClCompile Include="src\system\Player\Status\PlayerCombatUtil.cpp" />
     <ClCompile Include="src\system\Player\Weapon\WeaponUpdateUtil.cpp" />
     <ClCompile Include="src\system\Player\Weapon\WeaponTypeRegistry.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\WeaponCooldownRegistry.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\WeaponIconRegistry.cpp" />
+    <ClCompile Include="src\system\Player\UI\WeaponIconBarSystem.cpp" />
     <ClCompile Include="src\system\Player\Status\PlayerRegenSystem.cpp" />
     <ClCompile Include="src\system\UI\DamageNumber\DamageNumberSystem.cpp" />
+    <ClCompile Include="src\system\UI\UiPanelUtility.cpp" />
     <ClCompile Include="src\system\Player\UI\PlayerHpBarSystem.cpp" />
+    <ClCompile Include="src\system\Player\UI\PlayerUltimateGaugeSystem.cpp" />
     <ClCompile Include="src\system\Enemy\Death\EnemyDeathSystem.cpp" />
     <ClCompile Include="src\system\Player\Perk\PerkSelectSystem.cpp" />
     <ClCompile Include="src\Scene\Game\Result\ResultSystem.cpp" />
@@ -222,6 +227,8 @@
     <ClCompile Include="src\Scene\Game\State\GameStateSystem.cpp" />
     <ClCompile Include="src\system\RotateToMove\RotateToMoveSystem.cpp" />
     <ClCompile Include="src\system\Player\State\PlayerStateSystem.cpp" />
+    <ClCompile Include="src\system\Light\DirLightFollowSystem.cpp" />
+    <ClCompile Include="src\system\Animation\LocomotionAnimationSystem.cpp" />
     <ClCompile Include="src\system\Player\MovementSystem\PlayerMovementSystem.cpp" />
     <ClCompile Include="src\system\Player\InputSystem\PlayerInputSystem.cpp" />
     <ClCompile Include="src\Scene\Game\Factory\GameSceneFactory.cpp" />
@@ -273,6 +280,7 @@
     <ClCompile Include="src\system\Player\Weapon\BoneSpear\BoneSpearWeaponSystem.cpp" />
     <ClCompile Include="src\system\Player\Weapon\Cleave\CleaveWeaponSystem.cpp" />
     <ClCompile Include="src\system\Enemy\Knockback\EnemyKnockbackSystem.cpp" />
+    <ClCompile Include="src\system\Enemy\Status\EnemySlowStatusSystem.cpp" />
     <ClCompile Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeWeaponSystem.cpp" />
     <ClCompile Include="src\system\Enemy\EnemyTargetUtil.cpp" />
     <ClCompile Include="src\system\Player\Ultimate\PlayerUltimateSystem.cpp" />
@@ -288,6 +296,7 @@
   <ItemGroup>
     <ClInclude Include="src\system\Player\AimSysten\PlayerAimSystem.h" />
     <ClInclude Include="src\Data\Enemy\EnemyData.h" />
+    <ClInclude Include="src\Data\Enemy\BossData.h" />
     <ClInclude Include="src\system\Enemy\Status\EnemyStatusDebugPanel.h" />
     <ClInclude Include="src\system\Damage\PlayerContactDamage\PlayerContactDamageSystem.h" />
     <ClInclude Include="src\system\Enemy\Attack\EnemyAttackComponent.h" />
@@ -295,6 +304,7 @@
     <ClInclude Include="src\system\Player\AimSysten\PlayerAimComponent.h" />
     <ClInclude Include="src\system\Player\UI\FillAmountLerp.h" />
     <ClInclude Include="src\system\Player\UI\PlayerHpBarSystem.h" />
+    <ClInclude Include="src\system\Player\UI\PlayerUltimateGaugeSystem.h" />
     <ClInclude Include="src\system\Enemy\Death\EnemyDeathSystem.h" />
     <ClInclude Include="src\system\Player\Level\PlayerLevelComponent.h" />
     <ClInclude Include="src\system\Player\Perk\PerkDefinition.h" />
@@ -321,16 +331,24 @@
     <ClInclude Include="src\system\Player\Status\PlayerCombatUtil.h" />
     <ClInclude Include="src\system\Player\Weapon\WeaponUpdateUtil.h" />
     <ClInclude Include="src\system\Player\Weapon\WeaponTypeRegistry.h" />
+    <ClInclude Include="src\system\Player\Weapon\WeaponCooldownRegistry.h" />
+    <ClInclude Include="src\system\Player\Weapon\WeaponIconRegistry.h" />
+    <ClInclude Include="src\system\Player\UI\WeaponIconBarSystem.h" />
     <ClInclude Include="src\system\Player\Status\PlayerRegenSystem.h" />
     <ClInclude Include="src\system\UI\DamageNumber\DamageNumberComponent.h" />
     <ClInclude Include="src\system\UI\DamageNumber\DamageNumberSystem.h" />
+    <ClInclude Include="src\system\UI\UiPanelUtility.h" />
     <ClInclude Include="src\system\Player\UI\PlayerUiTag.h" />
     <ClInclude Include="src\system\Player\Weapon\Inventory\WeaponInventoryComponent.h" />
     <ClInclude Include="src\system\RotateToMove\RotateToMoveSystem.h" />
     <ClInclude Include="src\system\Player\State\PlayerStateSystem.h" />
+    <ClInclude Include="src\system\Light\DirLightFollowSystem.h" />
+    <ClInclude Include="src\system\Animation\LocomotionAnimationSystem.h" />
+    <ClInclude Include="src\system\Animation\ActionAnimLockComponent.h" />
     <ClInclude Include="src\system\Player\MovementSystem\PlayerMovementSystem.h" />
     <ClInclude Include="src\system\Player\InputSystem\PlayerInputSystem.h" />
     <ClInclude Include="src\Scene\Game\Factory\GameSceneFactory.h" />
+    <ClInclude Include="src\Scene\Game\Factory\FieldConstants.h" />
     <ClInclude Include="src\system\CameraFollow\CameraFollowOffsetComponent.h" />
     <ClInclude Include="src\system\CameraFollow\CameraOverrideComponent.h" />
     <ClInclude Include="src\system\CameraFollow\CameraPlayerFollowSystem.h" />
@@ -345,6 +363,7 @@
     <ClInclude Include="src\system\HubMenu\HubMenuInputSystem.h" />
     <ClInclude Include="src\system\StatusUpgrade\StatusUpgradeInputSystem.h" />
     <ClInclude Include="src\system\StatusUpgrade\StatusUpgradeComponent.h" />
+    <ClInclude Include="src\system\StatusUpgrade\StatusUpgradeLabels.h" />
     <ClInclude Include="src\Data\Save\PlayerSaveData.h" />
     <ClInclude Include="src\Data\Save\PlayerSaveDebugPanel.h" />
     <ClInclude Include="src\Data\StatUpgrade\StatUpgradeData.h" />
@@ -355,6 +374,8 @@
     <ClInclude Include="src\Scene\Title\TitleScene.h" />
     <ClInclude Include="src\Scene\Test\TestScene.h" />
     <ClInclude Include="src\system\MenuController\MenuControllerComp.h" />
+    <ClInclude Include="src\system\MenuController\WeaponSelectVisuals.h" />
+    <ClInclude Include="src\system\Input\InputGuideLabels.h" />
     <ClInclude Include="src\system\Player\MovementSystem\PlayerMovementComponent.h" />
     <ClInclude Include="src\system\Player\State\PlayerStateComponent.h" />
     <ClInclude Include="src\system\RotateToMove\RotateToMoveComponent.h" />
@@ -403,6 +424,8 @@
     <ClInclude Include="src\system\Player\Weapon\Cleave\CleaveWeaponSystem.h" />
     <ClInclude Include="src\system\Enemy\Knockback\EnemyKnockbackComponent.h" />
     <ClInclude Include="src\system\Enemy\Knockback\EnemyKnockbackSystem.h" />
+    <ClInclude Include="src\system\Enemy\Status\EnemySlowStatusComponent.h" />
+    <ClInclude Include="src\system\Enemy\Status\EnemySlowStatusSystem.h" />
     <ClInclude Include="src\Data\Weapon\FlickerStrikeWeaponData.h" />
     <ClInclude Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeRuntimeComponent.h" />
     <ClInclude Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeComponent.h" />

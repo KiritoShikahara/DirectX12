@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include<entt/entt.hpp>
 #include<Utility/Export/Export.h>
@@ -11,9 +11,9 @@ namespace ecs { struct RigidBodyComponent; }
 namespace ecs
 {
 	/// <summary>
-	/// RotateToMoveComponent ‚ğ‚ÂƒGƒ“ƒeƒBƒeƒB‚ÌŒü‚«‚ğ
-	/// RigidBodyComponent::MoveVelocity ‚Ì•ûŒü‚Ö‰ñ“]‚³‚¹‚éƒVƒXƒeƒ€B
-	/// ƒvƒŒƒCƒ„[E“GA‹¤’Ê‚Å—˜—p‚·‚éB
+	/// RotateToMoveComponent ç¹§å‘ˆæˆŸç¸ºï½¤ç¹§ï½¨ç¹ï½³ç¹ãƒ»ã…ç¹ãƒ»ã…ç¸ºï½®èœ·ä»£â€³ç¹§ãƒ»
+	/// RigidBodyComponent::MoveVelocity ç¸ºï½®è­ï½¹èœ·ä»£âˆˆè—æ«ï½»ï½¢ç¸ºè¼”â—‹ç¹§ä¹ã™ç¹§ï½¹ç¹ãƒ»Î’ç¸²ãƒ»
+	/// ç¹åŠ±Îç¹§ï½¤ç¹ï½¤ç¹ï½¼ç¹ï½»è¬¨ï½µç¸²âˆãƒ»é¨¾å£¹ã€’è›»ï½©é€•ï½¨ç¸ºå¶ï½‹ç¸²ãƒ»
 	/// </summary>
 	class ENGINE_API RotateToMoveSystem : public ecs::IUserSystem
 	{
