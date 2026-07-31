@@ -112,6 +112,7 @@ namespace ecs
 		projectile.ExplosionRadius = hitRadius;
 		projectile.VisualRadius = radius;
 		projectile.ExplosionEffectPath = ecs::effectutil::ResolveEffectIds(masterData.ExplosionEffectIds);
+		projectile.ExplosionAtGroundLevel = masterData.ExplosionAtGroundLevel;
 		projectile.LifeTime = masterData.ProjectileLifeTime;
 		projectile.Owner = weapon.Owner;
 

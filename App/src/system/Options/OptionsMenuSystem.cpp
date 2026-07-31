@@ -7,6 +7,7 @@
 #include <system/UI/UiPanelUtility.h>
 #include <graphics/Text/Renderer/TextRenderer.h>
 #include <Scene/Title/TitleScene.h>
+#include <Scene/Game/State/GameState.h>
 
 #include <algorithm>
 #include <limits>
@@ -67,7 +68,10 @@ namespace ecs
 
 		if (!mIsOpen)
 		{
-			if (input.IsActionPressed("Option"))
+			// PerkSelect中もEscapeで開けるが、Result/PreStart中は開かせない
+			// (リザルト画面はSelect/MenuLeft/MenuRightで独自の入力を処理しており、
+			// そちらとメニューのカーソル操作が同じ入力で同時に反応してしまうのを避けるため)
+			if (input.IsActionPressed("Option") && CanOpen(registry))
 			{
 				Open(registry);
 			}
@@ -75,6 +79,23 @@ namespace ecs
 		}
 
 		HandleInput(registry);
+	}
+
+	bool OptionsMenuSystem::CanOpen(entt::registry& registry) const
+	{
+		auto view = registry.view<::ecs::GameStateComponent>();
+		if (view.begin() == view.end()) return false;
+
+		const auto state = registry.get<::ecs::GameStateComponent>(*view.begin()).GameState;
+		return state == ::sys::eGameState::InGame || state == ::sys::eGameState::PerkSelect;
+	}
+
+	void OptionsMenuSystem::SetOptionsMenuOpenFlag(entt::registry& registry, bool isOpen)
+	{
+		auto view = registry.view<::ecs::GameStateComponent>();
+		if (view.begin() == view.end()) return;
+
+		registry.get<::ecs::GameStateComponent>(*view.begin()).IsOptionsMenuOpen = isOpen;
 	}
 
 	void OptionsMenuSystem::Open(entt::registry& registry)
@@ -86,6 +107,11 @@ namespace ecs
 		// ゲームを停止する。元の値を控えておき、閉じるときに復元する
 		mPrevTimeScale = GetTime().GetTimeScale();
 		GetTime().SetTimeScale(0.0);
+
+		// 開いている間、パーク選択・武器発射・プレイヤー移動等の他の入力処理を止める
+		// (Escapeは"Option"と"Cancel"の両方に割り当てられているため、これが無いと
+		// メニューを開いた直後の入力でパーク選択なども同時に反応してしまう)
+		SetOptionsMenuOpenFlag(registry, true);
 
 		BuildUi();
 		RefreshLabels();
@@ -101,6 +127,7 @@ namespace ecs
 		DestroyUi(registry);
 
 		GetTime().SetTimeScale(mPrevTimeScale);
+		SetOptionsMenuOpenFlag(registry, false);
 		mIsOpen = false;
 	}
 
@@ -168,10 +195,9 @@ namespace ecs
 		// 選択項目("戻る"、itemCount=1件)より下に、選択不可の操作方法一覧を並べる。
 		// mUiEntitiesの末尾に追加するだけなのでRefreshLabels(0..itemCount-1しか触らない)の
 		// 対象外になり、DestroyUiでは他のUIエンティティと同様にまとめて破棄される。
-		auto& manager = ENTITY_MANAGER;
 		const ::sys::eInputDevice device = ::sys::InputManager::Get().GetLastInputDevice();
 
-		const std::wstring lines[] =
+		const std::vector<std::wstring> lines =
 		{
 			L"移動: " + std::wstring(::ecs::inputguide::GetGameplayMoveLabel(device)),
 			L"照準: " + std::wstring(::ecs::inputguide::GetAimLabel(device)),
@@ -186,18 +212,10 @@ namespace ecs
 		constexpr float kInfoSize = 28.0f;
 		const DirectX::XMFLOAT4 kInfoColor = { 0.85f, 0.85f, 0.85f, 1.0f };
 
-		for (size_t i = 0; i < sizeof(lines) / sizeof(lines[0]); ++i)
-		{
-			auto entity = manager.CreateEntity();
-			auto& text = manager.AddComponent<TextComponent>(entity);
-			text.Text = lines[i];
-			text.X = kItemX;
-			text.Y = kInfoStartY + static_cast<float>(i) * kItemSpacingY;
-			text.Size = kInfoSize;
-			text.Color = kInfoColor;
-			text.Layer = kUiLayer;
-			mUiEntities.push_back(entity);
-		}
+		const auto entities = ::ecs::uiutil::CreateTextLines(
+			lines, ::ecs::uiutil::eTextHorizontalAlign::Left,
+			kItemX, kInfoStartY, kItemSpacingY, kInfoSize, kInfoColor, kUiLayer);
+		mUiEntities.insert(mUiEntities.end(), entities.begin(), entities.end());
 	}
 
 	void OptionsMenuSystem::BuildBackgroundPanel()
@@ -315,6 +333,7 @@ namespace ecs
 				::data::SaveGameSettings();
 				DestroyUi(registry);
 				GetTime().SetTimeScale(1.0);
+				SetOptionsMenuOpenFlag(registry, false);
 				mIsOpen = false;
 				::sys::SceneManager::Get().ChangeSceneWithTransition<::scene::TitleScene>();
 				break;

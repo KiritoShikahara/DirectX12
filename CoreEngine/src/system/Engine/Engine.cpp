@@ -349,10 +349,14 @@ namespace sys
 
         sys::PerformanceMonitor::Get().RecordFrame(rawDt);
 
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
         // Editモード中はゲームロジック・物理・アニメ・エフェクトを一切動かさず、
         // 表示に必要な最小限のシステムとエディタ操作(選択/配置/ドラッグ)のみ実行する。
         // Playモードでは従来通りフル更新する。
+        // (以前は#ifdef _DEBUGで分岐していたため、DevelopビルドではEditorUI自体は
+        // 初期化されるのにこの判定だけ効かず、Playを押していなくても常にフル更新される
+        // 不整合になっていた。DEV_TOOL_ENABLEDは_DEBUGを畳み込み済みのため、
+        // 判定は必ずこちらを使うこと(DebugConfig.h参照))
         if (sys::EditorManager::Get().IsPlaying())
         {
             UpdateGameplay(dt, rawDt, registry);

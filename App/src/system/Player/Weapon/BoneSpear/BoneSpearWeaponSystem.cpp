@@ -96,6 +96,10 @@ namespace ecs
         const float radius = masterData.ExplosionRadius;
         // 判定半径は見た目のradiusとは別にHitRadiusMultiplierで拡大する
         const float hitRadius = radius * masterData.HitRadiusMultiplier;
+        // 着弾エフェクトの見た目だけを底上げする倍率(判定半径・ダメージには一切影響しない。
+        // ProjectileComponent::VisualRadiusはExplosionRadiusと分離されている前提を利用)。
+        // BoneSpearはExplosionRadiusが他武器(Fire/Area等)より小さく、エフェクトが見劣りしていたための調整
+        constexpr float kVisualScaleBoost = 2.5f;
 
         auto& manager = ::ecs::EntityManager::Get();
         auto entity = manager.CreateEntity();
@@ -114,7 +118,7 @@ namespace ecs
         projectile.Speed = masterData.ProjectileSpeed;
         projectile.Damage = damage;
         projectile.ExplosionRadius = hitRadius;
-        projectile.VisualRadius = radius;
+        projectile.VisualRadius = radius * kVisualScaleBoost;
         projectile.ExplosionEffectPath = ecs::effectutil::ResolveEffectIds(masterData.ExplosionEffectIds);
         projectile.LifeTime = masterData.ProjectileLifeTime;
         projectile.Owner = weapon.Owner;

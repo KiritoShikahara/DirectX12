@@ -121,6 +121,9 @@ namespace sys
 		/// <returns>true:終了</returns>
 		[[nodiscard]] bool IsTransitionFinished();
 
+		/// <summary>現在のシーン名を取得する(デバッグ用、Editorのシーン切り替えパネル等で使う)</summary>
+		[[nodiscard]] const std::string& GetCurrentSceneName() const { return mCurrentSceneName; }
+
 		/// <summary>
 		/// 現在のシーンをトランジションなしで即座に作り直す。
 		/// プレイヤー・敵など、シーンの Initialize() が生成する全エンティティが

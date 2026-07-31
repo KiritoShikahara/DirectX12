@@ -24,16 +24,35 @@ namespace graphics
 	}
 	bool Texture::Create(const std::filesystem::path& FilePath, bool isSRGB)
 	{
+		// 単体ロード時は、CPU側のデコード(LoadImageData)とGPUリソース作成
+		// (CreateFromImageData)を同じ呼び出し元スレッドでそのまま順に行う。
+		// 複数枚をワーカースレッドで並列デコードしたい場合はTextureManager::
+		// PreloadBatchが両者を分離して使う(LoadImageDataだけを複数スレッドへ分配し、
+		// CreateFromImageDataは呼び出し元スレッドで直列に行う)。
+		const ImageData imageData = LoadImageData(FilePath, isSRGB);
+		if (!imageData.Success) return false;
+
+		return CreateFromImageData(FilePath, isSRGB, imageData);
+	}
+
+	/// <summary>
+	/// CPU側のみの処理(ファイル読み込み・デコード・ミップ生成)。D3D12を一切呼ばないため、
+	/// 別々のファイルを複数スレッドから同時に呼び出しても安全(TextureManager::PreloadBatch参照)。
+	/// </summary>
+	Texture::ImageData Texture::LoadImageData(const std::filesystem::path& FilePath, bool isSRGB)
+	{
+		ImageData result;
+
 		if (FilePath.empty() || FilePath.string().find_first_not_of(" \t\r\n") == std::string::npos)
 		{
 			DEBUG_LOG(sys::eLogLevel::Error, "Texture: FilePath is empty or invalid.");
-			return false;
+			return result;
 		}
 
 		if (fs::exists(FilePath) == false || fs::is_regular_file(FilePath) == false)
 		{
 			DEBUG_LOG(sys::eLogLevel::Error, "Texture: File not found or is not a regular file: {}", FilePath.string());
-			return false;
+			return result;
 		}
 
 		//	拡張子
@@ -70,6 +89,8 @@ namespace graphics
 		}
 		else
 		{
+			// WIC(PNG/JPG等)はCOMを使うため、呼び出し元スレッドでCOMが
+			// 初期化済みである必要がある(ThreadPool::WorkerLoopでCoInitializeEx済み)。
 			hr = DirectXTex::LoadFromWICFile(
 				path.c_str(),
 				DirectXTex::WIC_FLAGS_NONE,
@@ -80,7 +101,7 @@ namespace graphics
 		if (FAILED(hr))
 		{
 			//DEBUG_LOG(sys::eLogLevel::Error, "Texture: Failed to load texture file: {}", FilePath.string());
-			return false;
+			return result;
 		}
 
 		// ミップマップが含まれていない画像 (WIC/TGA読み込み等) はここで生成する。
@@ -111,6 +132,25 @@ namespace graphics
 			}
 		}
 
+		result.Success = true;
+		result.MetaData = metaData;
+		result.ScratchImage = std::move(scratchImage);
+		return result;
+	}
+
+	/// <summary>
+	/// GPU側のみの処理(リソース作成・アップロード・SRV作成)。呼び出し元スレッドの
+	/// D3D12コマンドリスト/フェンス(DX12Device::UploadTextureData内でmutex排他)を使うため、
+	/// 複数のTextureインスタンスに対して同時に呼び出さないこと(1スレッドずつ直列に呼ぶ)。
+	/// </summary>
+	bool Texture::CreateFromImageData(const std::filesystem::path& FilePath, bool isSRGB, const ImageData& imageData)
+	{
+		if (!imageData.Success) return false;
+
+		const DirectX::TexMetadata& metaData = imageData.MetaData;
+		const DirectX::ScratchImage& scratchImage = imageData.ScratchImage;
+
+		HRESULT hr = S_FALSE;
 		auto& DX12Device = graphics::DX12Device::Get();
 		auto device = DX12Device.GetDevice();
 		auto allocator = DX12Device.GetMAAllocator();

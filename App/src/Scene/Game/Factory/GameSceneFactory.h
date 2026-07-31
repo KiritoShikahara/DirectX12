@@ -103,6 +103,9 @@ namespace ecs
 		// 制限時間表示UIの生成
 		static void CreateWaveTimerUI();
 
+		// 経験値バー・現在レベル表示UIの生成(画面上部)
+		static void CreatePlayerExpBar();
+
 		// PlayerSaveData(ゴールドで購入したステータス恒久強化レベル)をBaseへ反映する
 		static void ApplyStatUpgrades(ecs::PlayerStatusComponent& status);
 	};

@@ -40,6 +40,10 @@ namespace
 		case data::eStatUpgradeType::GoldGainRate:return save.GoldGainRateLevel;
 		case data::eStatUpgradeType::HpRegen:     return save.HpRegenLevel;
 		case data::eStatUpgradeType::ExperienceGainRate: return save.ExperienceGainRateLevel;
+		case data::eStatUpgradeType::AttackCount: return save.AttackCountLevel;
+		case data::eStatUpgradeType::Revive:      return save.ReviveLevel;
+		case data::eStatUpgradeType::PostHitInvincibility: return save.PostHitInvincibilityLevel;
+		case data::eStatUpgradeType::PerkChoiceCount:      return save.PerkChoiceCountLevel;
 		}
 		return 0;
 	}
@@ -57,6 +61,10 @@ namespace
 		case data::eStatUpgradeType::GoldGainRate: save.GoldGainRateLevel += 1; break;
 		case data::eStatUpgradeType::HpRegen:      save.HpRegenLevel += 1;     break;
 		case data::eStatUpgradeType::ExperienceGainRate: save.ExperienceGainRateLevel += 1; break;
+		case data::eStatUpgradeType::AttackCount: save.AttackCountLevel += 1; break;
+		case data::eStatUpgradeType::Revive:      save.ReviveLevel += 1;      break;
+		case data::eStatUpgradeType::PostHitInvincibility: save.PostHitInvincibilityLevel += 1; break;
+		case data::eStatUpgradeType::PerkChoiceCount:      save.PerkChoiceCountLevel += 1;      break;
 		}
 	}
 
@@ -73,6 +81,10 @@ namespace
 		case data::eStatUpgradeType::GoldGainRate: save.GoldGainRateLevel = level; break;
 		case data::eStatUpgradeType::HpRegen:      save.HpRegenLevel = level;     break;
 		case data::eStatUpgradeType::ExperienceGainRate: save.ExperienceGainRateLevel = level; break;
+		case data::eStatUpgradeType::AttackCount: save.AttackCountLevel = level; break;
+		case data::eStatUpgradeType::Revive:      save.ReviveLevel = level;      break;
+		case data::eStatUpgradeType::PostHitInvincibility: save.PostHitInvincibilityLevel = level; break;
+		case data::eStatUpgradeType::PerkChoiceCount:      save.PerkChoiceCountLevel = level;      break;
 		}
 	}
 

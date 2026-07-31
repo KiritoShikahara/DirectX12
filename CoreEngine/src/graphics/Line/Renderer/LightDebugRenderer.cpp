@@ -10,6 +10,7 @@
 
 #include <system/Camera/CameraSystem.h>
 #include <system/ImGui/ImGuiManager.h>
+#include <system/Editor/EditorManager.h>
 
 using namespace DirectX;
 
@@ -98,9 +99,19 @@ namespace graphics
             return;
         }
 
-        ImGui::Checkbox("Show Directional Light Gizmo", &mEnabled);
+        // Play中は常に非表示にする(UpdateAndDraw側のガードと対になる)ため、
+        // チェックボックス自体もPlay中は無効化して「操作しても効かない」ことを明示する
+        const bool isPlaying = sys::EditorManager::Get().IsPlaying();
 
-        if (mEnabled)
+        ImGui::BeginDisabled(isPlaying);
+        ImGui::Checkbox("Show Directional Light Gizmo", &mEnabled);
+        ImGui::EndDisabled();
+
+        if (isPlaying)
+        {
+            ImGui::TextDisabled("(Play中は常に非表示)");
+        }
+        else if (mEnabled)
         {
             ImGui::ColorEdit4("Gizmo Color", &mGizmoColor.x);
             ImGui::DragFloat("Marker Size", &mMarkerSize, 0.05f, 0.1f, 10.f, "%.2f");
@@ -127,7 +138,10 @@ namespace graphics
 
     void LightDebugRenderer::UpdateAndDraw(entt::registry& registry)
     {
-        if (!mIsInitialized || !mEnabled) return;
+        // Play中はゲームプレイの見た目を優先し、編集用のギズモは表示しない
+        // (Begin()で毎フレームmDrawVertexCountが0にリセットされるため、ここで収集を
+        // スキップするだけでEnd()側も自動的に何も描画しなくなる)
+        if (!mIsInitialized || !mEnabled || sys::EditorManager::Get().IsPlaying()) return;
 
         // ── カメラ VP 行列を書き込む ──────────────────────────────────
         auto& cameraSys = sys::CameraSystem::Get();

@@ -167,10 +167,29 @@ namespace scene
 		// 操作案内。ボタン表示名は入力デバイスに応じてHubMenuInputSystemが毎フレーム更新するため、
 		// ここでは空文字のままでよい
 		{
+			constexpr float kGuideGapY = 60.0f;       // ラベル下端から操作案内までの間隔
+			constexpr float kGuideShiftDownY = 30.0f; // 表示位置を少し下にずらす調整分
+			constexpr float kGuideTextSize = 26.0f;
+			constexpr float kGuidePanelWidth = 620.0f;
+			constexpr float kGuidePanelPadY = 16.0f;  // 文字サイズに対するパネルの上下余白
+
+			// guideCenterYは文字とパネルの見た目上の縦中心に置きたい座標(Title画面と同じ方式)。
+			// TextComponent::Yはベースライン座標なので、そのままguideCenterYを渡すと
+			// パネル(guideCenterY中心)より上に見えてしまう(実際に発生した不具合)。
+			// MeasureVerticalCenterOffsetでベースラインYへ変換してから代入する。
+			const float guideCenterY = labelY + kLabelTextSize + kGuideGapY + kGuideShiftDownY;
+
+			constexpr float kGuidePanelAlpha = 0.85f; // 標準の0.6より濃く(要望反映)
+
+			::ecs::uiutil::CreateTranslucentPanel(
+				centerX, guideCenterY,
+				kGuidePanelWidth, kGuideTextSize + kGuidePanelPadY * 2.0f,
+				0, kGuidePanelAlpha);
+
 			auto entity = manager.CreateEntity();
 			auto& text = manager.AddComponent<::ecs::TextComponent>(entity);
-			text.Y = labelY + kLabelTextSize + 60.0f;
-			text.Size = 26.0f;
+			text.Y = guideCenterY + textRenderer.MeasureVerticalCenterOffset(kGuideTextSize);
+			text.Size = kGuideTextSize;
 			text.Color = { 0.6f, 0.6f, 0.6f, 1.0f };
 			text.Layer = 10;
 

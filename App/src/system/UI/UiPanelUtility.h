@@ -1,6 +1,9 @@
-#pragma once
+﻿#pragma once
 
 #include<entt/entt.hpp>
+#include<DirectXMath.h>
+#include<string>
+#include<vector>
 
 namespace ecs::uiutil
 {
@@ -26,4 +29,34 @@ namespace ecs::uiutil
 		float width, float height,
 		int layerOffset,
 		float alpha = 0.6f);
+
+	/// <summary>テキスト行の水平揃え方向</summary>
+	enum class eTextHorizontalAlign
+	{
+		Left,   // xを各行の左端として使う
+		Center, // xを各行の中心として使い、実測幅(TextRenderer::MeasureWidth)から左端を逆算する
+	};
+
+	/// <summary>
+	/// 複数行のテキストエンティティをまとめて生成する汎用ヘルパー。元は
+	/// OptionsMenuSystem::BuildControlsInfoLines(左揃え・複数行の操作方法一覧)と
+	/// PerkSelectSystemの操作説明(中央揃え・1行)にそれぞれ個別実装されていたものを
+	/// 共通化した(CreateTranslucentPanelと同じ経緯)。全行同じスタイル(サイズ・色・レイヤー)で、
+	/// startYから1行ごとにlineSpacingずつ下へ並べる(1行のみの場合lineSpacingは使われない)。
+	/// </summary>
+	/// <param name="lines">表示する行(上から順)</param>
+	/// <param name="align">水平揃え方向</param>
+	/// <param name="x">Left: 各行の左端X座標 / Center: 各行の中心X座標</param>
+	/// <param name="startY">1行目のY座標</param>
+	/// <param name="lineSpacing">行間(px)</param>
+	/// <param name="size">文字サイズ</param>
+	/// <param name="color">文字色</param>
+	/// <param name="layer">TextComponent::Layer</param>
+	/// <returns>生成した各行のエンティティ(linesと同じ順序。呼び出し側でタグ付け・
+	/// 破棄管理する場合に使う)</returns>
+	std::vector<entt::entity> CreateTextLines(
+		const std::vector<std::wstring>& lines,
+		eTextHorizontalAlign align,
+		float x, float startY, float lineSpacing,
+		float size, const DirectX::XMFLOAT4& color, int layer);
 }

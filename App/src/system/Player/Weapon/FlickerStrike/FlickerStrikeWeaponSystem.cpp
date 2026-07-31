@@ -27,6 +27,15 @@ namespace
     // 判定範囲可視化用ワイヤーの表示時間(秒)。他の武器と同じ基準
     constexpr float kDebugWireLifetime = 0.3f;
 
+    // 着弾の瞬間だけ攻撃アニメーションをこの倍速で再生する(通常速度だと1スイングが
+    // ワープ間隔より長く、次のワープまでに終わらないため。5〜10倍の中間値)
+    constexpr float kAttackAnimSpeedMultiplier = 8.0f;
+
+    // 攻撃/移動アニメーション切り替え時のクロスフェード時間(秒)。
+    // ワープ自体が一瞬なので、通常のLocomotion切り替え(0.2f)より短くして素早く馴染ませる
+    constexpr float kAttackAnimBlendDuration = 0.05f;
+    constexpr float kTravelAnimBlendDuration = 0.1f;
+
     /// <summary>演出中にこれらの手動スキル入力があった場合、Flicker Strikeのシーケンスを打ち切る</summary>
     bool IsOtherManualSkillPressed()
     {
@@ -167,26 +176,17 @@ namespace ecs
             status->IsInvincible = true;
         }
 
-        // 発動の瞬間にAttack_Aを1回再生する(連続ワープのたびに再始動すると0.08秒間隔で
-        // アニメが千切れて見えるため、シーケンス開始時のみ)。ActionAnimLockComponentで
-        // LocomotionAnimationSystemによるIdle/Runへの自動復帰を、クリップの長さだけ止める。
-        if (auto* fbx = registry.try_get<ecs::FbxComponent>(weapon.Owner))
-        {
-            if (auto* anim = registry.try_get<ecs::FbxAnimComponent>(weapon.Owner))
-            {
-                if (fbx->Resource != nullptr)
-                {
-                    const int clipIndex = fbx->Resource->FindClipIndex("Attack_A");
-                    if (clipIndex >= 0)
-                    {
-                        anim->CrossFade(clipIndex, 0.1f, false);
-                        const float clipDuration = fbx->Resource->GetAnimClips()[clipIndex].Duration;
-                        registry.emplace_or_replace<ecs::ActionAnimLockComponent>(
-                            weapon.Owner, ecs::ActionAnimLockComponent{ clipDuration });
-                    }
-                }
-            }
-        }
+        // シーケンス中はLocomotionAnimationSystemによる自動Idle/Run切り替えを止め、
+        // 本System側でWarpAndHit(着弾の瞬間=攻撃アニメーション)とUpdateTravelAnimation
+        // (ワープ待機中=移動アニメーション)を切り替える。実際のクリップ切り替えは
+        // WarpAndHit内のPlayAttackAnimationが最初のワープからまとめて行う。
+        // ActionAnimLockComponentのRemainingTimeはあくまでフォールバック(何らかの理由で
+        // EndSequenceが呼ばれなかった場合の保険)で、通常はEndSequence側の明示解除が先に効く。
+        constexpr float kLockSafetyMargin = 1.0f;
+        const float fallbackDuration =
+            static_cast<float>(flicker.RemainingHits) * masterData.WarpInterval + kLockSafetyMargin;
+        registry.emplace_or_replace<ecs::ActionAnimLockComponent>(
+            weapon.Owner, ecs::ActionAnimLockComponent{ fallbackDuration });
 
         WarpAndHit(registry, weapon, initialTarget, masterData);
         flicker.CurrentTarget = initialTarget;
@@ -215,6 +215,12 @@ namespace ecs
         }
 
         flicker.WarpTimer -= deltaTime;
+
+        // 攻撃アニメーションの再生が終わり次第、次のワープまでの待機中は移動アニメーションへ
+        // 戻す。WarpTimerがまだ残っていてもこの判定だけは毎フレーム行う必要があるため、
+        // 下の早期return(ワープ間隔待ち)より前に置く。
+        UpdateTravelAnimation(registry, weapon.Owner);
+
         if (flicker.WarpTimer > 0.0f) return;
 
         const auto* playerTransform = registry.try_get<ecs::Transform>(weapon.Owner);
@@ -291,6 +297,9 @@ namespace ecs
         playerTransform->SetPosition(warpPos);
         registry.emplace_or_replace<ecs::TransformDirtyTag>(weapon.Owner);
 
+        // 着弾の瞬間だけ攻撃アニメーションを高速再生する(初撃・追撃どちらもここを通る)
+        PlayAttackAnimation(registry, weapon.Owner);
+
         // AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
         const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
         const float damage = masterData.Damage * atkMultiplier;
@@ -332,5 +341,53 @@ namespace ecs
         {
             status->IsInvincible = false;
         }
+
+        // 攻撃アニメーションの高速再生を確実に元の速度へ戻す(途中で打ち切られた場合の保険)
+        if (auto* anim = registry.try_get<ecs::FbxAnimComponent>(playerEntity))
+        {
+            anim->PlaySpeed = 1.0f;
+        }
+
+        // LocomotionAnimationSystemによるIdle/Runへの自動復帰をシーケンス終了と同時に
+        // 再開させる(ActionAnimLockComponent::RemainingTimeの満了を待たない。
+        // Activate側のフォールバックタイマーより必ず先に効く)
+        registry.remove<ecs::ActionAnimLockComponent>(playerEntity);
+    }
+
+    /// <summary>ワープ着弾の瞬間に攻撃アニメーションを再生する(非ループ・高速再生)</summary>
+    void FlickerStrikeWeaponSystem::PlayAttackAnimation(entt::registry& registry, entt::entity playerEntity)
+    {
+        auto* fbx = registry.try_get<ecs::FbxComponent>(playerEntity);
+        auto* anim = registry.try_get<ecs::FbxAnimComponent>(playerEntity);
+        if (fbx == nullptr || anim == nullptr || fbx->Resource == nullptr) return;
+
+        const int clipIndex = fbx->Resource->FindClipIndex("Attack_A");
+        if (clipIndex < 0) return;
+
+        // 非ループでクロスフェードし、kAttackAnimSpeedMultiplier倍速で再生する
+        // (通常速度だと1スイングがワープ間隔より長く、次のワープまでに終わらないため)
+        anim->CrossFade(clipIndex, kAttackAnimBlendDuration, false);
+        anim->PlaySpeed = kAttackAnimSpeedMultiplier;
+    }
+
+    /// <summary>攻撃アニメーションの再生が終わっていれば、次のワープまでの待機中は
+    /// 移動アニメーション(Run)へ戻す</summary>
+    void FlickerStrikeWeaponSystem::UpdateTravelAnimation(entt::registry& registry, entt::entity playerEntity)
+    {
+        auto* fbx = registry.try_get<ecs::FbxComponent>(playerEntity);
+        auto* anim = registry.try_get<ecs::FbxAnimComponent>(playerEntity);
+        if (fbx == nullptr || anim == nullptr || fbx->Resource == nullptr) return;
+
+        // 攻撃アニメーション(非ループ)がまだ再生中(IsPlaying==true)なら、着弾の瞬間を
+        // 優先してここでは何もしない。再生し終えて初めてRunへ戻す
+        if (anim->IsPlaying) return;
+
+        const int runClipIndex = fbx->Resource->FindClipIndex("Run");
+        if (runClipIndex < 0) return;
+
+        // CrossFadeは同じクリップへの切り替えなら内部で無視するため、
+        // 既にRunへ戻っているフレームで毎回呼んでも無駄な再始動にはならない
+        anim->CrossFade(runClipIndex, kTravelAnimBlendDuration, true);
+        anim->PlaySpeed = 1.0f;
     }
 }

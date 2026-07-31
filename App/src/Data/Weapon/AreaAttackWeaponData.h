@@ -42,6 +42,10 @@ namespace data
         // ecs::effectutil::ResolveEffectIds()でパス文字列へ解決してから使うこと。
         std::string EffectIds;               // 発生時エフェクト
 
+        int         AutoStrikeCount = 1;     // 手動発動とは別に、自動で落雷する本数(このレベルでの値)。
+                                              // AreaAttackAutoStrikeSystemが使う。ダメージ/半径等は
+                                              // 手動発動と全く同じ値(Damage/Radius等)を流用する
+
         REFLECT_BEGIN(AreaAttackWeaponData, "area_attack_weapons")
             REFLECT_FIELD_ID(Id)
             REFLECT_FIELD_STR(Name)
@@ -55,6 +59,7 @@ namespace data
             REFLECT_FIELD_FLOAT(TickInterval)
             REFLECT_FIELD_FLOAT(ForwardOffset)
             REFLECT_FIELD_STR(EffectIds)
+            REFLECT_FIELD_INT(AutoStrikeCount)
         REFLECT_END()
     };
 }

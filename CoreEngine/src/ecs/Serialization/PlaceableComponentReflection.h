@@ -5,12 +5,15 @@
 //
 // 対象は v1 で合意した「主要な配置系」のみ:
 //   Transform / FbxComponent / DirectionalLight / PointLight / SpotLight /
-//   ColliderComponent / RigidBodyComponent
+//   ColliderComponent / RigidBodyComponent / Sprite
 //
-// FbxComponent::Resource (アセットへの生ポインタ) と
+// FbxComponent::Resource / Sprite::Texture (アセットへの生ポインタ) と
 // RigidBodyComponent::BodyID/IsBodyCreated (Jolt ハンドル・実行時状態) は
 // reflection の対象外とし、別途 EditorSerialization 側でアセットキー文字列や
 // 初期化フラグとして扱う。
+// Sprite::Color は graphics::Color 型 (XMFLOAT2/3/4 と一致しない) のため、
+// IComponentFieldVisitor の対応型を増やさずに済むよう reflection 対象外とする
+// (配置直後の見た目確認用途では既定色で十分なため)。
 
 #include "ComponentReflection.h"
 
@@ -19,6 +22,7 @@
 #include <ecs/component/Light/LightComponent.h>
 #include <ecs/component/collider/ColliderComponent.h>
 #include <ecs/component/rigidbody/RigidbodyComponent.h>
+#include <ecs/component/sprite/SpriteComponent.h>
 
 // ── Transform (private フィールドなので Getter/Setter 経由) ──────────────
 ECS_REFLECT_BEGIN(ecs::Transform)
@@ -91,4 +95,12 @@ ECS_REFLECT_BEGIN(ecs::RigidBodyComponent)
 	ECS_REFLECT_FIELD(LockRotationY)
 	ECS_REFLECT_FIELD(LockRotationZ)
 	ECS_REFLECT_FIELD(SyncRotation)
+ECS_REFLECT_END()
+
+// ── Sprite (Color は非対応型のため対象外、Texture は AssetKey 経由で解決) ──
+ECS_REFLECT_BEGIN(ecs::Sprite)
+	ECS_REFLECT_FIELD(Pivot)
+	ECS_REFLECT_FIELD(Size)
+	ECS_REFLECT_FIELD(Layer)
+	ECS_REFLECT_FIELD(IsVisible)
 ECS_REFLECT_END()

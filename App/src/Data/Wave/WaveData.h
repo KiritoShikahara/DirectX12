@@ -14,9 +14,15 @@ namespace data
         int Id = 0; // 常に0固定（単一設定行のためのダミー主キー）
 
         float SpawnInterval = 1.5f;         // 通常の敵を湧かせる間隔(秒)
-        int SpawnCountPerTick = 1;          // 1回のスポーンタイミングで湧かせる敵の数
+        int SpawnCountPerTick = 1;          // 1回のスポーンタイミングで湧かせる敵の数(経過時間による成長前の基準値)
         float SpawnMarginMin = 4.0f;        // 画面外スポーンの最小マージン(m)
         float SpawnMarginMax = 12.0f;       // 画面外スポーンの最大マージン(m)
+
+        // 1回のスポーン数(SpawnCountPerTick)も、敵ステータスと同様にSpawnCountGrowthStepInterval(秒)
+        // ごとにSpawnCountGrowthPerStep分だけ段階的に増加させる(階段状。詳細はEnemySpawnSystem::
+        // ComputeStepGrowth参照)。終盤ほど大量の敵が出現するようにするための調整値。
+        float SpawnCountGrowthStepInterval = 60.0f; // 何秒ごとにスポーン数が増えるか
+        float SpawnCountGrowthPerStep = 1.0f;       // 1ステップごとの増加倍率(1.0=+100%、つまり倍増)
 
         // 敵ステータス(HP/攻撃力)の成長は滑らかな連続成長ではなく、StatGrowthStepInterval(秒)
         // ごとにStatGrowthPerStep分だけ段階的に強くなる階段状にする(経過時間に対する体感の
@@ -47,6 +53,8 @@ namespace data
             REFLECT_FIELD_INT(SpawnCountPerTick)
             REFLECT_FIELD_FLOAT(SpawnMarginMin)
             REFLECT_FIELD_FLOAT(SpawnMarginMax)
+            REFLECT_FIELD_FLOAT(SpawnCountGrowthStepInterval)
+            REFLECT_FIELD_FLOAT(SpawnCountGrowthPerStep)
             REFLECT_FIELD_FLOAT(StatGrowthStepInterval)
             REFLECT_FIELD_FLOAT(StatGrowthPerStep)
             REFLECT_FIELD_FLOAT(MiniBossFirstSpawnTime)

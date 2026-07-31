@@ -44,6 +44,18 @@ namespace ecs
 			std::uniform_int_distribution<size_t> dist(0, enemies.size() - 1);
 			return enemies[dist(GetRandomEngine())].Id;
 		}
+
+		/// <summary>
+		/// 経過時間から「stepInterval秒ごとにgrowthPerStep分だけ段階的に増加する」倍率を求める共通ヘルパー。
+		/// 滑らかな連続成長ではなく階段状にすることで、経過時間に対する体感のメリハリを付ける。
+		/// 敵ステータス成長(ComputeWaveModifier)とスポーン数成長(EnemySpawnSystem::Update)の両方で使う。
+		/// </summary>
+		float ComputeStepGrowth(float elapsedTime, float stepInterval, float growthPerStep)
+		{
+			const float safeStepInterval = std::max(stepInterval, 1.0f); // 0除算防止
+			const float stepCount = std::floor(elapsedTime / safeStepInterval);
+			return 1.0f + growthPerStep * stepCount;
+		}
 	}
 
 	void EnemySpawnSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
@@ -81,7 +93,11 @@ namespace ecs
 		wave.SpawnTimer -= deltaTime;
 		if (wave.SpawnTimer <= 0.0f)
 		{
-			int spawnCount = std::max(1, wave.SpawnCountPerTick);
+			// 終盤ほど大量の敵が出現するよう、1回のスポーン数もSpawnCountGrowthStepInterval秒ごとに
+			// SpawnCountGrowthPerStep分だけ階段状に増やす(敵ステータス成長と同じ式を使い回す)
+			const float spawnCountGrowth = ComputeStepGrowth(
+				wave.ElapsedTime, wave.SpawnCountGrowthStepInterval, wave.SpawnCountGrowthPerStep);
+			int spawnCount = std::max(1, static_cast<int>(std::round(wave.SpawnCountPerTick * spawnCountGrowth)));
 			if (wave.MaxAliveEnemy > 0)
 			{
 				const int aliveCount = static_cast<int>(registry.view<::ecs::EnemyTag>().size());
@@ -203,9 +219,7 @@ namespace ecs
 	{
 		ecs::EnemyWaveModifier modifier;
 
-		const float safeStepInterval = std::max(stepInterval, 1.0f); // 0除算防止
-		const float stepCount = std::floor(elapsedTime / safeStepInterval);
-		const float growth = 1.0f + growthPerStep * stepCount;
+		const float growth = ComputeStepGrowth(elapsedTime, stepInterval, growthPerStep);
 
 		modifier.MulMaxHp = growth;
 		modifier.MulAtkPower = growth;

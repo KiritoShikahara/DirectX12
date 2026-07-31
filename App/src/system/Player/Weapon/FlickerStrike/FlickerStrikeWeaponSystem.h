@@ -68,6 +68,14 @@ namespace ecs
             entt::entity playerEntity,
             ecs::PlayerFlickerStrikeComponent& flicker);
 
+        /// <summary>ワープ着弾の瞬間に攻撃アニメーションを再生する(非ループ・高速再生)。
+        /// WarpAndHit内から呼ぶ(初撃・追撃どちらもWarpAndHitを通るため、ここが一本化ポイント)</summary>
+        static void PlayAttackAnimation(entt::registry& registry, entt::entity playerEntity);
+
+        /// <summary>攻撃アニメーションの再生が終わっていれば、次のワープまでの待機中は
+        /// 移動アニメーション(Run)へ戻す。WarpTimerの残りに関係なく毎フレーム呼ぶこと</summary>
+        static void UpdateTravelAnimation(entt::registry& registry, entt::entity playerEntity);
+
         // PickDirectionalTarget()のOverlapSphere結果の一時バッファ。毎回clear()して再利用する
         std::vector<entt::entity> mDirectionalCandidates;
         // UpdateActiveSequence()内: 次のワープ先探索の一時バッファ(ワープのたびにclear()して再利用)

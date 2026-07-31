@@ -10,13 +10,6 @@
 
 #include"../macros.h"
 
-namespace
-{
-	// 画面全体オーバーレイの不透明度。武器イメージカラーで軽く染める程度に留め、
-	// 背景やカードが完全に隠れないようにする(円のColor.a=0.55より控えめ)
-	constexpr float kBackgroundTintAlpha = 0.3f;
-}
-
 namespace ecs
 {
 	void MenuSlideSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
@@ -86,16 +79,6 @@ namespace ecs
 				{
 					controller.ActiveSpellID = spellData.SpellID;
 				}
-			});
-
-		// 画面全体の色付きオーバーレイを、現在選択中の武器のイメージカラーへ更新する
-		// (Fire=赤/Lightning=青/Orb=黄。WeaponSelectVisuals::GetWeaponAccentColor参照)
-		::graphics::Color tintColor = ecs::menuvisuals::GetWeaponAccentColor(controller.ActiveSpellID);
-		tintColor.a = kBackgroundTintAlpha;
-		registry.view<MenuBackgroundTintUiTag, Sprite>().each(
-			[tintColor](Sprite& sprite)
-			{
-				sprite.Color = tintColor;
 			});
 	}
 

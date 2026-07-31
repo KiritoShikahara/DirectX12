@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include<entt/entt.hpp>
+
 namespace sys
 {
     /// <summary>
@@ -47,6 +49,23 @@ namespace ecs
         bool PerkSelectDone = false; // PerkSelect 竊・InGame (繧ゅ＠縺上・PerkSelect縺ｮ縺ｾ縺ｾ谺｡縺ｮ1蝗槭∈)
         bool GameClearRequested = false; // InGame 竊・Result(Clear)
         bool GameOverRequested = false; // InGame 竊・Result(GameOver)
+
+        // 設定メニュー(OptionsMenuSystem)が開いているか。OptionsMenuSystemのOpen/Closeが書き換える。
+        // Escapeキーは"Option"と"Cancel"の両方に割り当てられているため、パーク選択/リザルト画面等の
+        // 他の入力処理はこのフラグを見て、メニュー表示中は自分の入力(カーソル移動・決定)を止める必要がある。
+        bool IsOptionsMenuOpen = false;
     };
+
+    /// <summary>
+    /// 設定メニュー(OptionsMenuSystem)が開いているかどうかを判定する。
+    /// パーク選択・武器発射・プレイヤー移動等、メニュー表示中は止めるべき入力処理はこちらを参照する。
+    /// </summary>
+    inline bool IsOptionsMenuOpen(entt::registry& registry)
+    {
+        auto view = registry.view<GameStateComponent>();
+        if (view.begin() == view.end()) return false;
+
+        return registry.get<GameStateComponent>(*view.begin()).IsOptionsMenuOpen;
+    }
 
 }

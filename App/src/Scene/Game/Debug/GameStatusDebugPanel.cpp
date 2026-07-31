@@ -15,6 +15,7 @@
 #include<system/Player/Weapon/BoneSpear/BoneSpearRuntimeComponent.h>
 #include<system/Player/Weapon/Cleave/CleaveRuntimeComponent.h>
 #include<system/Player/Weapon/FlickerStrike/FlickerStrikeRuntimeComponent.h>
+#include<system/Player/Weapon/Ricochet/RicochetRuntimeComponent.h>
 #include<system/Player/Weapon/FlickerStrike/FlickerStrikeComponent.h>
 #include<system/Player/PowerCharge/PlayerPowerChargeComponent.h>
 #include<system/Player/Ultimate/PlayerUltimateComponent.h>
@@ -252,6 +253,14 @@ namespace debug
 						case ecs::eWeaponType::FlickerStrike:
 							typeName = "FlickerStrike";
 							if (auto* rt = registry.try_get<ecs::FlickerStrikeRuntimeComponent>(weaponEntity))
+							{
+								cooldownTimer = rt->CooldownTimer;
+								hasRuntime = true;
+							}
+							break;
+						case ecs::eWeaponType::Ricochet:
+							typeName = "Ricochet";
+							if (auto* rt = registry.try_get<ecs::RicochetRuntimeComponent>(weaponEntity))
 							{
 								cooldownTimer = rt->CooldownTimer;
 								hasRuntime = true;

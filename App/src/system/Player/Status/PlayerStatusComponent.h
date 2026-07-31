@@ -20,6 +20,10 @@ namespace ecs
 
         float CooldownRate = 1.0f;     // クールダウン倍率(1.0=等倍、<1で短縮)
         float HpRegenPerSecond = 0.0f; // 秒間HP自然回復量(PlayerRegenSystemが加算)
+
+        // 敵からの接触ダメージを受けた直後、この秒数だけ無敵になる(PlayerContactDamageSystemが管理)。
+        // ショップ強化(data::eStatUpgradeType::PostHitInvincibility)でのみ加算される(パークからは未接続)
+        float PostHitInvincibleDuration = 0.0f;
     };
 
     /// <summary>
@@ -51,6 +55,7 @@ namespace ecs
         float CooldownRate = 1.0f;
         float HpRegenPerSecond = 0.0f;
         float AttackCountMultiplier = 1.0f;
+        float PostHitInvincibleDuration = 0.0f;
     };
 
     /// <summary>
@@ -67,10 +72,18 @@ namespace ecs
         bool           IsInvincible = false;
 
         /// <summary>
-        /// 残りの復活回数(パーク「復活」で加算)。HPが0になったとき1以上あれば1消費して
-        /// 全回復し、死亡を取り消す(PlayerContactDamageSystemが判定)。
+        /// 残りの復活回数(パーク「復活」・ショップ強化「復活回数」で加算)。HPが0になったとき
+        /// 1以上あれば1消費して全回復し、死亡を取り消す(PlayerContactDamageSystemが判定)。
         /// </summary>
         int            ReviveCount = 0;
+
+        /// <summary>
+        /// 被弾後無敵の残り時間(秒)。Current.PostHitInvincibleDuration > 0のショップ強化を
+        /// 取っている場合のみ、接触ダメージを受けるたびにPlayerContactDamageSystemが
+        /// この値をCurrent.PostHitInvincibleDurationへリセットする。IsInvincibleとは別枠
+        /// (Ultimate/Flicker Strikeの排他演出用フラグと衝突させないため、OR判定で扱う)。
+        /// </summary>
+        float          PostHitInvincibleTimer = 0.0f;
 
         /// <summary>Base×ModifierをCurrentへ反映する。パーク適用後に呼ぶこと。</summary>
         void Recompute()
@@ -80,12 +93,15 @@ namespace ecs
             Current.AtkPower = Base.AtkPower * Modifier.MulAtkPower;
             Current.Defense = Base.Defense * Modifier.MulDefense;
 
-            // 短縮系パークが積み重なっても発射間隔が0以下にならないようクランプする
-            constexpr float kMinCooldownRate = 0.1f;
+            // 短縮系パークが積み重なっても発射間隔が0以下にならないようクランプする。
+            // 0.1(10倍速)だと短縮パーク(CooldownDown/Berserk/AllStatsUp)が重なった際に
+            // 攻撃間隔が実質無くなってしまうため、0.35(約2.9倍速が上限)まで引き上げた
+            constexpr float kMinCooldownRate = 0.35f;
             Current.CooldownRate = std::max(kMinCooldownRate, Base.CooldownRate * Modifier.MulCooldownRate);
 
             Current.HpRegenPerSecond = Base.HpRegenPerSecond;
             Current.AttackCountMultiplier = Modifier.MulAttackCount;
+            Current.PostHitInvincibleDuration = Base.PostHitInvincibleDuration;
         }
     };
 }

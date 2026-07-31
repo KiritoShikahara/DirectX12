@@ -57,14 +57,34 @@ namespace sys
 			const std::string& key,
 			const DirectX::XMFLOAT3& groundHitPos);
 
+		/// <summary>
+		/// Sprite(UI画像)を指定の仮想スクリーン座標に配置する。3Dのプリミティブ配置
+		/// (SpawnPlacedObject)とは異なり地面へのレイキャストが不要なため分離している。
+		/// </summary>
+		entt::entity SpawnPlacedSprite(
+			entt::registry& registry,
+			const std::string& texturePath,
+			const DirectX::XMFLOAT2& screenPos);
+
+		/// <summary>
+		/// マウス位置(仮想スクリーン座標)と重なる PlaceableTag+Sprite エンティティのうち、
+		/// 最も手前(Layer値が最大)のものを返す。無ければ entt::null。
+		/// </summary>
+		entt::entity PickSpriteAt(entt::registry& registry, const DirectX::XMFLOAT2& screenPos) const;
+
 	private:
-		/// <summary>次のクリックで配置するオブジェクトの種類キー。空なら配置モードではない。</summary>
+		/// <summary>次のクリックで配置するオブジェクトの種類キー。空なら配置モードではない。
+		/// "Sprite:"で始まる場合はUI画像配置(以降がテクスチャパス)、それ以外は
+		/// PrimitiveResourceManagerのキー(Box/Sphere)またはPointLightとして扱う。</summary>
 		std::string mPendingPlacementKey;
 
 		/// <summary>ドラッグ中かどうか</summary>
 		bool mIsDragging = false;
 
-		/// <summary>ドラッグ中に固定する地面平面の高さ(選択オブジェクトの Y)</summary>
+		/// <summary>ドラッグ中に固定する地面平面の高さ(選択オブジェクトの Y。3Dドラッグ用)</summary>
 		float mDragPlaneY = 0.0f;
+
+		/// <summary>ドラッグ開始時点でのマウスとSprite座標の差分(2Dドラッグ用)</summary>
+		DirectX::XMFLOAT2 mDragOffset2D = { 0.0f, 0.0f };
 	};
 }

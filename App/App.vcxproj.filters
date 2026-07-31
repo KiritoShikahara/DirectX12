@@ -75,6 +75,12 @@
     <ClCompile Include="src\system\Player\MovementSystem\PlayerMovementSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\system\Player\Boundary\PlayerBoundaryClampSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Player\UI\PlayerExpBarSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="src\system\Player\State\PlayerStateSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -97,6 +103,12 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\system\Player\Weapon\AreaAttack\AreaAttackWeaponSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Player\Weapon\AreaAttack\AreaAttackAutoStrikeSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Player\Weapon\AreaAttack\AreaAttackHazardSpawner.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\system\Player\Weapon\AreaAttack\AreaAttackHazardSystem.cpp">
@@ -171,6 +183,48 @@
     <ClCompile Include="src\system\Player\Weapon\SingleShot\SingleShotWeaponDebugPanel.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\system\Player\Weapon\Ricochet\RicochetWeaponDebugPanel.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Player\Weapon\AreaAttack\AreaAttackWeaponDebugPanel.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Player\Weapon\BoneSpear\BoneSpearWeaponDebugPanel.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Player\Weapon\ChainLightning\ChainLightningWeaponDebugPanel.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Player\Weapon\Cleave\CleaveWeaponDebugPanel.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeWeaponDebugPanel.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Player\Weapon\Homing\HomingMissileWeaponDebugPanel.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Player\Weapon\Meteor\MeteorWeaponDebugPanel.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Player\Weapon\Nova\NovaWeaponDebugPanel.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Player\Weapon\Orbit\OrbitWeaponDebugPanel.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Player\Weapon\VoidBeam\VoidBeamWeaponDebugPanel.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\StatusUpgrade\StatUpgradeDebugPanel.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Effect\EffectAssetDebugPanel.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Enemy\Status\BossDebugPanel.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="src\system\Player\Weapon\Nova\NovaWeaponSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -205,6 +259,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeWeaponSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Player\Weapon\Ricochet\RicochetWeaponSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\system\Enemy\EnemyTargetUtil.cpp">
@@ -335,6 +392,12 @@
     <ClInclude Include="src\system\Animation\ActionAnimLockComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\system\Player\Boundary\PlayerBoundaryClampSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\UI\PlayerExpBarSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="src\system\Player\MovementSystem\PlayerMovementSystem.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -393,6 +456,48 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\Player\Weapon\SingleShot\SingleShotWeaponDebugPanel.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\Ricochet\RicochetWeaponDebugPanel.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\AreaAttack\AreaAttackWeaponDebugPanel.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\BoneSpear\BoneSpearWeaponDebugPanel.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\ChainLightning\ChainLightningWeaponDebugPanel.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\Cleave\CleaveWeaponDebugPanel.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeWeaponDebugPanel.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\Homing\HomingMissileWeaponDebugPanel.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\Meteor\MeteorWeaponDebugPanel.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\Nova\NovaWeaponDebugPanel.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\Orbit\OrbitWeaponDebugPanel.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\VoidBeam\VoidBeamWeaponDebugPanel.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\StatusUpgrade\StatUpgradeDebugPanel.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Effect\EffectAssetDebugPanel.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Enemy\Status\BossDebugPanel.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\Data\Weapon\NovaWeaponData.h">
@@ -486,6 +591,15 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeWeaponSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Data\Weapon\RicochetWeaponData.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\Ricochet\RicochetRuntimeComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\Ricochet\RicochetWeaponSystem.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\Player\PowerCharge\PlayerPowerChargeComponent.h">
@@ -594,6 +708,12 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\Player\Weapon\AreaAttack\AreaAttackWeaponSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\AreaAttack\AreaAttackAutoStrikeSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Player\Weapon\AreaAttack\AreaAttackHazardSpawner.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\Player\Weapon\AreaAttack\AreaAttackHazardComponent.h">

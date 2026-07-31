@@ -7,11 +7,11 @@ namespace ecs
 	/// <summary>
 	/// ステータス強化画面(StatusUpgradeScene)のカーソル位置・確認ダイアログ・
 	/// フィードバックメッセージの状態を保持するコンポーネント。
-	/// 選択肢はdata::eStatUpgradeTypeと対応する固定4件(MaxHp/AtkPower/Defense/CooldownRate)。
+	/// 選択肢はdata::eStatUpgradeTypeと対応する固定12件(kOptionCount参照)。
 	/// </summary>
 	struct StatusUpgradeComponent
 	{
-		static constexpr int kOptionCount = 8;
+		static constexpr int kOptionCount = 12;
 
 		/// <summary>現在カーソルが当たっている選択肢(0..kOptionCount-1、data::eStatUpgradeTypeと対応)</summary>
 		int SelectedIndex = 0;

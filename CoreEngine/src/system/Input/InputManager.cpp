@@ -172,6 +172,24 @@ namespace sys
         return false;
     }
 
+    bool InputManager::IsActionPressedExcludingMouse(const std::string& actionName) const
+    {
+        const auto it = mActionMaps.find(actionName);
+        if (it == mActionMaps.end()) return false;
+
+        const auto& bind = it->second;
+
+        for (const auto key : bind.Keys)
+        {
+            if (mKeyboard->IsPressed(key)) return true;
+        }
+        for (const auto pad : bind.Pads)
+        {
+            if (mPadManager->IsPressed(pad)) return true;
+        }
+        return false;
+    }
+
     bool InputManager::IsActionHeld(const std::string& actionName) const
     {
         const auto it = mActionMaps.find(actionName);

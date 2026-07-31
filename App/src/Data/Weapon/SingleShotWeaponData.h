@@ -32,6 +32,9 @@ namespace data
                                               // デフォルトはプレイヤーの胸あたりの高さ
                                               // (プレイヤーのColliderComponent半径・y=30を目安とする)
 
+        bool        ExplosionAtGroundLevel = false; // trueなら着弾エフェクトのYを地面(0)に固定する。
+                                                      // 飛翔中(ProjectileEffectIds)の高さはHeightOffsetのまま変えない
+
         // エフェクト素材ID(';'区切りで複数指定可、data::EffectAssetData参照)。
         // ecs::effectutil::ResolveEffectIds()でパス文字列へ解決してから使うこと。
         std::string ProjectileEffectIds;    // 飛翔中エフェクト
@@ -47,6 +50,7 @@ namespace data
             REFLECT_FIELD_FLOAT(HitRadiusMultiplier)
             REFLECT_FIELD_FLOAT(ProjectileLifeTime)
             REFLECT_FIELD_FLOAT(HeightOffset)
+            REFLECT_FIELD_BOOL(ExplosionAtGroundLevel)
             REFLECT_FIELD_STR(ProjectileEffectIds)
             REFLECT_FIELD_STR(ExplosionEffectIds)
         REFLECT_END()

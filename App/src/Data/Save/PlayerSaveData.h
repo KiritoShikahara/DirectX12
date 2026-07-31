@@ -23,6 +23,10 @@ namespace data
 		int GoldGainRateLevel = 0;
 		int HpRegenLevel = 0;
 		int ExperienceGainRateLevel = 0;
+		int AttackCountLevel = 0;
+		int ReviveLevel = 0;
+		int PostHitInvincibilityLevel = 0;
+		int PerkChoiceCountLevel = 0;
 
 		REFLECT_BEGIN(PlayerSaveData, "player_save")
 			REFLECT_FIELD_INT(Gold)
@@ -34,6 +38,10 @@ namespace data
 			REFLECT_FIELD_INT(GoldGainRateLevel)
 			REFLECT_FIELD_INT(HpRegenLevel)
 			REFLECT_FIELD_INT(ExperienceGainRateLevel)
+			REFLECT_FIELD_INT(AttackCountLevel)
+			REFLECT_FIELD_INT(ReviveLevel)
+			REFLECT_FIELD_INT(PostHitInvincibilityLevel)
+			REFLECT_FIELD_INT(PerkChoiceCountLevel)
 		REFLECT_END()
 	};
 

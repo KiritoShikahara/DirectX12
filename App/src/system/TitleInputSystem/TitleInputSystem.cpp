@@ -28,7 +28,7 @@ void sys::TitleInputSystem::Update(entt::registry& registry, float deltaTime, fl
 	registry.view<::ecs::TitleGuideUiTag, ::ecs::TextComponent>().each(
 		[device, screenCenterX, &textRenderer](::ecs::TextComponent& text)
 		{
-			text.Text = std::wstring(L"[") + ::ecs::inputguide::GetSelectLabel(device) + L"]";
+			text.Text = ::ecs::inputguide::GetSelectLabel(device);
 			const float textWidth = textRenderer.MeasureWidth(text.Text, text.Size);
 			text.X = screenCenterX - textWidth * 0.5f;
 		});

@@ -105,26 +105,15 @@ namespace scene
 		sprite.Intensity = 1.0f;
 		sprite.SetLayer(::ecs::SpriteLayer::Background);
 
+		// Titleと違い、この背景の上にはカード等の読みやすさが必要なUIが乗るため、
+		// Titleと同じ強さ(Base5.0±2.5=2.5~7.5倍)だと周期的に背景が白飛びし、
+		// 半透明パネル越しにその白さが透けて配色(Orbの黄色等)が薄く見えてしまう。
+		// 控えめな明滅に留める。
 		auto& glow = manager.AddComponent<::ecs::GlowAnimation>(entity);
-		glow.Amplitude = 2.5f;
-		glow.BaseIntensity = 5.0f;
+		glow.Amplitude = 0.3f;
+		glow.BaseIntensity = 1.2f;
 		glow.Frequency = 0.7f;
 		glow.PhaseOffset = 0.0f;
-
-		// 画面全体の色付きオーバーレイ(選択中の武器のイメージカラーで軽く染める。
-		// 実際の色更新はMenuPagingSystemが毎フレーム行う。WeaponSelectVisuals.h参照)
-		{
-			auto tintEntity = manager.CreateEntity();
-			auto& tintTransform = manager.AddComponent<::ecs::Transform>(tintEntity);
-			tintTransform.Set2DPosition(0.0f, 0.0f);
-
-			auto whiteTexture = ::graphics::TextureManager::Get().GetOrLoad("Assets/Effect/Texture/White.png");
-			auto& tintSprite = manager.AddComponent<::ecs::Sprite>(tintEntity, whiteTexture);
-			tintSprite.Size = { 1920.0f, 1080.0f };
-			tintSprite.SetLayer(::ecs::SpriteLayer::UI, -1); // 背景(Background)より手前、円(UI+0)より奥
-
-			registry.emplace<::ecs::MenuBackgroundTintUiTag>(tintEntity);
-		}
 
 		// 音楽
 		PLAY_BGM("Assets/Sound/BGM/BGM_Title.aud", true, 0.7);
@@ -136,24 +125,10 @@ namespace scene
 		auto& manager = ::ecs::EntityManager::Get();
 		auto& registry = ENTT_REGISTRY;
 		auto& texManager = ::graphics::TextureManager::Get();
-		auto& textRenderer = ::graphics::TextRenderer::Get();
 
 		// データ(ID=1001/1002/1003の並びで武器アイコン画像のパスを持つ。
 		// Assets/Bin/CSV/MenuSpells.csv、GameSceneFactory::CreatePlayerのID対応表と一致させること)
 		const auto& datas = ::data::DataRegistry::Get().GetManager<::data::SpellMenuData>().GetAll();
-
-		// 表示ラベル・説明文。データの並び順(ID=1001,1002,1003)と対応させる
-		// (UTF-8→UTF-16変換ユーティリティを新設せずに済むよう、wstringリテラルで直接持つ。
-		// StatusUpgradeScene等の他画面と同じ方針)。
-		const std::wstring kLabels[] = { L"Fire", L"Lightning", L"Orb" };
-		// フォントアトラス(font.json)に含まれない文字("、""基""敵"等)は無音で欠落するため、
-		// 収録済みの文字だけで構成すること(収録有無の確認はmsdf-atlas-genの出力jsonを直接参照)
-		const std::wstring kDescriptions[] =
-		{
-			L"左クリックで火の弾を放つ武器",
-			L"右クリックで周囲に範囲攻撃を放つ",
-			L"常時プレイヤーを周回して自動でダメージを与える",
-		};
 
 		// 状態管理コンポーネント
 		auto ent_MenuController = manager.CreateEntity();
@@ -166,49 +141,46 @@ namespace scene
 		const float centerX = MenuControllerComp.WindowWidth * 0.5f;
 		const float centerY = static_cast<float>(::sys::Window::Get().GetVirtualHeight()) * 0.5f;
 
-		// レイアウト定数。1ページ = 武器名(上) + 武器イメージカラーの背景パネル(奥)+武器アイコン(手前、中央) +
-		// 説明文(下)の4要素で構成する(以前は1枚の全画面画像を表示するだけだったが、
-		// Weapon_Selectのアイコン素材を使って武器選択画面らしい見た目にするため)。
-		constexpr float kCircleSize = 700.0f;   // 背景パネルの一辺
-		constexpr float kIconMaxSize = 380.0f;  // 武器アイコンの最大表示サイズ(縦横とも。アスペクト比は維持)
-		constexpr float kLabelGapY = 44.0f;     // アイコン上端とラベル(武器名)の間隔
-		constexpr float kLabelTextSize = 42.0f;
-		constexpr float kDescGapY = 44.0f;      // アイコン下端と説明文の間隔
-		constexpr float kDescTextSize = 26.0f;
-		constexpr float kCircleAlpha = 0.55f;   // 背景パネルの不透明度(武器イメージカラーに適用)
-		constexpr float kNeonIntensity = 2.2f;  // 発光感を出すための輝度倍率
+		// レイアウト定数。1ページ = 武器イメージカラーの背景パネル(奥、固定サイズの発光板) +
+		// カード画像(手前、中央)の2要素で構成する。
+		// 新しいWeaponSelect素材(Fire/Thunder/Orb.png)は武器名・アイコン・説明文が
+		// 1枚の画像に既に合成されているため、以前のような名前/説明テキストの個別生成は行わない。
+		// 素材ごとに縦横比が異なる(Fire=1213x1734、Thunder=1333x1691、Orb=1865x1734)ため、
+		// 高さ基準で統一して収める(kCardMaxWidthは最も横長なOrbが幅で頭打ちにならない値に
+		// 余裕を持たせてあり、実質的に全カードが同じ高さ(kCardMaxHeight)に揃う)。
+		// 元画像は素材そのままだと画面に対して大きすぎるため、旧アイコン+テキスト構成時の
+		// 表示占有面積(アイコン380+ラベル/説明文分=約550px)に近いサイズへ縮小している。
+		constexpr float kCardMaxWidth = 640.0f;
+		constexpr float kCardMaxHeight = 560.0f;
+		// 背景パネル(発光板)はカードの一回り外側にパディングを足した固定サイズ
+		// (カードサイズと独立した値にすると調整時に食い違うため、パディングだけを定数化する)。
+		constexpr float kAccentPanelPadding = 50.0f;
+		constexpr float kAccentPanelWidth = kCardMaxWidth + kAccentPanelPadding * 2.0f;
+		constexpr float kAccentPanelHeight = kCardMaxHeight + kAccentPanelPadding * 2.0f;
+		// kNeonIntensity(旧2.2)はSprite描画がColor*Intensityを素通しするため、
+		// 特にOrbの黄(R,G成分が高い)でR/G成分が1.0を超えて白飛びし、
+		// 半透明合成後も白っぽく見える不具合の原因だった。1.0にして色を素直に出す。
+		constexpr float kAccentAlpha = 0.85f;        // 背景パネルの不透明度(色をはっきり見せるため引き上げ)
+		constexpr float kNeonIntensity = 1.0f;
 
-		// アイコンの実表示サイズ(元画像のアスペクト比依存)ではなく、レイアウト用の固定枠
-		// (kIconMaxSize角)を基準にラベル/説明文の位置を揃える(武器ごとに画像の縦横比が
-		// 異なる=Fire.pngは3:2、lighting.png/orb.pngは1:1、ため実サイズ基準だと行がズレる)。
-		const float nameY = centerY - kIconMaxSize * 0.5f - kLabelGapY - kLabelTextSize;
-		const float descY = centerY + kIconMaxSize * 0.5f + kDescGapY;
-
-		// 背景(タイトル画像流用)の上に文字/アイコンが乗ると読みづらいため、黒半透明の板を
-		// カード全体の奥に敷く(UiPanelUtility参照)。ページ送りで武器アイコン/名前/説明文は
-		// スライドするが、カード自体の画面位置(centerX/centerY)は常に同じなため、
-		// この板はスライドさせず画面固定のままでよい。
+		// 背景(タイトル画像流用)の上にカードが乗ると読みづらいため、黒半透明の板を
+		// カード全体の奥に敷く(UiPanelUtility参照)。ページ送りでカードはスライドするが、
+		// この板自体の画面位置(centerX/centerY)は常に同じなため、スライドさせず画面固定でよい。
 		{
-			constexpr float kPanelPadX = 60.0f;
-			constexpr float kPanelPadTop = 30.0f;
-			constexpr float kPanelPadBottom = 30.0f;
-
-			const float panelTop = nameY - kPanelPadTop;
-			const float panelBottom = descY + kDescTextSize + kPanelPadBottom;
-			const float panelWidth = kCircleSize + kPanelPadX * 2.0f;
+			constexpr float kPanelPadX = 40.0f;
+			constexpr float kPanelPadY = 40.0f;
 
 			::ecs::uiutil::CreateTranslucentPanel(
-				centerX, (panelTop + panelBottom) * 0.5f,
-				panelWidth, panelBottom - panelTop,
+				centerX, centerY,
+				kAccentPanelWidth + kPanelPadX * 2.0f, kAccentPanelHeight + kPanelPadY * 2.0f,
 				-2); // 色付きタイント(offset-1)・武器アクセントパネル(offset0)より奥
 		}
 
 		// 読み込み成功したページ数
 		uint32_t pageIndex = 0;
 
-		// MenuSlideComp/SpellMenuDataCompの付与だけを共通化するヘルパー。実座標(Transform/TextComponent)は
-		// 要素の種類ごとに異なるため呼び出し側で設定する
-		// (MenuSlideSystemはTransform持ちとTextComponent持ちの両方に対応済み。下記参照)。
+		// MenuSlideComp/SpellMenuDataCompの付与だけを共通化するヘルパー。実座標(Transform)は
+		// 要素の種類ごとに異なるため呼び出し側で設定する。
 		auto attachSlide = [&](entt::entity entity, float targetX, uint32_t spellId)
 			{
 				auto& slide = manager.AddComponent<::ecs::MenuSlideComp>(entity);
@@ -231,15 +203,16 @@ namespace scene
 			// 初期座標(MenuPagingSystemのTargetX計算式と一致させる)
 			const float restX = centerX + static_cast<float>(pageIndex) * MenuControllerComp.WindowWidth;
 
-			// 武器イメージカラーの背景パネル(アイコンの奥。Fire=赤/Lightning=青/Orb=黄)。
+			// 武器イメージカラーの背景パネル(カードの奥、固定サイズの発光板。
+			// Fire=赤/Thunder=青/Orb=黄)。
 			// Shape(円)は使わない: このエンジンはSprite→Shape→Textの順で完全に別の描画パスに
 			// 分かれており、Shapeは常に全Spriteより後(手前)に描画されるため、Shapeで作った円の
-			// 上に武器アイコン(Sprite)を重ねることができない(Layer値をいくら調整しても解決しない、
-			// パス自体が別なので無関係)。同じSpriteパス内で完結させ、Layer順(円offset0 <
-			// アイコンoffset1)通りにアイコンが手前に来るようにする。
+			// 上にカード画像(Sprite)を重ねることができない(Layer値をいくら調整しても解決しない、
+			// パス自体が別なので無関係)。同じSpriteパス内で完結させ、Layer順(パネルoffset0 <
+			// カードoffset1)通りにカードが手前に来るようにする。
 			{
 				::graphics::Color panelColor = ::ecs::menuvisuals::GetWeaponAccentColor(data.ID);
-				panelColor.a = kCircleAlpha;
+				panelColor.a = kAccentAlpha;
 
 				auto entity = manager.CreateEntity();
 				auto& transform = manager.AddComponent<::ecs::Transform>(entity);
@@ -248,7 +221,7 @@ namespace scene
 				auto panelTexture = texManager.GetOrLoad("Assets/Effect/Texture/White.png");
 				auto& sprite = manager.AddComponent<::ecs::Sprite>(entity, panelTexture);
 				sprite.Pivot = { 0.5f, 0.5f };
-				sprite.Size = { kCircleSize, kCircleSize };
+				sprite.Size = { kAccentPanelWidth, kAccentPanelHeight };
 				sprite.Color = panelColor;
 				sprite.Intensity = kNeonIntensity;
 				sprite.SetLayer(::ecs::SpriteLayer::UI, 0);
@@ -256,11 +229,12 @@ namespace scene
 				attachSlide(entity, restX, data.ID);
 			}
 
-			// 武器アイコン(円の手前、中央。元画像のアスペクト比を維持したまま最大kIconMaxSize角に収める)
+			// カード画像(パネルの手前、中央。武器名・アイコン・説明文を1枚に合成済み。
+			// 元画像のアスペクト比を維持したままkCardMaxWidth×kCardMaxHeightの枠に収める)
 			{
 				const float texW = texRes->GetWidth();
 				const float texH = texRes->GetHeight();
-				const float fitScale = std::min(kIconMaxSize / texW, kIconMaxSize / texH);
+				const float fitScale = std::min(kCardMaxWidth / texW, kCardMaxHeight / texH);
 
 				auto entity = manager.CreateEntity();
 				auto& transform = manager.AddComponent<::ecs::Transform>(entity);
@@ -272,42 +246,6 @@ namespace scene
 				sprite.SetLayer(::ecs::SpriteLayer::UI, 1);
 
 				attachSlide(entity, restX, data.ID);
-			}
-
-			// 武器名(アイコンの上、水平中央揃え)
-			{
-				const std::wstring label = (pageIndex < sizeof(kLabels) / sizeof(kLabels[0])) ? kLabels[pageIndex] : L"";
-				const float textWidth = textRenderer.MeasureWidth(label, kLabelTextSize);
-				const float textX = restX - textWidth * 0.5f;
-
-				auto entity = manager.CreateEntity();
-				auto& text = manager.AddComponent<::ecs::TextComponent>(entity);
-				text.Text = label;
-				text.X = textX;
-				text.Y = nameY;
-				text.Size = kLabelTextSize;
-				text.Color = { 1.0f, 1.0f, 1.0f, 1.0f };
-				text.Layer = 10;
-
-				attachSlide(entity, textX, data.ID);
-			}
-
-			// 説明文(アイコンの下、水平中央揃え)
-			{
-				const std::wstring desc = (pageIndex < sizeof(kDescriptions) / sizeof(kDescriptions[0])) ? kDescriptions[pageIndex] : L"";
-				const float textWidth = textRenderer.MeasureWidth(desc, kDescTextSize);
-				const float textX = restX - textWidth * 0.5f;
-
-				auto entity = manager.CreateEntity();
-				auto& text = manager.AddComponent<::ecs::TextComponent>(entity);
-				text.Text = desc;
-				text.X = textX;
-				text.Y = descY;
-				text.Size = kDescTextSize;
-				text.Color = { 0.85f, 0.85f, 0.85f, 1.0f };
-				text.Layer = 10;
-
-				attachSlide(entity, textX, data.ID);
 			}
 
 			if (pageIndex == 0)
@@ -323,11 +261,26 @@ namespace scene
 		// 操作案内(画面固定、ページ送りでスライドさせない)。ボタン表示名は入力デバイスに応じて
 		// MenuInputSystemが毎フレーム更新するため、ここでは空文字のままでよい
 		{
+			constexpr float kGuideTextSize = 26.0f;
+			constexpr float kGuidePanelWidth = 620.0f;
+			constexpr float kGuidePanelPadY = 16.0f;
+
+			// guideCenterYは文字とパネルの見た目上の縦中心に置きたい座標(Title/Hubと同じ方式)。
+			// TextComponent::Yはベースライン座標なので、そのままguideCenterYを渡すと
+			// パネルより上に見えてしまう。MeasureVerticalCenterOffsetでベースラインYへ変換する。
+			const float guideCenterY = static_cast<float>(::sys::Window::Get().GetVirtualHeight()) - 80.0f;
+			auto& textRenderer = ::graphics::TextRenderer::Get();
+
+			::ecs::uiutil::CreateTranslucentPanel(
+				centerX, guideCenterY,
+				kGuidePanelWidth, kGuideTextSize + kGuidePanelPadY * 2.0f,
+				0);
+
 			auto entity = manager.CreateEntity();
 			auto& text = manager.AddComponent<::ecs::TextComponent>(entity);
 			text.X = centerX;
-			text.Y = static_cast<float>(::sys::Window::Get().GetVirtualHeight()) - 80.0f;
-			text.Size = 26.0f;
+			text.Y = guideCenterY + textRenderer.MeasureVerticalCenterOffset(kGuideTextSize);
+			text.Size = kGuideTextSize;
 			text.Color = { 0.8f, 0.8f, 0.8f, 1.0f };
 			text.Layer = 10;
 

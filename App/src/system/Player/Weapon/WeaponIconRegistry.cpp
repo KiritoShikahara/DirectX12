@@ -24,6 +24,7 @@ namespace ecs::weaponutil
 		case eWeaponType::Homing:        // Homing Missile: 専用アイコン未作成
 		case eWeaponType::Meteor:        // area_attack.pngはNovaで使用済みのため代用のまま区別する
 		case eWeaponType::Cleave:        // 専用アイコン未作成
+		case eWeaponType::Ricochet:      // 専用アイコン未作成
 		default:
 			return kFallbackIcon;
 		}

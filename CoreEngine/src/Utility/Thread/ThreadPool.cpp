@@ -2,6 +2,7 @@
 #include "ThreadPool.h"
 
 #include <algorithm>
+#include <combaseapi.h>
 
 namespace utility
 {
@@ -91,6 +92,12 @@ namespace utility
 
 	void ThreadPool::WorkerLoop(size_t workerIndex)
 	{
+		// COMを初期化しておく(WICベースの画像デコード(DirectXTex::LoadFromWICFile)等、
+		// このプールで実行されうる処理がCOMを要求するため。メインスレッドと同じ
+		// アパートメントモデルに合わせる。COMを使わないタスクには影響しない)。
+		const HRESULT comHr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+		const bool comInitialized = SUCCEEDED(comHr);
+
 		uint64_t lastGeneration = 0;
 
 		while (true)
@@ -107,6 +114,7 @@ namespace utility
 
 				if (!mRunning.load(std::memory_order_relaxed))
 				{
+					if (comInitialized) CoUninitialize();
 					return;
 				}
 

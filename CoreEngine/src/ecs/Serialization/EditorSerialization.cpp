@@ -9,6 +9,8 @@
 
 #include <graphics/Fbx/Resource/FbxResourceManager.h>
 #include <graphics/PrimitiveModel/Resource/PrimitiveResourceManager.h>
+#include <graphics/Texture/TextureManager.h>
+#include <graphics/Texture/Texture.h>
 
 #include <json/json.hpp>
 #include <fstream>
@@ -146,6 +148,9 @@ namespace ecs
 				if (auto* fbx = registry.try_get<ecs::FbxComponent>(entity))
 					entry["Fbx"] = SerializeComponent(*fbx);
 
+				if (auto* sprite = registry.try_get<ecs::Sprite>(entity))
+					entry["Sprite"] = SerializeComponent(*sprite);
+
 				if (auto* light = registry.try_get<ecs::DirectionalLightComponent>(entity))
 					entry["DirectionalLight"] = SerializeComponent(*light);
 
@@ -207,6 +212,16 @@ namespace ecs
 				{
 					registry.emplace<ecs::AssetKeyComponent>(entity, assetKey);
 					fbx.Resource = ResolveFbxResource(assetKey);
+				}
+			}
+
+			if (entry.contains("Sprite") && !assetKey.empty())
+			{
+				if (graphics::Texture* texture = graphics::TextureManager::Get().GetOrLoad(assetKey))
+				{
+					auto& sprite = registry.emplace<ecs::Sprite>(entity, texture);
+					DeserializeComponent(entry["Sprite"], sprite);
+					registry.emplace<ecs::AssetKeyComponent>(entity, assetKey);
 				}
 			}
 

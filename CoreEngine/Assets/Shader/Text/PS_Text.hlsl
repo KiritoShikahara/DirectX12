@@ -31,7 +31,11 @@ float Median(float r, float g, float b)
 
 float4 main(PSInput input) : SV_TARGET
 {
-    float4 msd = AtlasTexture.Sample(LinearSampler, input.TexCoord);
+    // MSDFはRGB各チャンネルの符号付き距離値からmedianで輪郭を再構築する特殊なエンコーディングのため、
+    // 通常のミップマップ(平均化フィルタ)を経由すると距離値が壊れてガビガビしたノイズになる。
+    // アンチエイリアシングはSDFの数式(screenPxRange/coverage計算)側で行うため、
+    // ミップは使わずレベル0を明示的に固定してサンプリングする。
+    float4 msd = AtlasTexture.SampleLevel(LinearSampler, input.TexCoord, 0);
 
     float sd = Median(msd.r, msd.g, msd.b);
 

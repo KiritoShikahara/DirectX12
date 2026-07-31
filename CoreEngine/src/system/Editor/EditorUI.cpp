@@ -6,6 +6,8 @@
 #include<system/ImGui/ImGuiManager.h>
 #include<system/Editor/EditorManager.h>
 #include<system/Editor/EditorSystem.h>
+#include<system/Scene/Manager/SceneManager.h>
+#include<system/Scene/Factory/SceneFactory.h>
 
 #include<ecs/entity/EntityTag.h>
 #include<ecs/component/Common/NameComponent.h>
@@ -123,6 +125,13 @@ namespace sys
 		ImGui::SameLine();
 		if (ImGui::Button("Point Light")) editorSys.ArmPlacement("PointLight");
 
+		static char sSpritePathBuf[256] = "Assets/Texture/UI/WeaponSelect/Fire.png";
+		ImGui::InputText("Texture Path", sSpritePathBuf, sizeof(sSpritePathBuf));
+		if (ImGui::Button("Sprite"))
+		{
+			editorSys.ArmPlacement(std::string("Sprite:") + sSpritePathBuf);
+		}
+
 		if (editorSys.IsPlacementArmed())
 		{
 			ImGui::TextColored({ 0.3f, 1.0f, 0.3f, 1.0f },
@@ -133,7 +142,36 @@ namespace sys
 
 		ImGui::EndDisabled();
 
+		// シーン切り替えはPlay/Editどちらのモードでも常に使えるようにする
+		// (上のBeginDisabled(IsPlaying())の対象外にする)ため、EndDisabled()の後に置く。
+		DrawScenePanel();
+
 		ImGui::End();
+	}
+
+	void EditorUI::DrawScenePanel()
+	{
+		ImGui::Separator();
+		ImGui::Text("Scene Switch (no transition)");
+
+		auto& sceneManager = sys::SceneManager::Get();
+		const std::string& currentScene = sceneManager.GetCurrentSceneName();
+		ImGui::Text("Current: %s", currentScene.c_str());
+
+		for (const auto& name : sys::SceneFactory::Get().GetRegisteredNames())
+		{
+			const bool isCurrent = (name == currentScene);
+
+			ImGui::BeginDisabled(isCurrent);
+			if (ImGui::Button(name.c_str()))
+			{
+				// トランジションなしで即座に切り替える(ChangeSceneWithTransitionは使わない)。
+				// 実際の切り替えはSceneManager::PostUpdate()(毎フレーム無条件で呼ばれる、
+				// Play/Editモードを問わない)で次フレーム冒頭に適用される。
+				sceneManager.ChangeScene(name);
+			}
+			ImGui::EndDisabled();
+		}
 	}
 
 	void EditorUI::DrawHierarchyPanel(entt::registry& registry)
@@ -220,6 +258,11 @@ namespace sys
 		{
 			if (ImGui::CollapsingHeader("Fbx"))
 				ecs::VisitComponentFields(*fbx, visitor);
+		}
+		if (auto* sprite = registry.try_get<ecs::Sprite>(entity))
+		{
+			if (ImGui::CollapsingHeader("Sprite", ImGuiTreeNodeFlags_DefaultOpen))
+				ecs::VisitComponentFields(*sprite, visitor);
 		}
 		if (auto* light = registry.try_get<ecs::DirectionalLightComponent>(entity))
 		{

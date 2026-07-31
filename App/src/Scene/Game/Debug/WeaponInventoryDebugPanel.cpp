@@ -30,6 +30,7 @@ namespace
         { "Bone Spear",             ecs::eWeaponType::BoneSpear,   0, ecs::eWeaponControl::Auto },
         { "Cleave",                 ecs::eWeaponType::Cleave,      0, ecs::eWeaponControl::Auto },
         { "Flicker Strike",         ecs::eWeaponType::FlickerStrike, 0, ecs::eWeaponControl::Manual },
+        { "Ricochet Orb",           ecs::eWeaponType::Ricochet,     0, ecs::eWeaponControl::Auto },
     };
 
     const char* WeaponTypeName(ecs::eWeaponType type)
@@ -47,6 +48,7 @@ namespace
         case ecs::eWeaponType::BoneSpear:   return "BoneSpear";
         case ecs::eWeaponType::Cleave:      return "Cleave";
         case ecs::eWeaponType::FlickerStrike: return "FlickerStrike";
+        case ecs::eWeaponType::Ricochet:    return "Ricochet";
         default:                            return "Unknown";
         }
     }

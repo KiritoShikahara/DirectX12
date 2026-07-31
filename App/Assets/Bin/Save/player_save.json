@@ -1,11 +1,15 @@
 {
-    "AtkPowerLevel": 10,
-    "CooldownRateLevel": 10,
-    "DefenseLevel": 10,
-    "ExperienceGainRateLevel": 10,
-    "Gold": 174017,
-    "GoldGainRateLevel": 10,
-    "HpRegenLevel": 10,
-    "MaxHpLevel": 10,
-    "MoveSpeedLevel": 10
+    "AtkPowerLevel": 0,
+    "AttackCountLevel": 0,
+    "CooldownRateLevel": 0,
+    "DefenseLevel": 0,
+    "ExperienceGainRateLevel": 2,
+    "Gold": 317323,
+    "GoldGainRateLevel": 0,
+    "HpRegenLevel": 2,
+    "MaxHpLevel": 1,
+    "MoveSpeedLevel": 0,
+    "PerkChoiceCountLevel": 0,
+    "PostHitInvincibilityLevel": 0,
+    "ReviveLevel": 0
 }

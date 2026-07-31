@@ -13,6 +13,7 @@
 #include<system/Player/Weapon/BoneSpear/BoneSpearRuntimeComponent.h>
 #include<system/Player/Weapon/Cleave/CleaveRuntimeComponent.h>
 #include<system/Player/Weapon/FlickerStrike/FlickerStrikeRuntimeComponent.h>
+#include<system/Player/Weapon/Ricochet/RicochetRuntimeComponent.h>
 
 #include<functional>
 #include<unordered_map>
@@ -38,6 +39,7 @@ namespace
             { ecs::eWeaponType::BoneSpear,     [](entt::registry& r, entt::entity e) { r.emplace<ecs::BoneSpearRuntimeComponent>(e); } },
             { ecs::eWeaponType::Cleave,        [](entt::registry& r, entt::entity e) { r.emplace<ecs::CleaveRuntimeComponent>(e); } },
             { ecs::eWeaponType::FlickerStrike, [](entt::registry& r, entt::entity e) { r.emplace<ecs::FlickerStrikeRuntimeComponent>(e); } },
+            { ecs::eWeaponType::Ricochet,      [](entt::registry& r, entt::entity e) { r.emplace<ecs::RicochetRuntimeComponent>(e); } },
         };
         return table;
     }

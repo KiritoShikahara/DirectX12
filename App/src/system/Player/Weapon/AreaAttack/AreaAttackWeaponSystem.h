@@ -38,13 +38,5 @@ namespace ecs
 
 		// Fire()のOverlapSphere結果の一時バッファ。毎回clear()して再利用する
 		std::vector<entt::entity> mFound;
-
-		/// <summary>1体の敵の座標に氷柱(ハザード)エンティティを1体生成する</summary>
-		static void SpawnHazard(
-			entt::registry& registry,
-			const DirectX::XMFLOAT3& position,
-			float radius,
-			float damage,
-			const data::AreaAttackWeaponData& masterData);
 	};
 }

@@ -19,6 +19,11 @@ namespace data
 		GoldGainRate = 5,       // EnemyDeathSystem::AwardGoldの倍率(PlayerStatusComponentには接続しない)
 		HpRegen = 6,            // PlayerStatusComponent.Base.HpRegenPerSecondへ加算(ecs::PlayerRegenSystem参照)
 		ExperienceGainRate = 7, // EnemyDeathSystem::AwardExperienceの倍率(PlayerStatusComponentには接続しない)
+
+		AttackCount = 8,          // PlayerStatusComponent.Modifier.MulAttackCountへ加算(パークのAttackCountUpと同じ加算先)
+		Revive = 9,               // PlayerStatusComponent.ReviveCountへ加算(パークのReviveと同じ加算先。MaxLevel=1想定)
+		PostHitInvincibility = 10,// PlayerStatusComponent.Base.PostHitInvincibleDurationへ加算(被弾直後の無敵時間、秒)
+		PerkChoiceCount = 11,     // PerkSelectComponent::ChoiceCountへ反映(PlayerStatusComponentには接続しない。MaxLevel=1想定)
 	};
 
 	/// <summary>

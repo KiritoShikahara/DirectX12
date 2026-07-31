@@ -16,10 +16,24 @@ namespace ecs
         // ── 敵の継続スポーン ──────────────────────────────────
         /// <summary>通常の敵を湧かせる間隔(秒)</summary>
         float SpawnInterval = 1.5f;
-        /// <summary>1回のスポーンタイミングで湧かせる敵の数</summary>
+        /// <summary>1回のスポーンタイミングで湧かせる敵の数(経過時間による成長前の基準値)</summary>
         int SpawnCountPerTick = 1;
-        /// <summary>次のスポーンまでの残り時間(秒)。0開始なのでInGame開始直後に1体目が湧く</summary>
-        float SpawnTimer = 0.0f;
+        /// <summary>
+        /// スポーン数の成長ステップ間隔(秒)。敵ステータス成長(StatGrowthStepInterval)と同様、
+        /// この秒数が経過するたびにSpawnCountGrowthPerStep分だけSpawnCountPerTickが階段状に増える
+        /// (EnemySpawnSystem::ComputeStepGrowth参照)。
+        /// </summary>
+        float SpawnCountGrowthStepInterval = 60.0f;
+        /// <summary>1ステップごとのスポーン数増加倍率(1.0=+100%、つまり倍増)</summary>
+        float SpawnCountGrowthPerStep = 1.0f;
+        /// <summary>
+        /// 次のスポーンまでの残り時間(秒)。CameraSystem::Update()はUpdateフェーズ
+        /// (EnemySpawnSystemが動く場所)より後、フレームの最後に実行されるため、
+        /// シーン開始直後(0秒)だとまだ新しいカメラの行列が計算されておらず、
+        /// ComputeVisibleRadiusがフォールバック半径(30m)を使ってプレイヤーのすぐ近くに
+        /// 湧いてしまう。カメラが最低1フレーム更新される猶予を持たせるための遅延値。
+        /// </summary>
+        float SpawnTimer = 0.2f;
         /// <summary>
         /// スポーン位置は「画面に映っている範囲の半径 + このマージン(m)」の円周上からランダムに選ぶ
         /// （必ず画面外から湧かせるため。画面内半径はカメラ設定から毎回動的に算出する）

@@ -6,6 +6,7 @@
 #include"../State/PlayerStateComponent.h"
 #include"../AimSysten/PlayerAimComponent.h"
 #include<system/Player/PlayerActionLock.h>
+#include<Scene/Game/State/GameState.h>
 
 namespace ecs
 {
@@ -16,13 +17,14 @@ namespace ecs
 		const bool wantsToFire = INPUT_MANAGER.IsActionPressed("Attack");
 		const bool wantsToFireSecondary = INPUT_MANAGER.IsActionPressed("Attack2");
 		const bool wantsToFireTertiary = INPUT_MANAGER.IsActionPressed("FlickerStrike");
-		// 必殺技/Flicker Strikeの演出中はプレイヤー操作を一切受け付けない（移動・攻撃とも入力を無視する）
-		const bool actionLocked = ecs::IsPlayerActionLocked(registry);
+		// 必殺技/Flicker Strikeの演出中、および設定メニュー(OptionsMenuSystem)表示中は
+		// プレイヤー操作を一切受け付けない（移動・攻撃とも入力を無視する）
+		const bool inputBlocked = ecs::IsPlayerActionLocked(registry) || ecs::IsOptionsMenuOpen(registry);
 
 		registry.view<ecs::PlayerMovementComponent, ecs::PlayerStateComponent, ecs::PlayerAimComponent, ecs::PlayerTag>().each(
 			[&](ecs::PlayerMovementComponent& movement, ecs::PlayerStateComponent& state, ecs::PlayerAimComponent& aim)
 			{
-				if (actionLocked)
+				if (inputBlocked)
 				{
 					movement.MoveInput = { 0.f, 0.f, 0.f };
 					aim.WantsToFire = false;

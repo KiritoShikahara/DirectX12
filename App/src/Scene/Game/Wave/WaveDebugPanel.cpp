@@ -57,6 +57,8 @@ namespace debug
                 wave.SpawnCountPerTick = row->SpawnCountPerTick;
                 wave.SpawnMarginMin = row->SpawnMarginMin;
                 wave.SpawnMarginMax = row->SpawnMarginMax;
+                wave.SpawnCountGrowthStepInterval = row->SpawnCountGrowthStepInterval;
+                wave.SpawnCountGrowthPerStep = row->SpawnCountGrowthPerStep;
                 wave.MaxAliveEnemy = row->MaxAliveEnemy;
                 wave.StatGrowthStepInterval = row->StatGrowthStepInterval;
                 wave.StatGrowthPerStep = row->StatGrowthPerStep;

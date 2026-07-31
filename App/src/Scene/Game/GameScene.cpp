@@ -15,6 +15,7 @@
 #include<system/Player/UI/PlayerHpBarSystem.h>
 #include<system/Player/UI/PlayerUltimateGaugeSystem.h>
 #include<system/Player/UI/WeaponIconBarSystem.h>
+#include<system/Player/UI/PlayerExpBarSystem.h>
 #include<Utility/config/DebugConfig.h> // DEV_TOOL_ENABLED(Debug/Develop両方で有効)を参照するため直接include
 #include<system/GlowAnimation/SpriteGlowSystem.h>
 #include<system/UI/DamageNumber/DamageNumberSystem.h>
@@ -25,10 +26,12 @@
 #include<system/Player/MovementSystem/PlayerMovementSystem.h>
 #include<system/Animation/LocomotionAnimationSystem.h>
 #include<system/Player/AimSysten/PlayerAimSystem.h>
+#include<system/Player/Boundary/PlayerBoundaryClampSystem.h>
 
 // 武器
 #include<system/Player/Weapon/SingleShot/SingleShotWeaponSystem.h>
 #include<system/Player/Weapon/AreaAttack/AreaAttackWeaponSystem.h>
+#include<system/Player/Weapon/AreaAttack/AreaAttackAutoStrikeSystem.h>
 #include<system/Player/Weapon/AreaAttack/AreaAttackHazardSystem.h>
 #include<system/Player/Weapon/Orbit/OrbitWeaponSystem.h>
 #include<system/Player/Weapon/Nova/NovaWeaponSystem.h>
@@ -40,6 +43,7 @@
 #include<system/Player/Weapon/BoneSpear/BoneSpearWeaponSystem.h>
 #include<system/Player/Weapon/Cleave/CleaveWeaponSystem.h>
 #include<system/Player/Weapon/FlickerStrike/FlickerStrikeWeaponSystem.h>
+#include<system/Player/Weapon/Ricochet/RicochetWeaponSystem.h>
 #include<system/Player/Ultimate/PlayerUltimateSystem.h>
 #include<system/Player/Weapon/Projectile/ProjectileMovementSystem.h>
 #include<system/Player/Weapon/Projectile/ProjectileCollisionSystem.h>
@@ -85,6 +89,7 @@
 #include<Data/Weapon/BoneSpearWeaponData.h>
 #include<Data/Weapon/CleaveWeaponData.h>
 #include<Data/Weapon/FlickerStrikeWeaponData.h>
+#include<Data/Weapon/RicochetWeaponData.h>
 #include<Data/Ultimate/UltimateData.h>
 #include<Data/StatUpgrade/StatUpgradeData.h>
 #include<Data/Save/PlayerSaveData.h>
@@ -208,6 +213,10 @@ namespace scene
 		{
 			dataRegistry.Register<data::FlickerStrikeWeaponData>("Assets/Data/Weapon/FlickerStrikeWeaponData.csv");
 		}
+		if (!dataRegistry.IsRegistered<data::RicochetWeaponData>())
+		{
+			dataRegistry.Register<data::RicochetWeaponData>("Assets/Data/Weapon/RicochetWeaponData.csv");
+		}
 		if (!dataRegistry.IsRegistered<data::UltimateData>())
 		{
 			dataRegistry.Register<data::UltimateData>("Assets/Data/Ultimate/UltimateData.csv");
@@ -273,6 +282,7 @@ namespace scene
 		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::BoneSpearWeaponData).GetAll());
 		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::CleaveWeaponData).GetAll());
 		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::FlickerStrikeWeaponData).GetAll());
+		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::RicochetWeaponData).GetAll());
 		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::UltimateData).GetAll());
 
 		// マスタデータに属さない固定演出(敵撃破・パーク確定)。EnemyDeathSystem/PerkSelectSystemの
@@ -300,10 +310,12 @@ namespace scene
 		manager.AddUserSystem<::ecs::PlayerHpBarSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::PlayerUltimateGaugeSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::WeaponIconBarSystem>(::ecs::eUpdatePhase::Update);
+		manager.AddUserSystem<::ecs::PlayerExpBarSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::PlayerContactDamageSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::PlayerRegenSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::SingleShotWeaponSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::AreaAttackWeaponSystem>(::ecs::eUpdatePhase::Update);
+		manager.AddUserSystem<::ecs::AreaAttackAutoStrikeSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::AreaAttackHazardSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::OrbitWeaponSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::NovaWeaponSystem>(::ecs::eUpdatePhase::Update);
@@ -315,6 +327,7 @@ namespace scene
 		manager.AddUserSystem<::ecs::BoneSpearWeaponSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::CleaveWeaponSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::FlickerStrikeWeaponSystem>(::ecs::eUpdatePhase::Update);
+		manager.AddUserSystem<::ecs::RicochetWeaponSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::ProjectileCollisionSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::ProjectileMovementSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::TemporaryLifetimeSystem>(::ecs::eUpdatePhase::Update);
@@ -328,6 +341,9 @@ namespace scene
 		// 書き込むだけ(Transformは直接書き換えない)。そのリクエストを同一フレーム内で反映するため、
 		// リクエストを消費して実際にTransformへ書き込むCameraPlayerFollowSystemより前段に置く
 		manager.AddUserSystem<::ecs::PlayerUltimateSystem>(::ecs::eUpdatePhase::PostUpdate);
+		// このフレーム中のテレポート(Flicker Strikeのワープ・必殺技のFinishAndExplode)を
+		// まとめて境界内へクランプしてから、CameraPlayerFollowSystemに正しい位置を読ませる
+		manager.AddUserSystem<::ecs::PlayerBoundaryClampSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::ecs::CameraPlayerFollowSystem>(::ecs::eUpdatePhase::PostUpdate);
 		// LightSystem::Update(Engine.cpp、LightViewProjの計算)より前にShadowTargetを
 		// 確定させる必要があるため、PostUpdateフェーズの中で(Renderより前であれば)登録する
@@ -377,6 +393,20 @@ namespace scene
 		mWeaponInventoryDebugPanel = std::make_unique<debug::WeaponInventoryDebugPanel>();
 		mUltimateDebugPanel = std::make_unique<debug::UltimateDebugPanel>();
 		mPlayerSaveDebugPanel = std::make_unique<debug::PlayerSaveDebugPanel>("GameScene_PlayerSaveDebug");
+		mRicochetWeaponDebugPanel = std::make_unique<debug::RicochetWeaponDebugPanel>();
+		mAreaAttackWeaponDebugPanel = std::make_unique<debug::AreaAttackWeaponDebugPanel>();
+		mBoneSpearWeaponDebugPanel = std::make_unique<debug::BoneSpearWeaponDebugPanel>();
+		mChainLightningWeaponDebugPanel = std::make_unique<debug::ChainLightningWeaponDebugPanel>();
+		mCleaveWeaponDebugPanel = std::make_unique<debug::CleaveWeaponDebugPanel>();
+		mFlickerStrikeWeaponDebugPanel = std::make_unique<debug::FlickerStrikeWeaponDebugPanel>();
+		mHomingMissileWeaponDebugPanel = std::make_unique<debug::HomingMissileWeaponDebugPanel>();
+		mMeteorWeaponDebugPanel = std::make_unique<debug::MeteorWeaponDebugPanel>();
+		mNovaWeaponDebugPanel = std::make_unique<debug::NovaWeaponDebugPanel>();
+		mOrbitWeaponDebugPanel = std::make_unique<debug::OrbitWeaponDebugPanel>();
+		mVoidBeamWeaponDebugPanel = std::make_unique<debug::VoidBeamWeaponDebugPanel>();
+		mStatUpgradeDebugPanel = std::make_unique<debug::StatUpgradeDebugPanel>();
+		mEffectAssetDebugPanel = std::make_unique<debug::EffectAssetDebugPanel>();
+		mBossDebugPanel = std::make_unique<debug::BossDebugPanel>();
 	}
 
 	void GameScene::DebugFinalize()
@@ -389,6 +419,20 @@ namespace scene
 		mWeaponInventoryDebugPanel.reset();
 		mUltimateDebugPanel.reset();
 		mPlayerSaveDebugPanel.reset();
+		mRicochetWeaponDebugPanel.reset();
+		mAreaAttackWeaponDebugPanel.reset();
+		mBoneSpearWeaponDebugPanel.reset();
+		mChainLightningWeaponDebugPanel.reset();
+		mCleaveWeaponDebugPanel.reset();
+		mFlickerStrikeWeaponDebugPanel.reset();
+		mHomingMissileWeaponDebugPanel.reset();
+		mMeteorWeaponDebugPanel.reset();
+		mNovaWeaponDebugPanel.reset();
+		mOrbitWeaponDebugPanel.reset();
+		mVoidBeamWeaponDebugPanel.reset();
+		mStatUpgradeDebugPanel.reset();
+		mEffectAssetDebugPanel.reset();
+		mBossDebugPanel.reset();
 	}
 
 

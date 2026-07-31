@@ -6,6 +6,7 @@
 #include<system/GlowAnimation/SpriteGlowSystem.h>
 #include<system/TitleInputSystem/TitleInputSystem.h>
 #include<system/UI/UiPanelUtility.h>
+#include<graphics/Text/Renderer/TextRenderer.h>
 
 #include"../macros.h"
 
@@ -140,7 +141,13 @@ namespace scene
 		auto& registry = ENTT_REGISTRY;
 		auto& window = ::sys::Window::Get();
 
-		const float textY = static_cast<float>(window.GetVirtualHeight()) / 5.0f * 4.0f + 90.0f;
+		auto& textRenderer = ::graphics::TextRenderer::Get();
+
+		// guideCenterYは文字とパネルの見た目上の縦中心に置きたい座標。
+		// TextComponent::Yはベースライン座標(グリフはそこから上下非対称に広がる)なので、
+		// そのままguideCenterYを渡すと中心がずれる(実際に発生した不具合)。
+		// MeasureVerticalCenterOffsetでベースラインYへ変換する。
+		const float guideCenterY = static_cast<float>(window.GetVirtualHeight()) / 5.0f * 4.0f + 90.0f;
 		constexpr float kTextSize = 30.0f;
 
 		// 閭梧勹(繧ｿ繧､繝医Ν逕ｻ蜒・縺ｮ荳翫↓逶ｴ謗･荵励ｋ縺ｨ隱ｭ縺ｿ縺･繧峨＞縺溘ａ縲・ｻ貞濠騾乗・縺ｮ譚ｿ繧剃ｸ九↓謨ｷ縺・
@@ -149,14 +156,14 @@ namespace scene
 		constexpr float kGuidePanelPadY = 16.0f;
 		::ecs::uiutil::CreateTranslucentPanel(
 			static_cast<float>(window.GetVirtualWidth()) * 0.5f,
-			textY + kTextSize * 0.5f,
+			guideCenterY,
 			kGuidePanelWidth,
 			kTextSize + kGuidePanelPadY * 2.0f,
 			0);
 
 		auto entity = manager.CreateEntity();
 		auto& text = manager.AddComponent<::ecs::TextComponent>(entity);
-		text.Y = textY;
+		text.Y = guideCenterY + textRenderer.MeasureVerticalCenterOffset(kTextSize);
 		text.Size = kTextSize;
 		text.Color = { 0.85f, 0.9f, 1.0f, 1.0f };
 		text.Layer = 10;

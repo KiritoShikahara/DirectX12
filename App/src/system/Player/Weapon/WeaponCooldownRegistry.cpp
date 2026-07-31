@@ -15,6 +15,7 @@
 #include<system/Player/Weapon/BoneSpear/BoneSpearRuntimeComponent.h>
 #include<system/Player/Weapon/Cleave/CleaveRuntimeComponent.h>
 #include<system/Player/Weapon/FlickerStrike/FlickerStrikeRuntimeComponent.h>
+#include<system/Player/Weapon/Ricochet/RicochetRuntimeComponent.h>
 
 #include<Data/Weapon/SingleShotWeaponData.h>
 #include<Data/Weapon/AreaAttackWeaponData.h>
@@ -26,6 +27,7 @@
 #include<Data/Weapon/BoneSpearWeaponData.h>
 #include<Data/Weapon/CleaveWeaponData.h>
 #include<Data/Weapon/FlickerStrikeWeaponData.h>
+#include<Data/Weapon/RicochetWeaponData.h>
 
 #include<functional>
 #include<unordered_map>
@@ -98,6 +100,10 @@ namespace
 			{ ecs::eWeaponType::FlickerStrike, [](entt::registry& r, entt::entity e, const ecs::WeaponComponent& w, float& rem, float& mx)
 				{ return GetCooldownGeneric<ecs::FlickerStrikeRuntimeComponent, data::FlickerStrikeWeaponData>(
 					r, e, w, rem, mx, [](const data::FlickerStrikeWeaponData& d) { return d.FireInterval; }); } },
+
+			{ ecs::eWeaponType::Ricochet, [](entt::registry& r, entt::entity e, const ecs::WeaponComponent& w, float& rem, float& mx)
+				{ return GetCooldownGeneric<ecs::RicochetRuntimeComponent, data::RicochetWeaponData>(
+					r, e, w, rem, mx, [](const data::RicochetWeaponData& d) { return d.FireInterval; }); } },
 		};
 		return table;
 	}

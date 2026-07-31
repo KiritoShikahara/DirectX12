@@ -34,9 +34,13 @@ namespace
 		case data::eStatUpgradeType::MoveSpeed:          return "Assets/Icon/speed_up.png";
 		case data::eStatUpgradeType::HpRegen:            return "Assets/Icon/heel.png";
 		case data::eStatUpgradeType::ExperienceGainRate: return "Assets/Icon/exp_up.png";
+		case data::eStatUpgradeType::AttackCount:        return "Assets/Icon/attack_up.png"; // PerkSelectSystemの同時攻撃数パークと同じ代用アイコン
+		case data::eStatUpgradeType::Revive:             return "Assets/Icon/revive.png";    // PerkSelectSystemの復活パークと同じアイコン
 
-		case data::eStatUpgradeType::CooldownRate: // 専用アイコン未作成
-		case data::eStatUpgradeType::GoldGainRate: // 専用アイコン未作成
+		case data::eStatUpgradeType::CooldownRate:          // 専用アイコン未作成
+		case data::eStatUpgradeType::GoldGainRate:          // 専用アイコン未作成
+		case data::eStatUpgradeType::PostHitInvincibility:  // 専用アイコン未作成
+		case data::eStatUpgradeType::PerkChoiceCount:       // 専用アイコン未作成
 		default:
 			return kFallbackIcon;
 		}
@@ -167,11 +171,11 @@ namespace scene
 			text.Layer = 10;
 		}
 
-		// 8ステータス分のカード(名前(上)/アイコン(中)/強化状態(下)の縦積み)を
-		// 横4×縦2グリッドで配置する。テキスト内容・色は毎フレームStatusUpgradeInputSystemが更新するため、
+		// 12ステータス分のカード(名前(上)/アイコン(中)/強化状態(下)の縦積み)を
+		// 横4×縦3グリッドで配置する。テキスト内容・色は毎フレームStatusUpgradeInputSystemが更新するため、
 		// ここでは空文字のままでよい(アイコンのみここで確定させ、以後変化しない)。
 		constexpr int kCardColumns = 4;
-		constexpr int kCardRows = 2;
+		constexpr int kCardRows = 3;
 		static_assert(kCardColumns * kCardRows == ::ecs::StatusUpgradeComponent::kOptionCount,
 			"カード数はStatusUpgradeComponent::kOptionCountと一致させること");
 

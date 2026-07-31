@@ -54,6 +54,8 @@ namespace ecs
         auto stateView = registry.view<::ecs::GameStateComponent>();
         if (stateView.begin() == stateView.end()) return;
         if (registry.get<::ecs::GameStateComponent>(*stateView.begin()).GameState != ::sys::eGameState::InGame) return;
+        // 設定メニュー(OptionsMenuSystem)表示中は必殺技も発動できないようにする
+        if (::ecs::IsOptionsMenuOpen(registry)) return;
 
         auto playerView = registry.view<ecs::PlayerTag, ecs::PlayerUltimateComponent, ecs::PlayerStatusComponent>();
         if (playerView.begin() == playerView.end()) return;

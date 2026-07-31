@@ -28,6 +28,11 @@ namespace sys
 		void DrawHierarchyPanel(entt::registry& registry);
 		void DrawInspectorPanel(entt::registry& registry);
 
+		/// <summary>DrawEditorPanel末尾で呼ぶ、登録済みシーン一覧からの切り替えUI。
+		/// トランジションなし(SceneManager::ChangeScene)で即座に切り替える。
+		/// Play/Editどちらのモードでも常に使える(BeginDisabledの対象外)</summary>
+		void DrawScenePanel();
+
 		bool mIsInitialized = false;
 	};
 }

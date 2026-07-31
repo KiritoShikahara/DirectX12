@@ -10,6 +10,13 @@ namespace ecs
 	/// </summary>
 	struct PlayerUltimateGaugeTag {};
 
+	/// <summary>経験値バーのスプライトを識別するタグ。PlayerExpBarSystemがFillAmountを
+	/// (現在経験値 / 次レベルに必要な経験値)の比率で駆動する</summary>
+	struct PlayerExpBarTag {};
+
+	/// <summary>現在レベル表示("Lv.X")のテキストを識別するタグ。PlayerExpBarSystemが更新する</summary>
+	struct PlayerLevelTextTag {};
+
 	/// <summary>所持武器アイコンバー(WeaponIconBarSystem)の1スロットを構成する要素</summary>
 	enum class eWeaponIconElement
 	{

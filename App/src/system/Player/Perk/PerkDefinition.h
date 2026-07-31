@@ -94,19 +94,15 @@ namespace ecs
 		static const std::vector<PerkDefinition> pool =
 		{
 			{ ePerkEffectType::MaxHpUp,       L"最大HP + 15%",    0.15f },
-			{ ePerkEffectType::CooldownDown,  L"攻撃間隔 - 10%",  -0.10f },
+			{ ePerkEffectType::CooldownDown,  L"攻撃間隔 - 6%",  -0.06f },
 			{ ePerkEffectType::MoveSpeedUp,   L"移動速度 + 10%",  0.10f },
 			{ ePerkEffectType::AtkPowerUp,    L"攻撃力 + 10%",    0.10f },
 			{ ePerkEffectType::DefenseUp,     L"防御力 + 15%",    0.15f },
 			{ ePerkEffectType::AttackCountUp, L"同時攻撃数 + 100%", 1.0f },
 			{ ePerkEffectType::WeaponLevelUp, L"武器レベルアップ", 0.0f },
 
-			// MenuScene(初期武器選択)で選ばなかった側もここで拾えるようにする
-			// (HasWeaponで既所持分は自動的に除外されるため、選んだ1種は出ない)。
-			{ ePerkEffectType::AcquireWeapon, L"新武器: Fire",      0.0f, eWeaponType::SingleShot, 0 },
-			{ ePerkEffectType::AcquireWeapon, L"新武器: Lightning", 0.0f, eWeaponType::AreaAttack, 0 },
-			{ ePerkEffectType::AcquireWeapon, L"新武器: Orb",       0.0f, eWeaponType::SelfDefense, 0 },
-
+			// Fire/Lightning/Orbは3つとも開始時に付与される(GameSceneFactory::CreatePlayer)ため、
+			// AcquireWeaponの対象はそれ以外の武器のみでよい。
 			{ ePerkEffectType::AcquireWeapon, L"新武器: Nova",    0.0f, eWeaponType::Nova, 0 },
 			{ ePerkEffectType::AcquireWeapon, L"新武器: Homing Missile", 0.0f, eWeaponType::Homing, 0 },
 			{ ePerkEffectType::AcquireWeapon, L"新武器: Chain Lightning", 0.0f, eWeaponType::Chain, 0 },
@@ -115,6 +111,7 @@ namespace ecs
 			{ ePerkEffectType::AcquireWeapon, L"新武器: Bone Spear", 0.0f, eWeaponType::BoneSpear, 0 },
 			{ ePerkEffectType::AcquireWeapon, L"新武器: Cleave", 0.0f, eWeaponType::Cleave, 0 },
 			{ ePerkEffectType::AcquireWeapon, L"新武器: Flicker Strike", 0.0f, eWeaponType::FlickerStrike, 0 },
+			{ ePerkEffectType::AcquireWeapon, L"新武器: Ricochet Orb", 0.0f, eWeaponType::Ricochet, 0 },
 			{ ePerkEffectType::HealHp,           L"HP回復 30%",         0.30f },
 			{ ePerkEffectType::ExperienceGainUp, L"経験値獲得量 + 15%", 0.15f },
 
@@ -127,12 +124,14 @@ namespace ecs
 
 			// --- トレードオフ(Magnitude=メリット, TradeoffMagnitude=デメリット) ---
 			// ハイリスク・ハイリターンの選択肢。数値は個人開発プロトタイプの暫定値で、
-			// プレイ感触に応じて調整すること
-			{ ePerkEffectType::GlassCannon, L"攻撃力 + 50% / 経験値 - 20%",
+			// プレイ感触に応じて調整すること。
+			// メリット/デメリットは"\n"区切りで2行に分けて表示する(TextRendererが改行に対応済み、
+			// PerkSelectSystem::EnterPerkSelectが行数に応じてカード表示領域の高さを動的に広げる)。
+			{ ePerkEffectType::GlassCannon, L"攻撃力 + 50%\n経験値 - 20%",
 				0.50f, eWeaponType::SingleShot, 0, 0.20f },
-			{ ePerkEffectType::Berserk,     L"移動速度・攻撃間隔 + 25% / 最大HP - 20%",
+			{ ePerkEffectType::Berserk,     L"移動速度・攻撃間隔 + 25%\n最大HP - 20%",
 				0.25f, eWeaponType::SingleShot, 0, 0.20f },
-			{ ePerkEffectType::Reckless,    L"同時攻撃数 + 100% / 防御力 - 50%",
+			{ ePerkEffectType::Reckless,    L"同時攻撃数 + 100%\n防御力 - 50%",
 				1.00f, eWeaponType::SingleShot, 0, 0.50f },
 		};
 		return pool;

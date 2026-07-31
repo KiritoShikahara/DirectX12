@@ -60,6 +60,12 @@ namespace ecs
 		void Open(entt::registry& registry);
 		void Close(entt::registry& registry);
 
+		/// <summary>現在のGameStateがメニューを開ける状態(InGame/PerkSelect)かどうかを判定する</summary>
+		bool CanOpen(entt::registry& registry) const;
+
+		/// <summary>GameStateComponent.IsOptionsMenuOpenを書き換える(存在しなければ何もしない)</summary>
+		void SetOptionsMenuOpenFlag(entt::registry& registry, bool isOpen);
+
 		/// <summary>ページを切り替えてUIを作り直す</summary>
 		void ChangePage(entt::registry& registry, ePage page);
 

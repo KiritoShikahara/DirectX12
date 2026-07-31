@@ -17,12 +17,12 @@ namespace ecs::weaponutil
 
     bool ShouldSkipAutoWeaponUpdate(entt::registry& registry)
     {
-        return !IsInGame(registry) || ecs::IsPlayerUltimateActive(registry);
+        return !IsInGame(registry) || ecs::IsPlayerUltimateActive(registry) || ecs::IsOptionsMenuOpen(registry);
     }
 
     bool ShouldSkipManualWeaponUpdate(entt::registry& registry)
     {
-        return !IsInGame(registry) || ecs::IsPlayerActionLocked(registry);
+        return !IsInGame(registry) || ecs::IsPlayerActionLocked(registry) || ecs::IsOptionsMenuOpen(registry);
     }
 
     int ComputeWeaponDataId(const ecs::WeaponComponent& weapon)

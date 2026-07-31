@@ -98,6 +98,12 @@ namespace sys
 		[[nodiscard]] bool IsActionReleased(const std::string& actionName) const;
 
 		/// <summary>
+		/// IsActionPressedと同様だが、マウスの割り当ては無視する(キーボード/パッドのみ判定する)。
+		/// パーク選択のように、画面上のクリックで誤って決定してしまうと困る画面向け。
+		/// </summary>
+		[[nodiscard]] bool IsActionPressedExcludingMouse(const std::string& actionName) const;
+
+		/// <summary>
 		/// 最後に入力があったデバイスを取得する。
 		/// どちらにも入力が無いフレームでは前回の値を維持する。
 		/// </summary>

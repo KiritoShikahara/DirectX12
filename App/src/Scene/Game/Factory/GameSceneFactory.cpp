@@ -67,6 +67,8 @@ namespace ecs
 			wave.SpawnCountPerTick = waveData->SpawnCountPerTick;
 			wave.SpawnMarginMin = waveData->SpawnMarginMin;
 			wave.SpawnMarginMax = waveData->SpawnMarginMax;
+			wave.SpawnCountGrowthStepInterval = waveData->SpawnCountGrowthStepInterval;
+			wave.SpawnCountGrowthPerStep = waveData->SpawnCountGrowthPerStep;
 			wave.MaxAliveEnemy = waveData->MaxAliveEnemy;
 			wave.StatGrowthStepInterval = waveData->StatGrowthStepInterval;
 			wave.StatGrowthPerStep = waveData->StatGrowthPerStep;
@@ -273,28 +275,31 @@ namespace ecs
 
 		manager.AddComponent<::ecs::WeaponInventoryComponent>(player);
 
-		// 初期武器: MenuScene(武器選択)でカーソルを合わせていたSpellMenuData::ID(Context.SelectSpellID)に
-		// 対応する武器を1つだけ付与する。IDはAssets/Bin/CSV/MenuSpells.csvの並びと一致させること。
+		// 初期武器: MenuScene(武器選択)で選べる3種(Fire/Lightning/Orb)はそれぞれ別の操作枠
+		// (Manual"Attack"/Manual"Attack2"/Auto)に属し、互いに競合しないため、選択に関わらず
+		// 3種類ともまず付与する。選んだ武器(Context.SelectSpellID)だけ選択の実感が出るよう
+		// Lv3スタートにし、他2つはLv1のままにする。
 		// WeaponID=0はいずれも対応するCSV(Assets/Data/Weapon/*.csv)のLv1レコードを指す。
 		// AddWeaponToPlayer()はパーク選択・デバッグ操作からの武器追加とも共通の経路にしてある。
-		// 選ばなかった2種は、パーク選択(PerkSelectSystem::AcquireWeapon)の抽選プールから
-		// 入手できる形にする(GetPerkPool参照)。
+		constexpr int kSelectedWeaponStartLevel = 3;
+
+		const entt::entity fireWeapon = AddWeaponToPlayer(player, ::ecs::eWeaponType::SingleShot, 0, ::ecs::eWeaponControl::Manual);   // Fire: FireBolt（左クリックで発射）
+		const entt::entity lightningWeapon = AddWeaponToPlayer(player, ::ecs::eWeaponType::AreaAttack, 0, ::ecs::eWeaponControl::Manual); // Lightning: IceSpike（右クリック"Attack2"で発動）
+		// SelfDefense(FrostOrb)は発動トリガーの無い周回武器のためControlは意味を持たないが、区分上はAutoとする
+		const entt::entity orbWeapon = AddWeaponToPlayer(player, ::ecs::eWeaponType::SelfDefense, 0, ::ecs::eWeaponControl::Auto);      // Orb: FrostOrb
+
+		entt::entity selectedWeapon = fireWeapon; // 未知のIDが渡ってきた場合のフォールバック
 		switch (Context.SelectSpellID)
 		{
-		case 1001: // Fire
-			AddWeaponToPlayer(player, ::ecs::eWeaponType::SingleShot, 0, ::ecs::eWeaponControl::Manual);  // FireBolt（左クリックで発射）
-			break;
-		case 1002: // Lightning(内部データはIceSpike/AreaAttackを流用)
-			AddWeaponToPlayer(player, ::ecs::eWeaponType::AreaAttack, 0, ::ecs::eWeaponControl::Manual);  // IceSpike（右クリック"Attack2"で発動）
-			break;
-		case 1003: // Orb
-			// SelfDefense(FrostOrb)は発動トリガーの無い常時稼働の武器のためControlは意味を持たないが、区分上はAutoとする
-			AddWeaponToPlayer(player, ::ecs::eWeaponType::SelfDefense, 0, ::ecs::eWeaponControl::Auto);
-			break;
-		default:
-			// 未知のIDが渡ってきた場合のフォールバック(GameScene::mSpellIDの既定値1001と同じ武器にしておく)
-			AddWeaponToPlayer(player, ::ecs::eWeaponType::SingleShot, 0, ::ecs::eWeaponControl::Manual);
-			break;
+		case 1001: selectedWeapon = fireWeapon;      break;
+		case 1002: selectedWeapon = lightningWeapon; break;
+		case 1003: selectedWeapon = orbWeapon;       break;
+		default: break;
+		}
+
+		if (registry.valid(selectedWeapon))
+		{
+			registry.get<::ecs::WeaponComponent>(selectedWeapon).Level = kSelectedWeaponStartLevel;
 		}
 	}
 
@@ -390,8 +395,24 @@ namespace ecs
 		{
 			status.Base.HpRegenPerSecond += hpRegen->ValuePerLevel * static_cast<float>(save.HpRegenLevel);
 		}
+		if (const auto* attackCount = dataMgr.GetById(static_cast<int>(data::eStatUpgradeType::AttackCount)))
+		{
+			// パークのAttackCountUpと同じMulAttackCountへ直接加算する(この値には「Base」に
+			// あたる概念が無く、1.0を基準に積み上げるだけの倍率のため、ショップ強化も
+			// Modifier側へ加算するのが素直。Recompute()はこの関数の呼び出し元が別途行う)
+			status.Modifier.MulAttackCount += attackCount->ValuePerLevel * static_cast<float>(save.AttackCountLevel);
+		}
+		if (const auto* revive = dataMgr.GetById(static_cast<int>(data::eStatUpgradeType::Revive)))
+		{
+			status.ReviveCount += static_cast<int>(std::lround(revive->ValuePerLevel * static_cast<float>(save.ReviveLevel)));
+		}
+		if (const auto* postHitInvincibility = dataMgr.GetById(static_cast<int>(data::eStatUpgradeType::PostHitInvincibility)))
+		{
+			status.Base.PostHitInvincibleDuration += postHitInvincibility->ValuePerLevel * static_cast<float>(save.PostHitInvincibilityLevel);
+		}
 		// GoldGainRate/ExperienceGainRateはPlayerStatusComponentに接続しない
-		// (EnemyDeathSystem::AwardGold/AwardExperienceがPlayerSaveDataを直接参照する)
+		// (EnemyDeathSystem::AwardGold/AwardExperienceがPlayerSaveDataを直接参照する)。
+		// PerkChoiceCountも同様に接続しない(PerkSelectSystem::EnterPerkSelectがPlayerSaveDataを直接参照する)。
 	}
 
 	void GameSceneFactory::CreateCamera()
@@ -472,6 +493,8 @@ namespace ecs
 		CreateWeaponIconBar();
 		// 制限時間のUI
 		CreateWaveTimerUI();
+		// 経験値バー・現在レベル表示のUI（画面上部）
+		CreatePlayerExpBar();
 	}
 
 	void GameSceneFactory::CreateEnemy(
@@ -835,6 +858,83 @@ namespace ecs
 		text.Layer = 1;
 
 		registry.emplace<::ecs::WaveTimerUiTag>(entity);
+	}
+
+	void GameSceneFactory::CreatePlayerExpBar()
+	{
+		auto& manager = ENTITY_MANAGER;
+		auto& registry = ENTT_REGISTRY;
+
+		const float virtualWidth = static_cast<float>(::sys::Window::Get().GetVirtualWidth());
+
+		// 画面上部に横長のバーを配置する。専用のバー画像は無いため、パーク選択のウィンドウ背景
+		// 等と同じ白テクスチャ(Color着色)で代用し、任意の幅にストレッチする(UiPanelUtilityと同じ手法)。
+		// WaveTimerUI(X=880,Y=30,Size48)と縦に被らないよう、バーはその上(Y=8〜24)に収める。
+		constexpr float kBarHeight = 16.0f;
+		constexpr float kBarY = 8.0f;
+		constexpr float kBarLeftMargin = 110.0f; // 左側にレベルテキストの表示余地を空ける
+		constexpr float kBarRightMargin = 40.0f;
+		const float barWidth = virtualWidth - kBarLeftMargin - kBarRightMargin;
+
+		// 経験値バーの識別色(黄緑)。HPバー(赤系)・必殺ゲージ(青)と一目で区別できるようにする
+		const ::graphics::Color kExpColor = ::graphics::Color(0.5f, 0.9f, 0.3f, 1.0f);
+
+		constexpr const char* kWhiteTexturePath = "Assets/Effect/Texture/White.png";
+
+		// 背景(空の状態、暗いグレー半透明)
+		{
+			auto entity = manager.CreateEntity();
+			auto res = ::graphics::TextureManager::Get().GetOrLoad(kWhiteTexturePath);
+
+			auto& tr = manager.AddComponent<ecs::Transform>(entity);
+			tr.Set2DPosition(kBarLeftMargin, kBarY);
+
+			auto& sprite = manager.AddComponent<::ecs::Sprite>(entity, res);
+			sprite.Size = { barWidth, kBarHeight };
+			sprite.Color = ::graphics::Color(0.0f, 0.0f, 0.0f, 0.5f);
+			sprite.SetLayer(::ecs::SpriteLayer::UI, 1);
+		}
+
+		// 本体(経験値の充填分。開始時は空、以降PlayerExpBarSystemが充填率で更新する)
+		{
+			auto entity = manager.CreateEntity();
+			auto res = ::graphics::TextureManager::Get().GetOrLoad(kWhiteTexturePath);
+
+			auto& tr = manager.AddComponent<ecs::Transform>(entity);
+			tr.Set2DPosition(kBarLeftMargin, kBarY);
+
+			auto& sprite = manager.AddComponent<::ecs::Sprite>(entity, res);
+			sprite.Size = { barWidth, kBarHeight };
+			sprite.Color = kExpColor;
+			sprite.FType = ::ecs::FillType::Horizontal;
+			sprite.FillAmount = 0.0f;
+			sprite.SetLayer(::ecs::SpriteLayer::UI, 2); // 背景(offset1)より手前
+
+			// FillAmountを目標値へ滑らかに追従させる(HPバー・必殺ゲージと同じ手法)
+			auto& lerp = manager.AddComponent<::ecs::FillAmountLerp>(entity);
+			lerp.Target = 0.0f;
+			lerp.Speed = 2.0f;
+
+			registry.emplace<::ecs::PlayerExpBarTag>(entity);
+		}
+
+		// 現在レベル表示("Lv.1"。バーの左側に配置)
+		{
+			auto entity = manager.CreateEntity();
+			auto& text = manager.AddComponent<::ecs::TextComponent>(entity);
+			text.Text = L"Lv.1"; // PlayerExpBarSystem が毎フレーム上書きする
+			text.X = 20.0f;
+			// TextComponent::Yはベースライン基準(TextRenderer::Submit参照。文字はここから上へ伸びる)。
+			// kBarY(=8)をそのまま使うとベースラインが画面上端付近になり、文字の大部分が
+			// Y<0(画面外)にはみ出して見えなくなっていた。バーの中心付近に来る値まで下げる
+			constexpr float kLevelTextBaselineY = 26.0f;
+			text.Y = kLevelTextBaselineY;
+			text.Size = 28.0f;
+			text.Color = { 1.0f, 1.0f, 1.0f, 1.0f };
+			text.Layer = 10;
+
+			registry.emplace<::ecs::PlayerLevelTextTag>(entity);
+		}
 	}
 
 }

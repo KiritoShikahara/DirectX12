@@ -1,6 +1,10 @@
 ﻿#include "pch.h"
 #include "EditorSystem.h"
 
+#include<limits>
+
+#include<ImGui/imgui.h>
+
 #include<system/Input/InputManager.h>
 #include<system/Camera/CameraSystem.h>
 #include<system/Physics/System/PhysicsSystem.h>
@@ -14,8 +18,11 @@
 #include<ecs/component/Light/LightComponent.h>
 #include<ecs/component/collider/ColliderComponent.h>
 #include<ecs/component/rigidbody/RigidbodyComponent.h>
+#include<ecs/component/sprite/SpriteComponent.h>
 
 #include<graphics/PrimitiveModel/Resource/PrimitiveResourceManager.h>
+#include<graphics/Texture/TextureManager.h>
+#include<graphics/Texture/Texture.h>
 
 using namespace DirectX;
 
@@ -28,6 +35,17 @@ namespace sys
 
 	void EditorSystem::Update(entt::registry& registry)
 	{
+		// ImGuiパネル(Editor/Hierarchy/Inspector等)上でのクリックはシーン側の
+		// 配置・選択・ドラッグに使わない。EditorSystem::Update は Engine::Update() 内、
+		// ImGuiManager::NewFrame() より前に呼ばれるため、ここで見る WantCaptureMouse は
+		// 1フレーム前の値になるが、マウスが単一フレームでImGuiウィンドウ境界を
+		// 跨ぐことは実用上ないため問題にならない。
+		if (ImGui::GetIO().WantCaptureMouse)
+		{
+			mIsDragging = false;
+			return;
+		}
+
 		auto& input = sys::InputManager::Get();
 		const bool selectPressed = input.IsActionPressed("Select");
 		const bool selectHeld = input.IsActionHeld("Select");
@@ -61,6 +79,12 @@ namespace sys
 		mIsDragging = false;
 	}
 
+	namespace
+	{
+		/// <summary>Sprite配置キーの接頭辞。ArmPlacement("Sprite:" + テクスチャパス)で使う。</summary>
+		constexpr std::string_view kSpritePlacementPrefix = "Sprite:";
+	}
+
 	bool EditorSystem::UpdatePlacement(entt::registry& registry, bool selectPressed)
 	{
 		if (mPendingPlacementKey.empty())
@@ -70,18 +94,35 @@ namespace sys
 
 		if (selectPressed)
 		{
-			auto& cameraSys = sys::CameraSystem::Get();
-			if (cameraSys.HasMainCamera())
+			if (mPendingPlacementKey.rfind(kSpritePlacementPrefix, 0) == 0)
 			{
+				// UI画像配置: 3Dの地面レイキャストは不要で、マウスの仮想スクリーン座標を
+				// そのままSprite座標として使う(SpriteはTransformの2D座標=仮想スクリーン座標の
+				// 正射影で描画されるため、変換なしで一致する)。
+				const std::string texturePath(mPendingPlacementKey.substr(kSpritePlacementPrefix.size()));
 				const XMFLOAT2 mousePos = sys::InputManager::Get().GetMouseVirtualPosition();
-				XMFLOAT3 groundPos;
-				if (cameraSys.ScreenPointToWorldOnPlaneY(registry, mousePos, 0.0f, groundPos))
+				const entt::entity spawned = SpawnPlacedSprite(registry, texturePath, mousePos);
+				if (registry.valid(spawned))
 				{
-					const entt::entity spawned = SpawnPlacedObject(registry, mPendingPlacementKey, groundPos);
-					if (registry.valid(spawned))
+					registry.clear<ecs::SelectedTag>();
+					registry.emplace<ecs::SelectedTag>(spawned);
+				}
+			}
+			else
+			{
+				auto& cameraSys = sys::CameraSystem::Get();
+				if (cameraSys.HasMainCamera())
+				{
+					const XMFLOAT2 mousePos = sys::InputManager::Get().GetMouseVirtualPosition();
+					XMFLOAT3 groundPos;
+					if (cameraSys.ScreenPointToWorldOnPlaneY(registry, mousePos, 0.0f, groundPos))
 					{
-						registry.clear<ecs::SelectedTag>();
-						registry.emplace<ecs::SelectedTag>(spawned);
+						const entt::entity spawned = SpawnPlacedObject(registry, mPendingPlacementKey, groundPos);
+						if (registry.valid(spawned))
+						{
+							registry.clear<ecs::SelectedTag>();
+							registry.emplace<ecs::SelectedTag>(spawned);
+						}
 					}
 				}
 			}
@@ -99,13 +140,24 @@ namespace sys
 			return;
 		}
 
-		auto& cameraSys = sys::CameraSystem::Get();
-		if (!cameraSys.HasMainCamera())
+		const XMFLOAT2 mousePos = sys::InputManager::Get().GetMouseVirtualPosition();
+
+		// Sprite(UI画像)はコライダーを持たないため3Dレイキャストでは選択できない。
+		// 画面座標のAABB当たり判定で先に試し、当たればそちらを優先する。
+		if (const entt::entity spriteHit = PickSpriteAt(registry, mousePos); spriteHit != entt::null)
 		{
+			registry.clear<ecs::SelectedTag>();
+			registry.emplace<ecs::SelectedTag>(spriteHit);
 			return;
 		}
 
-		const XMFLOAT2 mousePos = sys::InputManager::Get().GetMouseVirtualPosition();
+		auto& cameraSys = sys::CameraSystem::Get();
+		if (!cameraSys.HasMainCamera())
+		{
+			registry.clear<ecs::SelectedTag>();
+			return;
+		}
+
 		const sys::Ray ray = cameraSys.ScreenPointToRay(registry, mousePos);
 
 		entt::entity hitEntity = entt::null;
@@ -130,14 +182,30 @@ namespace sys
 			return;
 		}
 
+		const entt::entity selected = *selectedView.begin();
+		auto& transform = registry.get<ecs::Transform>(selected);
+		const XMFLOAT2 mousePos = sys::InputManager::Get().GetMouseVirtualPosition();
+
+		if (registry.all_of<ecs::Sprite>(selected))
+		{
+			// Sprite座標系は仮想スクリーン座標と一致する(正射影・カメラ非依存)ため、
+			// 3Dのような地面平面への逆投影は不要。掴んだ瞬間のオフセットを保持したまま
+			// マウスに追従させる。
+			if (!mIsDragging)
+			{
+				mIsDragging = true;
+				const XMFLOAT2 pos2D = transform.Get2DPosition();
+				mDragOffset2D = { pos2D.x - mousePos.x, pos2D.y - mousePos.y };
+			}
+			transform.Set2DPosition(mousePos.x + mDragOffset2D.x, mousePos.y + mDragOffset2D.y);
+			return;
+		}
+
 		auto& cameraSys = sys::CameraSystem::Get();
 		if (!cameraSys.HasMainCamera())
 		{
 			return;
 		}
-
-		const entt::entity selected = *selectedView.begin();
-		auto& transform = registry.get<ecs::Transform>(selected);
 
 		if (!mIsDragging)
 		{
@@ -145,7 +213,6 @@ namespace sys
 			mDragPlaneY = transform.GetPosition().y;
 		}
 
-		const XMFLOAT2 mousePos = sys::InputManager::Get().GetMouseVirtualPosition();
 		XMFLOAT3 worldPos;
 		if (cameraSys.ScreenPointToWorldOnPlaneY(registry, mousePos, mDragPlaneY, worldPos))
 		{
@@ -201,5 +268,67 @@ namespace sys
 		registry.emplace<ecs::RigidBodyComponent>(entity, ecs::RigidBodyComponent::MakeDynamic());
 
 		return entity;
+	}
+
+	entt::entity EditorSystem::SpawnPlacedSprite(
+		entt::registry& registry,
+		const std::string& texturePath,
+		const XMFLOAT2& screenPos)
+	{
+		graphics::Texture* texture = graphics::TextureManager::Get().GetOrLoad(texturePath);
+		if (texture == nullptr)
+		{
+			return entt::null;
+		}
+
+		const entt::entity entity = ecs::EntityManager::Get().CreateEntity();
+		registry.emplace<ecs::PlaceableTag>(entity);
+		registry.emplace<ecs::NameComponent>(
+			entity, "Sprite_" + std::to_string(static_cast<uint32_t>(entity)));
+
+		auto& transform = registry.emplace<ecs::Transform>(entity);
+		transform.Set2DPosition(screenPos.x, screenPos.y);
+
+		auto& sprite = registry.emplace<ecs::Sprite>(entity, texture);
+		sprite.Pivot = { 0.5f, 0.5f };
+		sprite.SetLayer(ecs::SpriteLayer::UI, 0);
+
+		registry.emplace<ecs::AssetKeyComponent>(entity, texturePath);
+
+		return entity;
+	}
+
+	entt::entity EditorSystem::PickSpriteAt(entt::registry& registry, const XMFLOAT2& screenPos) const
+	{
+		entt::entity bestHit = entt::null;
+		int bestLayer = std::numeric_limits<int>::min();
+
+		registry.view<ecs::PlaceableTag, ecs::Sprite, ecs::Transform>().each(
+			[&](entt::entity entity, ecs::Sprite& sprite, ecs::Transform& transform)
+			{
+				if (!sprite.IsVisible || sprite.Texture == nullptr)
+				{
+					return;
+				}
+
+				const XMFLOAT2 pos2D = transform.Get2DPosition();
+				const float w = (sprite.Size.x > 0.0f ? sprite.Size.x : sprite.Texture->GetWidth()) * sprite.DrawScale.x;
+				const float h = (sprite.Size.y > 0.0f ? sprite.Size.y : sprite.Texture->GetHeight()) * sprite.DrawScale.y;
+
+				const float left = pos2D.x - sprite.Pivot.x * w;
+				const float top = pos2D.y - sprite.Pivot.y * h;
+
+				const bool contains =
+					screenPos.x >= left && screenPos.x <= left + w &&
+					screenPos.y >= top && screenPos.y <= top + h;
+
+				if (contains && sprite.Layer > bestLayer)
+				{
+					bestLayer = sprite.Layer;
+					bestHit = entity;
+				}
+			});
+
+		return bestHit;
 	}
 }

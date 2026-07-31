@@ -182,6 +182,33 @@ namespace graphics
         mDrawCalls.push_back({ startVertex, vertCount, color });
     }
 
+    float TextRenderer::MeasureLineHeight(float size) const
+    {
+        if (!mIsInitialized || !mAtlas->IsLoaded()) return size;
+
+        return size * mAtlas->GetLineHeight();
+    }
+
+    float TextRenderer::MeasureVerticalCenterOffset(float size) const
+    {
+        if (!mIsInitialized || !mAtlas->IsLoaded()) return 0.0f;
+
+        // TextComponent::Y はベースライン座標であり、グリフはそこから
+        // Ascender分だけ上、Descender分だけ下(Descenderは負値)に広がる。
+        // 見た目の縦中心を目標Yに合わせたい場合、ベースラインは
+        // 目標Yよりこの戻り値の分だけ下(Y増加方向)に置く必要がある。
+        return size * (mAtlas->GetAscender() + mAtlas->GetDescender()) * 0.5f;
+    }
+
+    float TextRenderer::MeasureDescent(float size) const
+    {
+        if (!mIsInitialized || !mAtlas->IsLoaded()) return 0.0f;
+
+        // Descenderは負値(ベースラインより上が正)で定義されているため、
+        // ベースラインから下端までの距離は符号を反転させたもの。
+        return size * -mAtlas->GetDescender();
+    }
+
     float TextRenderer::MeasureWidth(const std::wstring& text, float size) const
     {
         if (!mIsInitialized || !mAtlas->IsLoaded()) return 0.0f;
