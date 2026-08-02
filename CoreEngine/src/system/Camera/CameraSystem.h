@@ -13,7 +13,7 @@ namespace ecs
 
 namespace sys
 {
-    /// <summary>レイ（始点 + 正規化方向）</summary>
+    /// <summary>レイ</summary>
     struct ENGINE_API Ray
     {
         DirectX::XMFLOAT3 Origin = { 0.f, 0.f, 0.f };

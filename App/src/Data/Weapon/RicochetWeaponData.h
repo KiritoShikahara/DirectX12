@@ -28,7 +28,7 @@ namespace data
 
         float       FireInterval = 1.0f;     // 発射間隔(秒)。CooldownRateで乗算短縮される
 
-        float       ProjectileSpeed = 40.0f; // 弾速 m/s
+        float       ProjectileSpeed = 60.0f; // 弾速 m/s
         float       Damage = 6.0f;           // このレベルでの火力(初弾・子弾とも同じ値を使う)
 
         float       Radius = 1.0f;           // 球体の見た目半径(m)。当たり判定の基準にも使う

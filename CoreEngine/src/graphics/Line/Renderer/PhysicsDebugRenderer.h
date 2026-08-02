@@ -16,14 +16,6 @@ namespace graphics
 
 	/// <summary>
 	/// 当たり判定のデバック用のワイヤーフレームを表示する。
-	///
-	/// 他のレンダラーと同じく Begin() → UpdateAndDraw() → End() の3段構成を取る。
-	///   Begin()         : 前フレームのデータをクリアする
-	///   UpdateAndDraw() : registry / Jolt から頂点を収集し GPU バッファへ転送する（収集フェーズ）
-	///   End()           : コマンドリストへの記録のみを行う（記録フェーズ）
-	///
-	/// 記録フェーズでは registry にも GPU バッファの Update にも触れないため、
-	/// 将来チャネルを別スレッドで記録しても安全。
 	/// </summary>
 	class PhysicsDebugRenderer : public utility::Singleton<PhysicsDebugRenderer>
 	{
@@ -34,8 +26,6 @@ namespace graphics
 
 		/// <summary>
 		/// パイプライン・バッファを初期化する。
-		/// DX12Renderer::Initialize() の後、アプリ起動時に一度だけ呼ぶ。
-		/// ImGuiManager にデバッグウィンドウも登録する。
 		/// </summary>
 		bool Initialize();
 
@@ -44,34 +34,25 @@ namespace graphics
 
 		/// <summary>
 		/// 前フレームの描画データをクリアする。
-		/// 収集フェーズの先頭で呼ぶこと。
 		/// </summary>
 		void Begin();
 
 		/// <summary>
 		/// registry と Jolt からコライダー形状を収集し、
 		/// カメラ定数バッファと頂点バッファへ転送する。
-		/// 収集フェーズ（シングルスレッド）で呼ぶこと。
-		/// IsEnabled() == false のとき何もしない。
 		/// </summary>
 		void UpdateAndDraw(entt::registry& registry);
 
 		/// <summary>
 		/// 収集済みデータを GPU コマンドとして発行する。
-		/// registry には触れないため、記録フェーズで呼べる。
 		/// </summary>
 		void End(ID3D12GraphicsCommandList* cmdList);
 
-		/// <summary>
-		/// 「Show Colliders」がONかどうか。ヒット時のデバッグ可視化用エンティティ
-		/// （DebugWireSphereComponent）の生成要否を、各武器システム側から
-		/// 判定するために公開している（OFF中に生成しても描画されず無駄なため）。
-		/// </summary>
 		bool IsEnabled() const { return mEnabled; }
 
 	private:
 
-		/// <summary>ワイヤーフレーム頂点（Position + Color）</summary>
+		/// <summary>ワイヤーフレーム頂点</summary>
 		struct WireVertex
 		{
 			DirectX::XMFLOAT3 Position;
@@ -126,11 +107,6 @@ namespace graphics
 		graphics::GDescriptorHeapManager* mHeapManager = nullptr;
 		bool mIsInitialized = false;
 
-		// 全RigidBody+ColliderのJolt三角形抽出とライン構築を毎フレーム行うため、
-		// Releaseでは無効を既定にする（ImGuiトグル自体をReleaseから除外しているため、
-		// ここでOFFにしておかないと常時有効のまま切り替える手段がなくなる）。
-		// Debugでは開発中の当たり判定確認のため、従来通りデフォルトONのままにする
-		// （実測ではこの可視化自体はfps低下の主要因ではなかったため、開発体験を優先する）。
 #ifdef _DEBUG
 		bool              mEnabled = true;
 #else
@@ -146,8 +122,6 @@ namespace graphics
 
 		/// <summary>
 		/// 今フレームに描画する頂点数。
-		/// UpdateAndDraw() が確定し、End() が参照する。
-		/// 0 のとき End() は何もしない。
 		/// </summary>
 		UINT mDrawVertexCount = 0;
 	};

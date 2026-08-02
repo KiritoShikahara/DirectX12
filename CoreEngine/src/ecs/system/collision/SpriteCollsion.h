@@ -12,7 +12,6 @@ namespace ecs
 {
 	/// <summary>
 	/// 2D スプライトに関する当たり判定（カーソル・矩形・点など）をまとめるクラス。
-	/// 全メソッドは static で、状態を持たない。
 	/// </summary>
 	class SpriteCollision
 	{

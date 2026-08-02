@@ -50,7 +50,7 @@ namespace graphics
 
         // Static Sampler x2
         // s0: 通常テクスチャ用 Linear サンプラー
-        // s1: PCF 用比較サンプラー (COMPARISON_LESS_EQUAL)
+        // s1: PCF 用比較サンプラー
         CD3DX12_STATIC_SAMPLER_DESC samplers[2];
 
         samplers[0].Init(
@@ -99,7 +99,6 @@ namespace graphics
         return true;
     }
 
-    // ── PSO ──────────────────────────────────────────────────────
 
     bool FbxPipeline::CreatePipeline(ID3D12Device* device, ShaderManager& shaderManager)
     {
@@ -132,11 +131,6 @@ namespace graphics
         psoDesc.InputLayout = { inputLayout, _countof(inputLayout) };
         psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
         psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-        // NOTE: BACKカリングを試したところ地面(Field)のマテリアルが消える不具合が発生した。
-        // 頂点の巻き順がD3D12の既定(時計回り=表面)と逆になっているモデルが含まれるため、
-        // 単純にBACKへ変えるとそれらのメッシュが丸ごとカリングされてしまう。
-        // 修正するにはモデルごとの巻き順を揃えるか、FrontCounterClockwise=TRUEを試すか、
-        // メッシュ単位でカリング方向を切り替えられるようにする必要がある(要調査、暫定NONEに戻す)。
         psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
         psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
         psoDesc.SampleMask = UINT_MAX;

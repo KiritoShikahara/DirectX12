@@ -12,15 +12,11 @@ namespace sys
     void LightSystem::Update(entt::registry& registry)
     {
         // 毎フレームのvector生成を避けるため、関数static変数として使い回す
-        // (LightSystemは全メンバがstaticなインスタンスを持たないユーティリティクラスのため、
-        // メンバ変数化ではなくfunction-static変数で対応する)
         static std::vector<graphics::LightData> lights;
         lights.clear();
         lights.reserve(16);
 
-        // ── Directional Light ─────────────────────────────────────
-        // Shadow を落とす Directional Light は必ず先頭 (index 0) に積む。
-        // FbxRenderer / シェーダー側が index 0 固定で Shadow Map を参照するため。
+        // 指向ライト
         registry.view<ecs::DirectionalLightComponent>().each(
             [&](ecs::DirectionalLightComponent& c)
             {
@@ -34,14 +30,13 @@ namespace sys
                 XMVECTOR dir = XMVector3Normalize(XMLoadFloat3(&c.Direction));
                 XMStoreFloat3(&d.Direction, dir);
 
-                // ── Shadow Map 設定 ───────────────────────────────
+                // シャドウマップデータ
                 if (c.CastShadow)
                 {
                     d.CastShadow = 1u;
                     d.ShadowBias = c.ShadowBias;
 
-                    // ライト位置 = 注視点からライト方向の逆向きに ShadowDistance だけ離れた位置
-                    // (ライト方向は「光が向かう方向」なので逆向きがライト座標)
+                    // ライト位置
                     XMVECTOR target = XMLoadFloat3(&c.ShadowTarget);
                     XMVECTOR lightPos = XMVectorSubtract(
                         target,
@@ -49,21 +44,20 @@ namespace sys
 
                     // View 行列
                     XMVECTOR up = XMVectorSet(0.f, 1.f, 0.f, 0.f);
-                    // ライト方向が真上/真下(平行 or 反平行)のとき up と縮退し
-                    // XMMatrixLookAtLH が特異行列(NaN)になるため、絶対値で判定して回避する。
-                    // デフォルトの Direction={0,-1,0}(真下)はまさにこのケースに該当するため、
-                    // fabs を取らないと既定シーンで常にシャドウが壊れる。
+
                     if (std::fabs(XMVectorGetX(XMVector3Dot(dir, up))) > 0.99f)
+                    {
                         up = XMVectorSet(0.f, 0.f, 1.f, 0.f);
+                    }
 
                     XMMATRIX lightView = XMMatrixLookAtLH(lightPos, target, up);
 
-                    // 正射影 Proj 行列 (Directional Light は平行光源)
+                    // 正射影 Proj 行列
                     XMMATRIX lightProj = XMMatrixOrthographicLH(
                         c.ShadowRange, c.ShadowRange,
                         c.ShadowNear, c.ShadowFar);
 
-                    // CPU 側で転置して格納 (シェーダーは column-major で受け取る)
+                    // CPU 側で転置して格納
                     XMMATRIX lightVP = lightView * lightProj;
                     XMStoreFloat4x4(&d.LightViewProj, XMMatrixTranspose(lightVP));
                 }
@@ -71,13 +65,12 @@ namespace sys
                 {
                     d.CastShadow = 0u;
                     d.ShadowBias = 0.f;
-                    // LightViewProj はゼロ初期化のまま (シェーダー側で CastShadow==0 なら参照しない)
                 }
 
                 lights.push_back(d);
             });
 
-        // ── Point Light ───────────────────────────────────────────
+        // ポイントライト
         registry.view<ecs::PointLightComponent, ecs::Transform>().each(
             [&](ecs::PointLightComponent& c, ecs::Transform& tr)
             {
@@ -95,7 +88,7 @@ namespace sys
                 lights.push_back(d);
             });
 
-        // ── Spot Light ────────────────────────────────────────────
+        // スポットライト
         registry.view<ecs::SpotLightComponent, ecs::Transform>().each(
             [&](ecs::SpotLightComponent& c, ecs::Transform& tr)
             {
@@ -153,7 +146,7 @@ namespace sys
                             ImGui::Checkbox("Active", &light.IsActive);
                             ImGui::Separator();
 
-                            // ── 方位角 / 仰角 ─────────────────────────────
+                            // 方位角と仰角 
                             XMVECTOR dir = XMVector3Normalize(XMLoadFloat3(&light.Direction));
                             XMFLOAT3 d;
                             XMStoreFloat3(&d, dir);
@@ -190,7 +183,7 @@ namespace sys
 
                             ImGui::Separator();
 
-                            // ── Color / Intensity ─────────────────────────
+                            // 色・光度
                             ImGui::Text("Color");
                             float col[3] = { light.Color.x, light.Color.y, light.Color.z };
                             if (ImGui::ColorEdit3("##Color", col,
@@ -201,12 +194,7 @@ namespace sys
 
                             ImGui::Separator();
 
-                            // ── Position ───────────────────────────────────
-                            // Directional Light は Transform を持たず、
-                            // ShadowTarget - Direction * ShadowDistance で位置が決まる。
-                            // CastShadow が false でもここは常に表示・編集可能にする
-                            // (以前は Shadow Settings 内 = CastShadow オンのときしか
-                            //  座標を操作できなかったため)。
+                            // 座標
                             {
                                 const XMVECTOR dirV = XMVector3Normalize(XMLoadFloat3(&light.Direction));
                                 const XMVECTOR targetV = XMLoadFloat3(&light.ShadowTarget);
@@ -237,7 +225,7 @@ namespace sys
 
                             ImGui::Separator();
 
-                            // ── Shadow 設定 ───────────────────────────────
+                            // シャドウ設定
                             if (ImGui::CollapsingHeader("Shadow Settings"))
                             {
                                 ImGui::Checkbox("Cast Shadow", &light.CastShadow);

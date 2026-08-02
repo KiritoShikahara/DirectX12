@@ -172,6 +172,9 @@ namespace ecs
 		{
 			if (result.SelectedIndex == 0)
 			{
+				// TODO: LoadingScene経由の非同期先読みはDevelop構成で原因未特定のクラッシュが
+				// 再現したため一旦見送り、以前と同じ「GameScene::Initialize()内で同期的に
+				// リソース読み込みする」方式に戻す(フェード中の一瞬のスパイクは許容する)。
 				::sys::SceneManager::Get().ChangeSceneWithTransition<scene::GameScene>();
 			}
 			else

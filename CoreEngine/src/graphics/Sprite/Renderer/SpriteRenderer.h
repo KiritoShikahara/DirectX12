@@ -38,7 +38,7 @@ namespace graphics
 		/// <summary>
 		/// 初期化。依存するオブジェクトをすべて引数で受け取る。
 		/// </summary>
-		/// <param name="device">GPU デバイス（バッファ作成・PSO 作成）</param>
+		/// <param name="device">GPU デバイス</param>
 		/// <param name="heapManager">ディスクリプタヒープの供給元</param>
 		/// <param name="shaderManager">シェーダーのコンパイル・キャッシュ管理</param>
 		/// <param name="window">仮想解像度の取得元</param>
@@ -107,7 +107,7 @@ namespace graphics
 		std::vector<SpriteShaderData>      mReservedData;
 		std::vector<DrawCall>              mDrawCalls;
 
-		// UpdateAndDraw()の一時バッファ。毎フレームclear()して再利用する(毎フレームのvector生成禁止のため)
+		// UpdateAndDraw()の一時バッファ
 		std::vector<RenderItem>            mRenderItems;
 
 		// 依存オブジェクト

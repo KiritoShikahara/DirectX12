@@ -86,11 +86,6 @@ namespace graphics
 		CD3DX12_DESCRIPTOR_RANGE1 rangeTex;
 		rangeTex.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1);    // t1
 
-		// rootParams[2]: インスタンスデータの先頭オフセットを渡す 32bit 定数 (b0)。
-		// SV_InstanceID は DrawInstanced の StartInstanceLocation を加算済みの値を返す
-		// はずの仕様だが、GPU/ドライバ依存でこれが反映されないケースがあるため、
-		// StartInstanceLocation には常に 0 を渡し、このオフセットを明示的にシェーダーへ渡して
-		// VS 側で手動加算する方式に統一する。
 		CD3DX12_ROOT_PARAMETER1 rootParams[3];
 		rootParams[0].InitAsDescriptorTable(1, &rangeBuffer, D3D12_SHADER_VISIBILITY_ALL);
 		rootParams[1].InitAsDescriptorTable(1, &rangeTex, D3D12_SHADER_VISIBILITY_ALL);

@@ -31,7 +31,7 @@ namespace ecs
 	{
 		using namespace DirectX;
 
-		// 描画サイズの決定（SpriteRenderer::CalculateShaderData と同じロジック）
+		// 描画サイズの決定
 		const float baseW = (sp.Size.x > 0.0f) ? sp.Size.x : sp.Texture->GetWidth();
 		const float baseH = (sp.Size.y > 0.0f) ? sp.Size.y : sp.Texture->GetHeight();
 		const float w = baseW * sp.DrawScale.x;
@@ -44,7 +44,6 @@ namespace ecs
 		const float    rotRad = tr.Get2DRotation();
 
 		// SpriteRenderer::CalculateShaderData と同じ合成順
-		//   Pivot（基準点オフセット） → Scale + Flip → Rotation(Z) → Translation
 		const XMMATRIX mPivot = XMMatrixTranslation(-sp.Pivot.x, -sp.Pivot.y, 0.0f);
 		const XMMATRIX mScale = XMMatrixScaling(w * sp.Flip.x, h * sp.Flip.y, 1.0f);
 		const XMMATRIX mRot = XMMatrixRotationZ(rotRad);

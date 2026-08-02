@@ -169,8 +169,6 @@ namespace graphics
 	/// <summary>
 	/// GPU にバッファデータを転送する。
 	/// UploadTextureData と同じく専用アップロードキューで同期的に完結する。
-	/// スレッドセーフ (内部で mutex によって排他制御される)。
-	/// cmdList は不要。描画ループに依存しない。
 	/// </summary>
 	bool DX12Device::UploadBufferData(ID3D12Resource* pResource, const void* data, size_t size, D3D12_RESOURCE_STATES targetState)
 	{

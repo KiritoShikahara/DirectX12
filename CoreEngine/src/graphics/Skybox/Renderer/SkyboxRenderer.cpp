@@ -26,7 +26,6 @@ namespace graphics
 
     void SkyboxRenderer::Finalize()
     {
-        // パイプライン（ComPtr/UniquePtr）のリセット
         if (mPipeline)
         {
             // 必要に応じて SkyboxPipeline 側にもリセット処理を追加
@@ -50,7 +49,7 @@ namespace graphics
 
 	void SkyboxRenderer::UpdateAndDraw(entt::registry& registry)
 	{
-        // 毎フレームのvector生成を避けるため、メンバ変数(mEntries)を使い回す
+        // 毎フレームのvector生成を避けるため、メンバ変数を使い回す
         mEntries.clear();
 
         registry.view<ecs::SkyboxComponent>().each(
@@ -66,8 +65,6 @@ namespace graphics
 
         auto& texMgr = TextureManager::Get();
 
-        // A 側 (最高優先度)。パスが前フレームと同じならGetOrLoad()自体を呼ばない
-        // (absolute()によるパス解決+文字列生成コストを避けるため)
         const std::filesystem::path& pathA = *mEntries[0].TexturePath;
         if (mCachedTexA == nullptr || pathA != mCachedPathA)
         {
@@ -81,7 +78,7 @@ namespace graphics
             return;
         }
 
-        // B 側 (2番目。存在しない場合は A と同じテクスチャで Weight=0)
+        // B 側 
         const Texture* texB = texA;
         float          weight = 0.0f;
 
@@ -116,27 +113,26 @@ namespace graphics
         cmdList->SetGraphicsRootSignature(mPipeline->GetRootSignature());
         cmdList->SetPipelineState(mPipeline->GetPipelineState());
 
-        // ヒープ (FbxRenderer::End() と同じヒープを使い回す)
+        // ヒープ
         ID3D12DescriptorHeap* heaps[] = { mHeapManager->GetNativeHeap() };
         cmdList->SetDescriptorHeaps(_countof(heaps), heaps);
 
-        // SLOT_BLEND_WEIGHT (b0): BlendWeight を float 1個として渡す
         cmdList->SetGraphicsRoot32BitConstant(
             SkyboxPipeline::SLOT_BLEND_WEIGHT,
             *reinterpret_cast<const UINT*>(&mBlendWeight),
             0);
 
-        // SLOT_SCENE_BUFFER (t8, space0): FbxRenderer::mSceneBuffer の GPU ハンドルを共有
+		// GPUハンドルをセットする。SLOT_SCENE_BUFFER は t8 space0 で、FbxRenderer::mSceneBuffer の内容を参照する。
         cmdList->SetGraphicsRootDescriptorTable(
             SkyboxPipeline::SLOT_SCENE_BUFFER,
             sceneBufferGpuHandle);
 
-        // SLOT_SKYBOX_TEX_A (t0, space1): キューブマップ A
+        // SLOT_SKYBOX_TEX_A
         cmdList->SetGraphicsRootDescriptorTable(
             SkyboxPipeline::SLOT_SKYBOX_TEX_A,
             mTexA->GetGpuHandle());
 
-        // SLOT_SKYBOX_TEX_B (t1, space1): キューブマップ B
+        // SLOT_SKYBOX_TEX_B
         cmdList->SetGraphicsRootDescriptorTable(
             SkyboxPipeline::SLOT_SKYBOX_TEX_B,
             mTexB->GetGpuHandle());
@@ -146,7 +142,7 @@ namespace graphics
         cmdList->IASetVertexBuffers(0, 0, nullptr);
         cmdList->IASetIndexBuffer(nullptr);
 
-        // フルスクリーントライアングル (3頂点, 1インスタンス)
+        // フルスクリーントライアングル
         cmdList->DrawInstanced(3, 1, 0, 0);
     }
 }

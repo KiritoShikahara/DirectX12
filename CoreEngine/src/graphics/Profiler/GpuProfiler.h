@@ -10,20 +10,7 @@
 namespace graphics
 {
     /// <summary>
-    /// GPU側の実行時間をタイムスタンプクエリで計測する。
-    ///
-    /// PerformanceMonitorが計測しているのはCPU時間(コマンド記録に要した時間)だけであり、
-    /// GPUが実際にそのコマンドを実行するのに要した時間は含まれていない。
-    /// 半透明パーティクルのオーバードローのようなGPU律速の負荷はCPU計測に一切現れないため、
-    /// CPU側の数値だけを見て最適化を判断すると誤る。その盲点を埋めるためのクラス。
-    ///
-    /// 計測はチャネル単位(eRenderChannel)で行う。チャネルはExecuteCommandListsへ
-    /// 宣言順で投入されGPU上でも同じ順に実行されるため、チャネルごとの所要時間と
-    /// フレーム全体(Pre開始〜Post終了)の所要時間が求められる。
-    ///
-    /// 結果の回収はFRAME_COUNTフレーム遅れで行う(GPUがまだ実行中の結果は読めないため)。
-    /// 回収タイミングはDX12Context::BeginRenderingのフェンス待機直後に固定しており、
-    /// このフレームのGPU完了は既に保証されているため、計測のための追加待機は発生しない。
+	/// GPUの実行時間をタイムスタンプクエリで計測するクラス
     /// </summary>
     class ENGINE_API GpuProfiler : public utility::Singleton<GpuProfiler>
     {
@@ -39,7 +26,6 @@ namespace graphics
 
         /// <summary>
         /// フレーム開始時に呼ぶ。前回このフレームインデックスで記録した計測結果を回収する。
-        /// DX12Context::BeginRenderingのGPU待機より後で呼ぶこと。
         /// </summary>
         void BeginFrame(uint32_t frameIndex);
 
@@ -51,7 +37,6 @@ namespace graphics
 
         /// <summary>
         /// 今フレーム分のクエリ結果を読み戻しバッファへ書き出すコマンドを積む。
-        /// 全チャネルのEndChannel後、最後のチャネル(Post)のCloseより前に呼ぶこと。
         /// </summary>
         void ResolveFrame(ID3D12GraphicsCommandList* cmdList);
 

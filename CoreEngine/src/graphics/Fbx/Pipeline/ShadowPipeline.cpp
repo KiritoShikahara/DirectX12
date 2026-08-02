@@ -46,22 +46,20 @@ namespace graphics
         psoDesc.PS = {};
         psoDesc.InputLayout = { inputLayout, _countof(inputLayout) };
 
-        // ── ラスタライザ ─────────────────────────────────────────
+        // ラスタライザ
         psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
         psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK; // 裏面をカリングしてピーターパン軽減
-        // DepthBias: 定数バイアス + スロープスケールバイアスでセルフシャドウを除去
-        // 値はシャドウマップ解像度 (2048) と near/far に合わせて調整
         psoDesc.RasterizerState.DepthBias = 1000;
         psoDesc.RasterizerState.DepthBiasClamp = 0.0f;
         psoDesc.RasterizerState.SlopeScaledDepthBias = 1.5f;
 
-        // ── Blend / Depth ────────────────────────────────────────
+        // Blend / Depth 
         psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
         psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
         psoDesc.SampleMask = UINT_MAX;
         psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
-        // ── RenderTarget なし / Depth のみ ───────────────────────
+        // RenderTarget なし / Depth のみ 
         psoDesc.NumRenderTargets = 0;
         psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
         psoDesc.SampleDesc.Count = 1;

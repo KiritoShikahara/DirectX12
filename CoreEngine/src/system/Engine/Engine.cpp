@@ -170,20 +170,20 @@ namespace sys
         sys::EditorUI::Get().Finalize();
 #endif
 
-        // 2. リソースマネージャーのクリア（ここで Texture 等のディスクリプタが解放される）
+        // リソースマネージャーのクリア
         FbxResourceManager::Get().Clear();
         TextureManager::Get().Clear();
 
-        // 3. UIの終了
+        // UIの終了
         ImGuiManager::Get().Finalize();
 
-        // 4. 物理エンジンなどの終了
+        // 物理エンジンなどの終了
         sys::PhysicsManager::Get().Finalize();
 
-        // 5. 基盤（ヒープマネージャ）の終了（すべてが解放された後に呼ぶ）
+        // 基盤（ヒープマネージャ）の終了（すべてが解放された後に呼ぶ）
         graphics::GDescriptorHeapManager::Get().Finalize();
 
-        // 6. DX12 デバイス/レンダラーの破棄
+        // DX12 デバイス/レンダラーの破棄
         mDX12Renderer->Finalize();
         mDX12Renderer = nullptr;
 
@@ -353,10 +353,6 @@ namespace sys
         // Editモード中はゲームロジック・物理・アニメ・エフェクトを一切動かさず、
         // 表示に必要な最小限のシステムとエディタ操作(選択/配置/ドラッグ)のみ実行する。
         // Playモードでは従来通りフル更新する。
-        // (以前は#ifdef _DEBUGで分岐していたため、DevelopビルドではEditorUI自体は
-        // 初期化されるのにこの判定だけ効かず、Playを押していなくても常にフル更新される
-        // 不整合になっていた。DEV_TOOL_ENABLEDは_DEBUGを畳み込み済みのため、
-        // 判定は必ずこちらを使うこと(DebugConfig.h参照))
         if (sys::EditorManager::Get().IsPlaying())
         {
             UpdateGameplay(dt, rawDt, registry);
@@ -383,17 +379,8 @@ namespace sys
             mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::Update, registry, dt, rawDt);
             sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::GameplayUpdate);
 
-            // Update フェーズの各システムが CollisionEnterEvent/SensorEnterEvent を読み終えた直後に
-            // クリアする。これらのイベントは前フレームの物理ステップ(下の PhysicsSystem::Update)が
-            // 生成したものを Update フェーズで消費する設計(1フレーム遅延)のため、
-            // このタイミングを逃す(=消費前にクリアする/クリアし忘れる)と、
-            // 消費し損ねる、または同じ接触が毎フレーム蓄積し続けて過剰にダメージ判定されるバグになる。
             sys::PhysicsSystem::ClearCollisionEvents(registry);
 
-            // シーン切り替えリクエスト（ChangeSceneWithTransition 等）は上記の Update フェーズ内、
-            // 例えば TitleInputSystem::Update で発行される。
-            // そのため SceneManager::Update（フェード進行）は各システムの実行後に呼び、
-            // 同フレーム中にリクエストされたトランジションを 1フレーム遅延なく開始できるようにする。
             mSceneManager->Update(rawDt);
 
             sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::Physics);
@@ -428,26 +415,10 @@ namespace sys
 
     /// <summary>
     /// 描画。
+    /// フレームは以下の 2 フェーズ
+    /// 収集フェーズ  Begin() / UpdateAndDraw()
     ///
-    /// フレームは以下の 2 フェーズに厳密に分かれる。
-    ///
-    /// [収集フェーズ]  Begin() / UpdateAndDraw()
-    ///   - entt::registry を読む
-    ///   - GPU バッファへの Update()（StructuredBuffer 等）を行う
-    ///   - テクスチャの遅延ロード（GDescriptorHeapManager::Issuance）を行う
-    ///   → registry / ヒープマネージャに触れてよいのはこのフェーズのみ
-    ///
-    /// [記録フェーズ]  End() / Flush()
-    ///   - コマンドリストへの記録のみを行う
-    ///   - registry には一切触れない
-    ///   - GPU バッファの Update() も行わない（GetGpuHandle() の読み取りのみ）
-    ///   → チャネルごとにコマンドリストが分かれているため、
-    ///      Shadow / Scene / Sprite はワーカースレッドで並列に記録する。
-    ///      Effect（Effekseer）/ Debug（ImGui）はスレッドセーフでないため
-    ///      メインスレッドで記録し、ワーカーと並行して実行する。
-    ///
-    /// チャネルの投入順（= 描画順）は eRenderChannel の宣言順で保証される
-    /// （記録順が並列化で入れ替わっても Flip() の ExecuteCommandLists 順は変わらない）。
+    /// 記録フェーズ  End() / Flush()
     /// </summary>
     void Engine::Render()
     {
@@ -456,9 +427,7 @@ namespace sys
         auto  context = mDX12Renderer->GetContext();
         auto& registry = mEntityManager->GetRegistry();
 
-        // ── Begin ────────────────────────────────────────────────
-        // BeginRendering() 内で RenderContext::SetFrameIndex() が呼ばれ、
-        // 全チャネルのコマンドリストが開かれる。
+        // begin
         {
             mDX12Renderer->BeginFrame();
             mImGuiManager->NewFrame();
@@ -471,16 +440,13 @@ namespace sys
         SINGLETON_REF(graphics::ShapeRenderer, shapeRenderer);
         SINGLETON_REF(graphics::TextRenderer, textRenderer);
 
-        // ── 収集フェーズ ──────────────────────────────────────────
-        // registry の読み取りと GPU バッファへの転送はすべてここで完結させる。
+        // 収集フェーズ
         {
             sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::RenderCollect);
 
             fbxRenderer.Begin();
             fbxRenderer.UpdateAndDraw(registry);
 
-            // SkyboxRenderer は内部で TextureManager::GetOrLoad()（遅延ロード）を行う。
-            // Issuance() はスレッドセーフではないため、必ずこのフェーズで呼ぶこと。
             skyboxRenderer.Begin();
             skyboxRenderer.UpdateAndDraw(registry);
 
@@ -506,20 +472,11 @@ namespace sys
             sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::RenderCollect);
         }
 
-        // ── 記録フェーズ ──────────────────────────────────────────
-        // 各チャネルへコマンドを記録する。registry には触れない。
-        //
-        // Shadow / Scene / Sprite はワーカースレッドへ委譲し、
-        // その間メインスレッドで Effect / Debug チャネルを記録することで
-        // 実際に並列に記録する。GPU への投入(ExecuteCommandLists)は
-        // WaitAll() で全ワーカーの記録完了を待った後、Flip() がチャネルの
-        // 宣言順に行うため、記録順が入れ替わっても描画順は保証される。
+        // 記録フェーズ
         {
             std::function<void()> parallelTasks[3] =
             {
-                // Shadow: RTV を外して Shadow Map (DSV) に深度を書き込む。
-                //         専用チャネルなので他チャネルの RTV 設定には影響しない
-                //         （RestoreMainRenderTarget() は不要）。
+                // Shadow: RTV を外して Shadow Mapに深度を書き込む。
                 [&]()
                 {
                     sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::ShadowPass);
@@ -527,7 +484,7 @@ namespace sys
                         context->GetCommandList(eRenderChannel::Shadow));
                     sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::ShadowPass);
                 },
-                // Scene: 通常描画パス（Shadow Map は SRV としてバインド済み）と Skybox
+                // Scene: 通常描画パスと Skybox
                 [&]()
                 {
                     sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::ScenePass);
@@ -566,38 +523,21 @@ namespace sys
                 graphics::PhysicsDebugRenderer::Get().End(cmdList);
                 graphics::LightDebugRenderer::Get().End(cmdList);
 #endif
-                // シーントランジション（フェードイン/アウト）のフルスクリーンオーバーレイ。
-                // すべてのシーン描画コマンドの後に発行する必要がある。
+                // シーントランジションのフルスクリーンオーバーレイ
                 mSceneManager->DrawTransition(cmdList);
 
-                // ImGui はスレッドセーフでないため Debug チャネル（メインスレッド）で記録する。
+                // ImGui はスレッドセーフでないため Debug チャネルで記録する。
                 mImGuiManager->EndFrame(cmdList);
                 sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::Debug);
             }
 
-            // Shadow / Scene / Sprite チャネルの記録完了を待つ。
-            // parallelTasks はローカル変数のため、EndFrame() で Close するより前に
-            // 必ず全ワーカーの記録が終わっていなければならない。
             mRenderThreadPool->WaitAll();
         }
 
-        // ── End ──────────────────────────────────────────────────
-        // 全チャネルを Close し、宣言順に ExecuteCommandLists → Present。
+        // End
         {
             mDX12Renderer->EndFrame();
 
-            // 【2026-07-21】EffekseerRendererLLGIの頂点リングバッファ(VertexBuffer::Unlock/
-            // GetNextBuffer)にはGPU側の完了確認が無く、"nextIndex_"という単純なカウンタを
-            // 描画バッチ(Unlock呼び出し)ごとに回しているだけ(ベンダーコード自身に
-            // "TODO make correct ring buffer"というコメントあり、未完成の実装)。
-            // このカウンタは「フレーム単位」ではなく「バッチ単位」で進むため、エンジン側で
-            // フレーム単位のフェンス追跡(EffekseerManager::OnFrameSubmitted、現在は不使用)を
-            // 行ってもバッチ数がフレームごとに変動する限り正しく保護できない
-            // (試したが再発を確認済み)。CPUがGPUより先行しすぎる環境(Develop/Releaseの高fps)では
-            // GPUがまだ読んでいるリング領域をCPUが上書きし、パーティクルがノイズ状に崩れる。
-            // 正しく直すにはベンダーコード側にバッチ単位のフェンス管理を追加する必要があり
-            // リスクが大きいため、確実性を優先してここで毎フレーム完全同期する。
-            // パフォーマンスコストとの兼ね合いは要測定(PerformanceMonitor参照)。
             mDX12Renderer->WaitForGPU();
         }
     }

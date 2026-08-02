@@ -9,14 +9,7 @@ namespace graphics
     class ShaderManager;
 
     /// <summary>
-    /// テキスト描画用 RootSignature / PSO
-    ///
-    /// RootSignature スロット:
-    ///   [0] DescriptorTable CBV b0 : TextSceneData  (ScreenW/H, PxRange, Threshold)
-    ///   [1] DescriptorTable SRV t0 : MSDF アトラステクスチャ
-    ///   [2] Root32BitConstants  b1 : RGBA カラー (4 floats)
-    ///
-    /// StaticSampler s0: LinearClamp
+    /// テキスト描画用
     /// </summary>
     class ENGINE_API TextPipeline
     {

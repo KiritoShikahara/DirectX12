@@ -18,7 +18,7 @@ namespace sys
 		virtual ~ContactListener() = default;
 
 		/// <summary>
-		/// 衝突を受け入れるかどうかを返す（常に全受け入れ）
+		/// 衝突を受け入れるかどうかを返す
 		/// </summary>
 		JPH::ValidateResult OnContactValidate(
 			const JPH::Body& inBody1,
@@ -43,8 +43,6 @@ namespace sys
 		/// <summary>
 		/// 衝突継続コールバック。接触が続いている間、毎フレーム呼ばれる。
 		/// OnContactAdded と同様、CollisionStayEvent/SensorStayEvent を保留バッファへ積むだけにする。
-		/// （継続ダメージのクールダウン判定など、密着し続けている間も
-		/// 毎フレーム検知したい処理のために必要）
 		/// </summary>
 		void OnContactPersisted(
 			const JPH::Body& inBody1,
@@ -58,9 +56,6 @@ namespace sys
 
 		/// <summary>
 		/// OnContactAdded で蓄積された保留イベントを entt::registry へ反映する。
-		/// PhysicsSystem::Update()（Jolt の PhysicsSystem::Update 呼び出し）の直後、
-		/// メインスレッドからのみ呼ぶこと。呼び出し後、内部バッファは
-		/// クリアされる（capacity は保持し、毎フレームの再確保を避ける）。
 		/// </summary>
 		void FlushPendingEvents(entt::registry& registry);
 

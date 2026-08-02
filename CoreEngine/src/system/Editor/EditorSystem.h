@@ -11,10 +11,6 @@ namespace sys
 	/// <summary>
 	/// EditorManager::IsEditing() の間だけ Engine::Update() から呼ばれる、
 	/// クリック選択・地面ドラッグ移動・パレット配置・削除のシステム。
-	///
-	/// 選択判定は物理コライダーへの Jolt レイキャスト(PhysicsSystem::TryPickEntity)を
-	/// 使うため、Collider の無いエンティティは 3D クリックでは選択できない
-	/// (Hierarchy パネルからの選択は別途 SelectedTag を直接付け替えるため可能)。
 	/// </summary>
 	class ENGINE_API EditorSystem : public utility::Singleton<EditorSystem>
 	{
@@ -27,7 +23,6 @@ namespace sys
 
 		/// <summary>
 		/// 次のクリックで指定キーのオブジェクトを配置するモードに入る。
-		/// EditorUI のパレットボタンから呼ぶ。
 		/// </summary>
 		void ArmPlacement(const std::string& placementKey);
 
@@ -42,8 +37,6 @@ namespace sys
 
 		/// <summary>
 		/// 選択中の配置オブジェクト(SelectedTag + PlaceableTag)を削除する。
-		/// 選択が無い、または対象が PlaceableTag でない場合は何もしない。
-		/// Deleteキー(EditorSystem::Update経由)と EditorUI の削除ボタンの両方から呼ばれる。
 		/// </summary>
 		void DeleteSelected(entt::registry& registry);
 
@@ -58,8 +51,7 @@ namespace sys
 			const DirectX::XMFLOAT3& groundHitPos);
 
 		/// <summary>
-		/// Sprite(UI画像)を指定の仮想スクリーン座標に配置する。3Dのプリミティブ配置
-		/// (SpawnPlacedObject)とは異なり地面へのレイキャストが不要なため分離している。
+		/// Sprite(UI画像)を指定の仮想スクリーン座標に配置する。
 		/// </summary>
 		entt::entity SpawnPlacedSprite(
 			entt::registry& registry,

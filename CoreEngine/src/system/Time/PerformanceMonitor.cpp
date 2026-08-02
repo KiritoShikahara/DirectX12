@@ -53,8 +53,7 @@ namespace sys
         mHistoryCount = std::min(mHistoryCount + 1, kHistorySize);
 
         // 直前のフレーム中にBeginSection/EndSectionで積算された各区分の所要時間を
-        // 平均化用バッファへ積み、今フレーム用にリセットする(ワーカースレッドが書き込んだ値は
-        // 直前フレームのRender()末尾のWaitAll()で同期済みのため、ここで安全に読める)
+        // 平均化用バッファへ積み、今フレーム用にリセットする
         for (auto& s : mSections)
         {
             s.AccumMs += s.CurrentFrameMs;
@@ -70,8 +69,8 @@ namespace sys
             mGpuAccumSamples += 1;
         }
 
-        // 表示用の数値は0.25秒ごとにのみ更新する(毎フレーム更新すると数値が
-        // 激しく点滅して読みづらいため)。表示値は直近履歴の平均・最小・最大から求める。
+        // 表示用の数値は0.25秒ごとにのみ更新する
+        // 毎フレームにするとめっちゃ激しく点滅したので
         mFpsUpdateAccumulator += rawDeltaTime;
         if (mFpsUpdateAccumulator < kFpsUpdateIntervalSec || mHistoryCount == 0)
         {
@@ -96,7 +95,7 @@ namespace sys
         mMaxFrameTimeMs = maxMs;
 
         // 1% Low: 遅い方から1%(最低1フレーム)の平均フレーム時間から求める。
-        // 平均FPSはカクつきを均してしまうため、体感の滑らかさはこちらに現れる
+        // ベンチマークでもこれは大事。
         mSortedFrameTimes.assign(mFrameTimeHistoryMs, mFrameTimeHistoryMs + mHistoryCount);
         std::sort(mSortedFrameTimes.begin(), mSortedFrameTimes.end(), std::greater<float>());
 
@@ -184,7 +183,7 @@ namespace sys
             return;
         }
 
-        // FPSが低いほど赤く、高いほど緑になる簡易な色分け(60FPS以上=緑、30FPS以下=赤)
+        // FPSが低いほど赤く、高いほど緑になる簡易な色分け
         const float t = std::clamp((mDisplayedFps - 30.0f) / 30.0f, 0.0f, 1.0f);
         const ImVec4 fpsColor = { 1.0f - t, t, 0.0f, 1.0f };
 
@@ -195,9 +194,8 @@ namespace sys
         ImGui::Text("Frame Time: %.2f ms  (min %.2f / max %.2f)",
             mDisplayedFrameTimeMs, mMinFrameTimeMs, mMaxFrameTimeMs);
 
-        // CPU(コマンド記録)とGPU(実行)を並べて表示する。
-        // どちらが律速かでとるべき対策が全く変わるため、両方を常に見えるようにしておく
-        // (GPU時間は計測非対応の環境ではn/aと表示する)
+        // CPUの実行時間を並べて表示
+        // 計測不可ではn/a 表示
         auto& gpu = graphics::GpuProfiler::Get();
         if (gpu.IsAvailable())
         {
@@ -216,7 +214,7 @@ namespace sys
         }
 
         // V-Sync有効時は表示リフレッシュレートで頭打ちになるため、
-        // 「これ以上速くならない」状態と「処理が重い」状態を取り違えないよう明示する
+        // わかるように文字を表示する
         if (mDisplayedFrameTimeMs > 0.0f && mDisplayedGpuMs > 0.0f)
         {
             const float busiestMs = std::max(mDisplayedGpuMs, mDisplayedFrameTimeMs);
@@ -228,8 +226,7 @@ namespace sys
 
         ImGui::Separator();
 
-        // 直近kHistorySizeフレームのフレーム時間推移(ミリ秒)を時系列順(古い→新しい)に並べ直す。
-        // 急なドロップ(スパイク)を目視で確認できるようにする
+        // 直近kHistorySizeフレームのフレーム時間推移を時系列順に並べなおす
         float ordered[kHistorySize];
         const int start = (mHistoryCursor - mHistoryCount + kHistorySize) % kHistorySize;
         for (int i = 0; i < mHistoryCount; ++i)
@@ -247,13 +244,11 @@ namespace sys
             0,
             overlay,
             0.0f,
-            33.3f, // 30FPS相当を上限目安として表示(それ以上はグラフ天井に張り付く形で視認できる)
+            33.3f,
             ImVec2(0, 80));
 
         ImGui::Separator();
         ImGui::Text("Breakdown (avg ms/frame):");
-        // Shadow/Scene/SpriteはEffect/Debugと並行実行されるワーカースレッド区分のため、
-        // 単純合計はフレーム時間と一致しない(重なりがある)点に注意
         for (size_t i = 0; i < kSectionCount; ++i)
         {
             ImGui::Text("  %-18s %6.2f ms", kSectionNames[i], mSections[i].DisplayedMs);
@@ -261,7 +256,6 @@ namespace sys
 
         // Effect Drawの負荷はEffekseer/LLGI内部の1呼び出しあたり固定コスト×呼び出し回数に
         // ほぼ比例するため、msの数値だけでなく実際の呼び出し回数も並べて表示する
-        // (EffectManager::Draw()参照。ms値が高い時にコンテンツ側の削減余地があるかの判断材料)
         auto& effect = graphics::EffekseerManager::Get();
         ImGui::Text("  %-18s calls=%-5d verts=%-6d instances=%-5d",
             "Effect Draw Stat",
@@ -272,8 +266,6 @@ namespace sys
         ImGui::Separator();
         if (ImGui::CollapsingHeader("GPU Breakdown (by render channel)"))
         {
-            // CPU側の内訳(上のBreakdown)は「コマンドを積むのに要した時間」であり、
-            // GPUが実際に描くのに要した時間はこちらにしか現れない
             auto& gpuProfiler = graphics::GpuProfiler::Get();
             if (!gpuProfiler.IsAvailable())
             {
@@ -301,8 +293,8 @@ namespace sys
         ImGui::Separator();
         if (ImGui::CollapsingHeader("Effect Breakdown (by asset)"))
         {
-            // Effect Drawの負荷はパーティクル(インスタンス)数にほぼ比例するため、
-            // 素材別のインスタンス数が「どの.efkを削れば効くか」を直接示す
+            // どのエフェクシアの素材が重いかを表示する
+            // めっちゃエフェクシアが重いので今後は独自のVFXを実装するかを検討かも
             mEffectStatEntries.clear();
             for (const auto& s : graphics::EffekseerManager::Get().GetEffectStats())
             {

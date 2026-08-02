@@ -126,7 +126,7 @@ namespace graphics
 		cmdList->SetPipelineState(mPipeline->GetPipelineState());
 		cmdList->SetGraphicsRootSignature(mPipeline->GetRootSignature());
 
-		// SRV ヒープのセット（SetDescriptorHeaps は Flip 前の最後呼び出しが有効）
+		// SRV ヒープのセット
 		ID3D12DescriptorHeap* heaps[] = { mHeapManager->GetNativeHeap() };
 		cmdList->SetDescriptorHeaps(_countof(heaps), heaps);
 
@@ -134,7 +134,7 @@ namespace graphics
 		mVB->Set(cmdList, 0);
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-		// [t0] StructuredBuffer（全図形の定数データ）
+		// 全図形の定数データ
 		cmdList->SetGraphicsRootDescriptorTable(0, mInstanceBuffer->GetGpuHandle());
 
 		// テクスチャの差し替えが無いため、全インスタンスを 1 回の DrawInstanced で発行
@@ -158,16 +158,14 @@ namespace graphics
 				mRenderItems.push_back({ &tr, &sp });
 			});
 
-		// Layer 昇順でソート（値が小さいほど手前＝後から描く）
-		// テクスチャ依存のバッチングが無いため、ソートは純粋に描画順保証のため。
+		// レイヤーでソート
 		std::sort(mRenderItems.begin(), mRenderItems.end(),
 			[](const RenderItem& a, const RenderItem& b)
 			{
 				return a.Shape->Layer < b.Shape->Layer;
 			});
 
-		// SV_InstanceID はバッファ内の連続インデックスとして使われるため、
-		// ソート順 = mReservedData への追加順をそのまま反映させる。
+		// ソート順で反映
 		for (const auto& item : mRenderItems)
 		{
 			const ShapeShaderData shaderData =
@@ -183,11 +181,11 @@ namespace graphics
 	{
 		using namespace DirectX;
 
-		// 仮想解像度（毎フレーム取得せず Window 参照で取得）
+		// 仮想解像度
 		const float vWidth = static_cast<float>(mWindow->GetVirtualWidth());
 		const float vHeight = static_cast<float>(mWindow->GetVirtualHeight());
 
-		// 描画サイズの決定（Shape はテクスチャを持たないため Size は常に明示値を使用）
+		// 描画サイズの決定
 		const float w = sp.Size.x * sp.DrawScale.x;
 		const float h = sp.Size.y * sp.DrawScale.y;
 
@@ -195,9 +193,7 @@ namespace graphics
 		const XMFLOAT2 pos2D = tr.Get2DPosition();
 		const float    rotRad = tr.Get2DRotation();
 
-		// ワールド行列の合成:
-		//   Pivot（基準点オフセット） → Scale + Flip → Rotation(Z) → Translation
-		// Sprite と完全に同一の合成順序・意味を採用する。
+		// ワールド行列の合成
 		const XMMATRIX mPivot = XMMatrixTranslation(-sp.Pivot.x, -sp.Pivot.y, 0.0f);
 		const XMMATRIX mScale = XMMatrixScaling(w * sp.Flip.x, h * sp.Flip.y, 1.0f);
 		const XMMATRIX mRot = XMMatrixRotationZ(rotRad);

@@ -274,6 +274,7 @@
     <ClCompile Include="src\Scene\Game\Wave\WaveTimerUiSystem.cpp" />
     <ClCompile Include="src\Scene\Game\Wave\WaveDebugPanel.cpp" />
     <ClCompile Include="src\system\Player\Weapon\SingleShot\SingleShotWeaponDebugPanel.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\WeaponMasterDataDebugPanel.cpp" />
     <ClCompile Include="src\system\Player\Weapon\Ricochet\RicochetWeaponDebugPanel.cpp" />
     <ClCompile Include="src\system\Player\Weapon\AreaAttack\AreaAttackWeaponDebugPanel.cpp" />
     <ClCompile Include="src\system\Player\Weapon\BoneSpear\BoneSpearWeaponDebugPanel.cpp" />
@@ -287,6 +288,8 @@
     <ClCompile Include="src\system\Player\Weapon\VoidBeam\VoidBeamWeaponDebugPanel.cpp" />
     <ClCompile Include="src\system\StatusUpgrade\StatUpgradeDebugPanel.cpp" />
     <ClCompile Include="src\system\Effect\EffectAssetDebugPanel.cpp" />
+    <ClCompile Include="src\system\Loading\LoadingScreenUpdateSystem.cpp" />
+    <ClCompile Include="src\Scene\Loading\LoadingScene.cpp" />
     <ClCompile Include="src\system\Enemy\Status\BossDebugPanel.cpp" />
     <ClCompile Include="src\system\Player\Weapon\Nova\NovaWeaponSystem.cpp" />
     <ClCompile Include="src\Scene\Game\Debug\WeaponInventoryDebugPanel.cpp" />
@@ -422,6 +425,7 @@
     <ClInclude Include="src\Scene\Game\Wave\WaveDebugPanel.h" />
     <ClInclude Include="src\Data\Wave\WaveData.h" />
     <ClInclude Include="src\system\Player\Weapon\SingleShot\SingleShotWeaponDebugPanel.h" />
+    <ClInclude Include="src\system\Player\Weapon\WeaponMasterDataDebugPanel.h" />
     <ClInclude Include="src\system\Player\Weapon\Ricochet\RicochetWeaponDebugPanel.h" />
     <ClInclude Include="src\system\Player\Weapon\AreaAttack\AreaAttackWeaponDebugPanel.h" />
     <ClInclude Include="src\system\Player\Weapon\BoneSpear\BoneSpearWeaponDebugPanel.h" />
@@ -435,6 +439,9 @@
     <ClInclude Include="src\system\Player\Weapon\VoidBeam\VoidBeamWeaponDebugPanel.h" />
     <ClInclude Include="src\system\StatusUpgrade\StatUpgradeDebugPanel.h" />
     <ClInclude Include="src\system\Effect\EffectAssetDebugPanel.h" />
+    <ClInclude Include="src\system\Loading\LoadingScreenComponent.h" />
+    <ClInclude Include="src\system\Loading\LoadingScreenUpdateSystem.h" />
+    <ClInclude Include="src\Scene\Loading\LoadingScene.h" />
     <ClInclude Include="src\system\Enemy\Status\BossDebugPanel.h" />
     <ClInclude Include="src\Data\Weapon\NovaWeaponData.h" />
     <ClInclude Include="src\system\Player\Weapon\Nova\NovaWeaponRuntimeComponent.h" />

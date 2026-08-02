@@ -88,12 +88,28 @@ namespace data
     public:
         explicit DataInspector(DataManager<T>& mgr) : mMgr(mgr) {}
 
+        /// <summary>
+        /// 単独ウィンドウとして表示する(Begin/Endを含む)。従来通りの使い方。
+        /// </summary>
         void Draw(const char* windowLabel = nullptr)
         {
-            const auto& fields = TypeDescriptor<T>::Fields();
             const char* label = windowLabel ? windowLabel : TypeDescriptor<T>::TableName();
 
             if (!ImGui::Begin(label)) { ImGui::End(); return; }
+            DrawContent();
+            ImGui::End();
+        }
+
+        /// <summary>
+        /// 中身(ツールバー+テーブル)だけを描画する(Begin/Endを含まない)。
+        /// 呼び出し側が既に開いているウィンドウ/CollapsingHeader等の中に埋め込む用途
+        /// (例: 複数種別のマスタデータを1つのウィンドウへ折りたたみセクションとして
+        /// まとめるWeaponMasterDataDebugPanel)。テーブルID("##data")が呼び出し元と
+        /// 衝突しないよう、呼び出し側でImGui::PushID/PopIDを挟むこと。
+        /// </summary>
+        void DrawContent()
+        {
+            const auto& fields = TypeDescriptor<T>::Fields();
 
             // ステータス（mLastMessage はRelease でも保持されているため安全）
             if (!mMgr.GetLastMessage().empty())
@@ -183,7 +199,6 @@ namespace data
             }
 
             ImGui::Text("Total: %d rows", (int)mMgr.GetAll().size());
-            ImGui::End();
         }
 
     private:

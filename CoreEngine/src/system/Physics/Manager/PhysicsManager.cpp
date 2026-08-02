@@ -17,35 +17,31 @@ namespace sys
 {
     static void TraceImpl(const char* inFMT, ...)
     {
-        // Format the message
+        // メッセージ出力
         va_list list;
         va_start(list, inFMT);
         char buffer[1024];
         vsnprintf(buffer, sizeof(buffer), inFMT, list);
         va_end(list);
 
-        // Print to the TTY
+        // TTYに出力
         std::cout << buffer << std::endl;
     }
 
 #ifdef JPH_ENABLE_ASSERTS
 
-    // Callback for asserts, connect this to your own assert handler if you have one
+    // アサート時のコールバック
     static bool AssertFailedImpl(const char* inExpression, const char* inMessage, const char* inFile, uint inLine)
     {
-        // Print to the TTY
+        // TTYの出力
         std::cout << inFile << ":" << inLine << ": (" << inExpression << ") " << (inMessage != nullptr ? inMessage : "") << std::endl;
-
-        // Breakpoint
         return true;
     };
 #endif
 
 	bool PhysicsManager::sJoltGlobalInitialized = false;
 
-    // ==============================================================
-    //  BroadPhaseLayerInterfaceImpl
-    // =============================================================
+    // 対応付け用
     PhysicsManager::BroadPhaseLayerInterfaceImpl::BroadPhaseLayerInterfaceImpl()
     {
         // ObjectLayer → BroadPhaseLayer のマッピング
@@ -80,9 +76,7 @@ namespace sys
     }
 #endif
 
-    // ==============================================================
-    //  ObjectVsBroadPhaseLayerFilterImpl
-    // ==============================================================
+    /// ブロードフェーズのレイヤー判定
     bool PhysicsManager::ObjectVsBroadPhaseLayerFilterImpl::ShouldCollide(
         JPH::ObjectLayer layer, JPH::BroadPhaseLayer bpLayer) const
     {
@@ -102,9 +96,7 @@ namespace sys
         }
     }
 
-    // ==============================================================
-    //  ObjectLayerPairFilterImpl
-    // ==============================================================
+    // 衝突レイヤー判定用
     bool PhysicsManager::ObjectLayerPairFilterImpl::ShouldCollide(
         JPH::ObjectLayer obj1, JPH::ObjectLayer obj2) const
     {
@@ -115,9 +107,7 @@ namespace sys
         case PhysicsLayer::Moving:
             return true; // Moving は全レイヤーと衝突
         case PhysicsLayer::EnemyMoving:
-            // EnemyMoving同士(=敵同士)だけは衝突させない。敵が密集した際の接触解決コストを
-            // 抑えるため。地面(NonMoving)・プレイヤー等(Moving)・センサー(Sensor)とは
-            // 通常通り衝突する
+            // EnemyMoving同士だけは衝突させない。
             return obj2 != PhysicsLayer::EnemyMoving;
         case PhysicsLayer::Sensor:
             return obj2 == PhysicsLayer::Moving || obj2 == PhysicsLayer::EnemyMoving; // センサーは動的オブジェクト全般とのみ
@@ -203,9 +193,8 @@ namespace sys
         mContactListener = std::make_unique<ContactListener>(registry);
         mPhysicsSystem->SetContactListener(mContactListener.get());
 
-        // RigidBodyComponent(またはそれを持つエンティティ)が破棄される直前に
-        // Jolt 側の Body を確実に除去する(孤立 Body 防止)。
-        // エディタの Play/Stop でのエンティティ一括破棄時にも効く。
+        // RigidBodyComponentが破棄される直前に
+        // Jolt 側の Body を確実に除去する
         registry.on_destroy<ecs::RigidBodyComponent>().connect<&PhysicsSystem::OnRigidBodyComponentDestroyed>();
 
         mIsInitialized = true;
@@ -224,7 +213,7 @@ namespace sys
         mJobSystem.reset();
         mTempAllocator.reset();
 
-        // Factory は最後に解放（他より長生きする必要がある）
+        // ファクトリの解放
         if (sJoltGlobalInitialized)
         {
             JPH::UnregisterTypes();

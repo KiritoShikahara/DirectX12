@@ -50,16 +50,11 @@ namespace sys
 
 		/// <summary>
 		/// 登録された UI 関数を順に呼び出す。
-		/// NewFrame() と EndFrame() の間に呼ぶこと。
 		/// </summary>
 		void Update();
 
 		/// <summary>
 		/// 描画データの確定と ImGui コマンドの発行。
-		///
-		/// ImGui の DX12 バックエンドはスレッドセーフではないため、
-		/// 必ずメインスレッドから eRenderChannel::Debug のコマンドリストを渡して呼ぶこと。
-		/// 記録フェーズ（Flip() の前）で呼ぶ。
 		/// </summary>
 		/// <param name="cmdList">記録先のコマンドリスト</param>
 		void EndFrame(ID3D12GraphicsCommandList* cmdList);

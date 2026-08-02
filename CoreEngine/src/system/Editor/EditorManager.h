@@ -14,14 +14,11 @@ namespace sys
 	};
 
 	/// <summary>
-	/// エディタの Edit/Play モードを管理する(UE の Play-In-Editor 相当)。
+	/// エディタの Edit/Play モードを管理する。
 	///
-	/// EnterPlayMode() でその時点の配置状態(PlaceableTag エンティティ群)を
+	/// EnterPlayMode() でその時点の配置状態を
 	/// インメモリの JSON スナップショットとして保持し、
 	/// ExitPlayMode() でそこから復元する。
-	///
-	/// SaveLayout/LoadLayout はファイルへの保存/復元で、
-	/// スナップショットと同じ ecs::EditorSerialization を共用する(二重実装しない)。
 	/// </summary>
 	class ENGINE_API EditorManager : public utility::Singleton<EditorManager>
 	{
@@ -33,15 +30,13 @@ namespace sys
 		bool IsPlaying() const { return mMode == eEditorMode::Play; }
 
 		/// <summary>
-		/// 現在の配置状態(PlaceableTag エンティティ)をスナップショットして Play モードへ移行する。
+		/// 現在の配置状態をスナップショットして Play モードへ移行する。
 		/// 既に Play 中の場合は何もしない。
 		/// </summary>
 		void EnterPlayMode(entt::registry& registry);
 
 		/// <summary>
 		/// PlaceableTag エンティティをスナップショットから復元して Edit モードへ戻る。
-		/// (Jolt Body の後始末は RigidBodyComponent の on_destroy フックが自動で行う)
-		/// 既に Edit 中の場合は何もしない。
 		/// </summary>
 		void ExitPlayMode(entt::registry& registry);
 

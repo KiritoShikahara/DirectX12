@@ -12,6 +12,9 @@ namespace
 {
 	// エフェクト素材のだいたいの基準半径。見た目のスケール計算に使う
 	constexpr float kEffectReferenceRadius = 2.0f;
+
+	// 見た目だけをもう一段階小さくするための倍率(判定半径には影響しない)
+	constexpr float kVisualScaleMultiplier = 0.5f;
 }
 
 namespace ecs::areaattack
@@ -56,7 +59,7 @@ namespace ecs::areaattack
 			// 見た目は着弾時に1回だけ。判定側の継続ダメージはAreaAttackHazardSystemが別に担う
 			effect.IsLoop = false;
 			// 見た目のスケールはradius基準(判定だけ拡大しても見た目は変えない)
-			const float scale = radius / kEffectReferenceRadius;
+			const float scale = (radius / kEffectReferenceRadius) * kVisualScaleMultiplier;
 			effect.Scale = { scale, scale, scale };
 			effect.Effect.Play(effect.Asset, position);
 			graphics::EffekseerManager::MarkSpawnHidden(effect);

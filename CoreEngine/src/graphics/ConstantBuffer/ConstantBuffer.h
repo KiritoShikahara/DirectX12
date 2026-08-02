@@ -18,7 +18,7 @@ namespace graphics
 	/// </summary>
 	class ENGINE_API ConstantBuffer
 	{
-        /// <summary>現在のフレームインデックス（StructuredBuffer と同じ取得元）</summary>
+        /// <summary>現在のフレームインデックス</summary>
         uint32_t GetCurrentIndex() const;
 	public:
 		ConstantBuffer() = default;

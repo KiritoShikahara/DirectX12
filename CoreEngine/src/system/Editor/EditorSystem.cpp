@@ -35,11 +35,7 @@ namespace sys
 
 	void EditorSystem::Update(entt::registry& registry)
 	{
-		// ImGuiパネル(Editor/Hierarchy/Inspector等)上でのクリックはシーン側の
-		// 配置・選択・ドラッグに使わない。EditorSystem::Update は Engine::Update() 内、
-		// ImGuiManager::NewFrame() より前に呼ばれるため、ここで見る WantCaptureMouse は
-		// 1フレーム前の値になるが、マウスが単一フレームでImGuiウィンドウ境界を
-		// 跨ぐことは実用上ないため問題にならない。
+
 		if (ImGui::GetIO().WantCaptureMouse)
 		{
 			mIsDragging = false;
@@ -96,9 +92,7 @@ namespace sys
 		{
 			if (mPendingPlacementKey.rfind(kSpritePlacementPrefix, 0) == 0)
 			{
-				// UI画像配置: 3Dの地面レイキャストは不要で、マウスの仮想スクリーン座標を
-				// そのままSprite座標として使う(SpriteはTransformの2D座標=仮想スクリーン座標の
-				// 正射影で描画されるため、変換なしで一致する)。
+				// UI画像配置: 3Dの地面レイキャストは不要で、マウスの仮想スクリーン座標をそのままSprite座標として使う
 				const std::string texturePath(mPendingPlacementKey.substr(kSpritePlacementPrefix.size()));
 				const XMFLOAT2 mousePos = sys::InputManager::Get().GetMouseVirtualPosition();
 				const entt::entity spawned = SpawnPlacedSprite(registry, texturePath, mousePos);
@@ -142,7 +136,7 @@ namespace sys
 
 		const XMFLOAT2 mousePos = sys::InputManager::Get().GetMouseVirtualPosition();
 
-		// Sprite(UI画像)はコライダーを持たないため3Dレイキャストでは選択できない。
+		// Spriteはコライダーを持たないため3Dレイキャストでは選択できない。
 		// 画面座標のAABB当たり判定で先に試し、当たればそちらを優先する。
 		if (const entt::entity spriteHit = PickSpriteAt(registry, mousePos); spriteHit != entt::null)
 		{

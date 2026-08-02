@@ -48,9 +48,8 @@ namespace graphics
     public:
         SINGLETON_ACCESSOR(TextRenderer);
 
-        /// <summary>
-        /// 初期化。アトラスのロードも内部で行う。
-        /// </summary>
+        // 呼べばフォントアトラスの読み込みまで済ませてしまうので、
+        // 呼び出し側で別途ロードしておく必要はない
         bool Initialize(
             DX12Device& device,
             GDescriptorHeapManager& heapManager,
@@ -64,30 +63,16 @@ namespace graphics
             DirectX::XMFLOAT4 color = { 1.f, 1.f, 1.f, 1.f });
         void Flush(ID3D12GraphicsCommandList* cmdList);
 
-        /// <summary>指定テキストをsize基準で描画したときの幅(px)を実際に描画せず計算する</summary>
+        // 実際には描画せず、このsizeで描いたときの幅(px)だけ先に知りたいときに使う
         float MeasureWidth(const std::wstring& text, float size) const;
 
-        /// <summary>
-        /// size基準での1行分の縦送り量(px)を返す(MeasureWidthの縦方向版)。
-        /// Submit()の改行処理(penY += size * LineHeight比率)と同じ計算式。
-        /// 複数行テキストが占める高さを事前に知りたいレイアウト計算(UI背景の高さ等)に使う。
-        /// </summary>
+        // MeasureWidthの縦バージョン。1行分の縦送り量(px)を返す。
         float MeasureLineHeight(float size) const;
 
-        /// <summary>
-        /// 1行分のテキストを指定sizeで描画したとき、その見た目の縦中心を目標Yに
-        /// 一致させるためのベースラインYオフセット(目標Y + この値 = TextComponent::Y)。
-        /// Ascender/Descenderが非対称(既定フォントはAscender=1.16,Descender=-0.288)なため、
-        /// 「YをそのままBox中心に置く」だけでは中心がずれる(実際に発生した不具合)。
-        /// </summary>
+        // テキストの見た目の縦中心を狙った位置(目標Y)にきっちり合わせたいときのオフセット。
         float MeasureVerticalCenterOffset(float size) const;
 
-        /// <summary>
-        /// ベースライン(TextComponent::Y)から、グリフの見た目の下端までの距離(px、常に正)。
-        /// 文字の下に別要素(区切り線・パネル等)を隙間を空けて配置したい場合、
-        /// 「ベースラインY + この値」を実際の見た目下端として使うこと。
-        /// (ベースラインをそのまま下端とみなすと、Descenderの分だけ重なってしまう)
-        /// </summary>
+        // ベースライン(TextComponent::Y)から文字の見た目の下端までの距離。常に正の値。
         float MeasureDescent(float size) const;
 
         void OnResize(uint32_t w, uint32_t h);
@@ -109,16 +94,12 @@ namespace graphics
         bool BuildConstantBuffer(DX12Device& device, GDescriptorHeapManager& heapManager);
         bool BuildVertexBuffer(DX12Device& device);
 
-        /// <summary>フレームインフライト中の書き込み先取り違えを防ぐため、現在の描画対象フレーム番号を返す</summary>
         static uint32_t GetCurrentFrameIndex();
 
         std::unique_ptr<TextPipeline> mPipeline;
-        std::unique_ptr<TextAtlas>    mAtlas;       // ← Renderer が所有
+        std::unique_ptr<TextAtlas>    mAtlas;       // Renderer が所有
 
-        // CB/VB は FRAME_COUNT(トリプルバッファ) 分だけ個別に持つ。
-        // 単一バッファのままだと、GPU がまだ前フレームの描画コマンドで参照している
-        // 最中に CPU が同じメモリへ Submit() で上書きしてしまい、文字のちらつき
-        // (点滅・表示崩れ) の原因になる。
+        // CB/VB は FRAME_COUNT(トリプルバッファ) 分だけ個別に持つための構造体
         struct FrameBuffer
         {
             Resource        CbResource;
@@ -138,7 +119,7 @@ namespace graphics
         std::vector<DrawCall> mDrawCalls;
         uint32_t              mVertexCursor = 0;
 
-        // UpdateAndDraw()の一時バッファ。毎フレームclear()して再利用する(毎フレームのvector生成禁止のため)
+        // UpdateAndDraw()の一時バッファ。
         std::vector<RenderItem> mRenderItems;
 
         GDescriptorHeapManager* mHeapManager = nullptr;

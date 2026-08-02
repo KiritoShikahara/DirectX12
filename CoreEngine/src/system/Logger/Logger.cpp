@@ -5,9 +5,7 @@ namespace sys
 {
 	namespace
 	{
-		/// <summary>
-		/// ���O���x���̕\�����x����Ԃ��B���𑵂��Đ��񂳂���B
-		/// </summary>
+		// ログレベルの文字表示をそろえて返す
 		constexpr std::string_view LevelLabel(eLogLevel level) noexcept
 		{
 			switch (level)
@@ -24,15 +22,14 @@ namespace sys
 
 	bool Logger::Initialize()
 	{
-		// VS�̏o�̓E�B���h�E�i�f�o�b�O�p�j
+		// VSの出力ウィンドへ出力
 		AddSink(std::make_unique<DebugOutputSink>());
 
-		// �R���\�[���V���N�̓f�o�b�O�r���h�̂�
+		// コンソール用
 #if DEV_TOOL_ENABLED
 		AddSink(std::make_unique<ConsoleLogSink>(true));
 #endif
-
-		// �t�@�C���V���N�͏�ɓo�^����i���s���O�̕ۑ��j
+		// ファイル出力
 		AddSink(std::make_unique<FileLogSink>("ecse_log.txt"));
 
 		DEBUG_LOG(eLogLevel::Log, "Logger initialized.");
@@ -42,25 +39,20 @@ namespace sys
 
 	void Logger::Finalize()
 	{
-		// TODO:���O�o��
 		DEBUG_LOG(eLogLevel::Log, "Logger finalized.");
 
 		std::lock_guard lock(sMutex);
 		mSinks.clear();
 	}
 
-	/// <summary>
-	/// �V���N��ǉ�����B�X���b�h�Z�[�t�B
-	/// </summary>
+	// シンクの追加
 	void Logger::AddSink(std::unique_ptr<ILogSink> sink)
 	{
 		std::lock_guard lock(sMutex);
 		mSinks.emplace_back(std::move(sink));
 	}
-	
-	/// <summary>
-	/// �S�V���N�֔z������BFatal �̏ꍇ�� MessageBox + DebugBreak ���s���B
-	/// </summary>
+
+	// 全シンクへの配信
 	void Logger::Dispatch(eLogLevel level, const std::string& message, const std::source_location& location)
 	{
 		{
@@ -71,7 +63,7 @@ namespace sys
 			}
 		}
 
-		// Fatal �̌㏈���̓V���N�̊O�ōs���i�~���[�e�b�N�X��������Ă���j
+		// Fatal の後処理の大部分はシンクの外で行う
 		if (level == eLogLevel::Fatal)
 		{
 			std::string detail = std::format(
@@ -86,14 +78,13 @@ namespace sys
 
 	}
 
-	/// <summary>
-	/// Visual Studio �̏o�̓E�B���h�E�� OutputDebugStringA �ŏ����o���V���N�B
-	/// </summary>
+
+	// VSの出力ウィンドへ文字列を出力するシンク
 	void DebugOutputSink::Write(eLogLevel level, std::string_view message, const std::source_location& location)
 	{
 		std::string out;
 
-		// �t�@�C�����ƍs�ԍ��� Warning �ȏ�̂ݕt�^����
+		// ファイル名と行番号はwarnig以上のみ付与する
 		if (level != eLogLevel::Log)
 		{
 			out = std::format("{}{} [{}({})]\n",
@@ -129,17 +120,15 @@ namespace sys
 		}
 	}
 
-	/// <summary>
-	/// AllocConsole �Ő��������R���\�[���E�B���h�E�֏����o���V���N�B
-	/// �f�o�b�O�r���h�ł̂ݗL���B
-	/// </summary>
+
+	// AllocConsole で生成したコンソールウィンドウへ文字出力するシンク。デバッグビルドでのみ
 	void ConsoleLogSink::Write(eLogLevel level, std::string_view message, const std::source_location& location)
 	{
 		SetTextColor(level);
 
 		std::cout << LevelLabel(level) << message << '\n';
 
-		// �����ӏ��� Warning �ȏ�̂ݕ\������
+		// 発信場所は Warning 以上のみ表示する
 		if (level != eLogLevel::Log)
 		{
 			std::cout << "  -> " << location.file_name()
@@ -153,20 +142,20 @@ namespace sys
 	void ConsoleLogSink::SetTextColor(eLogLevel level)
 	{
 		HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
-		WORD   color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; // ���i�f�t�H���g�j
+		WORD   color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE; // デフォルト
 
 		switch (level)
 		{
 		case eLogLevel::Warning:
-			color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;  // ��
+			color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;  // 黄色
 			break;
 		case eLogLevel::Error:
-			color = FOREGROUND_RED | FOREGROUND_INTENSITY;                     // ��
+			color = FOREGROUND_RED | FOREGROUND_INTENSITY;                     // 赤色
 			break;
 		case eLogLevel::Fatal:
 			color = BACKGROUND_RED |
 				FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE |
-				FOREGROUND_INTENSITY;                                       // �Ԕw�i�E������
+				FOREGROUND_INTENSITY;                                       // 赤背景・白文字
 			break;
 		default:
 			break;
@@ -198,14 +187,13 @@ namespace sys
 		}
 	}
 
-	/// <summary>
-	/// �e�L�X�g�t�@�C���փ^�C���X�^���v�t���ŒǋL����V���N
-	/// </summary>
+
+	// テキストファイルへタイムスタンプ付きで追記するシンク
 	void FileLogSink::Write(eLogLevel level, std::string_view message, const std::source_location& location)
 	{
 		if (mFile == nullptr) return;
 
-		// �^�C���X�^���v�𐶐�����
+		// タイムスタンプ
 		const auto now = std::chrono::system_clock::now();
 		const auto timeStr = std::format("{:%Y-%m-%d %H:%M:%S}", now);
 
@@ -228,7 +216,7 @@ namespace sys
 		}
 
 		fputs(line.c_str(), mFile);
-		fflush(mFile);  // �v���Z�X���ُ�I�����Ă������o��
+		fflush(mFile); // プロセス異常終了時にもログ出力されるようにする。
 
 	}
 

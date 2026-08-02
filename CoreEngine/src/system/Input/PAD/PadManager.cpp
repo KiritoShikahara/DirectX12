@@ -78,9 +78,7 @@ namespace sys
         return mPads[i].IsReleased(button);
     }
 
-    // -----------------------------------------------------------------------
-    //  スティック取得
-    // -----------------------------------------------------------------------
+    // スティック取得
     DirectX::XMFLOAT2 PadManager::GetLeftStick3D(ePadIndex index) const
     {
         std::lock_guard lock(mMutex);
@@ -109,9 +107,7 @@ namespace sys
         return IsValidIndex(i) ? mPads[i].GetRightStick2D() : DirectX::XMFLOAT2{ 0.0f, 0.0f };
     }
 
-    // -----------------------------------------------------------------------
- //  ユーティリティ
- // -----------------------------------------------------------------------
+    // ユーティリティ
     std::vector<ePadIndex> PadManager::GetAvailableIndices() const
     {
         std::lock_guard lock(mMutex);
@@ -131,9 +127,7 @@ namespace sys
         return mPads.size();
     }
 
-    // -----------------------------------------------------------------------
-    //  private ヘルパー
-    // -----------------------------------------------------------------------
+    // Privateヘルパー
     bool PadManager::IsValidIndex(uint8_t index) const
     {
         return static_cast<size_t>(index) < mPads.size()
@@ -155,9 +149,7 @@ namespace sys
         return false;
     }
 
-    // -----------------------------------------------------------------------
-    //  ImGui デバッグ表示
-    // -----------------------------------------------------------------------
+    // ImGuiデバック
     void PadManager::ImGuiUpdate()
     {
 #ifdef ENABLE_INPUT_DEBUG_PAD

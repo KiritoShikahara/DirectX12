@@ -15,16 +15,7 @@ namespace graphics
 	class GDescriptorHeapManager;
 
 	/// <summary>
-	/// DirectionalLightComponent の位置・方向を矢印(軸+矢じり)とマーカー(十字)で可視化する。
-	///
-	/// 他のデバッグレンダラー(PhysicsDebugRenderer)と同じく
-	/// Begin() → UpdateAndDraw() → End() の3段構成を取り、LinePipeline を共用する。
-	///   Begin()         : 前フレームのデータをクリアする
-	///   UpdateAndDraw() : registry から矢印の頂点を構築し GPU バッファへ転送する（収集フェーズ）
-	///   End()           : コマンドリストへの記録のみを行う（記録フェーズ）
-	///
-	/// 記録フェーズでは registry にも GPU バッファの Update にも触れないため、
-	/// チャネルを別スレッドで記録しても安全。
+	/// DirectionalLightComponent の位置・方向を矢印とマーカーで可視化する。
 	/// </summary>
 	class LightDebugRenderer : public utility::Singleton<LightDebugRenderer>
 	{
@@ -45,13 +36,11 @@ namespace graphics
 		/// <summary>
 		/// registry から DirectionalLightComponent を収集し、
 		/// 矢印(方向)とマーカー(位置)の頂点をカメラ定数バッファと頂点バッファへ転送する。
-		/// 収集フェーズ（シングルスレッド）で呼ぶこと。IsEnabled() == false のとき何もしない。
 		/// </summary>
 		void UpdateAndDraw(entt::registry& registry);
 
 		/// <summary>
 		/// 収集済みデータを GPU コマンドとして発行する。
-		/// registry には触れないため、記録フェーズで呼べる。
 		/// </summary>
 		void End(ID3D12GraphicsCommandList* cmdList);
 
@@ -109,7 +98,6 @@ namespace graphics
 
 		/// <summary>
 		/// 今フレームに描画する頂点数。
-		/// UpdateAndDraw() が確定し、End() が参照する。0 のとき End() は何もしない。
 		/// </summary>
 		UINT mDrawVertexCount = 0;
 	};

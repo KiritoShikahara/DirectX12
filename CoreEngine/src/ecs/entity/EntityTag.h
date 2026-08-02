@@ -2,16 +2,16 @@
 
 namespace ecs
 {
-    // �V�[�����ׂ��Ő�������
+    // 永久オブジェクト
     struct PersistentTag {};
 
-    // ���݂̃t���[���̍Ō�ɍ폜�����\��
+    // 破棄する予定のオブジェクトのタグ
     struct PendingDestroyTag {};
 
-    // �ҏW���̃G�f�B�^��ł̂ݑI������Ă���
+    // 選択されているオブジェクトに付けるタグ
     struct SelectedTag {};
 
-    // �J�����ɉf��Ώۂł���
+    // 描画するオブジェクトに付けるタグ
     struct RenderableTag {};
 
     // エディタで配置されたエンティティ。Save/Load/スナップショットの対象になる。

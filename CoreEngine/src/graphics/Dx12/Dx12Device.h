@@ -1,19 +1,19 @@
 ﻿#pragma once
 
-#include  <utility/Singleton/Singleton.hpp>
+#include <utility/Singleton/Singleton.hpp>
 #include <Utility/Export/Export.h>
-#include<vector>
-#include<mutex>
-
+#include <vector>
+#include <mutex>
 #include "Dx12Type.h"
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "dxguid.lib")
+
 namespace graphics
 {
 	/// <summary>
-	/// Dx12�f�o�C�X�Ǘ�
+	/// DX12デバイス管理
 	/// </summary>
 	class ENGINE_API DX12Device : public utility::Singleton<DX12Device>
 	{
@@ -23,53 +23,50 @@ namespace graphics
 		SINGLETON_ACCESSOR(DX12Device);
 
 		/// <summary>
-		/// ������
+		/// 初期化
 		/// </summary>
-		/// <returns>true:�����@</returns>
+		/// <returns>true:成功</returns>
 		bool Initialize();
 
 		/// <summary>
-		/// �I������
+		/// 終了処理
 		/// </summary>
-		/// <returns></returns>
+		/// <returns>true:成功</returns>
 		bool Finalize();
 
 		/// <summary>
-		/// Dx12�f�o�C�X�̎擾
+		/// DX12デバイスの取得
 		/// </summary>
 		ID3D12Device* GetDevice();
 
 		/// <summary>
-		/// DXGI�t�@�N�g���[�̎擾
+		/// DXGIファクトリーの取得
 		/// </summary>
 		IDXGIFactory7* GetFactory();
 
 		/// <summary>
-		/// D3D12MA�A���P�[�^�[�̎擾
+		/// D3D12MAアロケーターの取得
 		/// </summary>
 		D3D12MA::Allocator* GetMAAllocator();
 
 		/// <summary>
-		/// GPU�Ƀe�N�X�`�����\�[�X��]������B
-		/// ��p�̃A�b�v���[�h�L���[�Ŏ��s���邽�ߕ`�惋�[�v�Ɉˑ����Ȃ��B
-		/// �X���b�h�Z�[�t (UploadBufferData �Ɠ��� mUploadMutex �ɂ���Ĕr�����䂳���)�B
+		/// GPUにテクスチャリソースを転送する。
+		/// 専用のアップロードキューで実行するため描画ループに依存しない。
 		/// </summary>
-		/// <param name="pResource">�]���惊�\�[�X</param>
-		/// <param name="subresources">�]������T�u���\�[�X�̃f�[�^</param>
-		/// <returns>true:����</returns>
+		/// <param name="pResource">転送先リソース</param>
+		/// <param name="subresources">転送するサブリソースのデータ</param>
+		/// <returns>true:成功</returns>
 		bool UploadTextureData(ID3D12Resource* pResource,
 			const std::vector<D3D12_SUBRESOURCE_DATA>& subresources);
 
 		/// <summary>
-		/// GPU �Ƀo�b�t�@�f�[�^��]������B
-		/// UploadTextureData �Ɠ�������p�A�b�v���[�h�L���[�œ����I�Ɋ�������B
-		/// �X���b�h�Z�[�t (������ mutex �ɂ���Ĕr�����䂳���)�B
-		/// cmdList �͕s�v�B�`�惋�[�v�Ɉˑ����Ȃ��B
+		/// GPU にバッファデータを転送する。
+		/// UploadTextureData と同様専用アップロードキューで同期的に実行する。
 		/// </summary>
-		/// <param name="pResource">�]���惊�\�[�X (DEFAULT heap, COPY_DEST ��Ԃō쐬�ς�)</param>
-		/// <param name="data">�]������f�[�^�|�C���^ (nullptr �֎~)</param>
-		/// <param name="size">�]���o�C�g�� (0 �֎~)</param>
-		/// <param name="targetState">�]��������̃��\�[�X���</param>
+		/// <param name="pResource">転送先リソース (DEFAULT heap, COPY_DEST ステータスで作成済み)</param>
+		/// <param name="data">転送元データポインタ (nullptr 厳禁)</param>
+		/// <param name="size">転送バイト数 (0 厳禁)</param>
+		/// <param name="targetState">転送完了後のリソースステート</param>
 		bool UploadBufferData(
 			ID3D12Resource* pResource,
 			const void* data,
@@ -78,59 +75,57 @@ namespace graphics
 
 	private:
 		/// <summary>
-		/// �f�o�b�O���C���[�̗L�����i�f�o�b�O�r���h�̂݁j
+		/// デバッグレイヤーの有効化 (デバッグビルドのみ)
 		/// </summary>
 		void DebugLayerOn();
 
 		/// <summary>
-		/// DXGI�t�@�N�g���[�̏�����
+		/// DXGIファクトリーの初期化
 		/// </summary>
 		bool InitializeFactory();
 
 		/// <summary>
-		/// �f�o�C�X��D3D12MA�A���P�[�^�[�̏�����
+		/// デバイスとD3D12MAアロケーターの初期化
 		/// </summary>
 		bool InitializeDevice();
 
 		/// <summary>
-		/// �A�b�v���[�h��p�R���e�L�X�g�̏�����
-		/// �i�R�}���h�L���[�E�A���P�[�^�[�E�R�}���h���X�g�E�t�F���X�j
+		/// アップロード用コンテキストの初期化
+		/// (コマンドキュー・アロケーター・コマンドリスト・フェンス)
 		/// </summary>
 		bool InitializeUploadContext();
 
 	private:
-		/// <summary>GPU�Ƃ̒ʐM����</summary>
+		/// <summary>GPUとの通信インターフェース</summary>
 		Device          mDevice;
-		/// <summary>�X���b�v�`�F�C����A�_�v�^�̍쐬�Ɏg��</summary>
+		/// <summary>スワップチェイン、アダプターの作成に使う</summary>
 		Factory         mFactory;
-		/// <summary>D3D12MA�̃������A���P�[�^�[</summary>
+		/// <summary>D3D12MAのメモリロケーター</summary>
 		MAAllocator     mMAAllocator;
-		/// <summary>���\�[�X�R�ꌟ�m�i�f�o�b�O�r���h�̂ݗL���j</summary>
+		/// <summary>リソースリーク検知(デバッグビルドのみ有効)</summary>
 		DebugDevice     mDebugDevice;
 
-		// ---- �A�b�v���[�h��p�R���e�L�X�g ----
-		/// <summary>�A�b�v���[�h��p�R�}���h�L���[�i�`��L���[�ƕ����j</summary>
+		// ---- アップロード用コンテキスト ----
+		/// <summary>アップロード用コマンドキュー(描画キューとは別)</summary>
 		CmdQueue        mUploadCmdQueue;
-		/// <summary>�A�b�v���[�h��p�R�}���h�A���P�[�^�[</summary>
+		/// <summary>アップロード用コマンドアロケーター</summary>
 		CmdAlloc        mUploadAllocator;
-		/// <summary>�A�b�v���[�h��p�R�}���h���X�g</summary>
+		/// <summary>アップロード用コマンドリスト</summary>
 		CmdList         mUploadCmdList;
-		/// <summary>�A�b�v���[�h���������p�t�F���X</summary>
+		/// <summary>アップロード完了待ち用フェンス</summary>
 		Fence           mUploadFence;
-		/// <summary>�A�b�v���[�h�p�t�F���X�J�E���^�[</summary>
+		/// <summary>アップロード用フェンスカウンター</summary>
 		UINT64          mUploadFenceValue = 0;
-		/// <summary>�A�b�v���[�h�����҂��C�x���g�n���h��</summary>
+		/// <summary>アップロード完了待ちイベントハンドル</summary>
 		HANDLE          mUploadEvent = nullptr;
 
 		/// <summary>
-		/// �A�b�v���[�h�R���e�L�X�g�p�̔r������
-		///  UploadTextureData / UploadBufferData �𕡐��X���b�h���瓯���ɌĂ񂾏ꍇ��
-        /// mUploadAllocator / mUploadCmdList �ւ̓����A�N�Z�X��h��
+		/// アップロードコンテキスト用の排他制御
+		/// UploadTextureData / UploadBufferData を複数スレッド同時に呼んだ場合等、
+		/// mUploadAllocator / mUploadCmdList への同時アクセスを防ぐ
 		/// </summary>
 		std::mutex mUploadMutex;
 
 		bool mDebugLayerEnabled = false;
 	};
 }
-
-

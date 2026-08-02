@@ -451,7 +451,11 @@ namespace ecs
 		manager.AddComponent<::ecs::Transform>(entity);
 
 		auto& light = manager.AddComponent<ecs::DirectionalLightComponent>(entity);
-		light.Direction = { 0.3f, -1.0f, 0.5f };
+		// 影はDirectionの水平(X,Z)成分の向きへ伸びる。カメラはCreateCamera()のOffset(z=-300)通り
+		// -Z側から+Z方向(奥)を見ているため、以前のZ=+0.5だと影がカメラから見て奥へ伸びていた。
+		// 手前(カメラ側、-Z方向)へ影が伸びるよう、水平成分(X,Z)の符号を反転する
+		// (Y=高さ方向の差し込み角度は変えない)。
+		light.Direction = { -0.3f, -1.0f, -0.5f };
 		light.Color = { 1.0f,  1.0f, 1.0f };
 		light.Intensity = 7.5f;
 		light.IsActive = true;
@@ -470,7 +474,7 @@ namespace ecs
 		// 2. ShadowRangeも、戦闘中の実射程(VoidBeamのBeamLength=90、AreaAttackのSearchRadius=105等)
 		//    を余裕を持ってカバーできるよう150に拡大し、プレイヤー周辺の攻撃エフェクトが
 		//    範囲外に出ないようにする。
-		light.ShadowRange = 150.0f;
+		light.ShadowRange = 300.0f;
 		light.ShadowTarget = { 0.0f, 0.0f, 0.0f }; // 初期値。以降はDirLightFollowSystemが更新する
 		light.ShadowDistance = 30.0f;
 		light.ShadowNear = 0.1f;

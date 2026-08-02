@@ -13,31 +13,21 @@
 
 namespace
 {
-    /// <summary>
-    /// EffekseerへのSetLocation/SetScale/SetRotation呼び出しを間引くための一致判定。
-    /// 比較対象は毎フレーム同一の入力から算出される値のため、変化がなければビット単位で
-    /// 一致する。許容誤差を設けると微小な移動が反映されなくなるため厳密比較にする。
-    /// </summary>
     bool IsSameFloat3(const DirectX::XMFLOAT3& a, const DirectX::XMFLOAT3& b)
     {
+        // 厳密比較(epsilon不要、毎フレーム同一入力から算出されるため)
         return a.x == b.x && a.y == b.y && a.z == b.z;
     }
 }
 
 namespace graphics
 {
-    // -----------------------------------------------------------------------
-    //  Initialize
-    //  旧実装の EffectManager::Initialize() を参考に
-    //  EffekseerRendererDX12::Create() でレンダラーを生成する
-    // -----------------------------------------------------------------------
     bool EffekseerManager::Initialize(
         graphics::DX12Device& device,
         graphics::DX12Context& context)
     {
         if (mIsInitialized) return false;
 
-        // RTV フォーマット（スワップチェーンと一致させる）
         DXGI_FORMAT rtFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
         mRenderer = EffekseerRendererDX12::Create(
@@ -65,37 +55,25 @@ namespace graphics
             return false;
         }
 
-        // パーティクル更新(Manager::Update)をワーカースレッドへ分散する。
-        //
-        // 過去に一度有効化して表示崩れ(素の四角形で描画される/一度も表示されない)が出たが、
-        // 原因は非同期化そのものではなく、非表示解除をIsPlaying()のタイミングに依存させて
-        // いた当時の実装にあった。現在はフレーム数で管理しており環境非依存になっている
-        // (ecs::EffectComponent::HiddenFramesRemaining参照)。
-        //
-        // Update()はSyncUpdate=true(既定)のため、ワーカーでの計算完了を待って返る。
-        // 呼び出し側から見た同期点は単一スレッド時と同一で、余分な遅延やフレーム跨ぎの
-        // 状態ずれは発生しない。並列化はDoUpdate内のインスタンス分割に対して効く。
         if constexpr (EFFECT_WORKER_THREAD_COUNT > 0)
         {
+            // SyncUpdate=trueのため、ワーカー使用時も呼び出し側の同期タイミングは変わらない
             mManager->LaunchWorkerThreads(EFFECT_WORKER_THREAD_COUNT);
             DEBUG_LOG(sys::eLogLevel::Log,
                 "EffekseerManager: Launched {} worker threads for particle update.",
                 EFFECT_WORKER_THREAD_COUNT);
         }
 
-        // レンダラーの設定
         mManager->SetSpriteRenderer(mRenderer->CreateSpriteRenderer());
         mManager->SetRibbonRenderer(mRenderer->CreateRibbonRenderer());
         mManager->SetRingRenderer(mRenderer->CreateRingRenderer());
         mManager->SetModelRenderer(mRenderer->CreateModelRenderer());
         mManager->SetTrackRenderer(mRenderer->CreateTrackRenderer());
 
-        // ローダーの設定
         mManager->SetTextureLoader(mRenderer->CreateTextureLoader());
         mManager->SetModelLoader(mRenderer->CreateModelLoader());
         mManager->SetMaterialLoader(mRenderer->CreateMaterialLoader());
 
-        // メモリプール・コマンドリスト
         mMemoryPool = EffekseerRenderer::CreateSingleFrameMemoryPool(
             mRenderer->GetGraphicsDevice());
         if (mMemoryPool == nullptr)
@@ -129,15 +107,11 @@ namespace graphics
         DEBUG_LOG(sys::eLogLevel::Log, "EffekseerManager: Finalized.");
     }
 
-    // -----------------------------------------------------------------------
-    //  Update  ― 旧 EffectSystem::PostUpdate() を参考に
-    // -----------------------------------------------------------------------
     void EffekseerManager::Update(entt::registry& registry, float dt)
     {
         if (!mIsInitialized) return;
 
-        // 素材別の負荷内訳は「どの.efkを削れば効くか」の判断材料。集計自体もコストのため
-        // デバッグUIが存在するビルドでのみ行う(PerformanceMonitor::Initializeと同じ条件)
+        // 集計コストがあるためDebug/Developのみ実行
 #if DEV_TOOL_ENABLED
         mEffectStats.clear();
         constexpr bool kCollectEffectStats = true;
@@ -149,12 +123,9 @@ namespace graphics
             {
                 if constexpr (kCollectEffectStats)
                 {
-                    // 非表示・再生終了の分岐で早期returnする前に集計する
-                    // (GetTotalInstanceCount()の値と内訳が一致するようにするため)
                     AccumulateEffectStat(effect);
                 }
 
-                // 表示状態の変更を反映
                 if (effect.IsVisible != effect.LastIsVisible)
                 {
                     effect.Effect.SetVisible(effect.IsVisible);
@@ -163,10 +134,7 @@ namespace graphics
 
                 if (!effect.IsVisible) return;
 
-                // Transform に追従する位置を解決する（無ければ Offset を直接座標として使う）。
-                // Play() での初回再生位置と SetLocation() での追従先を同じ値にするため、
-                // ここで一度だけ計算して使い回す（バラバラに計算すると再生直後の1フレームだけ
-                // Offset(原点扱い)に表示されてから追従先へ飛ぶ、という表示不具合になる）。
+                // Play()の初期位置とSetLocation()の追従先を一致させるため一度だけ計算する
                 ecs::Transform* targetTrans = nullptr;
 
                 if (effect.Parent != entt::null && registry.valid(effect.Parent))
@@ -181,12 +149,7 @@ namespace graphics
                         targetTrans->GetPosition().z + effect.Offset.z }
                     : effect.Offset;
 
-                // 再生開始直後の非表示期間を進める。
-                // IsPlaying()の状態に依存せずtick数(dt*60.f)だけで判定するため、
-                // ワーカースレッドの有無で内部状態の確定タイミングが変わっても破綻しない。
-                // レンダーフレーム数ではなくtick数で減らすことで、VSync環境でfpsが変動しても
-                // (Debugビルドで低fps・Develop/Releaseで高fpsになっても)常に同じ
-                // シミュレーション時間だけ隠される(fps依存で猶予不足になる不具合を回避)。
+                // tick数(dt*60.f)で管理し、fps変動に依存させない
                 if (effect.HiddenFramesRemaining > 0.f)
                 {
                     effect.HiddenFramesRemaining -= dt * 60.f;
@@ -197,37 +160,27 @@ namespace graphics
                     }
                 }
 
-                // 再生終了していたら
                 if (!effect.Effect.IsPlaying())
                 {
                     if (effect.IsLoop == true && effect.Asset != nullptr)
                     {
-                        // ループ: 現在の追従先座標から再スタートする。
-                        // 再始動直後も新規生成と同じく内部状態が未確定のため、同じ猶予を与える
-                        // (FrostOrbの周回オーブ・IceSpike・各種投射武器のトレイル等、
-                        // IsLoop=trueで素材自体の長さより長く表示し続けたい場合に発生する)。
+                        // 再始動直後も新規生成と同じ猶予を与える
                         effect.Effect.Play(effect.Asset, worldPos, effect.Effect.ShouldDestroy());
                         MarkSpawnHidden(effect);
-                        // Play()でEffekseer側の変換行列がリセットされるため、
-                        // 差分チェックを無効化して下の適用処理で必ず再適用させる
                         effect.HasAppliedTransform = false;
                     }
                     else if (effect.HiddenFramesRemaining > 0.f)
                     {
-                        // 生成直後の猶予中はIsPlaying()がまだfalseを返しうる。
-                        // ここで破棄すると「一度も表示されずに消えるエフェクト」になるため、
-                        // 猶予が明けるまでは破棄しない
+                        // 猶予中は破棄しない
                     }
                     else
                     {
-                        // 自動削除フラグがあればエンティティを削除
                         if (effect.Effect.ShouldDestroy())
                             registry.destroy(entity);
                         return;
                     }
                 }
 
-                // スケール = Transform.Scale * EffectComponent.Scale
                 const DirectX::XMFLOAT3 worldScale = targetTrans
                     ? DirectX::XMFLOAT3{
                         targetTrans->GetScale().x * effect.Scale.x,
@@ -235,14 +188,7 @@ namespace graphics
                         targetTrans->GetScale().z * effect.Scale.z }
                     : effect.Scale;
 
-                // Effekseer側の各Setterはstd::map検索と行列再構築を伴うため、
-                // 前回適用値から変化したものだけを呼ぶ(EffectComponentのLastApplied*参照)。
-                // 値は毎フレーム同じ入力から算出されるため、変化がなければビット単位で
-                // 一致する。epsilon比較は不要かつ「わずかな移動が反映されない」不具合の元になる。
-                //
-                // 【2026-07-21】この間引きを一時的に無効化してパーティクルのノイズ状の崩れとの
-                // 関連を検証したが無関係と判明済み(実際の原因はEffekseerRendererLLGIの頂点リング
-                // バッファにGPU完了確認が無いこと。Engine::Render()末尾のWaitForGPU()参照)。
+                // 前回適用値から変化した項目だけ呼ぶ(Setterはstd::map検索を伴うため)
                 const bool forceApply = !effect.HasAppliedTransform;
 
                 if (forceApply || !IsSameFloat3(worldPos, effect.LastAppliedLocation))
@@ -266,16 +212,11 @@ namespace graphics
                 effect.HasAppliedTransform = true;
             });
 
-        // Effekseer 内部更新（秒 → フレーム換算、60fps 基準）
         mManager->Update(dt * 60.f);
 
-        // メモリプールのフレーム更新
         mMemoryPool->NewFrame();
     }
 
-    // -----------------------------------------------------------------------
-    //  Draw
-    // -----------------------------------------------------------------------
     void EffekseerManager::Draw(entt::registry& registry, ID3D12GraphicsCommandList* cmdList)
     {
         if (!mIsInitialized) return;
@@ -292,9 +233,7 @@ namespace graphics
         EffekseerRendererDX12::BeginCommandList(mCmdList, cmdList);
         mRenderer->SetCommandList(mCmdList);
 
-        // 描画呼び出し数・頂点数はそれぞれ専用のReset関数を呼ばない限りアプリ起動からの
-        // 累積値のまま増え続ける(ResetDrawCallCount()は頂点数側をリセットしない)ため、
-        // 両方を毎フレームリセットしてから計測する(PerformanceMonitorでの負荷診断用)
+        // 累積値のまま増え続けるため毎フレームリセットする
         mRenderer->ResetDrawCallCount();
         mRenderer->ResetDrawVertexCount();
 
@@ -310,9 +249,6 @@ namespace graphics
         EffekseerRendererDX12::EndCommandList(mCmdList);
     }
 
-    // -----------------------------------------------------------------------
-    //  アセット管理
-    // -----------------------------------------------------------------------
     Effekseer::EffectRef EffekseerManager::GetEffect(
         const std::filesystem::path& filePath)
     {
@@ -332,24 +268,17 @@ namespace graphics
         }
 
         mEffectCache.emplace(key, effect);
-        // 素材別の負荷集計(AccumulateEffectStat)で表示するため、フルパスではなく
-        // ファイル名だけを控えておく
+        // 表示用にファイル名だけ控えておく
         mEffectNames.emplace(effect.Get(), filePath.filename().string());
         return effect;
     }
 
-    // -----------------------------------------------------------------------
-    //  生成直後の非表示化
-    // -----------------------------------------------------------------------
     void EffekseerManager::MarkSpawnHidden(ecs::EffectComponent& effect)
     {
         effect.Effect.SetRenderingVisible(false);
         effect.HiddenFramesRemaining = GetSpawnHiddenTicks();
     }
 
-    // -----------------------------------------------------------------------
-    //  素材別の負荷集計
-    // -----------------------------------------------------------------------
     void EffekseerManager::AccumulateEffectStat(const ecs::EffectComponent& effect)
     {
         if (effect.Asset == nullptr) return;
@@ -362,7 +291,7 @@ namespace graphics
 
         const Effekseer::Effect* key = effect.Asset.Get();
 
-        // 素材数は多くても数十のため線形探索で十分(mapを毎フレーム構築するより安い)
+        // 素材数は多くても数十のため線形探索で十分
         for (auto& entry : mEffectStats)
         {
             if (entry.Asset == key)
@@ -381,9 +310,6 @@ namespace graphics
             instances });
     }
 
-    // -----------------------------------------------------------------------
-    //  手動再生 API
-    // -----------------------------------------------------------------------
     Effekseer::Handle EffekseerManager::Play(
         Effekseer::EffectRef     effect,
         const DirectX::XMFLOAT3& position,
@@ -412,9 +338,6 @@ namespace graphics
         mManager->StopAllEffects();
     }
 
-    // -----------------------------------------------------------------------
-    //  行列変換
-    // -----------------------------------------------------------------------
     Effekseer::Matrix44 EffekseerManager::ToEffekseerMatrix(
         const DirectX::XMMATRIX& mat)
     {

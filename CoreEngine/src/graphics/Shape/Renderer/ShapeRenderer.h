@@ -31,10 +31,7 @@ namespace graphics
 	class ShaderManager;
 
 	/// <summary>
-	/// ShapeHeader.hlsli の ShapeShaderData と同一レイアウトの CPU 側ミラー。
-	/// SpriteShaderData が graphics/Data/GraphicsData.h で定義されているのと同様、
-	/// 本来はそちらに追記するのが望ましいが、当ファイルでは単独定義する。
-	/// HLSL 側のフィールド順・型・パディングと完全に一致させること。
+	/// ShapeHeader.hlsli の ShapeShaderData と同一レイアウトの CPU 側ミラー
 	/// </summary>
 	struct ShapeShaderData
 	{
@@ -118,7 +115,7 @@ namespace graphics
 		// フレームデータ
 		std::vector<ShapeShaderData>       mReservedData;
 
-		// UpdateAndDraw()の一時バッファ。毎フレームclear()して再利用する(毎フレームのvector生成禁止のため)
+		// UpdateAndDraw()の一時バッファ。毎フレームclear()して再利用する
 		std::vector<RenderItem>            mRenderItems;
 
 		// 依存オブジェクト

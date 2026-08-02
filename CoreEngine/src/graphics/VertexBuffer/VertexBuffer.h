@@ -8,11 +8,7 @@ namespace graphics
 {
 	/// <summary>
 	/// 頂点バッファ。
-	///
 	/// Dynamic  : UPLOAD ヒープに FRAME_COUNT 個のリソースを確保し、永続マップする。
-	///            Update() / Set() は RenderContext::GetFrameIndex() が示すフレームの
-	///            リソースに対して行われるため、GPU が読み取り中のバッファを
-	///            CPU が上書きすることがない。
 	/// Static   : DEFAULT ヒープに 1 個だけ確保する。作成後は書き換え不可。
 	/// </summary>
 	class ENGINE_API VertexBuffer
@@ -28,7 +24,7 @@ namespace graphics
 		VertexBuffer();
 		virtual ~VertexBuffer();
 
-		// GPUリソースを持っているので、コピーは禁止（ムーブは必要に応じて実装する）
+		// GPUリソースを持っているので、コピーは禁止
 		VertexBuffer(const VertexBuffer&) = delete;
 		VertexBuffer& operator=(const VertexBuffer&) = delete;
 
@@ -43,7 +39,7 @@ namespace graphics
 		bool CreateDynamic(const size_t Size, const size_t Stride);
 
 		/// <summary>
-		/// 静的な頂点バッファの作成（コマンドリスト経由）。
+		/// 静的な頂点バッファの作成。
 		/// CmdList に Copy コマンドを積むため、実行・完了待ちは呼び出し側の責任。
 		/// 転送完了後は ReleaseUploadBuffer() で一時リソースを解放すること。
 		/// </summary>
@@ -64,17 +60,14 @@ namespace graphics
 		void Release();
 
 		/// <summary>
-		/// アップロード用の一時バッファを解放する（CreateStatic 使用時のみ意味を持つ）
+		/// アップロード用の一時バッファを解放する
 		/// </summary>
 		void ReleaseUploadBuffer();
 
 		/// <summary>
 		/// CPU 上のデータを現在フレームのバッファへ転送する。
-		/// Map/Unmap は行わない（永続マッピングポインタへの memcpy）。
+		/// Map/Unmap は行わない
 		/// Dynamic で作成したバッファにのみ有効。
-		///
-		/// 注意: 書き込まれるのは現在フレームのリソースのみ。
-		///       内容が不変なバッファは Update() ではなく CreateStaticSync() を使うこと。
 		/// </summary>
 		/// <param name="SrcData">転送元データ</param>
 		/// <param name="Size">転送するサイズ（バイト）</param>
@@ -83,8 +76,7 @@ namespace graphics
 
 		/// <summary>
 		/// 全フレーム分のバッファへ同一データを書き込む。
-		/// Dynamic バッファを「初期化時に一度だけ書いて以降変えない」用途で使う場合に呼ぶ。
-		/// （本来そのような用途は CreateStaticSync() が正しい）
+		/// Dynamic バッファを初期化時に一度だけ書いて以降変えない用途で使う場合に呼ぶ。
 		/// </summary>
 		/// <param name="SrcData">転送元データ</param>
 		/// <param name="Size">転送するサイズ（バイト）</param>
@@ -150,8 +142,6 @@ namespace graphics
 		/// </summary>
 		std::array<DynamicFrame, FRAME_COUNT> mDynamicFrames;
 
-		// ---- Static 用 ----
-
 		/// <summary>キャッシュされたバッファビュー（Static のみ使用）</summary>
 		D3D12_VERTEX_BUFFER_VIEW mBufferView;
 
@@ -163,8 +153,6 @@ namespace graphics
 
 		/// <summary>静的バッファ転送用の一時リソース（CreateStatic 使用時のみ有効）</summary>
 		Resource mUploadResource;
-
-		// ---- 共通 ----
 
 		/// <summary>バッファの全容量（1 フレーム分）</summary>
 		size_t mBufferSize;

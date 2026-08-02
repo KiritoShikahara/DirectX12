@@ -1,27 +1,23 @@
 #include "pch.h"
 #include "PhysicsDebugRenderer.h"
 
-// Jolt
 #include <Jolt/Jolt.h>
 #include <Jolt/Physics/Body/BodyInterface.h>
 #include <Jolt/Physics/Collision/Shape/Shape.h>
 #include <Jolt/Geometry/AABox.h>
 
-// dx12
 #include <d3dx12.h>
 #include <graphics/Dx12/Dx12Device.h>
 #include <graphics/Dx12/Dx12Renderer.h>
 #include <graphics/Shader/ShaderManager.h>
 #include <graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeapManager.h>
 
-// ecs
 #include <ecs/component/rigidbody/RigidbodyComponent.h>
 #include <ecs/component/collider/ColliderComponent.h>
 #include <ecs/component/transform/TransformComponent.h>
 #include <ecs/component/camera/CameraComponent.h>
 #include <ecs/component/Debug/DebugWireSphereComponent.h>
 
-// sys
 #include <system/Camera/CameraSystem.h>
 #include <system/Physics/Manager/PhysicsManager.h>
 #include <system/ImGui/ImGuiManager.h>
@@ -37,7 +33,6 @@ namespace graphics
 
         mLineVertices.reserve(kMaxVertices);
 
-        // パイプライン作成
         mPipeline = std::make_unique<LinePipeline>();
         if (!mPipeline->Initialize())
         {
@@ -45,14 +40,12 @@ namespace graphics
             return false;
         }
 
-        // カメラ ConstantBuffer 作成
         if (!CreateCameraBuffer())
         {
             DEBUG_LOG(sys::eLogLevel::Error, "PhysicsDebugRenderer: Failed to create camera buffer.");
             return false;
         }
 
-        // 動的頂点バッファ作成（FRAME_COUNT 個のリングとして確保される）
         mVertexBuffer = std::make_unique<VertexBuffer>();
         if (!mVertexBuffer->CreateDynamic(sizeof(WireVertex) * kMaxVertices, sizeof(WireVertex)))
         {
@@ -60,8 +53,6 @@ namespace graphics
             return false;
         }
 
-        // ImGui ウィンドウ登録（Show Collidersのトグル自体がデバッグ専用機能のため、
-        // WaveDebugPanel等と同じ流儀でReleaseビルドには含めない）
 #ifdef _DEBUG
         sys::ImGuiManager::Get().AddDebugUI([this]() { ImGuiWindow(); }, "Physics");
 #endif
@@ -86,16 +77,10 @@ namespace graphics
         mIsInitialized = false;
     }
 
-    // ==============================================================
-    //  CreateCameraBuffer
-    // ==============================================================
-
     bool PhysicsDebugRenderer::CreateCameraBuffer()
     {
         auto& device = graphics::DX12Device::Get();
 
-        // 自作 ConstantBuffer クラスを使って初期化
-        // 内部で 256 バイトアライメント計算と CBV 登録が全自動で行われる
         mCameraBuffer = std::make_unique<graphics::ConstantBuffer>();
         if (!mCameraBuffer->Create(device, *mHeapManager, sizeof(CameraData)))
         {
@@ -104,10 +89,6 @@ namespace graphics
 
         return true;
     }
-
-    // ==============================================================
-    //  ImGuiWindow
-    // ==============================================================
 
     void PhysicsDebugRenderer::ImGuiWindow()
     {
@@ -132,29 +113,16 @@ namespace graphics
         ImGui::End();
     }
 
-    // ==============================================================
-    //  Begin  ― 前フレームの描画データをクリアする
-    // ==============================================================
-
     void PhysicsDebugRenderer::Begin()
     {
         mLineVertices.clear();
         mDrawVertexCount = 0;
     }
 
-    // ==============================================================
-    //  UpdateAndDraw  ― 収集フェーズ
-    //
-    //  registry / Jolt / CameraSystem から頂点を構築し、
-    //  カメラ定数バッファと頂点バッファへ転送するところまでを行う。
-    //  コマンドリストへの記録は一切行わない。
-    // ==============================================================
-
     void PhysicsDebugRenderer::UpdateAndDraw(entt::registry& registry)
     {
         if (!mIsInitialized || !mEnabled) return;
 
-        // ── カメラ VP 行列を書き込む ──────────────────────────────────
         auto& cameraSys = sys::CameraSystem::Get();
         if (!cameraSys.HasMainCamera()) return;
 
@@ -162,16 +130,13 @@ namespace graphics
             cameraSys.GetMainCameraEntity());
         if (!cam) return;
 
-        // HLSL は row_major なので転置して渡す
         CameraData camData;
         DirectX::XMStoreFloat4x4(
             &camData.ViewProjection,
             DirectX::XMMatrixTranspose(cam->GetViewProjectionMatrix()));
 
-        // 現在フレームの ConstantBuffer へ転送する
         mCameraBuffer->Update(&camData, sizeof(CameraData));
 
-        // ── Jolt から Shape の三角形を取り出して頂点構築 ─────────────
         auto& bodyInterface = sys::PhysicsManager::Get().GetBodyInterface();
 
         registry.view<ecs::RigidBodyComponent, ecs::ColliderComponent>().each(
@@ -181,7 +146,6 @@ namespace graphics
             {
                 if (!rb.IsBodyCreated) return;
 
-                // MotionType で色を決定
                 const bool isSensor = registry.all_of<ecs::SensorTagComponent>(entity);
                 DirectX::XMFLOAT4 color;
                 if (isSensor)
@@ -199,12 +163,8 @@ namespace graphics
                     }
                 }
 
-                // Jolt の Body ワールド行列を取得
                 const JPH::RMat44 joltWorld = bodyInterface.GetWorldTransform(rb.BodyID);
 
-                // ── GetTrianglesStart に Jolt のワールド変換を直接渡す ──
-                // これで triangle 頂点が最初からワールド空間で返ってくるため、
-                // C++ 側での手動の XMMATRIX 変換やオフセット計算が不要になる。
                 JPH::ShapeRefC shape = bodyInterface.GetShape(rb.BodyID);
                 if (!shape) return;
 
@@ -212,9 +172,9 @@ namespace graphics
                 shape->GetTrianglesStart(
                     context,
                     JPH::AABox::sBiggest(),
-                    joltWorld.GetTranslation(),    // COM のワールド位置
-                    joltWorld.GetQuaternion(),     // ワールド回転
-                    JPH::Vec3::sReplicate(1.0f));  // スケール
+                    joltWorld.GetTranslation(),
+                    joltWorld.GetQuaternion(),
+                    JPH::Vec3::sReplicate(1.0f));
 
                 static constexpr int kBatchSize = 64;
                 JPH::Float3 joltVerts[kBatchSize * 3];
@@ -227,7 +187,6 @@ namespace graphics
 
                     for (int i = 0; i < triCount; ++i)
                     {
-                        // 頂点はすでにワールド空間 → そのまま割り当て
                         const DirectX::XMFLOAT3 p0 =
                         { joltVerts[i * 3 + 0].x, joltVerts[i * 3 + 0].y, joltVerts[i * 3 + 0].z };
                         const DirectX::XMFLOAT3 p1 =
@@ -242,8 +201,6 @@ namespace graphics
                 }
             });
 
-        // ── Jolt に登録されないアドホックな当たり判定(OverlapSphere等)の可視化 ──────
-        // DebugWireSphereComponent が付与されたエンティティをワイヤーフレーム球として描画する。
         registry.view<ecs::Transform, ecs::DebugWireSphereComponent>().each(
             [&](const ecs::Transform& tr, const ecs::DebugWireSphereComponent& wire)
             {
@@ -252,21 +209,12 @@ namespace graphics
 
         if (mLineVertices.empty()) return;
 
-        // ── 頂点バッファに転送（現在フレームのリソースへ書き込まれる）──
         const size_t vertCount = std::min(mLineVertices.size(), kMaxVertices);
         const size_t uploadSize = sizeof(WireVertex) * vertCount;
         mVertexBuffer->Update(mLineVertices.data(), uploadSize, 0);
 
-        // End() が参照する描画頂点数を確定する
         mDrawVertexCount = static_cast<UINT>(vertCount);
     }
-
-    // ==============================================================
-    //  End  ― 記録フェーズ
-    //
-    //  収集済みデータをコマンドリストへ記録するだけ。
-    //  registry / GPU バッファの Update には一切触れない。
-    // ==============================================================
 
     void PhysicsDebugRenderer::End(ID3D12GraphicsCommandList* cmdList)
     {
@@ -279,7 +227,6 @@ namespace graphics
 
         cmdList->SetGraphicsRootSignature(mPipeline->GetRootSignature());
 
-        // ConstantBuffer から現在フレームの GPU ハンドルを取得してバインドする
         cmdList->SetGraphicsRootDescriptorTable(
             LinePipeline::SLOT_CAMERA_BUFFER,
             mCameraBuffer->GetGpuHandle());
@@ -291,10 +238,6 @@ namespace graphics
         cmdList->DrawInstanced(mDrawVertexCount, 1, 0, 0);
     }
 
-    // ==============================================================
-    //  PushLine
-    // ==============================================================
-
     void PhysicsDebugRenderer::PushLine(
         const DirectX::XMFLOAT3& from,
         const DirectX::XMFLOAT3& to,
@@ -305,11 +248,6 @@ namespace graphics
         mLineVertices.push_back({ to,   color });
     }
 
-    // ==============================================================
-    //  PushWireSphere
-    //  XY/XZ/YZ の3つの円で球を近似する（軽量・実装単純さ優先）。
-    // ==============================================================
-
     void PhysicsDebugRenderer::PushWireSphere(
         const DirectX::XMFLOAT3& center,
         float radius,
@@ -317,7 +255,7 @@ namespace graphics
     {
         constexpr int kSegments = 24;
 
-        for (int axis = 0; axis < 3; ++axis) // 0:XY 1:XZ 2:YZ
+        for (int axis = 0; axis < 3; ++axis)
         {
             DirectX::XMFLOAT3 prev{};
             for (int i = 0; i <= kSegments; ++i)
@@ -327,9 +265,9 @@ namespace graphics
                 const float s = std::sin(t) * radius;
 
                 DirectX::XMFLOAT3 p = center;
-                if (axis == 0)      { p.x += c; p.y += s; }
+                if (axis == 0) { p.x += c; p.y += s; }
                 else if (axis == 1) { p.x += c; p.z += s; }
-                else                { p.y += c; p.z += s; }
+                else { p.y += c; p.z += s; }
 
                 if (i > 0) PushLine(prev, p, color);
                 prev = p;

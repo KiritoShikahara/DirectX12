@@ -52,18 +52,15 @@ namespace graphics
         std::unique_ptr<SkyboxPipeline> mPipeline;
         GDescriptorHeapManager* mHeapManager = nullptr;
 
-        // UpdateAndDraw()の一時バッファ。毎フレームclear()して再利用する(毎フレームのvector生成禁止のため)
+        // UpdateAndDraw()の一時バッファ。毎フレームclear()して再利用する
         std::vector<Entry> mEntries;
 
-        // UpdateAndDraw() → End() へ渡す描画パラメータ
+        // UpdateAndDraw()からEnd() へ渡す描画パラメータ
         const Texture* mTexA = nullptr;
         const Texture* mTexB = nullptr;
         float          mBlendWeight = 0.0f;
         bool           mHasDraw = false;
 
-        // TextureManager::GetOrLoad()はキャッシュヒット時でもfilesystem::absolute()による
-        // パス解決+文字列生成を行うため、毎フレーム同じパスで呼び続けるコストを避けるべく
-        // 直前に解決したパスと結果をここで保持し、パスが変化した時だけ再解決する
         std::filesystem::path mCachedPathA;
         const Texture*        mCachedTexA = nullptr;
         std::filesystem::path mCachedPathB;

@@ -16,14 +16,6 @@
 namespace graphics
 {
 
-	/// <summary>
-	/// 初期化。依存するオブジェクトをすべて引数で受け取る。
-	/// </summary>
-	/// <param name="device">GPU デバイス（バッファ作成・PSO 作成）</param>
-	/// <param name="heapManager">ディスクリプタヒープの供給元</param>
-	/// <param name="shaderManager">シェーダーのコンパイル・キャッシュ管理</param>
-	/// <param name="window">仮想解像度の取得元</param>
-	/// <returns>true:成功</returns>
 	bool SpriteRenderer::Initialize(
 		DX12Device& device,
 		GDescriptorHeapManager& heapManager,
@@ -154,11 +146,6 @@ namespace graphics
 		// [t0] StructuredBuffer（全スプライトの定数データ）
 		cmdList->SetGraphicsRootDescriptorTable(0, mInstanceBuffer->GetGpuHandle());
 
-		// バッチごとに [t1] テクスチャを差し替え、[b0] にインスタンス先頭オフセットをセットして
-		// DrawInstanced を発行する。
-		// 注意: SV_InstanceID の StartInstanceLocation 加算は GPU/ドライバ依存で信頼できないため、
-		// StartInstanceLocation には常に 0 を渡し、代わりに Root32BitConstant でオフセットを渡して
-		// VS 側 (InstanceOffset + SV_InstanceID) で手動加算する。
 		for (const auto& call : mDrawCalls)
 		{
 			cmdList->SetGraphicsRootDescriptorTable(1, call.textureHandle);
@@ -174,7 +161,7 @@ namespace graphics
 	/// </summary>
 	void SpriteRenderer::UpdateAndDraw(entt::registry& registry)
 	{
-		// 毎フレームのvector生成を避けるため、メンバ変数(mRenderItems)を使い回す
+		// 毎フレームのvector生成を避けるため、メンバ変数を使い回す
 		mRenderItems.clear();
 		auto view = registry.view<ecs::Transform, ecs::Sprite>();
 		mRenderItems.reserve(view.size_hint());
@@ -192,7 +179,8 @@ namespace graphics
 				return a.Sprite->Layer < b.Sprite->Layer;
 			});
 
-		// ソート済み順で Draw を発行（バッチ化のためテクスチャ順が重要）
+		// ソート済み順で Draw を発行
+		// バッチ処理のため順番は重要
 		for (const auto& item : mRenderItems)
 		{
 			const SpriteShaderData shaderData =

@@ -9,12 +9,7 @@
 namespace ecs
 {
 	/// <summary>
-	/// ECS コンポーネントのフィールドを走査するビジターインターフェース。
-	///
-	/// Data/Storage/Reflection.h (SqliteManager/ConfigManager 等 DB レコード用、
-	/// int/float/bool/string のみ対応) とは別系統。
-	/// エディタ配置エンティティのコンポーネント(Transform, FbxComponent, Light系,
-	/// Collider, RigidBody)が使う XMFLOAT2/3/4 を追加でサポートする。
+	/// ECS コンポーネントのフィールドを走査するビジターインターフェース
 	/// </summary>
 	class IComponentFieldVisitor
 	{
@@ -30,7 +25,9 @@ namespace ecs
 		virtual void OnFloat4(const std::string& name, DirectX::XMFLOAT4& value) = 0;
 	};
 
-	/// <summary>1フィールド分の走査情報</summary>
+	/// <summary>
+	/// 1フィールド分の走査情報
+	/// </summary>
 	struct ComponentFieldInfo
 	{
 		std::string Name;
@@ -38,7 +35,7 @@ namespace ecs
 	};
 
 	/// <summary>
-	/// ECS_REFLECT_BEGIN/FIELD/END マクロで型ごとに特殊化する。
+	/// 型ごとに特殊化するディスクリプター
 	/// </summary>
 	template<typename T>
 	struct ComponentTypeDescriptor
@@ -46,7 +43,9 @@ namespace ecs
 		static const std::vector<ComponentFieldInfo>& Fields();
 	};
 
-	/// <summary>ComponentTypeDescriptor<T>::Fields() を回してビジターを適用する</summary>
+	/// <summary>
+	/// ビジターを適用する
+	/// </summary>
 	template<typename T>
 	void VisitComponentFields(T& obj, IComponentFieldVisitor& visitor)
 	{
@@ -55,21 +54,14 @@ namespace ecs
 	}
 }
 
-// ============================================================
-//  型ごとの Fields() 特殊化を組み立てるマクロ群。
-//  コンポーネント定義ファイル自体は変更せず、
-//  Serialization 側の別ファイルで型ごとに登録する想定。
-// ============================================================
-
 #define ECS_REFLECT_BEGIN(Type)                                                             \
 	namespace ecs {                                                                          \
 	template<> inline const std::vector<ecs::ComponentFieldInfo>&                            \
 		ecs::ComponentTypeDescriptor<Type>::Fields()                                        \
 	{                                                                                        \
 		using _T = Type;                                                                     \
-		static const std::vector<ecs::ComponentFieldInfo> sFields = {
+		static const std::vector<ecs::ComponentFieldInfo> sFields = {                        \
 
-// 公開フィールドを直接参照する通常フィールド(型自動判別)
 #define ECS_REFLECT_FIELD(FieldName)                                                        \
 			ecs::ComponentFieldInfo {                                                        \
 				#FieldName,                                                                  \
@@ -87,7 +79,6 @@ namespace ecs
 				}                                                                            \
 			},
 
-// enum class (underlying型は int を前提) 用。int として編集・保存する。
 #define ECS_REFLECT_FIELD_ENUM(FieldName)                                                   \
 			ecs::ComponentFieldInfo {                                                        \
 				#FieldName,                                                                  \
@@ -100,8 +91,6 @@ namespace ecs
 				}                                                                            \
 			},
 
-// private フィールドを Getter/Setter 経由で読み書きする用(例: Transform)。
-// 型 Type は XMFLOAT2/XMFLOAT3/XMFLOAT4/float のいずれか。
 #define ECS_REFLECT_FIELD_ACCESSOR(Name, Type, Getter, Setter)                              \
 			ecs::ComponentFieldInfo {                                                        \
 				#Name,                                                                       \

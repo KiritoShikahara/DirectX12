@@ -2,7 +2,6 @@
 
 #include <Utility/Export/Export.h>
 #include <graphics/Color/Color.h>
-
 #include <array>
 #include "Dx12Type.h"
 
@@ -12,14 +11,6 @@ namespace graphics
 
     /// <summary>
     /// DX12描画コンテキストクラス
-    /// スワップチェインを使ったフレーム描画ループを管理する。
-    /// デバイス層(DX12Device)に依存する。
-    /// DX12Rendererによって所有・管理される。
-    ///
-    /// コマンドリストは eRenderChannel ごとに分割されており、
-    /// チャネル単位で別スレッドから記録できる。
-    /// GPU への投入(ExecuteCommandLists)は Flip() がチャネルの宣言順に行うため、
-    /// 記録順が並列化で入れ替わっても描画順は保証される。
     /// </summary>
     class ENGINE_API DX12Context
     {
@@ -30,111 +21,113 @@ namespace graphics
         /// <summary>
         /// 初期化
         /// </summary>
-        /// <param name="pDevice">初期化済みの DX12Device</param>
-        /// <param name="WindowHandle">対象ウィンドウのハンドル</param>
-        /// <param name="Width">スクリーン横幅</param>
-        /// <param name="Height">スクリーン縦幅</param>
-        /// <returns>true:成功</returns>
         bool Initialize(DX12Device* pDevice, HWND WindowHandle, UINT Width, UINT Height);
 
         /// <summary>
         /// 終了処理
         /// </summary>
-        /// <returns>true:成功</returns>
         bool Finalize();
 
         /// <summary>
-        /// フレーム描画の開始。
-        ///
-        /// 1. 現フレームのGPU完了を待機
-        /// 2. RenderContext にフレームインデックスを通知
-        ///    （StructuredBuffer / ConstantBuffer / VertexBuffer のリング切り替えに必須）
-        /// 3. 全チャネルのアロケータ／コマンドリストを Reset して開く
-        /// 4. 全チャネルに DescriptorHeap / RTV / DSV / Viewport を設定
-        /// 5. Pre チャネルに barrier(PRESENT→RT) と RTV/DSV クリアを積む
+        /// フレーム描画開始
         /// </summary>
         void BeginRendering();
 
         /// <summary>
-        /// 画面のフリップ。
-        ///
-        /// 1. Post チャネルに barrier(RT→PRESENT) を積む
-        /// 2. 全チャネルを Close
-        /// 3. チャネルの宣言順に ExecuteCommandLists
-        /// 4. Present + フェンス Signal
+        /// 画面フリップ
         /// </summary>
         void Flip();
 
         /// <summary>
-        /// 全GPU コマンドの完了を待機する
+        /// GPU完了待機
         /// </summary>
         void WaitForGPU();
 
         /// <summary>
-        /// ビューポートとシザー矩形の設定。
-        /// 記録先のコマンドリストを明示的に受け取る。
+        /// ビューポート設定
         /// </summary>
-        /// <param name="cmdList">設定先のコマンドリスト</param>
         void SetViewPort(ID3D12GraphicsCommandList* cmdList,
             float Width, float Height, float x = 0.0f, float y = 0.0f);
 
         /// <summary>
-        /// メインの RTV / DSV / ビューポートを再セットする。
-        ///
-        /// 注意: チャネル分割により BeginRendering() が全チャネルに RTV を設定するため、
-        ///       通常は呼ぶ必要がない。
-        ///       同一チャネル内で RT を付け外しする場合にのみ使用すること。
+        /// メインレンダーターゲット再セット
         /// </summary>
         void RestoreMainRenderTarget(ID3D12GraphicsCommandList* cmdList);
 
         /// <summary>
-        /// 指定チャネルの描画用コマンドリストを取得する。
-        /// BeginRendering() 〜 Flip() の間のみ有効。
-        ///
-        /// 注意: 1つのチャネルを複数スレッドから同時に触ってはならない。
+        /// コマンドリスト取得
         /// </summary>
-        /// <param name="channel">取得するチャネル</param>
         ID3D12GraphicsCommandList* GetCommandList(eRenderChannel channel);
 
         /// <summary>
-        /// 現在フレーム・指定チャネルのコマンドアロケーターの取得
+        /// コマンドアロケーター取得
         /// </summary>
         ID3D12CommandAllocator* GetCommandAllocator(eRenderChannel channel);
 
         /// <summary>
-        /// コマンドキューの取得
+        /// コマンドキュー取得
         /// </summary>
         ID3D12CommandQueue* GetCommandQueue();
 
         /// <summary>
-        /// 現在フレームのD3D12MAアップロードプールの取得
+        /// アップロードプール取得
         /// </summary>
         D3D12MA::Pool* GetMAUploadPool();
 
         /// <summary>
-        /// 現在フレームのインデックスの取得
+        /// 現在フレームインデックス取得
         /// </summary>
         UINT GetCurrentFrameIndex() const;
 
-        /// <summary>スクリーン横幅</summary>
+        /// <summary>
+        /// スクリーン横幅取得
+        /// </summary>
         UINT GetWidth() const { return mWidth; }
-        /// <summary>スクリーン縦幅</summary>
+
+        /// <summary>
+        /// スクリーン縦幅取得
+        /// </summary>
         UINT GetHeight() const { return mHeight; }
 
     private:
+        /// <summary>
+        /// コマンドオブジェクト初期化
+        /// </summary>
         bool InitializeCommandObjects();
+
+        /// <summary>
+        /// スワップチェイン初期化
+        /// </summary>
         bool InitializeSwapChain(HWND WindowHandle, UINT Width, UINT Height);
+
+        /// <summary>
+        /// バックバッファヒープ初期化
+        /// </summary>
         bool InitializeBackBufferHeap();
+
+        /// <summary>
+        /// 深度ヒープ初期化
+        /// </summary>
         bool InitializeDepthHeap(UINT Width, UINT Height);
+
+        /// <summary>
+        /// フェンス初期化
+        /// </summary>
         bool InitializeFence();
 
-        /// <summary>現在フレームの RTV ハンドルを取得する</summary>
+        /// <summary>
+        /// 現在のRTVハンドル取得
+        /// </summary>
         D3D12_CPU_DESCRIPTOR_HANDLE GetCurrentRtvHandle() const;
 
-        /// <summary>DSV ハンドルを取得する</summary>
+        /// <summary>
+        /// DSVハンドル取得
+        /// </summary>
         D3D12_CPU_DESCRIPTOR_HANDLE GetDsvHandle() const;
 
-        /// <summary>リソースバリアを積むヘルパー</summary>
+        /// <summary>
+        /// リソースバリア発行
+        /// </summary>
         static void Barrier(
             ID3D12GraphicsCommandList* cmdList,
             ID3D12Resource* resource,
@@ -142,64 +135,61 @@ namespace graphics
             D3D12_RESOURCE_STATES after);
 
         /// <summary>
-        /// フレームごとのリソースまとめ
+        /// フレームごとのリソース
         /// </summary>
         struct FrameResource
         {
-            /// <summary>実際に色を書き込まれるバックバッファテクスチャ</summary>
+            /// <summary>バックバッファ</summary>
             Resource BackBuffer = nullptr;
-            /// <summary>このフレームのGPU完了を確認するためのフェンス値</summary>
+            /// <summary>フェンス値</summary>
             UINT64   FenceValue = 0;
-            /// <summary>このフレーム用のアップロードプール</summary>
+            /// <summary>アップロードプール</summary>
             MAPool   UploadPool = nullptr;
-
-            /// <summary>
-            /// チャネルごとのコマンドアロケーター。
-            /// 記録中は他スレッドと共有できないためチャネル単位で持つ。
-            /// </summary>
+            /// <summary>アロケーター配列</summary>
             std::array<CmdAlloc, CHANNEL_COUNT> Allocators{};
-
-            /// <summary>チャネルごとのコマンドリスト</summary>
+            /// <summary>コマンドリスト配列</summary>
             std::array<CmdList, CHANNEL_COUNT> CmdLists{};
         };
 
-        /// <summary>DX12Deviceへの参照(ライフタイムの管理はサービス側が行う)</summary>
+        /// <summary>DX12デバイスサービス</summary>
         DX12Device* mDeviceService = nullptr;
 
-        /// <summary>フロント・バックバッファの入れ替え</summary>
+        /// <summary>スワップチェイン</summary>
         SwapChain   mSwapChain;
-        /// <summary>完了したコマンドをGPUへ送り出すキュー</summary>
+        /// <summary>コマンドキュー</summary>
         CmdQueue    mCmdQueue;
 
-        /// <summary>フレームごとのリソース配列</summary>
+        /// <summary>フレームリソース配列</summary>
         std::array<FrameResource, graphics::FRAME_COUNT> mFrames;
 
-        /// <summary>深度バッファリソース(前後関係の判断に使う)</summary>
+        /// <summary>深度バッファ</summary>
         Resource    mDepthBuffer;
-        /// <summary>RTV用ディスクリプタヒープ</summary>
+        /// <summary>RTVヒープ</summary>
         Heap        mRtvHeap;
-        /// <summary>DSV用ディスクリプタヒープ</summary>
+        /// <summary>DSVヒープ</summary>
         Heap        mDsvHeap;
 
-        /// <summary>CPUとGPUの同期用フェンス</summary>
+        /// <summary>フェンス</summary>
         Fence       mFence;
 
-        /// <summary>GPU待ちイベントハンドル</summary>
+        /// <summary>GPU待機イベント</summary>
         HANDLE      mWaitForGPUEventHandle = nullptr;
-        /// <summary>次にSignalする値</summary>
+        /// <summary>次のフェンス値</summary>
         UINT64      mNextFenceValue = 1;
-        /// <summary>現在フレームのインデックス</summary>
+        /// <summary>フレームインデックス</summary>
         UINT        mFrameIndex = 0;
 
-        /// <summary>RTV ディスクリプタ1個分のバイトサイズ</summary>
+        /// <summary>RTVインクリメントサイズ</summary>
         UINT        mRtvIncrementSize = 0;
 
-        /// <summary>背景クリア色</summary>
+        /// <summary>クリアカラー</summary>
         Color       mClearColor;
-        /// <summary>バックバッファのフォーマット</summary>
+        /// <summary>バックバッファフォーマット</summary>
         DXGI_FORMAT mFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 
+        /// <summary>横幅</summary>
         UINT mWidth = 0;
+        /// <summary>縦幅</summary>
         UINT mHeight = 0;
     };
 

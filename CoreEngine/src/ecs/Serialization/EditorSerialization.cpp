@@ -20,7 +20,7 @@ namespace ecs
 {
 	namespace
 	{
-		// ── 構造体 → JSON ────────────────────────────────────────
+		// 構造体 → JSON 
 		class JsonComponentSerializeVisitor final : public IComponentFieldVisitor
 		{
 		public:
@@ -48,7 +48,7 @@ namespace ecs
 			nlohmann::json& mJson;
 		};
 
-		// ── JSON → 構造体 (キーが無ければスキップ = 部分更新・後方互換対応) ──
+		// JSON → 構造体 
 		class JsonComponentDeserializeVisitor final : public IComponentFieldVisitor
 		{
 		public:
@@ -109,8 +109,6 @@ namespace ecs
 
 		/// <summary>
 		/// AssetKey から FbxComponent::Resource を解決する。
-		/// PrimitiveResourceManager のキャッシュを優先し、無ければ
-		/// 実ファイルパスとみなして FbxResourceManager::Load を試みる。
 		/// </summary>
 		graphics::FbxResource* ResolveFbxResource(const std::string& assetKey)
 		{
@@ -251,7 +249,6 @@ namespace ecs
 				DeserializeComponent(entry["RigidBody"], rigidBody);
 
 				// Jolt ハンドルは必ず未生成状態に戻す。
-				// PhysicsSystem::BuildPendingBodies が次フレームで Body を再生成する。
 				rigidBody.BodyID = JPH::BodyID();
 				rigidBody.IsBodyCreated = false;
 			}

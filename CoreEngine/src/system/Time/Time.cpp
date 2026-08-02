@@ -38,8 +38,7 @@ namespace sys
     bool Time::AccumulateFixedStep()
     {
         // 1回のUpdate()あたりの実行回数が上限に達していたら、蓄積時間が残っていても
-        // 今フレームはこれ以上実行しない(spiral of death防止。残りの蓄積時間は次フレームへ
-        // 持ち越すが、MAX_DELTA_TIMEのクランプにより無限に溜まり続けることはない)
+        // 今フレームはこれ以上実行しない。残りの蓄積時間は次フレームへ
         if (mFixedStepsThisUpdate >= MAX_FIXED_STEPS_PER_UPDATE)
         {
             return false;

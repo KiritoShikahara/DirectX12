@@ -24,21 +24,14 @@ namespace graphics
 	}
 	bool Texture::Create(const std::filesystem::path& FilePath, bool isSRGB)
 	{
-		// 単体ロード時は、CPU側のデコード(LoadImageData)とGPUリソース作成
-		// (CreateFromImageData)を同じ呼び出し元スレッドでそのまま順に行う。
-		// 複数枚をワーカースレッドで並列デコードしたい場合はTextureManager::
-		// PreloadBatchが両者を分離して使う(LoadImageDataだけを複数スレッドへ分配し、
-		// CreateFromImageDataは呼び出し元スレッドで直列に行う)。
+ 
 		const ImageData imageData = LoadImageData(FilePath, isSRGB);
 		if (!imageData.Success) return false;
 
 		return CreateFromImageData(FilePath, isSRGB, imageData);
 	}
 
-	/// <summary>
-	/// CPU側のみの処理(ファイル読み込み・デコード・ミップ生成)。D3D12を一切呼ばないため、
-	/// 別々のファイルを複数スレッドから同時に呼び出しても安全(TextureManager::PreloadBatch参照)。
-	/// </summary>
+	// CPU側の処理
 	Texture::ImageData Texture::LoadImageData(const std::filesystem::path& FilePath, bool isSRGB)
 	{
 		ImageData result;
@@ -89,8 +82,6 @@ namespace graphics
 		}
 		else
 		{
-			// WIC(PNG/JPG等)はCOMを使うため、呼び出し元スレッドでCOMが
-			// 初期化済みである必要がある(ThreadPool::WorkerLoopでCoInitializeEx済み)。
 			hr = DirectXTex::LoadFromWICFile(
 				path.c_str(),
 				DirectXTex::WIC_FLAGS_NONE,
@@ -100,13 +91,11 @@ namespace graphics
 		}
 		if (FAILED(hr))
 		{
-			//DEBUG_LOG(sys::eLogLevel::Error, "Texture: Failed to load texture file: {}", FilePath.string());
 			return result;
 		}
 
-		// ミップマップが含まれていない画像 (WIC/TGA読み込み等) はここで生成する。
-		// ミップ無しのまま縮小表示すると遠景でモアレ/シミー(ちらつき)が発生するため。
-		// Volumemap(3Dテクスチャ)はGenerateMipMapsが非対応のため対象外。
+		// ミップマップがない画像は生成
+		// ちらつき防止
 		if (metaData.mipLevels <= 1 && metaData.IsVolumemap() == false)
 		{
 			// sRGB用テクスチャはガンマ空間のまま縮小フィルタすると暗部が変色するため、
@@ -138,11 +127,7 @@ namespace graphics
 		return result;
 	}
 
-	/// <summary>
-	/// GPU側のみの処理(リソース作成・アップロード・SRV作成)。呼び出し元スレッドの
-	/// D3D12コマンドリスト/フェンス(DX12Device::UploadTextureData内でmutex排他)を使うため、
-	/// 複数のTextureインスタンスに対して同時に呼び出さないこと(1スレッドずつ直列に呼ぶ)。
-	/// </summary>
+	// GPU側の処理
 	bool Texture::CreateFromImageData(const std::filesystem::path& FilePath, bool isSRGB, const ImageData& imageData)
 	{
 		if (!imageData.Success) return false;
@@ -211,7 +196,6 @@ namespace graphics
 
 		// SRVの作成
 		// isSRGB指定時はGPUリソース自体はUNORMのまま、SRVの解釈のみをSRGBにする。
-		// (サンプル時にハードウェアがsRGB→linear変換を行うため、ストレージ形式を変える必要はない)
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
 		srvDesc.Format = isSRGB ? DirectXTex::MakeSRGB(metaData.format) : metaData.format;
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;

@@ -20,8 +20,7 @@ namespace sys
 	namespace
 	{
 		/// <summary>
-		/// Inspector パネル用の ImGui 編集ビジター。
-		/// Data/Storage/Inspector/DataInspector.h の ImGuiEditVisitor と同型のパターン。
+		/// Inspector パネル用のImGui編集ビジター。
 		/// </summary>
 		class ImGuiComponentEditVisitor final : public ecs::IComponentFieldVisitor
 		{
@@ -143,7 +142,6 @@ namespace sys
 		ImGui::EndDisabled();
 
 		// シーン切り替えはPlay/Editどちらのモードでも常に使えるようにする
-		// (上のBeginDisabled(IsPlaying())の対象外にする)ため、EndDisabled()の後に置く。
 		DrawScenePanel();
 
 		ImGui::End();
@@ -165,9 +163,7 @@ namespace sys
 			ImGui::BeginDisabled(isCurrent);
 			if (ImGui::Button(name.c_str()))
 			{
-				// トランジションなしで即座に切り替える(ChangeSceneWithTransitionは使わない)。
-				// 実際の切り替えはSceneManager::PostUpdate()(毎フレーム無条件で呼ばれる、
-				// Play/Editモードを問わない)で次フレーム冒頭に適用される。
+				// トランジションなしで即座に切り替える
 				sceneManager.ChangeScene(name);
 			}
 			ImGui::EndDisabled();
@@ -233,7 +229,7 @@ namespace sys
 			ImGui::Separator();
 		}
 
-		// Play中は編集操作(削除含む)を無効化する(Placement Palette等と同じ方針)
+		// Play中は編集操作をできないように
 		ImGui::BeginDisabled(sys::EditorManager::Get().IsPlaying());
 		ImGui::PushStyleColor(ImGuiCol_Button, { 0.6f, 0.15f, 0.15f, 1.0f });
 		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, { 0.8f, 0.2f, 0.2f, 1.0f });

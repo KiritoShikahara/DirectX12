@@ -8,6 +8,7 @@
 
 namespace graphics
 {
+    // コンストラクタ
     DX12Context::DX12Context()
         : mDeviceService(nullptr)
         , mSwapChain(nullptr)
@@ -21,10 +22,12 @@ namespace graphics
         mClearColor = graphics::Color::Gray;
     }
 
+    // デストラクタ
     DX12Context::~DX12Context()
     {
     }
 
+    // 初期化処理
     bool DX12Context::Initialize(DX12Device* pDevice, HWND WindowHandle, UINT Width, UINT Height)
     {
         if (pDevice == nullptr) return false;
@@ -36,20 +39,18 @@ namespace graphics
         if (!InitializeSwapChain(WindowHandle, Width, Height)) return false;
         if (!InitializeBackBufferHeap())  return false;
         if (!InitializeDepthHeap(Width, Height)) return false;
-        if (!InitializeFence())           return false;
+        if (!InitializeFence())            return false;
 
-        // GPU計測はタイムスタンプ未対応環境では無効化されるだけなので、
-        // 失敗しても初期化全体は続行する
         GpuProfiler::Get().Initialize(mDeviceService->GetDevice(), mCmdQueue.Get());
 
         return true;
     }
 
+    // 終了処理
     bool DX12Context::Finalize()
     {
         WaitForGPU();
 
-        // GPUの完了を待った後に解放する(クエリヒープを実行中に破棄しないため)
         GpuProfiler::Get().Finalize();
 
         if (mWaitForGPUEventHandle != nullptr)
@@ -58,7 +59,6 @@ namespace graphics
             mWaitForGPUEventHandle = nullptr;
         }
 
-        // 生成と逆順で解放する
         for (auto& frame : mFrames)
         {
             for (auto& cmdList : frame.CmdLists)   cmdList.Reset();
@@ -71,7 +71,7 @@ namespace graphics
         mRtvHeap.Reset();
         mDsvHeap.Reset();
 
-        mSwapChain.Reset();  // CommandQueue より先に解放
+        mSwapChain.Reset();
         mCmdQueue.Reset();
 
         mFence.Reset();
@@ -79,30 +79,21 @@ namespace graphics
         return true;
     }
 
-    // -----------------------------------------------------------------------
-    //  フレーム描画
-    // -----------------------------------------------------------------------
-
+    // フレーム描画開始
     void DX12Context::BeginRendering()
     {
-        // 次に描画するバックバッファのインデックスを取得
         mFrameIndex = mSwapChain->GetCurrentBackBufferIndex();
 
-        // リングバッファ(StructuredBuffer / ConstantBuffer / VertexBuffer)の
-        // 切り替えに使われるため、コマンド記録より前に必ず通知する
         RenderContext::Get().SetFrameIndex(mFrameIndex);
 
         auto& frame = mFrames[mFrameIndex];
 
-        // このフレームのGPU処理が終了していなければ待機(ストール防止)
         if (mFence->GetCompletedValue() < frame.FenceValue)
         {
             mFence->SetEventOnCompletion(frame.FenceValue, mWaitForGPUEventHandle);
             WaitForSingleObject(mWaitForGPUEventHandle, INFINITE);
         }
 
-        // 前フレーム分のGPU計測結果を回収する。直前のフェンス待機で
-        // このフレームインデックスのGPU完了は保証済みのため、追加の待機は発生しない
         GpuProfiler::Get().BeginFrame(mFrameIndex);
 
         const D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = GetCurrentRtvHandle();
@@ -110,9 +101,6 @@ namespace graphics
 
         ID3D12DescriptorHeap* heaps[] = { GDescriptorHeapManager::Get().GetNativeHeap() };
 
-        // 全チャネルのコマンド記録を開始する。
-        // DescriptorHeap / RTV / DSV / Viewport はコマンドリスト単位の状態のため、
-        // チャネルごとに毎フレーム設定し直す必要がある。
         for (uint32_t i = 0; i < CHANNEL_COUNT; ++i)
         {
             frame.Allocators[i]->Reset();
@@ -125,11 +113,9 @@ namespace graphics
             SetViewPort(cmdList,
                 static_cast<float>(mWidth), static_cast<float>(mHeight));
 
-            // チャネル先頭でGPUタイムスタンプを打つ(終了側はFlipで打つ)
             GpuProfiler::Get().BeginChannel(cmdList, static_cast<eRenderChannel>(i));
         }
 
-        // Pre チャネル: バックバッファを PRESENT → RENDER_TARGET へ遷移してクリアする
         ID3D12GraphicsCommandList* preCmdList = GetCommandList(eRenderChannel::Pre);
 
         Barrier(preCmdList, frame.BackBuffer.Get(),
@@ -140,28 +126,23 @@ namespace graphics
         preCmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
     }
 
+    // 画面フリップ処理
     void DX12Context::Flip()
     {
         auto& frame = mFrames[mFrameIndex];
 
-        // Post チャネル: バックバッファを RENDER_TARGET → PRESENT へ遷移
         Barrier(GetCommandList(eRenderChannel::Post), frame.BackBuffer.Get(),
             D3D12_RESOURCE_STATE_RENDER_TARGET,
             D3D12_RESOURCE_STATE_PRESENT);
 
-        // 各チャネル末尾でGPUタイムスタンプを打つ。
-        // 記録は並列でも、この時点では全ワーカーの記録が完了している(呼び出し側でWaitAll済み)
         auto& gpuProfiler = GpuProfiler::Get();
         for (uint32_t i = 0; i < CHANNEL_COUNT; ++i)
         {
             gpuProfiler.EndChannel(frame.CmdLists[i].Get(), static_cast<eRenderChannel>(i));
         }
 
-        // クエリ結果の書き出しは、全チャネルのタイムスタンプを打った後に
-        // 最後のチャネル(Post)へ積む(GPU実行順で最後になるため全結果が確定している)
         gpuProfiler.ResolveFrame(GetCommandList(eRenderChannel::Post));
 
-        // 全チャネルを確定する
         ID3D12CommandList* cmdLists[CHANNEL_COUNT] = {};
         for (uint32_t i = 0; i < CHANNEL_COUNT; ++i)
         {
@@ -169,18 +150,16 @@ namespace graphics
             cmdLists[i] = frame.CmdLists[i].Get();
         }
 
-        // 記録は並列でも構わないが、GPU への投入はチャネルの宣言順(= 描画順)で行う
         mCmdQueue->ExecuteCommandLists(CHANNEL_COUNT, cmdLists);
 
-        // 画面の切り替え
         mSwapChain->Present(1, 0);
 
-        // このフレームの完了フェンス値を記録
         mNextFenceValue++;
         frame.FenceValue = mNextFenceValue;
         mCmdQueue->Signal(mFence.Get(), mNextFenceValue);
     }
 
+    // GPU完了待機
     void DX12Context::WaitForGPU()
     {
         if (mCmdQueue == nullptr || mFence == nullptr) return;
@@ -197,10 +176,7 @@ namespace graphics
         }
     }
 
-    // -----------------------------------------------------------------------
-    //  設定
-    // -----------------------------------------------------------------------
-
+    // ビューポート設定
     void DX12Context::SetViewPort(
         ID3D12GraphicsCommandList* cmdList,
         float Width, float Height, float x, float y)
@@ -218,6 +194,7 @@ namespace graphics
         cmdList->RSSetScissorRects(1, &scissor);
     }
 
+    // メインレンダーターゲット再セット
     void DX12Context::RestoreMainRenderTarget(ID3D12GraphicsCommandList* cmdList)
     {
         if (cmdList == nullptr) return;
@@ -231,39 +208,37 @@ namespace graphics
             static_cast<float>(mWidth), static_cast<float>(mHeight));
     }
 
-    // -----------------------------------------------------------------------
-    //  アクセサ
-    // -----------------------------------------------------------------------
-
+    // コマンドリスト取得
     ID3D12GraphicsCommandList* DX12Context::GetCommandList(eRenderChannel channel)
     {
         return mFrames[mFrameIndex].CmdLists[static_cast<uint32_t>(channel)].Get();
     }
 
+    // コマンドアロケーター取得
     ID3D12CommandAllocator* DX12Context::GetCommandAllocator(eRenderChannel channel)
     {
         return mFrames[mFrameIndex].Allocators[static_cast<uint32_t>(channel)].Get();
     }
 
+    // コマンドキュー取得
     ID3D12CommandQueue* DX12Context::GetCommandQueue()
     {
         return mCmdQueue.Get();
     }
 
+    // アップロードプール取得
     D3D12MA::Pool* DX12Context::GetMAUploadPool()
     {
         return mFrames[mFrameIndex].UploadPool.Get();
     }
 
+    // 現在フレームインデックス取得
     UINT DX12Context::GetCurrentFrameIndex() const
     {
         return mFrameIndex;
     }
 
-    // -----------------------------------------------------------------------
-    //  Private ヘルパー
-    // -----------------------------------------------------------------------
-
+    // 現在のRTVハンドル取得
     D3D12_CPU_DESCRIPTOR_HANDLE DX12Context::GetCurrentRtvHandle() const
     {
         D3D12_CPU_DESCRIPTOR_HANDLE handle = mRtvHeap->GetCPUDescriptorHandleForHeapStart();
@@ -271,11 +246,13 @@ namespace graphics
         return handle;
     }
 
+    // DSVハンドル取得
     D3D12_CPU_DESCRIPTOR_HANDLE DX12Context::GetDsvHandle() const
     {
         return mDsvHeap->GetCPUDescriptorHandleForHeapStart();
     }
 
+    // リソースバリア発行
     void DX12Context::Barrier(
         ID3D12GraphicsCommandList* cmdList,
         ID3D12Resource* resource,
@@ -292,16 +269,12 @@ namespace graphics
         cmdList->ResourceBarrier(1, &barrier);
     }
 
-    // -----------------------------------------------------------------------
-    //  Private 初期化
-    // -----------------------------------------------------------------------
-
+    // コマンドオブジェクト初期化
     bool DX12Context::InitializeCommandObjects()
     {
         ID3D12Device* device = mDeviceService->GetDevice();
         HRESULT hr = S_OK;
 
-        // コマンドキューの作成
         D3D12_COMMAND_QUEUE_DESC queueDesc = {};
         queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
         queueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
@@ -319,7 +292,6 @@ namespace graphics
 
         for (uint32_t f = 0; f < FRAME_COUNT; ++f)
         {
-            // フレームごとのアップロードプール
             D3D12MA::POOL_DESC poolDesc = {};
             poolDesc.HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
             poolDesc.Flags = D3D12MA::POOL_FLAG_ALGORITHM_LINEAR;
@@ -332,7 +304,6 @@ namespace graphics
                 return false;
             }
 
-            // チャネルごとのアロケーターとコマンドリスト
             for (uint32_t c = 0; c < CHANNEL_COUNT; ++c)
             {
                 hr = device->CreateCommandAllocator(
@@ -356,7 +327,6 @@ namespace graphics
                     return false;
                 }
 
-                // 最初は記録しない状態にしておく
                 mFrames[f].CmdLists[c]->Close();
             }
         }
@@ -364,6 +334,7 @@ namespace graphics
         return true;
     }
 
+    // スワップチェイン初期化
     bool DX12Context::InitializeSwapChain(HWND WindowHandle, UINT Width, UINT Height)
     {
         DXGI_SWAP_CHAIN_DESC1 scDesc = {};
@@ -371,7 +342,7 @@ namespace graphics
         scDesc.Height = Height;
         scDesc.Format = mFormat;
         scDesc.Stereo = FALSE;
-        scDesc.SampleDesc.Count = 1;   // マルチサンプルOFF
+        scDesc.SampleDesc.Count = 1;
         scDesc.SampleDesc.Quality = 0;
         scDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
         scDesc.BufferCount = FRAME_COUNT;
@@ -395,6 +366,7 @@ namespace graphics
         return true;
     }
 
+    // バックバッファヒープ初期化
     bool DX12Context::InitializeBackBufferHeap()
     {
         ID3D12Device* device = mDeviceService->GetDevice();
@@ -412,7 +384,6 @@ namespace graphics
             return false;
         }
 
-        // インクリメントサイズをキャッシュ（毎フレームの取得を避ける）
         mRtvIncrementSize =
             device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
@@ -434,6 +405,7 @@ namespace graphics
         return true;
     }
 
+    // 深度ヒープ初期化
     bool DX12Context::InitializeDepthHeap(UINT Width, UINT Height)
     {
         ID3D12Device* device = mDeviceService->GetDevice();
@@ -486,6 +458,7 @@ namespace graphics
         return true;
     }
 
+    // フェンス初期化
     bool DX12Context::InitializeFence()
     {
         HRESULT hr = mDeviceService->GetDevice()->CreateFence(

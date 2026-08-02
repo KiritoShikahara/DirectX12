@@ -30,7 +30,6 @@ namespace graphics
         auto pngPath = ASSET_PATH("/Engine/Assets/Fonts/font.png");
         auto jsonPath = ASSET_PATH("/Engine/Assets/Fonts/font.json").string();
 
-        // Atlas のロード
         mAtlas = std::make_unique<TextAtlas>();
         if (!mAtlas->Load(pngPath, jsonPath))
         {
@@ -38,7 +37,6 @@ namespace graphics
             return false;
         }
 
-        // Pipeline
         mPipeline = std::make_unique<TextPipeline>();
         if (!mPipeline->Create(device, shaderManager))
         {
@@ -78,7 +76,6 @@ namespace graphics
         DEBUG_LOG(sys::eLogLevel::Log, "TextRenderer: Finalized.");
     }
 
-    /// <summary>フレームインフライト中の書き込み先取り違えを防ぐため、現在の描画対象フレーム番号を返す</summary>
     uint32_t TextRenderer::GetCurrentFrameIndex()
     {
         return graphics::RenderContext::Get().GetFrameIndex();
@@ -94,7 +91,7 @@ namespace graphics
     {
         if (!mIsInitialized || !mAtlas->IsLoaded()) return;
 
-        // 毎フレームのvector生成を避けるため、メンバ変数(mRenderItems)を使い回す
+        // 毎フレームのvector生成を避けるため、メンバ変数を使い回す
         mRenderItems.clear();
         auto view = registry.view<ecs::TextComponent>();
         mRenderItems.reserve(view.size());
@@ -195,8 +192,6 @@ namespace graphics
 
         // TextComponent::Y はベースライン座標であり、グリフはそこから
         // Ascender分だけ上、Descender分だけ下(Descenderは負値)に広がる。
-        // 見た目の縦中心を目標Yに合わせたい場合、ベースラインは
-        // 目標Yよりこの戻り値の分だけ下(Y増加方向)に置く必要がある。
         return size * (mAtlas->GetAscender() + mAtlas->GetDescender()) * 0.5f;
     }
 

@@ -32,7 +32,6 @@ namespace sys
 
         /// <summary>
         /// Jolt のシミュレーションを 1 ステップ進める。
-        /// FixedUpdate フェーズで呼ぶこと（固定タイムステップ推奨）。
         /// </summary>
         static void Update(entt::registry& registry, float fixedDeltaTime);
 

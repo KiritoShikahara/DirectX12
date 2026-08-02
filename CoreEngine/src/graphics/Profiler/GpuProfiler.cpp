@@ -11,7 +11,6 @@ namespace graphics
         if (device == nullptr || queue == nullptr) return false;
 
         // タイムスタンプの単位はGPU固有のカウンタのため、周波数を取得して秒へ換算する。
-        // 一部の環境(WARP等)では失敗しうるので、その場合は計測なしで動作を続ける。
         if (FAILED(queue->GetTimestampFrequency(&mTimestampFrequency)) || mTimestampFrequency == 0)
         {
             DEBUG_LOG(sys::eLogLevel::Warning,
@@ -30,8 +29,7 @@ namespace graphics
             return false;
         }
 
-        // 読み戻し用バッファ。READBACKヒープは常にCOPY_DEST状態で固定されるため
-        // リソースバリアによる遷移は不要かつ不可。
+        // 読み戻し用バッファ
         const auto heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK);
         const auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(sizeof(uint64_t) * kQueryCount);
 
@@ -71,8 +69,6 @@ namespace graphics
         mFrameIndex = frameIndex;
 
         // このフレームインデックスで前回記録した結果を回収する。
-        // 呼び出し元(DX12Context::BeginRendering)が同フレームのフェンス待機を済ませており、
-        // GPUは既に完了しているため、ここで待機は発生しない。
         if (!mFrameRecorded[frameIndex]) return;
 
         const uint32_t first = frameIndex * kQueriesPerFrame;

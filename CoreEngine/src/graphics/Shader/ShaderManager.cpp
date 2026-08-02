@@ -13,7 +13,7 @@ namespace graphics
     /// </summary>
     /// <param name="FileName">ファイルパス</param>
     /// <param name="EntryPoint">エントリーポイント</param>
-    /// <param name="Target">バージョン (例: vs_6_0, ps_6_0)</param>
+    /// <param name="Target">バージョン</param>
     /// <returns></returns>
     Blob ShaderManager::GetShader(std::string_view FileName, std::string_view EntryPoint, std::string_view Target)
     {
@@ -50,7 +50,7 @@ namespace graphics
     /// </summary>
     Blob ShaderManager::CompileShader(std::string_view FileName, std::string_view EntryPoint, std::string_view Target)
     {
-        // ---- DXC インスタンス生成 ----
+        // DZCインスタンス生成
         Microsoft::WRL::ComPtr<IDxcUtils>    utils;
         Microsoft::WRL::ComPtr<IDxcCompiler3> compiler;
 
@@ -68,7 +68,7 @@ namespace graphics
             return nullptr;
         }
 
-        // ---- デフォルト インクルードハンドラ ----
+        // includeハンドラ
         Microsoft::WRL::ComPtr<IDxcIncludeHandler> includeHandler;
         hr = utils->CreateDefaultIncludeHandler(&includeHandler);
         if (FAILED(hr))
@@ -77,7 +77,7 @@ namespace graphics
             return nullptr;
         }
 
-        // ---- UTF-8 -> UTF-16 変換 ----
+		// UTF-8 文字列を UTF-16 に変換する。DXC は UTF-16 を使うため。
         std::string fileNameStr(FileName);
         int sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, fileNameStr.c_str(), -1, nullptr, 0);
         if (sizeNeeded <= 0)
@@ -109,7 +109,7 @@ namespace graphics
             std::filesystem::path(wideFileName).parent_path();
         std::wstring wideShaderDir = shaderDir.wstring();
 
-        // ---- ソースファイルの読み込み ----
+        // ソースファイルの読み込み
         Microsoft::WRL::ComPtr<IDxcBlobEncoding> sourceBlob;
         hr = utils->LoadFile(wideFileName.c_str(), nullptr, &sourceBlob);
         if (FAILED(hr))
@@ -123,7 +123,7 @@ namespace graphics
         sourceBuffer.Size = sourceBlob->GetBufferSize();
         sourceBuffer.Encoding = DXC_CP_ACP;
 
-        // ---- コンパイル引数の組み立て ----
+        // コンパイル引数の組み立て
         std::vector<LPCWSTR> args;
 
         // エントリーポイント / ターゲットプロファイル
@@ -132,7 +132,6 @@ namespace graphics
 
         // シェーダーファイルのディレクトリをインクルードパスに追加する。
         // これにより、相対パス指定の #include がシェーダーと同じフォルダから解決される。
-        // (FXC の D3D_COMPILE_STANDARD_FILE_INCLUDE と同等の動作)
         args.push_back(L"-I");
         args.push_back(wideShaderDir.c_str());
 
@@ -144,7 +143,7 @@ namespace graphics
         args.push_back(L"-O3");  // 最大最適化
 #endif
 
-        // ---- コンパイル実行 ----
+        // コンパイル実行
         Microsoft::WRL::ComPtr<IDxcResult> result;
         hr = compiler->Compile(
             &sourceBuffer,
@@ -160,7 +159,7 @@ namespace graphics
             return nullptr;
         }
 
-        // ---- エラー/警告メッセージの確認 ----
+        // エラー・警告メッセージの確認
         Microsoft::WRL::ComPtr<IDxcBlobUtf8> errorBlob;
         result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errorBlob), nullptr);
         if (errorBlob && errorBlob->GetStringLength() > 0)
@@ -169,7 +168,7 @@ namespace graphics
                 std::format("Shader Compile Error:\n{}", errorBlob->GetStringPointer()));
         }
 
-        // ---- コンパイル結果の確認 ----
+        // コンパイル結果の確認
         HRESULT compileStatus = S_OK;
         result->GetStatus(&compileStatus);
         if (FAILED(compileStatus))
@@ -177,7 +176,7 @@ namespace graphics
             return nullptr;
         }
 
-        // ---- バイトコード取得 ----
+        // バイトコードを取得
         Microsoft::WRL::ComPtr<IDxcBlob> dxcShader;
         hr = result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&dxcShader), nullptr);
         if (FAILED(hr) || !dxcShader)
@@ -186,9 +185,7 @@ namespace graphics
             return nullptr;
         }
 
-        // ---- IDxcBlob -> ID3DBlob (Blob) へコピー ----
-        // IDxcBlob と ID3DBlob は同一インターフェースではないため、
-        // D3DCreateBlob でバッファを確保してバイトコードをコピーする。
+        // IDxcBlob -> ID3DBlob へコピーする
         Blob shader;
         hr = D3DCreateBlob(dxcShader->GetBufferSize(), &shader);
         if (FAILED(hr))

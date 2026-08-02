@@ -19,9 +19,6 @@ using namespace DirectX;
 
 namespace graphics
 {
-    // ============================================================
-    //  Initialize
-    // ============================================================
     bool FbxRenderer::Initialize(
         DX12Device& device,
         GDescriptorHeapManager& heapManager,
@@ -29,7 +26,7 @@ namespace graphics
     {
         mHeapManager = &heapManager;
 
-        // ── FBX 通常パスパイプライン ──────────────────────────────
+        // パイプライン
         mPipeline = std::make_unique<FbxPipeline>();
         if (!mPipeline->Create(device, shaderManager))
         {
@@ -37,7 +34,7 @@ namespace graphics
             return false;
         }
 
-        // ── Shadow パスパイプライン (Root Signature は FbxPipeline と共有) ──
+        // シャドウパス
         mShadowPipeline = std::make_unique<ShadowPipeline>();
         if (!mShadowPipeline->Create(device, shaderManager, mPipeline->GetRootSignature()))
         {
@@ -45,7 +42,7 @@ namespace graphics
             return false;
         }
 
-        // ── GPU バッファ ──────────────────────────────────────────
+        // GPUバッファ
         mInstanceBuffer = std::make_unique<StructuredBuffer>();
         if (!mInstanceBuffer->Create(sizeof(FbxInstanceData), MAX_FBX_INSTANCES))
         {
@@ -74,14 +71,14 @@ namespace graphics
             return false;
         }
 
-        // ── Shadow Map リソース ───────────────────────────────────
+        // Shadow Map リソース 
         if (!CreateShadowMapResources(device, heapManager))
         {
             DEBUG_LOG(sys::eLogLevel::Error, "FbxRenderer: Failed to create shadow map resources.");
             return false;
         }
 
-        // ── デフォルトテクスチャ ──────────────────────────────────
+        // デフォルトテクスチャ
         auto& texMgr = TextureManager::Get();
         mDefaultWhiteTexture = texMgr.GetOrLoad(ASSET_PATH("/Engine/Assets/Texture/White.dds").string());
         mDefaultNormalTexture = texMgr.GetOrLoad(ASSET_PATH("/Engine/Assets/Texture/Normal.dds").string());
@@ -91,7 +88,7 @@ namespace graphics
         mBoneData.reserve(MAX_TOTAL_BONES);
         mDrawCalls.reserve(MAX_FBX_INSTANCES * 4);
 
-        // 距離LODの切り替えUI(開発ツール有効時のみ。PhysicsDebugRendererと同じ流儀)
+        // 距離LODの切り替えUI
 #if DEV_TOOL_ENABLED
         sys::ImGuiManager::Get().AddDebugUI([this]() { ImGuiWindow(); }, "FbxRenderer");
 #endif
@@ -108,9 +105,6 @@ namespace graphics
             ImGui::TextUnformatted("Skinned Animation LOD");
             ImGui::Checkbox("Distance LOD", &mAnimationDistanceLodEnabled);
 
-            // このファイルはBOM無しのため、文字列リテラルに日本語を使うと
-            // コードページ932として誤解釈されコンパイルが壊れる。
-            // 既存のデバッグUI(PhysicsDebugRenderer等)と同じく表示は英語で統一する。
             if (mAnimationDistanceLodEnabled)
             {
                 ImGui::DragFloat("Update Distance (m)", &mAnimationUpdateDistance, 1.0f, 1.0f, 1000.0f);
@@ -148,16 +142,13 @@ namespace graphics
         mShadowPipeline.reset();
     }
 
-    // ============================================================
-    //  Shadow Map リソース生成
-    // ============================================================
     bool FbxRenderer::CreateShadowMapResources(
         DX12Device& device,
         GDescriptorHeapManager& heapManager)
     {
         ID3D12Device* d3d = device.GetDevice();
 
-        // ── テクスチャリソース ────────────────────────────────────
+        // テクスチャリソース
         D3D12_RESOURCE_DESC texDesc = {};
         texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
         texDesc.Width = SHADOW_MAP_SIZE;
@@ -189,7 +180,7 @@ namespace graphics
         }
         mShadowMapResource->SetName(L"ShadowMapTexture");
 
-        // ── DSV ヒープ (非シェーダービジブル) ─────────────────────
+        // DSV ヒープ 
         D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
         dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
         dsvHeapDesc.NumDescriptors = 1;
@@ -212,7 +203,7 @@ namespace graphics
             &dsvDesc,
             mShadowMapDSVHeap->GetCPUDescriptorHandleForHeapStart());
 
-        // ── SRV (GDescriptorHeapManager 管理) ─────────────────────
+        // SRV
         if (!mShadowMapSRV.Create(heapManager, 1))
         {
             DEBUG_LOG(sys::eLogLevel::Error, "FbxRenderer: Failed to allocate shadow map SRV slot.");
@@ -229,8 +220,7 @@ namespace graphics
             &srvDesc,
             mShadowMapSRV.GetCpuHandle());
 
-        // ── Null SRV (Shadow Map なし時のフォールバック) ───────────
-        // Shadow Map が未使用フレームでも t10 スロットに有効なディスクリプタが必要
+        // Shadow Map なし時のフォールバック
         if (!mShadowMapNullSRV.Create(heapManager, 1))
         {
             DEBUG_LOG(sys::eLogLevel::Error, "FbxRenderer: Failed to allocate null SRV slot.");
@@ -250,9 +240,6 @@ namespace graphics
         return true;
     }
 
-    // ============================================================
-    //  Begin
-    // ============================================================
     void FbxRenderer::Begin()
     {
         mInstanceData.clear();
@@ -260,13 +247,6 @@ namespace graphics
         mDrawCalls.clear();
     }
 
-    // ============================================================
-    //  UpdateAndDraw  (収集フェーズ)
-    //
-    //  registry から描画対象を収集し、GPU バッファへの転送まで完結させる。
-    //  DrawShadowPass() / End() は記録のみを行うため、
-    //  Update() を呼ぶのはこの関数だけ。
-    // ============================================================
     void FbxRenderer::UpdateAndDraw(entt::registry& registry)
     {
         auto& camSystem = sys::CameraSystem::Get();
@@ -286,7 +266,7 @@ namespace graphics
                 sizeof(LightData) * mLightData.size());
         }
 
-        // 毎フレームのvector生成を避けるため、メンバ変数(mRenderItems)を使い回す
+        // 毎フレームのvector生成を避けるため、メンバ変数を使い回す
         mRenderItems.clear();
         auto view = registry.view<ecs::Transform, ecs::FbxComponent>();
         mRenderItems.reserve(view.size_hint());
@@ -304,9 +284,6 @@ namespace graphics
             if (hasAnimation)
             {
                 // 距離LODが無効(既定)なら常に計算する。
-                // 有効時はカメラから遠いエンティティ(画面外含む)のボーン行列再計算を間引き、
-                // 最後に計算済みの姿勢のまま描画する。BoneMatricesが一度も計算されていない
-                // 場合(生成直後)は、Tポーズのまま描画されるのを避けるため必ず計算する。
                 bool needsCalc = true;
 
                 if (mAnimationDistanceLodEnabled && !item.Anim->BoneMatrices.empty())
@@ -347,10 +324,7 @@ namespace graphics
             Submit(*item.Fbx->Resource, worldF, bonePtr, item.Fbx->CustomColor);
         }
 
-        // ── GPU バッファへの転送 ──────────────────────────────────
-        // Submit() で mInstanceData / mBoneData が確定した後に一度だけ転送する。
-        // DrawShadowPass() と End() の両方がこのデータを参照するが、
-        // どちらも記録のみを行うため転送はここに集約する。
+        // GPUバッファへ転送
         if (!mInstanceData.empty())
         {
             mInstanceBuffer->Update(
@@ -366,9 +340,6 @@ namespace graphics
         }
     }
 
-    // ============================================================
-    //  Submit  (変更なし)
-    // ============================================================
     void FbxRenderer::Submit(
         const FbxResource& resource,
         const XMFLOAT4X4& world,
@@ -423,15 +394,6 @@ namespace graphics
         }
     }
 
-    // ============================================================
-    //  DrawShadowPass  (記録フェーズ)
-    //
-    //  UpdateAndDraw で蓄積した DrawCall をライト空間で深度描画する。
-    //  OMSetRenderTargets(0, nullptr) で RTV を外し、ビューポートも
-    //  SHADOW_MAP_SIZE に変更するが、これらはコマンドリスト単位の状態のため
-    //  専用チャネル (eRenderChannel::Shadow) に隔離されている限り
-    //  他チャネルには影響しない (RestoreMainRenderTarget は不要)。
-    // ============================================================
     void FbxRenderer::DrawShadowPass(ID3D12GraphicsCommandList* cmdList)
     {
         // CastShadow == true の Directional Light が index 0 にあるか確認
@@ -440,25 +402,22 @@ namespace graphics
         if (shadowLight.Type != 0 /*DIRECTIONAL*/ || !shadowLight.CastShadow) return;
         if (mDrawCalls.empty()) return;
 
-        // GPU バッファは UpdateAndDraw() で転送済み。
-        // この関数はコマンドの記録のみを行い、registry / GPU バッファには触れない。
-
-        // ── Shadow Map を DSV として使えるようにバリア ────────────
+        // Shadow Map を DSV として使えるようにバリア 
         auto barrierToDSV = CD3DX12_RESOURCE_BARRIER::Transition(
             mShadowMapResource.Get(),
             D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
             D3D12_RESOURCE_STATE_DEPTH_WRITE);
         cmdList->ResourceBarrier(1, &barrierToDSV);
 
-        // ── DSV クリア ────────────────────────────────────────────
+        // DSV クリア 
         D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle =
             mShadowMapDSVHeap->GetCPUDescriptorHandleForHeapStart();
         cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-        // ── RenderTarget なし / DSV のみをセット ─────────────────
+        // RenderTarget なし / DSV のみをセット 
         cmdList->OMSetRenderTargets(0, nullptr, FALSE, &dsvHandle);
 
-        // ── ビューポート / シザー ─────────────────────────────────
+        // ビューポート / シザー 
         D3D12_VIEWPORT vp = { 0.f, 0.f,
             static_cast<float>(SHADOW_MAP_SIZE),
             static_cast<float>(SHADOW_MAP_SIZE),
@@ -469,14 +428,14 @@ namespace graphics
         cmdList->RSSetViewports(1, &vp);
         cmdList->RSSetScissorRects(1, &scissor);
 
-        // ── パイプライン / Root Signature ────────────────────────
+        // パイプライン / Root Signature 
         ID3D12DescriptorHeap* heaps[] = { mHeapManager->GetNativeHeap() };
         cmdList->SetDescriptorHeaps(1, heaps);
         cmdList->SetGraphicsRootSignature(mPipeline->GetRootSignature());
         cmdList->SetPipelineState(mShadowPipeline->GetPipelineState());
         cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        // ── フレーム共通バッファをセット ──────────────────────────
+        // フレーム共通バッファをセット 
         cmdList->SetGraphicsRootDescriptorTable(
             FbxPipeline::SLOT_INSTANCE_BUFFER, mInstanceBuffer->GetGpuHandle());
         cmdList->SetGraphicsRootDescriptorTable(
@@ -488,7 +447,7 @@ namespace graphics
         cmdList->SetGraphicsRoot32BitConstant(
             FbxPipeline::SLOT_SHADOW_LIGHT_INDEX, 0u, 0);
 
-        // ── DrawCall ループ ───────────────────────────────────────
+        // DrawCall ループ 
         const FbxResource* prevResource = nullptr;
 
         for (const DrawCall& dc : mDrawCalls)
@@ -506,7 +465,7 @@ namespace graphics
             cmdList->DrawIndexedInstanced(sec.IndexCount, 1, sec.IndexOffset, 0, 0);
         }
 
-        // ── Shadow Map を SRV (PS 読み取り) に戻す ────────────────
+        // Shadow Map を SRVに戻す
         auto barrierToSRV = CD3DX12_RESOURCE_BARRIER::Transition(
             mShadowMapResource.Get(),
             D3D12_RESOURCE_STATE_DEPTH_WRITE,
@@ -514,12 +473,6 @@ namespace graphics
         cmdList->ResourceBarrier(1, &barrierToSRV);
     }
 
-    // ============================================================
-    //  End  (通常描画パス / 記録フェーズ)
-    //
-    //  GPU バッファは UpdateAndDraw() で転送済み。
-    //  この関数はコマンドの記録のみを行い、registry / GPU バッファには触れない。
-    // ============================================================
     void FbxRenderer::End(ID3D12GraphicsCommandList* cmdList)
     {
         if (mDrawCalls.empty()) return;
@@ -530,7 +483,7 @@ namespace graphics
         cmdList->SetPipelineState(mPipeline->GetPipelineState());
         cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-        // ── フレーム共通 ───────────────────────────────────────────
+        // フレーム共通
         cmdList->SetGraphicsRootDescriptorTable(
             FbxPipeline::SLOT_INSTANCE_BUFFER, mInstanceBuffer->GetGpuHandle());
         cmdList->SetGraphicsRootDescriptorTable(
@@ -549,7 +502,7 @@ namespace graphics
             FbxPipeline::SLOT_SHADOW_MAP,
             hasShadow ? mShadowMapSRV.GetGpuHandle() : mShadowMapNullSRV.GetGpuHandle());
 
-        // ── DrawCall ループ ───────────────────────────────────────
+        // DrawCall ループ 
         Texture* prevTex[6] = {};
         const FbxResource* prevResource = nullptr;
 
@@ -585,9 +538,6 @@ namespace graphics
         }
     }
 
-    // ============================================================
-    //  SetLights
-    // ============================================================
     void FbxRenderer::SetLights(const std::vector<LightData>& lights)
     {
         mLightData = lights;

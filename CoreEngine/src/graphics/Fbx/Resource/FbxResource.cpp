@@ -2,331 +2,343 @@
 #include "FbxResource.h"
 
 #include <graphics/Texture/Texture.h>
-#include<graphics/Texture/TextureManager.h>
+#include <graphics/Texture/TextureManager.h>
 #include <system/AssetPath/AssetPathManager.h>
 
 namespace graphics
 {
+	// FBX モデルの読み込み
+	bool FbxResource::Load(
+		const std::string& binPath)
+	{
+		if (!LoadBin(binPath)) return false;
 
-    // ============================================================
-    //  Load  (.bin のみ)
-    // ============================================================
-    bool FbxResource::Load(
-        const std::string& binPath)
-    {
-        if (!LoadBin(binPath)) return false;
+		mIsLoaded = true;
+		DEBUG_LOG(sys::eLogLevel::Log, std::format("FbxResource: Loaded '{}'", binPath));
+		return true;
+	}
 
-        mIsLoaded = true;
-        DEBUG_LOG(sys::eLogLevel::Log, std::format("FbxResource: Loaded '{}'", binPath));
-        return true;
-    }
+	// バイナリデータのパース処理
+	FbxResource::LoadedBinData FbxResource::LoadBinData(const std::string& binPath)
+	{
+		LoadedBinData result;
 
-    // ============================================================
-    //  LoadBin  (.bin パーサ)
-    //
-    //  フォーマット (FbxAnalyzer の fwrite 順と完全一致):
-    //    [MeshCount:i32][PolygonCount:i32][VertexCount:i32]
-    //    Vertices × VertexCount
-    //      Position:vec3  UV:vec2  Normal:vec3  Tangent:vec3
-    //      Bone:i32[4]   Weight:f32[4]
-    //    [IndexCount:i32]  Indices × IndexCount
-    //    [MaterialCount:i32]
-    //      Material:
-    //        [NameSize:i32][Name]
-    //        [AlbedoSize:i32][AlbedoPath]  ... × 6チャンネル
-    //        BaseColorFactor:vec3  MetallicFactor:f32  RoughnessFactor:f32
-    //        EmissiveFactor:vec3
-    //        PolygonCount:u32
-    //    [BoneCount:i32]
-    //      Bone: [NameSize:i32][Name]  ParentIndex:i32  BindMatrix:Matrix
-    // ============================================================
-    bool FbxResource::LoadBin(const std::string& binPath)
-    {
-        FILE* fp = nullptr;
-        if (fopen_s(&fp, binPath.c_str(), "rb") != 0)
-        {
-            DEBUG_LOG(sys::eLogLevel::Error,
-                std::format("FbxResource: Cannot open '{}'", binPath));
-            return false;
-        }
+		FILE* fp = nullptr;
+		if (fopen_s(&fp, binPath.c_str(), "rb") != 0)
+		{
+			DEBUG_LOG(sys::eLogLevel::Error,
+				std::format("FbxResource: Cannot open '{}'", binPath));
+			return result;
+		}
 
-        auto& texManager = graphics::TextureManager::Get();
+		result.TextureBaseDir = std::filesystem::path(binPath).parent_path() / "Texture";
 
+		auto ReadStr = [&](std::string& s)
+			{
+				int32_t size = 0;
+				fread(&size, sizeof(int32_t), 1, fp);
+				s.resize(size);
+				if (size > 0) fread(s.data(), 1, size, fp);
+			};
 
-        // テクスチャは binPath の隣の "Texture" フォルダを基準とする
-        const std::filesystem::path baseDir =
-            std::filesystem::path(binPath).parent_path() / "Texture";
+		int32_t meshCount = 0, polyCount = 0, vertexCount = 0;
+		fread(&meshCount, sizeof(int32_t), 1, fp);
+		fread(&polyCount, sizeof(int32_t), 1, fp);
+		fread(&vertexCount, sizeof(int32_t), 1, fp);
 
-        auto ReadStr = [&](std::string& s)
-            {
-                int32_t size = 0;
-                fread(&size, sizeof(int32_t), 1, fp);
-                s.resize(size);
-                if (size > 0) fread(s.data(), 1, size, fp);
-            };
+		result.Vertices.resize(vertexCount);
+		fread(result.Vertices.data(), sizeof(FbxVertex), vertexCount, fp);
+		{
+			float minX = FLT_MAX, maxX = -FLT_MAX;
+			float minY = FLT_MAX, maxY = -FLT_MAX;
+			float minZ = FLT_MAX, maxZ = -FLT_MAX;
+			for (const auto& v : result.Vertices)
+			{
+				minX = std::min(minX, v.Position.x); maxX = std::max(maxX, v.Position.x);
+				minY = std::min(minY, v.Position.y); maxY = std::max(maxY, v.Position.y);
+				minZ = std::min(minZ, v.Position.z); maxZ = std::max(maxZ, v.Position.z);
+			}
+			if (vertexCount > 0)
+			{
+				result.BottomCenterPivot =
+				{
+					-(minX + maxX) * 0.5f,
+					-minY,
+					-(minZ + maxZ) * 0.5f
+				};
+			}
+		}
 
-        // isSRGB: Albedo/EmissiveはsRGBエンコードされた色情報のため、
-        // SRVをsRGBとして解釈し線形空間で正しくライティング計算できるようにする。
-        // Normal/Metallic/Roughness/AOは非色データのため線形のまま扱う。
-        auto LoadTex = [&](const std::string& relPath, bool isSRGB) -> Texture*
-            {
-                if (relPath.empty()) return nullptr;
-                return texManager.GetOrLoad((baseDir / relPath).string(), isSRGB);
-            };
+		int32_t indexCount = 0;
+		fread(&indexCount, sizeof(int32_t), 1, fp);
+		result.Indices.resize(indexCount);
+		fread(result.Indices.data(), sizeof(uint32_t), indexCount, fp);
 
-        // ---- ヘッダー ----
-        int32_t meshCount = 0, polyCount = 0, vertexCount = 0;
-        fread(&meshCount, sizeof(int32_t), 1, fp);
-        fread(&polyCount, sizeof(int32_t), 1, fp);
-        fread(&vertexCount, sizeof(int32_t), 1, fp);
+		int32_t materialCount = 0;
+		fread(&materialCount, sizeof(int32_t), 1, fp);
+		result.Materials.reserve(materialCount);
 
-        // ---- 頂点 ----
-        std::vector<FbxVertex> vertices(vertexCount);
-        fread(vertices.data(), sizeof(FbxVertex), vertexCount, fp);
-        {
-            float minX = FLT_MAX, maxX = -FLT_MAX;
-            float minY = FLT_MAX, maxY = -FLT_MAX;
-            float minZ = FLT_MAX, maxZ = -FLT_MAX;
-            for (const auto& v : vertices)
-            {
-                minX = std::min(minX, v.Position.x); maxX = std::max(maxX, v.Position.x);
-                minY = std::min(minY, v.Position.y); maxY = std::max(maxY, v.Position.y);
-                minZ = std::min(minZ, v.Position.z); maxZ = std::max(maxZ, v.Position.z);
-            }
-            if (vertexCount > 0)
-            {
-                // 底面(minY)が y=0 になり、XZ が中心になるオフセット
-                mBottomCenterPivot =
-                {
-                    -(minX + maxX) * 0.5f,
-                    -minY,
-                    -(minZ + maxZ) * 0.5f
-                };
-            }
-        }
+		uint32_t indexOffset = 0;
+		for (int i = 0; i < materialCount; ++i)
+		{
+			MaterialInfo mat;
 
-        // ---- インデックス ----
-        int32_t indexCount = 0;
-        fread(&indexCount, sizeof(int32_t), 1, fp);
-        std::vector<uint32_t> indices(indexCount);
-        fread(indices.data(), sizeof(uint32_t), indexCount, fp);
+			ReadStr(mat.Name);
+			ReadStr(mat.AlbedoPath);
+			ReadStr(mat.NormalPath);
+			ReadStr(mat.MetallicPath);
+			ReadStr(mat.RoughnessPath);
+			ReadStr(mat.AOPath);
+			ReadStr(mat.EmissivePath);
 
-        // ---- マテリアル → FbxSection ----
-        int32_t materialCount = 0;
-        fread(&materialCount, sizeof(int32_t), 1, fp);
-        mSections.reserve(materialCount);
+			DirectX::XMFLOAT3 baseColor = {};
+			fread(&baseColor, sizeof(DirectX::XMFLOAT3), 1, fp);
+			fread(&mat.MetallicFactor, sizeof(float), 1, fp);
+			fread(&mat.RoughnessFactor, sizeof(float), 1, fp);
+			fread(&mat.EmissiveFactor, sizeof(DirectX::XMFLOAT3), 1, fp);
+			mat.BaseColorFactor = baseColor;
 
-        uint32_t indexOffset = 0;
-        for (int i = 0; i < materialCount; ++i)
-        {
-            FbxSection sec = {};
-            std::string albedoPath, normalPath, metallicPath,
-                roughnessPath, aoPath, emissivePath;
+			uint32_t matPolyCount = 0;
+			fread(&matPolyCount, sizeof(uint32_t), 1, fp);
+			mat.IndexCount = matPolyCount * 3;
+			mat.IndexOffset = indexOffset;
+			indexOffset += mat.IndexCount;
 
-            ReadStr(sec.Name);
-            ReadStr(albedoPath);
-            ReadStr(normalPath);
-            ReadStr(metallicPath);
-            ReadStr(roughnessPath);
-            ReadStr(aoPath);
-            ReadStr(emissivePath);
+			result.Materials.push_back(std::move(mat));
+		}
 
-            sec.AlbedoTexture = LoadTex(albedoPath, true);
-            sec.NormalTexture = LoadTex(normalPath, false);
-            sec.MetallicTexture = LoadTex(metallicPath, false);
-            sec.RoughnessTexture = LoadTex(roughnessPath, false);
-            sec.AOTexture = LoadTex(aoPath, false);
-            sec.EmissiveTexture = LoadTex(emissivePath, true);
+		int32_t boneCount = 0;
+		fread(&boneCount, sizeof(int32_t), 1, fp);
+		result.Bones.reserve(boneCount);
 
-            DirectX::XMFLOAT3 baseColor = {};
-            fread(&baseColor, sizeof(DirectX::XMFLOAT3), 1, fp);
-            fread(&sec.MetallicFactor, sizeof(float), 1, fp);
-            fread(&sec.RoughnessFactor, sizeof(float), 1, fp);
-            fread(&sec.EmissiveFactor, sizeof(DirectX::XMFLOAT3), 1, fp);
-            sec.BaseColorFactor = baseColor;
+		for (int i = 0; i < boneCount; ++i)
+		{
+			FbxBoneData bone = {};
+			ReadStr(bone.Name);
+			fread(&bone.ParentIndex, sizeof(int32_t), 1, fp);
+			fread(&bone.BindMatrix, sizeof(DirectX::XMFLOAT4X4), 1, fp);
+			DirectX::XMStoreFloat4x4(&bone.LocalTransform,
+				DirectX::XMMatrixIdentity());
+			result.Bones.push_back(std::move(bone));
+		}
 
-            uint32_t matPolyCount = 0;
-            fread(&matPolyCount, sizeof(uint32_t), 1, fp);
-            sec.IndexCount = matPolyCount * 3;
-            sec.IndexOffset = indexOffset;
-            indexOffset += sec.IndexCount;
+		fclose(fp);
 
-            mSections.push_back(std::move(sec));
-        }
+		result.Success = true;
+		return result;
+	}
 
-        // ---- ボーン ----
-        int32_t boneCount = 0;
-        fread(&boneCount, sizeof(int32_t), 1, fp);
-        mBones.reserve(boneCount);
+	// テクスチャパスの収集処理
+	void FbxResource::CollectTexturePaths(
+		const LoadedBinData& data,
+		std::vector<std::filesystem::path>& outSrgbPaths,
+		std::vector<std::filesystem::path>& outLinearPaths)
+	{
+		auto add = [](std::vector<std::filesystem::path>& out, const std::filesystem::path& baseDir, const std::string& relPath)
+			{
+				if (!relPath.empty()) out.push_back(baseDir / relPath);
+			};
 
-        for (int i = 0; i < boneCount; ++i)
-        {
-            FbxBoneData bone = {};
-            ReadStr(bone.Name);
-            fread(&bone.ParentIndex, sizeof(int32_t), 1, fp);
-            fread(&bone.BindMatrix, sizeof(DirectX::XMFLOAT4X4), 1, fp);
-            // LocalTransform はレストポーズとして BindMatrix の逆行列で近似
-            // (FBX .bin には保存されないため単位行列で初期化)
-            DirectX::XMStoreFloat4x4(&bone.LocalTransform,
-                DirectX::XMMatrixIdentity());
-            mBones.push_back(std::move(bone));
-        }
+		for (const auto& mat : data.Materials)
+		{
+			add(outSrgbPaths, data.TextureBaseDir, mat.AlbedoPath);
+			add(outSrgbPaths, data.TextureBaseDir, mat.EmissivePath);
+			add(outLinearPaths, data.TextureBaseDir, mat.NormalPath);
+			add(outLinearPaths, data.TextureBaseDir, mat.MetallicPath);
+			add(outLinearPaths, data.TextureBaseDir, mat.RoughnessPath);
+			add(outLinearPaths, data.TextureBaseDir, mat.AOPath);
+		}
+	}
 
-        fclose(fp);
+	// バイナリデータから GPU リソースを構築する
+	bool FbxResource::CreateFromBinData(const LoadedBinData& data)
+	{
+		if (!data.Success) return false;
 
-        // ---- GPU バッファ構築 (CreateStaticSync = cmdList 不要) ----
-        mVB = std::make_unique<VertexBuffer>();
-        if (!mVB->CreateStaticSync(
-            vertices.data(),
-            sizeof(FbxVertex) * vertexCount,
-            sizeof(FbxVertex)))
-        {
-            DEBUG_LOG(sys::eLogLevel::Error, "FbxResource: Failed to create vertex buffer.");
-            return false;
-        }
+		auto& texManager = graphics::TextureManager::Get();
 
-        mIB = std::make_unique<IndexBuffer>();
-        if (!mIB->CreateStaticSync(
-            indices.data(),
-            sizeof(uint32_t) * indexCount,
-            DXGI_FORMAT_R32_UINT))
-        {
-            DEBUG_LOG(sys::eLogLevel::Error, "FbxResource: Failed to create index buffer.");
-            return false;
-        }
+		auto LoadTex = [&](const std::string& relPath, bool isSRGB) -> Texture*
+			{
+				if (relPath.empty()) return nullptr;
+				return texManager.GetOrLoad((data.TextureBaseDir / relPath).string(), isSRGB);
+			};
 
-        return true;
-    }
+		mSections.clear();
+		mSections.reserve(data.Materials.size());
+		for (const auto& mat : data.Materials)
+		{
+			FbxSection sec = {};
+			sec.Name = mat.Name;
+			sec.AlbedoTexture = LoadTex(mat.AlbedoPath, true);
+			sec.NormalTexture = LoadTex(mat.NormalPath, false);
+			sec.MetallicTexture = LoadTex(mat.MetallicPath, false);
+			sec.RoughnessTexture = LoadTex(mat.RoughnessPath, false);
+			sec.AOTexture = LoadTex(mat.AOPath, false);
+			sec.EmissiveTexture = LoadTex(mat.EmissivePath, true);
+			sec.BaseColorFactor = mat.BaseColorFactor;
+			sec.MetallicFactor = mat.MetallicFactor;
+			sec.RoughnessFactor = mat.RoughnessFactor;
+			sec.EmissiveFactor = mat.EmissiveFactor;
+			sec.IndexCount = mat.IndexCount;
+			sec.IndexOffset = mat.IndexOffset;
 
-    // ============================================================
-    //  LoadAnm  (.anm の追加ロード)
-    //  複数回呼べるので1モデルに複数アニメーションを持てる
-    //  clipName を省略するとファイル名(拡張子なし)をクリップ名にする
-    // ============================================================
-    bool FbxResource::LoadAnm(const std::string& anmPath, const std::string& clipName)
-    {
-        FILE* fp = nullptr;
-        if (fopen_s(&fp, anmPath.c_str(), "rb") != 0)
-        {
-            DEBUG_LOG(sys::eLogLevel::Warning,
-                std::format("FbxResource: Cannot open anm '{}'", anmPath));
-            return false;
-        }
+			mSections.push_back(std::move(sec));
+		}
 
-        FbxAnimClip clip = {};
-        // clipName 未指定ならファイル名(拡張子なし)をクリップ名にする
-        clip.Name = clipName.empty()
-            ? std::filesystem::path(anmPath).stem().string()
-            : clipName;
+		mBones = data.Bones;
+		mBottomCenterPivot = data.BottomCenterPivot;
 
-        fread(&clip.NumFrame, sizeof(int32_t), 1, fp);
-        clip.Duration = clip.NumFrame / clip.FrameRate;
+		const uint32_t vertexCount = static_cast<uint32_t>(data.Vertices.size());
+		const uint32_t indexCount = static_cast<uint32_t>(data.Indices.size());
 
-        int32_t numBone = 0;
-        fread(&numBone, sizeof(int32_t), 1, fp);
-        clip.KeyFrames.resize(numBone);
+		mVB = std::make_unique<VertexBuffer>();
+		if (!mVB->CreateStaticSync(
+			data.Vertices.data(),
+			sizeof(FbxVertex) * vertexCount,
+			sizeof(FbxVertex)))
+		{
+			DEBUG_LOG(sys::eLogLevel::Error, "FbxResource: Failed to create vertex buffer.");
+			return false;
+		}
 
-        for (int b = 0; b < numBone; ++b)
-        {
-            int32_t frameCount = 0;
-            fread(&frameCount, sizeof(int32_t), 1, fp);
-            clip.KeyFrames[b].resize(frameCount);
-            fread(clip.KeyFrames[b].data(),
-                sizeof(DirectX::XMFLOAT4X4), frameCount, fp);
-        }
+		mIB = std::make_unique<IndexBuffer>();
+		if (!mIB->CreateStaticSync(
+			data.Indices.data(),
+			sizeof(uint32_t) * indexCount,
+			DXGI_FORMAT_R32_UINT))
+		{
+			DEBUG_LOG(sys::eLogLevel::Error, "FbxResource: Failed to create index buffer.");
+			return false;
+		}
 
-        fclose(fp);
+		mIsLoaded = true;
+		return true;
+	}
 
-        // 実行時のXMMatrixDecomposeを無くすため、ここで一度だけTRSへ分解しておく。
-        // 分解結果はエンティティに依存しないため、同じモデルを何体表示しても再利用できる
-        clip.KeyFrameTrs.resize(clip.KeyFrames.size());
-        for (size_t b = 0; b < clip.KeyFrames.size(); ++b)
-        {
-            const auto& track = clip.KeyFrames[b];
-            auto& trsTrack = clip.KeyFrameTrs[b];
-            trsTrack.resize(track.size());
+	// バイナリファイルの内部ロード処理
+	bool FbxResource::LoadBin(const std::string& binPath)
+	{
+		const LoadedBinData data = LoadBinData(binPath);
+		return CreateFromBinData(data);
+	}
 
-            for (size_t f = 0; f < track.size(); ++f)
-            {
-                DirectX::XMVECTOR scale, rotation, translation;
-                if (DirectX::XMMatrixDecompose(&scale, &rotation, &translation,
-                    DirectX::XMLoadFloat4x4(&track[f])))
-                {
-                    DirectX::XMStoreFloat4(&trsTrack[f].Scale, scale);
-                    DirectX::XMStoreFloat4(&trsTrack[f].Rotation, rotation);
-                    DirectX::XMStoreFloat4(&trsTrack[f].Translation, translation);
-                }
-                // 分解に失敗した場合(退化した行列など)は既定値(単位変換)のままにする
-            }
-        }
+	// アニメーションファイルの追加ロード処理
+	bool FbxResource::LoadAnm(const std::string& anmPath, const std::string& clipName)
+	{
+		FILE* fp = nullptr;
+		if (fopen_s(&fp, anmPath.c_str(), "rb") != 0)
+		{
+			DEBUG_LOG(sys::eLogLevel::Warning,
+				std::format("FbxResource: Cannot open anm '{}'", anmPath));
+			return false;
+		}
 
-        mAnimClips.push_back(std::move(clip));
-        return true;
-    }
+		FbxAnimClip clip = {};
+		clip.Name = clipName.empty()
+			? std::filesystem::path(anmPath).stem().string()
+			: clipName;
 
-    // ============================================================
-    //  FindClipIndex
-    // ============================================================
-    int FbxResource::FindClipIndex(const std::string& name) const
-    {
-        for (int i = 0; i < static_cast<int>(mAnimClips.size()); ++i)
-        {
-            if (mAnimClips[i].Name == name) return i;
-        }
-        return -1;
-    }
+		fread(&clip.NumFrame, sizeof(int32_t), 1, fp);
+		clip.Duration = clip.NumFrame / clip.FrameRate;
 
-    bool FbxResource::BuildFromMemory(const std::vector<FbxVertex>& vertices, const std::vector<uint32_t>& indices, const std::vector<FbxSection>& sections)
-    {
-        if (vertices.empty() || indices.empty())
-        {
-            DEBUG_LOG(sys::eLogLevel::Error,
-                "FbxResource::BuildFromMemory: empty vertices or indices.");
-            return false;
-        }
+		int32_t numBone = 0;
+		fread(&numBone, sizeof(int32_t), 1, fp);
+		clip.KeyFrames.resize(numBone);
 
-        mSections = sections;
-        // mBones / mAnimClips は空のまま (スキニングなし)
+		for (int b = 0; b < numBone; ++b)
+		{
+			int32_t frameCount = 0;
+			fread(&frameCount, sizeof(int32_t), 1, fp);
+			clip.KeyFrames[b].resize(frameCount);
+			fread(clip.KeyFrames[b].data(),
+				sizeof(DirectX::XMFLOAT4X4), frameCount, fp);
+		}
 
-        const uint32_t vertexCount = static_cast<uint32_t>(vertices.size());
-        const uint32_t indexCount = static_cast<uint32_t>(indices.size());
+		fclose(fp);
 
-        mVB = std::make_unique<VertexBuffer>();
-        if (!mVB->CreateStaticSync(
-            vertices.data(),
-            sizeof(FbxVertex) * vertexCount,
-            sizeof(FbxVertex)))
-        {
-            DEBUG_LOG(sys::eLogLevel::Error,
-                "FbxResource::BuildFromMemory: Failed to create vertex buffer.");
-            return false;
-        }
+		clip.KeyFrameTrs.resize(clip.KeyFrames.size());
+		for (size_t b = 0; b < clip.KeyFrames.size(); ++b)
+		{
+			const auto& track = clip.KeyFrames[b];
+			auto& trsTrack = clip.KeyFrameTrs[b];
+			trsTrack.resize(track.size());
 
-        mIB = std::make_unique<IndexBuffer>();
-        if (!mIB->CreateStaticSync(
-            indices.data(),
-            sizeof(uint32_t) * indexCount,
-            DXGI_FORMAT_R32_UINT))
-        {
-            DEBUG_LOG(sys::eLogLevel::Error,
-                "FbxResource::BuildFromMemory: Failed to create index buffer.");
-            return false;
-        }
+			for (size_t f = 0; f < track.size(); ++f)
+			{
+				DirectX::XMVECTOR scale, rotation, translation;
+				if (DirectX::XMMatrixDecompose(&scale, &rotation, &translation,
+					DirectX::XMLoadFloat4x4(&track[f])))
+				{
+					DirectX::XMStoreFloat4(&trsTrack[f].Scale, scale);
+					DirectX::XMStoreFloat4(&trsTrack[f].Rotation, rotation);
+					DirectX::XMStoreFloat4(&trsTrack[f].Translation, translation);
+				}
+			}
+		}
 
-        mIsLoaded = true;
-        DEBUG_LOG(sys::eLogLevel::Log,
-            std::format("FbxResource::BuildFromMemory: {} verts, {} indices, {} sections.",
-                vertexCount, indexCount, sections.size()));
-        return true;
-    }
+		mAnimClips.push_back(std::move(clip));
+		return true;
+	}
 
-    // ============================================================
-    //  SetBuffers
-    // ============================================================
-    void FbxResource::SetBuffers(ID3D12GraphicsCommandList* cmdList) const
-    {
-        if (mVB) mVB->Set(cmdList);
-        if (mIB) mIB->Set(cmdList);
-    }
+	// クリップ名からインデックスを取得する
+	int FbxResource::FindClipIndex(const std::string& name) const
+	{
+		for (int i = 0; i < static_cast<int>(mAnimClips.size()); ++i)
+		{
+			if (mAnimClips[i].Name == name) return i;
+		}
+		return -1;
+	}
+
+	// メモリ上のデータから直接構築する
+	bool FbxResource::BuildFromMemory(const std::vector<FbxVertex>& vertices, const std::vector<uint32_t>& indices, const std::vector<FbxSection>& sections)
+	{
+		if (vertices.empty() || indices.empty())
+		{
+			DEBUG_LOG(sys::eLogLevel::Error,
+				"FbxResource::BuildFromMemory: empty vertices or indices.");
+			return false;
+		}
+
+		mSections = sections;
+
+		const uint32_t vertexCount = static_cast<uint32_t>(vertices.size());
+		const uint32_t indexCount = static_cast<uint32_t>(indices.size());
+
+		mVB = std::make_unique<VertexBuffer>();
+		if (!mVB->CreateStaticSync(
+			vertices.data(),
+			sizeof(FbxVertex) * vertexCount,
+			sizeof(FbxVertex)))
+		{
+			DEBUG_LOG(sys::eLogLevel::Error,
+				"FbxResource::BuildFromMemory: Failed to create vertex buffer.");
+			return false;
+		}
+
+		mIB = std::make_unique<IndexBuffer>();
+		if (!mIB->CreateStaticSync(
+			indices.data(),
+			sizeof(uint32_t) * indexCount,
+			DXGI_FORMAT_R32_UINT))
+		{
+			DEBUG_LOG(sys::eLogLevel::Error,
+				"FbxResource::BuildFromMemory: Failed to create index buffer.");
+			return false;
+		}
+
+		mIsLoaded = true;
+		DEBUG_LOG(sys::eLogLevel::Log,
+			std::format("FbxResource::BuildFromMemory: {} verts, {} indices, {} sections.",
+				vertexCount, indexCount, sections.size()));
+		return true;
+	}
+
+	// バッファをコマンドリストにセットする
+	void FbxResource::SetBuffers(ID3D12GraphicsCommandList* cmdList) const
+	{
+		if (mVB) mVB->Set(cmdList);
+		if (mIB) mIB->Set(cmdList);
+	}
 
 } // namespace graphics

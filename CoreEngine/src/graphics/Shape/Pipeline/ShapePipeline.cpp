@@ -9,7 +9,6 @@ namespace graphics
 {
 	D3D12_DEPTH_STENCIL_DESC ShapePipeline::MakeDepthStencilDesc()
 	{
-		// 2D shapes never need depth test/write.
 		D3D12_DEPTH_STENCIL_DESC desc = {};
 		desc.DepthEnable = FALSE;
 		desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
@@ -26,7 +25,6 @@ namespace graphics
 	}
 	D3D12_BLEND_DESC ShapePipeline::MakeBlendDesc()
 	{
-		// Standard alpha blending (needed for circle/triangle AA edges and FillAmount cutoff).
 		D3D12_BLEND_DESC desc = {};
 		desc.AlphaToCoverageEnable = FALSE;
 		desc.IndependentBlendEnable = FALSE;
@@ -48,7 +46,6 @@ namespace graphics
 	}
 	D3D12_RASTERIZER_DESC ShapePipeline::MakeRasterizerDesc()
 	{
-		// Two-sided draw (supports Flip-based mirroring), no depth bias.
 		D3D12_RASTERIZER_DESC desc = {};
 		desc.FillMode = D3D12_FILL_MODE_SOLID;
 		desc.CullMode = D3D12_CULL_MODE_NONE;
@@ -74,11 +71,6 @@ namespace graphics
 		return mPipelineState.Get();
 	}
 
-	/// <summary>
-	/// CreateRootSignature
-	/// Only one descriptor table (t0: instance StructuredBuffer) is needed,
-	/// since shapes have no texture.
-	/// </summary>
 	bool ShapePipeline::CreateRootSignature(ID3D12Device* device)
 	{
 		CD3DX12_DESCRIPTOR_RANGE1 rangeBuffer;
@@ -132,14 +124,14 @@ namespace graphics
 			return false;
 		}
 
-		// Vertex layout: same unit-quad layout as Sprite.
+		// Spriteのレイアウト
 		D3D12_INPUT_ELEMENT_DESC inputLayout[] =
 		{
 			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		};
 
-		// PSO setup
+		// PSO
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 		psoDesc.pRootSignature = mRootSignature.Get();
 		psoDesc.VS = CD3DX12_SHADER_BYTECODE(VS.Get());
@@ -168,12 +160,6 @@ namespace graphics
 		return true;
 	}
 
-	/// <summary>
-	/// Creates the root signature and PSO.
-	/// </summary>
-	/// <param name="device">GPU device</param>
-	/// <param name="shaderManager">Shader compile/cache manager</param>
-	/// <returns>true on success</returns>
 	bool ShapePipeline::Create(DX12Device& device, ShaderManager& shaderManager)
 	{
 		ID3D12Device* d3dDevice = device.GetDevice();

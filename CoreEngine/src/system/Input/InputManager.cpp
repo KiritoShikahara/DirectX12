@@ -12,13 +12,7 @@ namespace sys
         mMouse = std::make_unique<Mouse>();
         mKeyboard = std::make_unique<Keyboard>();
 
-        // ----------------------------------------------------------------
-        //  デフォルトのアクションマッピング
-        //  将来的には外部ファイルから読み込む想定
-        //
-        //  各デバイスは vector なので、波カッコの中に複数コードを並べれば良い。
-        //  例: Keys = {Up, W} で上矢印とWどちらでも判定が通る。
-        // ----------------------------------------------------------------
+        // デフォルトのアクションマッピング
         AddAction("Sprint", { { eKeyCode::LShift }, { ePadButton::L1 }, {} });
         AddAction("Select", { { eKeyCode::Space }, { ePadButton::A }, { eMouseButton::Left } });
         AddAction("Cancel", { { eKeyCode::Escape }, { ePadButton::B }, {} });
@@ -69,9 +63,7 @@ namespace sys
         mKeyboard->Update();
     }
 
-    // -----------------------------------------------------------------------
-    //  ウィンドウメッセージ
-    // -----------------------------------------------------------------------
+    // ウィンドウメッセージ
     bool InputManager::ProcessEvent(UINT message, WPARAM wParam, LPARAM lParam)
     {
         if (!mIsInitialized) return false;
@@ -81,9 +73,7 @@ namespace sys
         return false;
     }
 
-    // -----------------------------------------------------------------------
-    //  軸入力
-    // -----------------------------------------------------------------------
+    // 軸入力
     DirectX::XMFLOAT2 InputManager::GetMoveAxis() const
     {
         using namespace DirectX;
@@ -141,9 +131,7 @@ namespace sys
         return result;
     }
 
-    // -----------------------------------------------------------------------
-    //  アクションマッピング
-    // -----------------------------------------------------------------------
+    // アクションマッピング
     void InputManager::AddAction(const std::string& actionName, const ActionBinding& bind)
     {
         if (actionName.empty()) return;
@@ -253,6 +241,7 @@ namespace sys
         // どちらにも入力が無ければ前回の値を維持する
     }
 
+    // 仮想サイズ内の座標に変換
     DirectX::XMFLOAT2 InputManager::GetMouseVirtualPosition() const
     {
         const DirectX::XMFLOAT2 raw = mMouse->GetPosition();
@@ -261,7 +250,6 @@ namespace sys
         const float scaleX = window.GetScaleX();
         const float scaleY = window.GetScaleY();
 
-        // GetScaleX/Y は「仮想サイズ → 実サイズ」の比率なので、逆算して仮想座標に戻す
         return {
             (scaleX != 0.0f) ? raw.x / scaleX : raw.x,
             (scaleY != 0.0f) ? raw.y / scaleY : raw.y

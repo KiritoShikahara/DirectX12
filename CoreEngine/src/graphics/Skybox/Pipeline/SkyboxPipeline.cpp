@@ -18,44 +18,36 @@ namespace graphics
         return true;
     }
 
-    // -------------------------------------------------------------------------
-
     bool SkyboxPipeline::CreateRootSignature(ID3D12Device* device)
     {
         CD3DX12_DESCRIPTOR_RANGE1 rangeScene, rangeCubeA, rangeCubeB;
 
-        // FbxSceneData : t8, space0 (FbxRenderer が毎フレーム更新するバッファを共有)
         rangeScene.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 8, 0); // t8 space0
 
-        // TextureCube A/B : t0/t1, space1 (FBX の space0 と衝突しないよう space1 を使用)
         rangeCubeA.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1); // t0 space1
         rangeCubeB.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1, 1); // t1 space1
 
         CD3DX12_ROOT_PARAMETER1 params[4];
 
-        // SLOT_BLEND_WEIGHT: Root32BitConstants (b0, space0) ? float 1個
         params[SLOT_BLEND_WEIGHT].InitAsConstants(
             1,
             /*shaderRegister=*/0,
             /*registerSpace=*/0,
             D3D12_SHADER_VISIBILITY_PIXEL);
 
-        // SLOT_SCENE_BUFFER: t8, space0 (VERTEX のみ ? VP 行列取得用)
         params[SLOT_SCENE_BUFFER].InitAsDescriptorTable(
             1, &rangeScene,
             D3D12_SHADER_VISIBILITY_VERTEX);
 
-        // SLOT_SKYBOX_TEX_A: t0, space1 (PIXEL)
         params[SLOT_SKYBOX_TEX_A].InitAsDescriptorTable(
             1, &rangeCubeA,
             D3D12_SHADER_VISIBILITY_PIXEL);
 
-        // SLOT_SKYBOX_TEX_B: t1, space1 (PIXEL)
         params[SLOT_SKYBOX_TEX_B].InitAsDescriptorTable(
             1, &rangeCubeB,
             D3D12_SHADER_VISIBILITY_PIXEL);
 
-        // StaticSampler s0: LinearWrap
+        // サンプラー
         CD3DX12_STATIC_SAMPLER_DESC sampler(
             0,
             D3D12_FILTER_MIN_MAG_MIP_LINEAR,
@@ -69,6 +61,7 @@ namespace graphics
             1, &sampler,
             D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
+        // 生成
         Blob sigBlob, errBlob;
         HRESULT hr = D3D12SerializeVersionedRootSignature(&desc, &sigBlob, &errBlob);
         if (FAILED(hr))
@@ -94,8 +87,6 @@ namespace graphics
         return true;
     }
 
-    // -------------------------------------------------------------------------
-
     bool SkyboxPipeline::CreatePipeline(ID3D12Device* device)
     {
         auto& shaderManager = ShaderManager::Get();
@@ -110,11 +101,11 @@ namespace graphics
             return false;
         }
 
-        // ラスタライザ: カリングなし (SV_VertexID トライアングルは表裏が不定)
+        // ラスタライザ
         auto rasterDesc = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
         rasterDesc.CullMode = D3D12_CULL_MODE_NONE;
 
-        // 深度: 書き込みなし / LESS_EQUAL (VS で z=w=1.0 にして最遠面に描く)
+        // 深度
         auto dsDesc = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
         dsDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
         dsDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
