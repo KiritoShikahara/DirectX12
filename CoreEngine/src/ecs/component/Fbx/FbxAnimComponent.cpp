@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "FbxAnimComponent.h"
-
 #include <graphics/FBX/Resource/FbxResource.h>
 #include <graphics/FBX/Data/FbxData.h>
 #include <algorithm>
@@ -10,9 +9,7 @@ namespace ecs
 {
     using namespace DirectX;
 
-    // ============================================================
-    //  Play / CrossFade
-    // ============================================================
+    // 再生を開始する
     void FbxAnimComponent::Play(int clipIndex, bool loop)
     {
         CurrentClipIndex = clipIndex;
@@ -23,6 +20,7 @@ namespace ecs
         BlendTime = 0.f;
     }
 
+    // 指定したクリップ名で再生を開始する
     void FbxAnimComponent::Play(const graphics::FbxResource& resource,
         const std::string& clipName, bool loop)
     {
@@ -36,6 +34,7 @@ namespace ecs
         Play(idx, loop);
     }
 
+    // クロスフェードでアニメーションを切り替える
     void FbxAnimComponent::CrossFade(int newClipIndex, float blendDuration, bool loop)
     {
         if (newClipIndex == CurrentClipIndex) return;
@@ -49,6 +48,7 @@ namespace ecs
         IsPlaying = true;
     }
 
+    // 指定したクリップ名でクロスフェードを行う
     void FbxAnimComponent::CrossFade(const graphics::FbxResource& resource,
         const std::string& clipName,
         float blendDuration, bool loop)
@@ -63,9 +63,7 @@ namespace ecs
         CrossFade(idx, blendDuration, loop);
     }
 
-    // ============================================================
-    //  Update  (再生時間の進行)
-    // ============================================================
+    // 再生時間を進める
     void FbxAnimComponent::Update(float deltaTime, const graphics::FbxResource& resource)
     {
         if (!IsPlaying || !resource.HasAnimation()) return;
@@ -73,7 +71,7 @@ namespace ecs
         const auto& clips = resource.GetAnimClips();
         if (CurrentClipIndex < 0 || CurrentClipIndex >= (int)clips.size()) return;
 
-        // ── ブレンド時間を進める ─────────────────────────────────
+        // ブレンド時間を進める
         if (PrevClipIndex >= 0)
         {
             BlendTime += deltaTime;
@@ -96,7 +94,7 @@ namespace ecs
             }
         }
 
-        // ── 現在クリップを進める ─────────────────────────────────
+        // 現在クリップを進める
         const float duration = clips[CurrentClipIndex].Duration;
         if (duration <= 0.f) return;
 
@@ -114,11 +112,7 @@ namespace ecs
         }
     }
 
-    // ============================================================
-    //  EvalLocalMats  (内部ヘルパー)
-    //  指定クリップ/時刻の全ボーン ローカル行列を返す
-    //  フレーム間を TRS 分解 + Lerp/Slerp で補間する
-    // ============================================================
+    // ローカル行列を評価する
     void FbxAnimComponent::EvalLocalMats(
         const graphics::FbxResource& resource,
         int clipIndex, float time,
@@ -138,15 +132,12 @@ namespace ecs
         const auto& clip = clips[clipIndex];
         if (clip.NumFrame <= 0) return;
 
-        // 補間パラメータ (60fps ベイク済み)
+        // 補間パラメータを計算
         const float frameFull = time * clip.FrameRate;
         const int   frame0 = static_cast<int>(frameFull) % clip.NumFrame;
         const int   frame1 = (frame0 + 1) % clip.NumFrame;
         const float t = frameFull - static_cast<float>(static_cast<int>(frameFull));
 
-        // TRSは読み込み時に分解済み(graphics::FbxAnimClip::KeyFrameTrs)。
-        // ここでXMMatrixDecomposeを呼ぶと、同じモデルを表示している全エンティティが
-        // 毎フレーム同一の分解を重複して行うことになるため、必ず分解済みの値を使う
         const int activeBones = (int)clip.KeyFrameTrs.size();
         for (int i = 0; i < boneCount && i < activeBones; ++i)
         {
@@ -159,7 +150,7 @@ namespace ecs
             const auto& k0 = track[f0];
             const auto& k1 = track[f1];
 
-            // 補間 → 再合成
+            // キーフレーム間を補間して合成
             const XMVECTOR s = XMVectorLerp(XMLoadFloat4(&k0.Scale), XMLoadFloat4(&k1.Scale), t);
             const XMVECTOR p = XMVectorLerp(XMLoadFloat4(&k0.Translation), XMLoadFloat4(&k1.Translation), t);
             const XMVECTOR r = XMQuaternionSlerp(XMLoadFloat4(&k0.Rotation), XMLoadFloat4(&k1.Rotation), t);
@@ -170,10 +161,7 @@ namespace ecs
         }
     }
 
-    // ============================================================
-    //  BuildSkinMatrices  (内部ヘルパー)
-    //  ローカル行列 → 親子階層 → BindMatrix → 転置して BoneMatrices へ
-    // ============================================================
+    // スキン行列を構築する
     void FbxAnimComponent::BuildSkinMatrices(
         const graphics::FbxResource& resource,
         const std::vector<XMMATRIX>& localMats)
@@ -184,6 +172,7 @@ namespace ecs
 
         mWorldMats.resize(boneCount);
 
+        // ワールド行列を計算
         for (int i = 0; i < boneCount; ++i)
         {
             const int parent = bones[i].ParentIndex;
@@ -193,6 +182,7 @@ namespace ecs
                 mWorldMats[i] = localMats[i];
         }
 
+        // スキン行列を計算して転置保存
         for (int i = 0; i < boneCount; ++i)
         {
             XMMATRIX bind = XMLoadFloat4x4(&bones[i].BindMatrix);
@@ -201,21 +191,19 @@ namespace ecs
         }
     }
 
-    // ============================================================
-    //  CalcBoneMatrices  (メイン API)
-    // ============================================================
+    // ボーン行列を計算する
     void FbxAnimComponent::CalcBoneMatrices(const graphics::FbxResource& resource)
     {
         if (!resource.HasSkinning()) return;
 
         EvalLocalMats(resource, CurrentClipIndex, CurrentTime, mCurrLocal);
 
+        // クロスフェード中の処理
         if (PrevClipIndex >= 0 && BlendDuration > 0.f)
         {
-            // ── クロスフェード: TRS 空間でブレンドして BuildSkinMatrices ──
             EvalLocalMats(resource, PrevClipIndex, PrevTime, mPrevLocal);
 
-            const float alpha = GetBlendFactor();   // 0.0(前) → 1.0(現在)
+            const float alpha = GetBlendFactor();
             const int   boneCount = (int)mCurrLocal.size();
             mBlendedLocal.resize(boneCount);
 
@@ -241,5 +229,4 @@ namespace ecs
             BuildSkinMatrices(resource, mCurrLocal);
         }
     }
-
-} // namespace ecs
+}
