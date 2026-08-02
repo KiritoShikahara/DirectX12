@@ -21,6 +21,7 @@ namespace
     constexpr float kEffectReferenceRadius = 2.0f;
     constexpr float kDebugWireLifetime = 0.3f;
     constexpr float kEffectForwardRatio = 0.5f;
+    constexpr float kAreaSeVolume = 0.4f;
 }
 
 namespace ecs
@@ -64,6 +65,8 @@ namespace ecs
         const auto* ownerTransform = registry.try_get<ecs::Transform>(weapon.Owner);
         const auto* ownerAim = registry.try_get<ecs::PlayerAimComponent>(weapon.Owner);
         if (ownerTransform == nullptr || ownerAim == nullptr) return;
+
+        PLAY_SE("Assets/Sound/SE/SE_Area.aud", false, kAreaSeVolume, false);
 
         const DirectX::XMFLOAT3& ownerPos = ownerTransform->GetPosition();
         const DirectX::XMFLOAT3& aimDir = ownerAim->Direction;

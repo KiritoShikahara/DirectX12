@@ -1,6 +1,8 @@
 ﻿#pragma once
 
 #include<system/Scene/IScene.h>
+#include<Data/Save/PlayerSaveDebugPanel.h>
+#include<memory>
 
 namespace scene
 {
@@ -35,5 +37,7 @@ namespace scene
 		/// 選択肢(武器・ステージ選択/ステータス強化)
 		/// </summary>
 		static void CreateOptions();
+
+		std::unique_ptr<debug::PlayerSaveDebugPanel> mPlayerSaveDebugPanel;
 	};
 }

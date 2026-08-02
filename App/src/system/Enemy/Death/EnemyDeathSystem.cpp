@@ -17,6 +17,8 @@
 namespace
 {
 	constexpr const char* kDeathEffectPath = "Assets/Effect/AttackHit.efk";
+	constexpr float kDeadSeVolume = 0.2f;
+	constexpr float kLevelUpSeVolume = 0.6f;
 }
 
 namespace ecs
@@ -69,6 +71,7 @@ namespace ecs
 			{
 				ecs::effectutil::PlayOneShotCombined(kDeathEffectPath, transform->GetPosition(), 1.0f);
 			}
+			PLAY_SE("Assets/Sound/SE/SE_Dead.aud", false, kDeadSeVolume, false);
 			registry.destroy(entity);
 		}
 	}
@@ -103,6 +106,7 @@ namespace ecs
 			level.Level += 1;
 			level.ExperienceToNextLevel *= level.ExperienceGrowthRate;
 			gameState.PendingLevelUpCount += 1;
+			PLAY_SE("Assets/Sound/SE/SE_LevelUp.aud", false, kLevelUpSeVolume, false);
 		}
 	}
 

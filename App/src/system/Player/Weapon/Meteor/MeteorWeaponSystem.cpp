@@ -22,6 +22,7 @@ namespace
 {
 	constexpr float kEffectReferenceRadius = 2.0f;
 	constexpr float kDebugWireLifetime = 0.3f;
+	constexpr float kAreaSeVolume = 0.4f;
 
 	std::mt19937& GetRandomEngine()
 	{
@@ -125,6 +126,8 @@ namespace ecs
 		float visualRadius,
 		const data::MeteorWeaponData& masterData)
 	{
+		PLAY_SE("Assets/Sound/SE/SE_Area.aud", false, kAreaSeVolume, false);
+
 		mOverlapped.clear();
 		::sys::PhysicsSystem::OverlapSphere(registry, position, hitRadius, mOverlapped);
 

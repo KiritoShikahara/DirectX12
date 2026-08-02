@@ -12,6 +12,11 @@
 #include<Tag/EntityTag.h>
 #include<system/Effect/EffectSpawnUtility.h>
 
+namespace
+{
+    constexpr float kFireSeVolume = 0.4f;
+}
+
 namespace ecs
 {
     void VoidBeamWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
@@ -78,6 +83,8 @@ namespace ecs
         const DirectX::XMFLOAT3& direction,
         const data::VoidBeamWeaponData& masterData)
     {
+        PLAY_SE("Assets/Sound/SE/SE_Fire.aud", false, kFireSeVolume, false);
+
         // AtkPowerパークの強化分をCurrent/Base比で反映する
         const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
         const float damage = masterData.Damage * atkMultiplier;

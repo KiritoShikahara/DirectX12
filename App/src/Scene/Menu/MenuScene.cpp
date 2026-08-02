@@ -100,8 +100,11 @@ namespace scene
 		glow.Frequency = 0.7f;
 		glow.PhaseOffset = 0.0f;
 
-		// 音楽
-		PLAY_BGM("Assets/Sound/BGM/BGM_Title.aud", true, 0.7);
+		// 既に共通BGMが再生中ならそのまま継続させ、途切れさせない
+		if (!::audio::AudioManager::Get().IsBgmPlaying())
+		{
+			PLAY_BGM("Assets/Sound/BGM/BGM_Title.aud", true, 0.7);
+		}
 	}
 
 	void MenuScene::CreateSpells()

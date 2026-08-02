@@ -9,6 +9,7 @@
 #include<system/StatusUpgrade/StatusUpgradeInputSystem.h>
 #include<system/StatusUpgrade/StatusUpgradeLabels.h>
 #include<system/UI/UiPanelUtility.h>
+#include<graphics/Text/Renderer/TextRenderer.h>
 
 #include<Data/StatUpgrade/StatUpgradeData.h>
 #include<Data/Save/PlayerSaveData.h>
@@ -127,7 +128,11 @@ namespace scene
 		glow.Frequency = 0.7f;
 		glow.PhaseOffset = 0.0f;
 
-		PLAY_BGM("Assets/Sound/BGM/BGM_Title.aud", true, 0.7f);
+		// 既に共通BGMが再生中ならそのまま継続させ、途切れさせない
+		if (!::audio::AudioManager::Get().IsBgmPlaying())
+		{
+			PLAY_BGM("Assets/Sound/BGM/BGM_Title.aud", true, 0.7f);
+		}
 	}
 
 	void StatusUpgradeScene::CreateOptions()
@@ -135,6 +140,7 @@ namespace scene
 		auto& manager = ::ecs::EntityManager::Get();
 		auto& registry = ENTT_REGISTRY;
 		auto& window = ::sys::Window::Get();
+		auto& textRenderer = ::graphics::TextRenderer::Get();
 
 		const float centerX = static_cast<float>(window.GetVirtualWidth()) * 0.5f;
 		const float centerY = static_cast<float>(window.GetVirtualHeight()) * 0.5f;
@@ -297,7 +303,54 @@ namespace scene
 			registry.emplace<::ecs::StatusUpgradeConfirmUiTag>(entity);
 		}
 
-		// フィードバックメッセージ 「ゴールドが足りません」等。MessageTimerが尽きたら非表示 
+		// はい/いいえの選択肢、内容・位置は固定で表示色のみStatusUpgradeInputSystemが毎フレーム更新する
+		constexpr float kConfirmOptionOffsetY = 55.0f;
+		constexpr float kConfirmOptionOffsetX = 90.0f;
+		constexpr float kConfirmOptionTextSize = 30.0f;
+		{
+			auto entity = manager.CreateEntity();
+			auto& text = manager.AddComponent<::ecs::TextComponent>(entity);
+			text.Text = L"はい";
+			text.Size = kConfirmOptionTextSize;
+			text.Layer = 20;
+			text.IsVisible = false;
+
+			const float textWidth = textRenderer.MeasureWidth(text.Text, text.Size);
+			text.X = centerX - kConfirmOptionOffsetX - textWidth * 0.5f;
+			text.Y = centerY + kConfirmOptionOffsetY;
+
+			registry.emplace<::ecs::StatusUpgradeConfirmOptionUiTag>(entity, ::ecs::StatusUpgradeConfirmOptionUiTag{ ::ecs::eStatusUpgradeConfirmOption::Yes });
+		}
+		{
+			auto entity = manager.CreateEntity();
+			auto& text = manager.AddComponent<::ecs::TextComponent>(entity);
+			text.Text = L"いいえ";
+			text.Size = kConfirmOptionTextSize;
+			text.Layer = 20;
+			text.IsVisible = false;
+
+			const float textWidth = textRenderer.MeasureWidth(text.Text, text.Size);
+			text.X = centerX + kConfirmOptionOffsetX - textWidth * 0.5f;
+			text.Y = centerY + kConfirmOptionOffsetY;
+
+			registry.emplace<::ecs::StatusUpgradeConfirmOptionUiTag>(entity, ::ecs::StatusUpgradeConfirmOptionUiTag{ ::ecs::eStatusUpgradeConfirmOption::No });
+		}
+
+		// 操作案内、内容はデバイスに応じてStatusUpgradeInputSystemが毎フレーム更新する
+		constexpr float kConfirmGuideOffsetY = 110.0f;
+		{
+			auto entity = manager.CreateEntity();
+			auto& text = manager.AddComponent<::ecs::TextComponent>(entity);
+			text.Y = centerY + kConfirmGuideOffsetY;
+			text.Size = 24.0f;
+			text.Color = { 0.7f, 0.7f, 0.7f, 1.0f };
+			text.Layer = 20;
+			text.IsVisible = false;
+
+			registry.emplace<::ecs::StatusUpgradeConfirmGuideUiTag>(entity);
+		}
+
+		// フィードバックメッセージ 「ゴールドが足りません」等。MessageTimerが尽きたら非表示
 		constexpr float kMessageOffsetY = 130.0f;
 		constexpr float kMessageTextSize = 28.0f;
 		{

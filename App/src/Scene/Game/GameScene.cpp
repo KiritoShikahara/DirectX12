@@ -116,6 +116,8 @@ namespace scene
 
 	void GameScene::Finalize()
 	{
+		// InGameを抜けるタイミングでのみBGMを止める。次のシーンが共通BGMを再生し直す
+		STOP_BGM();
 
 #if DEV_TOOL_ENABLED
 			this->DebugFinalize();

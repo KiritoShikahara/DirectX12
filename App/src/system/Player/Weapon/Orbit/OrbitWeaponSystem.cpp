@@ -15,6 +15,7 @@
 namespace
 {
 	constexpr float kEffectReferenceRadius = 2.0f;
+	constexpr float kAreaSeVolume = 0.4f;
 }
 
 namespace ecs
@@ -91,6 +92,8 @@ namespace ecs
 		ecs::OrbitWeaponRuntimeComponent& runtime,
 		const data::OrbitWeaponData& masterData)
 	{
+		PLAY_SE("Assets/Sound/SE/SE_Area.aud", false, kAreaSeVolume, false);
+
 		auto& manager = ::ecs::EntityManager::Get();
 		const int orbCount = std::max(1, masterData.OrbCount);
 

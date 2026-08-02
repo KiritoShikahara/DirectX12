@@ -13,6 +13,11 @@
 
 #include<algorithm>
 
+namespace
+{
+    constexpr float kFireSeVolume = 0.4f;
+}
+
 namespace ecs
 {
     void ChainLightningWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
@@ -61,6 +66,8 @@ namespace ecs
         const data::ChainLightningWeaponData& masterData,
         entt::entity initialTarget)
     {
+        PLAY_SE("Assets/Sound/SE/SE_Fire.aud", false, kFireSeVolume, false);
+
         // AtkPowerパークの強化分をCurrent/Base比で反映する
         const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
         float damage = masterData.Damage * atkMultiplier;

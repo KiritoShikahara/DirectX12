@@ -21,6 +21,8 @@ namespace ecs
 		const DirectX::XMFLOAT4 kTitleColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 		const DirectX::XMFLOAT4 kNormalColor = { 0.7f, 0.7f, 0.7f, 1.0f };
 		const DirectX::XMFLOAT4 kSelectedColor = { 1.0f, 0.9f, 0.2f, 1.0f };
+
+		constexpr float kResultSeVolume = 0.6f;
 	}
 
 	void ResultSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
@@ -60,6 +62,15 @@ namespace ecs
 	void ResultSystem::EnterResult(entt::registry& registry, entt::entity controllerEntity, ::sys::eResultType resultType)
 	{
 		registry.emplace<ResultComponent>(controllerEntity);
+
+		if (resultType == ::sys::eResultType::Clear)
+		{
+			PLAY_SE("Assets/Sound/SE/SE_GameClear.aud", false, kResultSeVolume, false);
+		}
+		else
+		{
+			PLAY_SE("Assets/Sound/SE/SE_GameOver.aud", false, kResultSeVolume, false);
+		}
 
 		auto& manager = ENTITY_MANAGER;
 		auto& window = ::sys::Window::Get();

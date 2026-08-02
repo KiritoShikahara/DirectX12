@@ -80,8 +80,7 @@ namespace ecs
 
 	void GameSceneFactory::CreateBGM()
 	{
-		// 仮の音楽
-		PLAY_BGM("Assets/Sound/BGM/BGM_Title.aud", true, 0.7);
+		PLAY_BGM("Assets/Sound/BGM/BGM_Ingame.aud", true, 0.7);
 	}
 
 	void GameSceneFactory::CreateGround()

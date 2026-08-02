@@ -55,6 +55,7 @@ namespace ecs
 	namespace
 	{
 		constexpr float kMultiShotSpreadDegrees = 8.0f;
+		constexpr float kFireSeVolume = 0.4f;
 	}
 
 	void SingleShotWeaponSystem::Fire(
@@ -67,6 +68,8 @@ namespace ecs
 		const auto* ownerTransform = registry.try_get<ecs::Transform>(weapon.Owner);
 		const auto* ownerAim = registry.try_get<ecs::PlayerAimComponent>(weapon.Owner);
 		if (ownerTransform == nullptr || ownerAim == nullptr) return;
+
+		PLAY_SE("Assets/Sound/SE/SE_Fire.aud", false, kFireSeVolume, false);
 
 		const DirectX::XMFLOAT3& ownerPos = ownerTransform->GetPosition();
 		const DirectX::XMFLOAT3 direction = ecs::combatutil::ComputeSpreadDirection(

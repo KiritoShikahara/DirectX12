@@ -34,6 +34,11 @@ namespace audio
 		void PauseBGM();
 		void ResumeBGM();
 
+		///<summary>
+		///BGMが現在アクティブか、Stop後や再生開始前はfalse
+		///</summary>
+		bool IsBgmPlaying();
+
 		// SE制御
 		void PlaySE(const std::string& filePath,
 			bool  loop = false,

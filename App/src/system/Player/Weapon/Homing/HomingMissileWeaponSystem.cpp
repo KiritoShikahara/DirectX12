@@ -54,6 +54,7 @@ namespace ecs
     namespace
     {
         constexpr float kMultiShotSpreadDegrees = 8.0f;
+        constexpr float kFireSeVolume = 0.4f;
     }
 
     void HomingMissileWeaponSystem::Fire(
@@ -67,6 +68,8 @@ namespace ecs
         const auto* ownerTransform = registry.try_get<ecs::Transform>(weapon.Owner);
         const auto* targetTransform = registry.try_get<ecs::Transform>(target);
         if (ownerTransform == nullptr || targetTransform == nullptr) return;
+
+        PLAY_SE("Assets/Sound/SE/SE_Fire.aud", false, kFireSeVolume, false);
 
         const DirectX::XMFLOAT3& ownerPos = ownerTransform->GetPosition();
 

@@ -19,6 +19,7 @@ namespace
     const DirectX::XMFLOAT4 kPlayerDamageColor = { 1.0f, 0.3f, 0.3f, 1.0f };
 
     constexpr int kMaxAttackCount = 6;
+    constexpr float kHitSeVolume = 0.2f;
 }
 
 namespace ecs::combatutil
@@ -96,6 +97,8 @@ namespace ecs::combatutil
         {
             SpawnDamageNumber(transform->GetPosition(), damage, false);
         }
+
+        PLAY_SE("Assets/Sound/SE/SE_Hit.aud", false, kHitSeVolume, false);
 
         return true;
     }

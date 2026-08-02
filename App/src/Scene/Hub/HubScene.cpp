@@ -1,5 +1,6 @@
 ﻿#include "apppch.h"
 #include "HubScene.h"
+#include <Utility/config/DebugConfig.h>
 #include <ecs/system/manager/ComponentSystemManager.h>
 #include <system/GlowAnimation/GlowAnimationComp.h>
 #include <system/GlowAnimation/SpriteGlowSystem.h>
@@ -22,6 +23,10 @@ namespace scene
 		CreateBackground();
 		CreateOptions();
 
+#if DEV_TOOL_ENABLED
+		mPlayerSaveDebugPanel = std::make_unique<debug::PlayerSaveDebugPanel>("HubScene_PlayerSaveDebug");
+#endif
+
 		DEBUG_LOG(::sys::eLogLevel::Log, "Hub Scene.");
 	}
 
@@ -29,6 +34,10 @@ namespace scene
 	{
 		::ecs::ComponentSystemManager::Get().ClearUserSystems();
 		::audio::AudioManager::Get().ClearSceneSounds();
+
+#if DEV_TOOL_ENABLED
+		mPlayerSaveDebugPanel.reset();
+#endif
 	}
 
 	void HubScene::CreateCompSystem()
@@ -66,7 +75,11 @@ namespace scene
 		glow.Frequency = 0.7f;
 		glow.PhaseOffset = 0.0f;
 
-		PLAY_BGM("Assets/Sound/BGM/BGM_Title.aud", true, 0.7f);
+		// 既に共通BGMが再生中ならそのまま継続させ、途切れさせない
+		if (!::audio::AudioManager::Get().IsBgmPlaying())
+		{
+			PLAY_BGM("Assets/Sound/BGM/BGM_Title.aud", true, 0.7f);
+		}
 	}
 
 	void HubScene::CreateOptions()

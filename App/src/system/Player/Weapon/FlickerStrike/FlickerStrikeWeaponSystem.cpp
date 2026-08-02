@@ -28,6 +28,7 @@ namespace
     constexpr float kAttackAnimSpeedMultiplier = 8.0f;
     constexpr float kAttackAnimBlendDuration = 0.05f;
     constexpr float kTravelAnimBlendDuration = 0.1f;
+    constexpr float kFireSeVolume = 0.4f;
 
     bool IsOtherManualSkillPressed()
     {
@@ -244,6 +245,8 @@ namespace ecs
         const auto* targetTransform = registry.try_get<ecs::Transform>(target);
         auto* targetStatus = registry.try_get<ecs::EnemyStatusComponent>(target);
         if (playerTransform == nullptr || targetTransform == nullptr || targetStatus == nullptr) return;
+
+        PLAY_SE("Assets/Sound/SE/SE_Fire.aud", false, kFireSeVolume, false);
 
         const DirectX::XMFLOAT3& playerPos = playerTransform->GetPosition();
         const DirectX::XMFLOAT3& targetPos = targetTransform->GetPosition();

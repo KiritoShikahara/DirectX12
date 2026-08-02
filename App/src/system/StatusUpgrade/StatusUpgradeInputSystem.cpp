@@ -22,6 +22,7 @@ namespace
 	constexpr float kMessageDuration = 2.0f;
 
 	constexpr float kConfirmLineHeightRatio = 1.3f;
+	constexpr float kConfirmDetailOffsetY = 50.0f;
 
 	int GetLevel(const data::PlayerSaveData& save, int index)
 	{
@@ -118,10 +119,25 @@ namespace ecs
 
 		if (upgrade.IsConfirming)
 		{
-			// 最大レベルまで強化の確認ダイアログ表示中はSelect=はい/Cancel=いいえのみ受け付ける
+			// 十字キー左右どちらでもはい/いいえをトグルする、選択肢は2つだけのため方向は問わない
+			if (input.IsActionPressed("MenuLeft") || input.IsActionPressed("MenuRight"))
+			{
+				upgrade.ConfirmSelectedOption = (upgrade.ConfirmSelectedOption == eStatusUpgradeConfirmOption::Yes)
+					? eStatusUpgradeConfirmOption::No
+					: eStatusUpgradeConfirmOption::Yes;
+			}
+
 			if (input.IsActionPressed("Select"))
 			{
-				ConfirmMaxPurchase(upgrade);
+				if (upgrade.ConfirmSelectedOption == eStatusUpgradeConfirmOption::Yes)
+				{
+					ConfirmMaxPurchase(upgrade);
+				}
+				else
+				{
+					upgrade.IsConfirming = false;
+					PLAY_SE("Assets/Sound/SE/SE_Select.aud", false, 1, false);
+				}
 			}
 			else if (input.IsActionPressed("Cancel"))
 			{
@@ -260,6 +276,7 @@ namespace ecs
 		}
 
 		upgrade.IsConfirming = true;
+		upgrade.ConfirmSelectedOption = eStatusUpgradeConfirmOption::No;
 		PLAY_SE("Assets/Sound/SE/SE_Select.aud", false, 1, false);
 	}
 
@@ -369,8 +386,8 @@ namespace ecs
 				}
 			});
 
-		// 確認ダイアログ表示中は背後の全テキストを非表示にする。TextComponentは常にSpriteより手前に描画されるため黒背景だけでは隠せない。StatusUpgradeConfirmUiTagだけは除外して常に表示可能にする
-		registry.view<TextComponent>(entt::exclude<StatusUpgradeConfirmUiTag>).each(
+		// 確認ダイアログ表示中は背後の全テキストを非表示にする。TextComponentは常にSpriteより手前に描画されるため黒背景だけでは隠せない。確認ダイアログ自身の要素だけは除外して常に表示可能にする
+		registry.view<TextComponent>(entt::exclude<StatusUpgradeConfirmUiTag, StatusUpgradeConfirmOptionUiTag, StatusUpgradeConfirmGuideUiTag>).each(
 			[&](TextComponent& text)
 			{
 				text.IsVisible = !upgrade.IsConfirming;
@@ -456,23 +473,44 @@ namespace ecs
 				if (targetLevel == level)
 				{
 					// 1レベルも買えない場合もダイアログ自体は開いたままにし、内容だけをこのメッセージに差し替える
-					text.Text = L"ゴールドが足りません\n[" + std::wstring(ecs::inputguide::GetCancelLabel(device)) + L"]:戻る";
+					text.Text = L"ゴールドが足りません";
 				}
 				else
 				{
 					text.Text = std::wstring(ecs::statusupgrade::GetOptionLabel(upgrade.SelectedIndex)) +
 						L"を Lv." + std::to_wstring(level) + L" → Lv." + std::to_wstring(targetLevel) + L" まで強化しますか？\n" +
-						L"Gold: " + std::to_wstring(save.Gold) + L" → " + std::to_wstring(save.Gold - totalCost) +
-						L"\n[" + ecs::inputguide::GetSelectLabel(device) + L"]:はい　[" + ecs::inputguide::GetCancelLabel(device) + L"]:いいえ";
+						L"Gold: " + std::to_wstring(save.Gold) + L" → " + std::to_wstring(save.Gold - totalCost);
 				}
 
-				// 画面中心の黒背景ウィンドウに重ねるため水平・垂直とも中央揃えにする
+				// 画面中心より上に表示し、下側にはい/いいえの選択肢と操作案内を並べる余地を残す
 				const float textWidth = textRenderer.MeasureWidth(text.Text, text.Size);
 				text.X = screenCenterX - textWidth * 0.5f;
 
 				const auto lineCount = std::count(text.Text.begin(), text.Text.end(), L'\n') + 1;
 				const float blockHeight = static_cast<float>(lineCount) * text.Size * kConfirmLineHeightRatio;
-				text.Y = screenCenterY - blockHeight * 0.5f;
+				text.Y = screenCenterY - kConfirmDetailOffsetY - blockHeight * 0.5f;
+			});
+
+		// はい/いいえの選択肢、現在選択中の項目だけ黄色にする
+		registry.view<StatusUpgradeConfirmOptionUiTag, TextComponent>().each(
+			[&](const StatusUpgradeConfirmOptionUiTag& tag, TextComponent& text)
+			{
+				text.IsVisible = upgrade.IsConfirming;
+				text.Color = (tag.Option == upgrade.ConfirmSelectedOption) ? kSelectedColor : kNormalColor;
+			});
+
+		// 操作案内、十字キーでの選択移動とSelectでの決定を案内する
+		registry.view<StatusUpgradeConfirmGuideUiTag, TextComponent>().each(
+			[&](TextComponent& text)
+			{
+				text.IsVisible = upgrade.IsConfirming;
+				if (!upgrade.IsConfirming) return;
+
+				text.Text = std::wstring(ecs::inputguide::GetMenuMoveLabel(device)) + L":選択　" +
+					ecs::inputguide::GetSelectLabel(device) + L":決定";
+
+				const float textWidth = textRenderer.MeasureWidth(text.Text, text.Size);
+				text.X = screenCenterX - textWidth * 0.5f;
 			});
 
 		registry.view<StatusUpgradeMessageUiTag, TextComponent>().each(

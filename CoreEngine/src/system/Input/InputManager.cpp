@@ -15,6 +15,7 @@ namespace sys
         // デフォルトのアクションマッピング
         AddAction("Sprint", { { eKeyCode::LShift }, { ePadButton::L1 }, {} });
         AddAction("Select", { { eKeyCode::Space }, { ePadButton::A }, { eMouseButton::Left } });
+        AddAction("SelectAll", { { eKeyCode::Enter }, { ePadButton::Y }, {} });
         AddAction("Cancel", { { eKeyCode::Escape }, { ePadButton::B }, {} });
         AddAction("Delete", { { eKeyCode::Delete }, {}, {} });
         AddAction("Attack", { {}, { ePadButton::R2 }, { eMouseButton::Left } });

@@ -10,6 +10,11 @@
 #include<system/Effect/EffectSpawnUtility.h>
 #include<Data/Weapon/BoneSpearWeaponData.h>
 
+namespace
+{
+    constexpr float kFireSeVolume = 0.4f;
+}
+
 namespace ecs
 {
     void BoneSpearWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
@@ -77,6 +82,8 @@ namespace ecs
     {
         const auto* ownerTransform = registry.try_get<ecs::Transform>(weapon.Owner);
         if (ownerTransform == nullptr) return;
+
+        PLAY_SE("Assets/Sound/SE/SE_Fire.aud", false, kFireSeVolume, false);
 
         const DirectX::XMFLOAT3& ownerPos = ownerTransform->GetPosition();
 
