@@ -1,14 +1,18 @@
 #include "pch.h"
 #include "DX12Context.h"
 #include "Dx12Device.h"
+#include "RenderContext.h"
+
+#include <graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeapManager.h>
+#include <graphics/Profiler/GpuProfiler.h>
 
 namespace graphics
 {
+    // コンストラクタ
     DX12Context::DX12Context()
         : mDeviceService(nullptr)
         , mSwapChain(nullptr)
         , mCmdQueue(nullptr)
-        , mCmdList(nullptr)
         , mDepthBuffer(nullptr)
         , mRtvHeap(nullptr)
         , mDsvHeap(nullptr)
@@ -18,10 +22,12 @@ namespace graphics
         mClearColor = graphics::Color::Gray;
     }
 
+    // デストラクタ
     DX12Context::~DX12Context()
     {
     }
 
+    // 初期化処理
     bool DX12Context::Initialize(DX12Device* pDevice, HWND WindowHandle, UINT Width, UINT Height)
     {
         if (pDevice == nullptr) return false;
@@ -33,14 +39,19 @@ namespace graphics
         if (!InitializeSwapChain(WindowHandle, Width, Height)) return false;
         if (!InitializeBackBufferHeap())  return false;
         if (!InitializeDepthHeap(Width, Height)) return false;
-        if (!InitializeFence())           return false;
+        if (!InitializeFence())            return false;
+
+        GpuProfiler::Get().Initialize(mDeviceService->GetDevice(), mCmdQueue.Get());
 
         return true;
     }
 
+    // 終了処理
     bool DX12Context::Finalize()
     {
         WaitForGPU();
+
+        GpuProfiler::Get().Finalize();
 
         if (mWaitForGPUEventHandle != nullptr)
         {
@@ -50,8 +61,9 @@ namespace graphics
 
         for (auto& frame : mFrames)
         {
+            for (auto& cmdList : frame.CmdLists)   cmdList.Reset();
+            for (auto& alloc : frame.Allocators)   alloc.Reset();
             frame.BackBuffer.Reset();
-            frame.Allocator.Reset();
             frame.UploadPool.Reset();
         }
 
@@ -59,8 +71,7 @@ namespace graphics
         mRtvHeap.Reset();
         mDsvHeap.Reset();
 
-        mCmdList.Reset();
-        mSwapChain.Reset();  // CommandQueue より後に解放
+        mSwapChain.Reset();
         mCmdQueue.Reset();
 
         mFence.Reset();
@@ -68,73 +79,91 @@ namespace graphics
         return true;
     }
 
+    // フレーム描画開始
     void DX12Context::BeginRendering()
     {
-        // 次に描画するバックバッファのインデックスを取得
         mFrameIndex = mSwapChain->GetCurrentBackBufferIndex();
 
-        // このフレームのGPU処理が終了していなければ待機(ストール防止)
-        if (mFence->GetCompletedValue() < mFrames[mFrameIndex].FenceValue)
+        RenderContext::Get().SetFrameIndex(mFrameIndex);
+
+        auto& frame = mFrames[mFrameIndex];
+
+        if (mFence->GetCompletedValue() < frame.FenceValue)
         {
-            mFence->SetEventOnCompletion(mFrames[mFrameIndex].FenceValue, mWaitForGPUEventHandle);
+            mFence->SetEventOnCompletion(frame.FenceValue, mWaitForGPUEventHandle);
             WaitForSingleObject(mWaitForGPUEventHandle, INFINITE);
         }
 
-        // コマンド記録の開始
-        mFrames[mFrameIndex].Allocator->Reset();
-        mCmdList->Reset(mFrames[mFrameIndex].Allocator.Get(), nullptr);
+        GpuProfiler::Get().BeginFrame(mFrameIndex);
 
-        // バックバッファを PRESENT → RENDER_TARGET へ遷移
-        D3D12_RESOURCE_BARRIER barrier = {};
-        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        barrier.Transition.pResource = mFrames[mFrameIndex].BackBuffer.Get();
-        barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-        barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-        barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-        mCmdList->ResourceBarrier(1, &barrier);
+        const D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = GetCurrentRtvHandle();
+        const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = GetDsvHandle();
 
-        // レンダーターゲットの設定
-        const UINT rtvIncSize = mDeviceService->GetDevice()
-            ->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        ID3D12DescriptorHeap* heaps[] = { GDescriptorHeapManager::Get().GetNativeHeap() };
 
-        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = mRtvHeap->GetCPUDescriptorHandleForHeapStart();
-        rtvHandle.ptr += mFrameIndex * rtvIncSize;
+        for (uint32_t i = 0; i < CHANNEL_COUNT; ++i)
+        {
+            frame.Allocators[i]->Reset();
+            frame.CmdLists[i]->Reset(frame.Allocators[i].Get(), nullptr);
 
-        D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
-        mCmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+            ID3D12GraphicsCommandList* cmdList = frame.CmdLists[i].Get();
 
-        // レンダーターゲットと深度バッファをクリア
-        mCmdList->ClearRenderTargetView(rtvHandle, mClearColor.GetRawPointer(), 0, nullptr);
-        mCmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+            cmdList->SetDescriptorHeaps(_countof(heaps), heaps);
+            cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+            SetViewPort(cmdList,
+                static_cast<float>(mWidth), static_cast<float>(mHeight));
+
+            GpuProfiler::Get().BeginChannel(cmdList, static_cast<eRenderChannel>(i));
+        }
+
+        ID3D12GraphicsCommandList* preCmdList = GetCommandList(eRenderChannel::Pre);
+
+        Barrier(preCmdList, frame.BackBuffer.Get(),
+            D3D12_RESOURCE_STATE_PRESENT,
+            D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+        preCmdList->ClearRenderTargetView(rtvHandle, mClearColor.GetRawPointer(), 0, nullptr);
+        preCmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
     }
 
+    // 画面フリップ処理
     void DX12Context::Flip()
     {
-        // バックバッファを RENDER_TARGET → PRESENT へ遷移
-        D3D12_RESOURCE_BARRIER barrier = {};
-        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-        barrier.Transition.pResource = mFrames[mFrameIndex].BackBuffer.Get();
-        barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
-        barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-        barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-        mCmdList->ResourceBarrier(1, &barrier);
+        auto& frame = mFrames[mFrameIndex];
 
-        // コマンドリストを確定してGPUへ送信
-        mCmdList->Close();
-        ID3D12CommandList* ppCommandLists[] = { mCmdList.Get() };
-        mCmdQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+        Barrier(GetCommandList(eRenderChannel::Post), frame.BackBuffer.Get(),
+            D3D12_RESOURCE_STATE_RENDER_TARGET,
+            D3D12_RESOURCE_STATE_PRESENT);
 
-        // 画面の切り替え
+        auto& gpuProfiler = GpuProfiler::Get();
+        for (uint32_t i = 0; i < CHANNEL_COUNT; ++i)
+        {
+            gpuProfiler.EndChannel(frame.CmdLists[i].Get(), static_cast<eRenderChannel>(i));
+        }
+
+        gpuProfiler.ResolveFrame(GetCommandList(eRenderChannel::Post));
+
+        ID3D12CommandList* cmdLists[CHANNEL_COUNT] = {};
+        for (uint32_t i = 0; i < CHANNEL_COUNT; ++i)
+        {
+            frame.CmdLists[i]->Close();
+            cmdLists[i] = frame.CmdLists[i].Get();
+        }
+
+        mCmdQueue->ExecuteCommandLists(CHANNEL_COUNT, cmdLists);
+
         mSwapChain->Present(1, 0);
 
-        // このフレームの完了フェンス値を記録
         mNextFenceValue++;
-        mFrames[mFrameIndex].FenceValue = mNextFenceValue;
+        frame.FenceValue = mNextFenceValue;
         mCmdQueue->Signal(mFence.Get(), mNextFenceValue);
     }
 
+    // GPU完了待機
     void DX12Context::WaitForGPU()
     {
+        if (mCmdQueue == nullptr || mFence == nullptr) return;
+
         mNextFenceValue++;
         if (FAILED(mCmdQueue->Signal(mFence.Get(), mNextFenceValue)))
         {
@@ -147,73 +176,105 @@ namespace graphics
         }
     }
 
-    void DX12Context::SetViewPort(float Width, float Height, float x, float y)
+    // ビューポート設定
+    void DX12Context::SetViewPort(
+        ID3D12GraphicsCommandList* cmdList,
+        float Width, float Height, float x, float y)
     {
+        if (cmdList == nullptr) return;
+
         D3D12_VIEWPORT viewport = { x, y, Width, Height, 0.0f, 1.0f };
-        D3D12_RECT     scissor = { (LONG)x, (LONG)y, (LONG)(x + Width), (LONG)(y + Height) };
+        D3D12_RECT     scissor = {
+            static_cast<LONG>(x),
+            static_cast<LONG>(y),
+            static_cast<LONG>(x + Width),
+            static_cast<LONG>(y + Height) };
 
-        mCmdList->RSSetViewports(1, &viewport);
-        mCmdList->RSSetScissorRects(1, &scissor);
-    }
-
-    void DX12Context::RestoreMainRenderTarget(ID3D12GraphicsCommandList* cmdList)
-    {
-        const UINT rtvIncSize = mDeviceService->GetDevice()
-            ->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = mRtvHeap->GetCPUDescriptorHandleForHeapStart();
-        rtvHandle.ptr += mFrameIndex * rtvIncSize;
-
-        D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = mDsvHeap->GetCPUDescriptorHandleForHeapStart();
-
-        cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
-
-        // ビューポートとシザーも元に戻す
-        D3D12_VIEWPORT vp = { 0.f, 0.f,
-            static_cast<float>(mWidth), static_cast<float>(mHeight),
-            0.f, 1.f };
-        D3D12_RECT scissor = { 0, 0,
-            static_cast<LONG>(mWidth), static_cast<LONG>(mHeight) };
-
-        cmdList->RSSetViewports(1, &vp);
+        cmdList->RSSetViewports(1, &viewport);
         cmdList->RSSetScissorRects(1, &scissor);
     }
 
-    ID3D12GraphicsCommandList* DX12Context::GetCommandList()
+    // メインレンダーターゲット再セット
+    void DX12Context::RestoreMainRenderTarget(ID3D12GraphicsCommandList* cmdList)
     {
-        return mCmdList.Get();
+        if (cmdList == nullptr) return;
+
+        const D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = GetCurrentRtvHandle();
+        const D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = GetDsvHandle();
+
+        cmdList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+
+        SetViewPort(cmdList,
+            static_cast<float>(mWidth), static_cast<float>(mHeight));
     }
 
-    ID3D12CommandAllocator* DX12Context::GetCommandAllocator()
+    // コマンドリスト取得
+    ID3D12GraphicsCommandList* DX12Context::GetCommandList(eRenderChannel channel)
     {
-        return mFrames[mFrameIndex].Allocator.Get();
+        return mFrames[mFrameIndex].CmdLists[static_cast<uint32_t>(channel)].Get();
     }
 
+    // コマンドアロケーター取得
+    ID3D12CommandAllocator* DX12Context::GetCommandAllocator(eRenderChannel channel)
+    {
+        return mFrames[mFrameIndex].Allocators[static_cast<uint32_t>(channel)].Get();
+    }
+
+    // コマンドキュー取得
     ID3D12CommandQueue* DX12Context::GetCommandQueue()
     {
         return mCmdQueue.Get();
     }
 
+    // アップロードプール取得
     D3D12MA::Pool* DX12Context::GetMAUploadPool()
     {
         return mFrames[mFrameIndex].UploadPool.Get();
     }
 
+    // 現在フレームインデックス取得
     UINT DX12Context::GetCurrentFrameIndex() const
     {
         return mFrameIndex;
     }
 
-    // -----------------------------------------------------------------------
-    // Private 初期化
-    // -----------------------------------------------------------------------
+    // 現在のRTVハンドル取得
+    D3D12_CPU_DESCRIPTOR_HANDLE DX12Context::GetCurrentRtvHandle() const
+    {
+        D3D12_CPU_DESCRIPTOR_HANDLE handle = mRtvHeap->GetCPUDescriptorHandleForHeapStart();
+        handle.ptr += static_cast<SIZE_T>(mFrameIndex) * mRtvIncrementSize;
+        return handle;
+    }
 
+    // DSVハンドル取得
+    D3D12_CPU_DESCRIPTOR_HANDLE DX12Context::GetDsvHandle() const
+    {
+        return mDsvHeap->GetCPUDescriptorHandleForHeapStart();
+    }
+
+    // リソースバリア発行
+    void DX12Context::Barrier(
+        ID3D12GraphicsCommandList* cmdList,
+        ID3D12Resource* resource,
+        D3D12_RESOURCE_STATES before,
+        D3D12_RESOURCE_STATES after)
+    {
+        D3D12_RESOURCE_BARRIER barrier = {};
+        barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrier.Transition.pResource = resource;
+        barrier.Transition.StateBefore = before;
+        barrier.Transition.StateAfter = after;
+        barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
+        cmdList->ResourceBarrier(1, &barrier);
+    }
+
+    // コマンドオブジェクト初期化
     bool DX12Context::InitializeCommandObjects()
     {
         ID3D12Device* device = mDeviceService->GetDevice();
         HRESULT hr = S_OK;
 
-        // コマンドキューの作成
         D3D12_COMMAND_QUEUE_DESC queueDesc = {};
         queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
         queueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
@@ -223,49 +284,57 @@ namespace graphics
         hr = device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&mCmdQueue));
         if (FAILED(hr))
         {
-            // TODO: ログ出力
+            DEBUG_LOG(sys::eLogLevel::Error, "DX12Context: Failed to create CommandQueue.");
             return false;
         }
 
-        // フレームごとのコマンドアロケーターとアップロードプールを作成
         D3D12MA::Allocator* maAllocator = mDeviceService->GetMAAllocator();
-        for (int i = 0; i < FRAME_COUNT; i++)
-        {
-            hr = device->CreateCommandAllocator(
-                D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mFrames[i].Allocator));
-            if (FAILED(hr))
-            {
-                // TODO: ログ出力
-                return false;
-            }
 
+        for (uint32_t f = 0; f < FRAME_COUNT; ++f)
+        {
             D3D12MA::POOL_DESC poolDesc = {};
             poolDesc.HeapProperties.Type = D3D12_HEAP_TYPE_UPLOAD;
             poolDesc.Flags = D3D12MA::POOL_FLAG_ALGORITHM_LINEAR;
 
-            hr = maAllocator->CreatePool(&poolDesc, &mFrames[i].UploadPool);
+            hr = maAllocator->CreatePool(&poolDesc, &mFrames[f].UploadPool);
             if (FAILED(hr))
             {
-                // TODO: ログ出力
+                DEBUG_LOG(sys::eLogLevel::Error,
+                    "DX12Context: Failed to create UploadPool. frame={}", f);
                 return false;
             }
-        }
 
-        // コマンドリストの作成(最初は Close 状態)
-        hr = device->CreateCommandList(
-            0, D3D12_COMMAND_LIST_TYPE_DIRECT,
-            mFrames[0].Allocator.Get(), nullptr,
-            IID_PPV_ARGS(&mCmdList));
-        if (FAILED(hr))
-        {
-            // TODO: ログ出力
-            return false;
+            for (uint32_t c = 0; c < CHANNEL_COUNT; ++c)
+            {
+                hr = device->CreateCommandAllocator(
+                    D3D12_COMMAND_LIST_TYPE_DIRECT,
+                    IID_PPV_ARGS(&mFrames[f].Allocators[c]));
+                if (FAILED(hr))
+                {
+                    DEBUG_LOG(sys::eLogLevel::Error,
+                        "DX12Context: Failed to create CommandAllocator. frame={} channel={}", f, c);
+                    return false;
+                }
+
+                hr = device->CreateCommandList(
+                    0, D3D12_COMMAND_LIST_TYPE_DIRECT,
+                    mFrames[f].Allocators[c].Get(), nullptr,
+                    IID_PPV_ARGS(&mFrames[f].CmdLists[c]));
+                if (FAILED(hr))
+                {
+                    DEBUG_LOG(sys::eLogLevel::Error,
+                        "DX12Context: Failed to create CommandList. frame={} channel={}", f, c);
+                    return false;
+                }
+
+                mFrames[f].CmdLists[c]->Close();
+            }
         }
-        mCmdList->Close();
 
         return true;
     }
 
+    // スワップチェイン初期化
     bool DX12Context::InitializeSwapChain(HWND WindowHandle, UINT Width, UINT Height)
     {
         DXGI_SWAP_CHAIN_DESC1 scDesc = {};
@@ -273,7 +342,7 @@ namespace graphics
         scDesc.Height = Height;
         scDesc.Format = mFormat;
         scDesc.Stereo = FALSE;
-        scDesc.SampleDesc.Count = 1;   // マルチサンプルOFF
+        scDesc.SampleDesc.Count = 1;
         scDesc.SampleDesc.Quality = 0;
         scDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
         scDesc.BufferCount = FRAME_COUNT;
@@ -287,7 +356,7 @@ namespace graphics
             mCmdQueue.Get(), WindowHandle, &scDesc, nullptr, nullptr, &swapChain1);
         if (FAILED(hr))
         {
-            // TODO: ログ出力
+            DEBUG_LOG(sys::eLogLevel::Error, "DX12Context: Failed to create SwapChain.");
             return false;
         }
 
@@ -297,6 +366,7 @@ namespace graphics
         return true;
     }
 
+    // バックバッファヒープ初期化
     bool DX12Context::InitializeBackBufferHeap()
     {
         ID3D12Device* device = mDeviceService->GetDevice();
@@ -310,28 +380,32 @@ namespace graphics
         HRESULT hr = device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&mRtvHeap));
         if (FAILED(hr))
         {
-            // TODO: ログ出力
+            DEBUG_LOG(sys::eLogLevel::Error, "DX12Context: Failed to create RTV heap.");
             return false;
         }
 
+        mRtvIncrementSize =
+            device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
         D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = mRtvHeap->GetCPUDescriptorHandleForHeapStart();
-        const UINT rtvIncSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
         for (UINT i = 0; i < FRAME_COUNT; ++i)
         {
             hr = mSwapChain->GetBuffer(i, IID_PPV_ARGS(&mFrames[i].BackBuffer));
             if (FAILED(hr))
             {
-                // TODO: ログ出力
+                DEBUG_LOG(sys::eLogLevel::Error,
+                    "DX12Context: Failed to get back buffer. index={}", i);
                 return false;
             }
             device->CreateRenderTargetView(mFrames[i].BackBuffer.Get(), nullptr, rtvHandle);
-            rtvHandle.ptr += rtvIncSize;
+            rtvHandle.ptr += mRtvIncrementSize;
         }
 
         return true;
     }
 
+    // 深度ヒープ初期化
     bool DX12Context::InitializeDepthHeap(UINT Width, UINT Height)
     {
         ID3D12Device* device = mDeviceService->GetDevice();
@@ -345,7 +419,7 @@ namespace graphics
         HRESULT hr = device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&mDsvHeap));
         if (FAILED(hr))
         {
-            // TODO: ログ出力
+            DEBUG_LOG(sys::eLogLevel::Error, "DX12Context: Failed to create DSV heap.");
             return false;
         }
 
@@ -374,7 +448,7 @@ namespace graphics
             &clearValue, IID_PPV_ARGS(&mDepthBuffer));
         if (FAILED(hr))
         {
-            // TODO: ログ出力
+            DEBUG_LOG(sys::eLogLevel::Error, "DX12Context: Failed to create depth buffer.");
             return false;
         }
 
@@ -384,13 +458,14 @@ namespace graphics
         return true;
     }
 
+    // フェンス初期化
     bool DX12Context::InitializeFence()
     {
         HRESULT hr = mDeviceService->GetDevice()->CreateFence(
             0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence));
         if (FAILED(hr))
         {
-            // TODO: ログ出力
+            DEBUG_LOG(sys::eLogLevel::Error, "DX12Context: Failed to create Fence.");
             return false;
         }
 

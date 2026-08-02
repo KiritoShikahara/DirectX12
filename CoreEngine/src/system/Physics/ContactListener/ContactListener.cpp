@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "ContactListener.h"
 
 #include<Jolt/Physics/Body/Body.h>
@@ -7,13 +7,21 @@
 
 namespace sys
 {
+	namespace
+	{
+		// 1フレームで発生しうる保留イベント数の目安。
+		// 毎フレームの再確保を避けるため初期予約しておく。
+		constexpr size_t kPendingEventsReserve = 256;
+	}
+
 	ContactListener::ContactListener(entt::registry& registry)
 		: mRegistry(registry)
 	{
+		mPendingEvents.reserve(kPendingEventsReserve);
 	}
 
 	/// <summary>
-	/// Body �� UserData �� entt::entity �ɕϊ�����
+	/// Body の UserData から entt::entity へ変換する
 	/// </summary>
 	inline entt::entity sys::ContactListener::ToEntity(const JPH::Body& body)
 	{
@@ -21,34 +29,10 @@ namespace sys
 			static_cast<uint32_t>(body.GetUserData()));
 	}
 
-	/// <summary>
-	/// entity �� CollisionEnterEvent ���Ȃ���ΐ������AOtherEntities �� other ��ǉ�����
-	/// </summary>
-	void ContactListener::AppendCollisionEnter(entt::entity entity, entt::entity other)
+	void ContactListener::PushPendingEvent(EventKind kind, entt::entity entity, entt::entity other)
 	{
-		if (!mRegistry.valid(entity)) return;
-
-		auto* ev = mRegistry.try_get<ecs::CollisionEnterEvent>(entity);
-		if (ev == nullptr)
-		{
-			ev = &mRegistry.emplace<ecs::CollisionEnterEvent>(entity);
-		}
-		ev->OtherEntities.push_back(other);
-	}
-
-	/// <summary>
-	/// entity �� SensorEnterEvent ���Ȃ���ΐ������AVisitors �� visitor ��ǉ�����
-	/// </summary>
-	void ContactListener::AppendSensorEnter(entt::entity entity, entt::entity visitor)
-	{
-		if (!mRegistry.valid(entity)) return;
-
-		auto* ev = mRegistry.try_get<ecs::SensorEnterEvent>(entity);
-		if (ev == nullptr)
-		{
-			ev = &mRegistry.emplace<ecs::SensorEnterEvent>(entity);
-		}
-		ev->Visitors.push_back(visitor);
+		std::lock_guard<std::mutex> lock(mPendingMutex);
+		mPendingEvents.push_back({ kind, entity, other });
 	}
 
 	void ContactListener::OnContactAdded(
@@ -57,6 +41,8 @@ namespace sys
 		const JPH::ContactManifold& /*inManifold*/,
 		JPH::ContactSettings&      /*ioSettings*/)
 	{
+		// この関数は Jolt の衝突検出ジョブスレッドから並行に呼ばれうるため、
+		// entt::registry には一切触れず、保留イベントバッファへ積むだけにする。
 		const entt::entity entityA = ToEntity(inBody1);
 		const entt::entity entityB = ToEntity(inBody2);
 
@@ -65,20 +51,105 @@ namespace sys
 
 		if (isSensorA)
 		{
-			// A ���Z���T�[ �� A �� SensorEnterEvent�AB ���N����
-			AppendSensorEnter(entityA, entityB);
+			// A がセンサー → A に SensorEnterEvent、B が侵入者
+			PushPendingEvent(EventKind::SensorEnter, entityA, entityB);
 		}
 		else if (isSensorB)
 		{
-			// B ���Z���T�[ �� B �� SensorEnterEvent�AA ���N����
-			AppendSensorEnter(entityB, entityA);
+			// B がセンサー → B に SensorEnterEvent、A が侵入者
+			PushPendingEvent(EventKind::SensorEnter, entityB, entityA);
 		}
 		else
 		{
-			// �ʏ�̕����Փ� �� ������ CollisionEnterEvent
-			AppendCollisionEnter(entityA, entityB);
-			AppendCollisionEnter(entityB, entityA);
+			// 通常の物理衝突 → 双方に CollisionEnterEvent
+			// 開始フレームも「接触中」に含めるため CollisionStayEvent も併せて積む
+			PushPendingEvent(EventKind::CollisionEnter, entityA, entityB);
+			PushPendingEvent(EventKind::CollisionEnter, entityB, entityA);
+			PushPendingEvent(EventKind::CollisionStay, entityA, entityB);
+			PushPendingEvent(EventKind::CollisionStay, entityB, entityA);
 		}
 	}
-}
 
+	void ContactListener::OnContactPersisted(
+		const JPH::Body& inBody1,
+		const JPH::Body& inBody2,
+		const JPH::ContactManifold& /*inManifold*/,
+		JPH::ContactSettings&      /*ioSettings*/)
+	{
+		// OnContactAdded と同じくジョブスレッドから並行に呼ばれうるため、
+		// entt::registry には触れず保留バッファへ積むだけにする。
+		const entt::entity entityA = ToEntity(inBody1);
+		const entt::entity entityB = ToEntity(inBody2);
+
+		const bool isSensorA = inBody1.IsSensor();
+		const bool isSensorB = inBody2.IsSensor();
+
+		if (isSensorA)
+		{
+			// A がセンサー → A に SensorStayEvent、B が侵入者
+			PushPendingEvent(EventKind::SensorStay, entityA, entityB);
+		}
+		else if (isSensorB)
+		{
+			// B がセンサー → B に SensorStayEvent、A が侵入者
+			PushPendingEvent(EventKind::SensorStay, entityB, entityA);
+		}
+		else
+		{
+			// 通常の物理衝突 → 双方に CollisionStayEvent
+			PushPendingEvent(EventKind::CollisionStay, entityA, entityB);
+			PushPendingEvent(EventKind::CollisionStay, entityB, entityA);
+		}
+	}
+
+	void ContactListener::FlushPendingEvents(entt::registry& registry)
+	{
+		// メインスレッドのみから呼ばれる想定。ロックは Jolt 側との整合性のため。
+		std::lock_guard<std::mutex> lock(mPendingMutex);
+
+		for (const PendingEvent& ev : mPendingEvents)
+		{
+			if (!registry.valid(ev.Entity)) continue;
+
+			if (ev.Kind == EventKind::CollisionEnter)
+			{
+				auto* comp = registry.try_get<ecs::CollisionEnterEvent>(ev.Entity);
+				if (comp == nullptr)
+				{
+					comp = &registry.emplace<ecs::CollisionEnterEvent>(ev.Entity);
+				}
+				comp->OtherEntities.push_back(ev.Other);
+			}
+			else if (ev.Kind == EventKind::CollisionStay)
+			{
+				auto* comp = registry.try_get<ecs::CollisionStayEvent>(ev.Entity);
+				if (comp == nullptr)
+				{
+					comp = &registry.emplace<ecs::CollisionStayEvent>(ev.Entity);
+				}
+				comp->OtherEntities.push_back(ev.Other);
+			}
+			else if (ev.Kind == EventKind::SensorEnter)
+			{
+				auto* comp = registry.try_get<ecs::SensorEnterEvent>(ev.Entity);
+				if (comp == nullptr)
+				{
+					comp = &registry.emplace<ecs::SensorEnterEvent>(ev.Entity);
+				}
+				comp->Visitors.push_back(ev.Other);
+			}
+			else // SensorStay
+			{
+				auto* comp = registry.try_get<ecs::SensorStayEvent>(ev.Entity);
+				if (comp == nullptr)
+				{
+					comp = &registry.emplace<ecs::SensorStayEvent>(ev.Entity);
+				}
+				comp->Visitors.push_back(ev.Other);
+			}
+		}
+
+		// capacity は保持したままクリアし、毎フレームの再確保を避ける
+		mPendingEvents.clear();
+	}
+}

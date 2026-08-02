@@ -19,7 +19,8 @@ namespace sys
 	/// <returns>true:成功 false:失敗</returns>
 	bool ImGuiManager::Initialize(sys::Window& window, graphics::DX12Device& device, graphics::DX12Context& context, graphics::GDescriptorHeapManager& descriptorHeapManager)
 	{
-#if !defined(_DEBUG)
+
+#if !DEV_TOOL_ENABLED
 		mIsInitialized = false; // 初期化フラグはfalseのまま
 		return true;
 #endif
@@ -41,7 +42,7 @@ namespace sys
 
 		ImGui::StyleColorsDark();
 
-		// ---- Win32 バックエンドの初期化 ----
+		// Win32バックエンド初期化
 		if (!ImGui_ImplWin32_Init(window.GetHWND()))
 		{
 			DEBUG_LOG(sys::eLogLevel::Error, "ImGuiManager: Failed to init Win32 backend.");
@@ -55,7 +56,7 @@ namespace sys
 			return false;
 		}
 
-		// ---- DX12 バックエンドの初期化 ----
+		// DX12 バックエンドの初期化
 		ImGui_ImplDX12_InitInfo initInfo = {};
 		initInfo.Device = device.GetDevice();
 		initInfo.CommandQueue = context.GetCommandQueue();
@@ -74,7 +75,6 @@ namespace sys
 		}
 
 		// EndFrame() で毎フレーム使うものだけ保持する
-		mRendererContext = &context;
 		mHeapManager = &descriptorHeapManager;
 
 		mIsInitialized = true;
@@ -100,7 +100,6 @@ namespace sys
 		}
 		mFontHeap.Release();
 
-		mRendererContext = nullptr;
 		mHeapManager = nullptr;
 		mIsInitialized = false;
 
@@ -112,7 +111,7 @@ namespace sys
 	/// <summary>フレーム開始。BeginRendering の直後に呼ぶ。</summary>
 	void ImGuiManager::NewFrame()
 	{
-#if defined(_DEBUG) || DEV_TOOL_ENABLED
+#if DEV_TOOL_ENABLED
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
@@ -125,11 +124,9 @@ namespace sys
 	/// </summary>
 	void ImGuiManager::Update()
 	{
-#if defined(_DEBUG) || DEV_TOOL_ENABLED
+#if DEV_TOOL_ENABLED
 		// RemoveDebugUI が Update() 中のコールバック内から呼ばれる可能性があるため
-		// （例：UI 自身の「閉じる」ボタンが RemoveDebugUI を呼ぶケース）、
 		// イテレート用に keys をコピーしてから回す。
-		// 実行中に mDebugUIFunctions が変更されても安全。
 		std::vector<std::string> keys;
 		keys.reserve(mDebugUIFunctions.size());
 		for (const auto& [key, func] : mDebugUIFunctions)
@@ -146,18 +143,15 @@ namespace sys
 
 	/// <summary>
 	/// 描画データの確定と ImGui コマンドの発行。
-	/// Flip() の直前に呼ぶ。
 	/// </summary>
-	void ImGuiManager::EndFrame()
+	/// <param name="cmdList">記録先のコマンドリスト</param>
+	void ImGuiManager::EndFrame(ID3D12GraphicsCommandList* cmdList)
 	{
-#if defined(_DEBUG) || DEV_TOOL_ENABLED
+#if DEV_TOOL_ENABLED
+		if (!mIsInitialized || cmdList == nullptr) return;
+
 		// 描画データの確定
 		ImGui::Render();
-
-		// コマンドリストへの描画コマンド発行
-		// SetDescriptorHeaps は描画直前に呼ぶ必要がある
-		// （DX12 の仕様上、後から呼んだものが有効になるため）
-		auto* cmdList = mRendererContext->GetCommandList();
 
 		ID3D12DescriptorHeap* heaps[] = { mHeapManager->GetNativeHeap() };
 		cmdList->SetDescriptorHeaps(_countof(heaps), heaps);
@@ -175,13 +169,10 @@ namespace sys
 
 	/// <summary>
 	/// デバッグ UI 描画関数を登録する。
-	/// 登録した関数は Update() 内で毎フレーム呼ばれる。
-	/// 同じ key で再登録すると、既存の登録を上書きする
-	/// （シーン再入場時に多重登録されることを防ぐ）。
 	/// </summary>
 	void ImGuiManager::AddDebugUI(std::function<void()> guiFunc, const std::string& key)
 	{
-#if defined(_DEBUG) || DEV_TOOL_ENABLED
+#if DEV_TOOL_ENABLED
 		mDebugUIFunctions[key] = std::move(guiFunc);
 #endif
 	}
@@ -191,7 +182,7 @@ namespace sys
 	/// </summary>
 	void ImGuiManager::RemoveDebugUI(const std::string& key)
 	{
-#if defined(_DEBUG) || DEV_TOOL_ENABLED
+#if DEV_TOOL_ENABLED
 		mDebugUIFunctions.erase(key);
 #endif
 	}
@@ -201,7 +192,7 @@ namespace sys
 	/// </summary>
 	bool ImGuiManager::HasDebugUI(const std::string& key) const
 	{
-#if defined(_DEBUG) || DEV_TOOL_ENABLED
+#if DEV_TOOL_ENABLED
 		return mDebugUIFunctions.count(key) > 0;
 #else
 		return false;
@@ -213,7 +204,7 @@ namespace sys
 	/// </summary>
 	void ImGuiManager::ClearDebugUI()
 	{
-#if defined(_DEBUG) || DEV_TOOL_ENABLED
+#if DEV_TOOL_ENABLED
 		mDebugUIFunctions.clear();
 #endif
 	}

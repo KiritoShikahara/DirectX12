@@ -29,7 +29,7 @@ namespace graphics
     /// </summary>
     struct alignas(16) FbxInstanceData
     {
-        // Row 0-3 : ワールド行列 (転置済み)
+        // Row 0-3 : ワールド行列
         DirectX::XMFLOAT4X4 World;            // 64 bytes
 
         // Row 4 : ベースカラー係数 + メタリック係数
@@ -136,6 +136,16 @@ namespace graphics
     };
 
     /// <summary>
+    /// キーフレーム1点分の変換をTRS(スケール・回転クォータニオン・平行移動)へ分解したもの。
+    /// </summary>
+    struct FbxKeyFrameTrs
+    {
+        DirectX::XMFLOAT4 Scale = { 1.f, 1.f, 1.f, 0.f };       // xyzのみ使用
+        DirectX::XMFLOAT4 Rotation = { 0.f, 0.f, 0.f, 1.f };    // クォータニオン
+        DirectX::XMFLOAT4 Translation = { 0.f, 0.f, 0.f, 1.f }; // xyzのみ使用
+    };
+
+    /// <summary>
     /// アニメーションクリップ（.anmのエントリ）
     /// </summary>
     struct ENGINE_API FbxAnimClip
@@ -145,8 +155,9 @@ namespace graphics
         float       FrameRate = 60.0f;
         float       Duration = 0.0f;   // NumFrame / FrameRate
 
-        // KeyFrames[BoneIndex][FrameIndex] = ローカル変換行列 (未転置)
         std::vector<std::vector<DirectX::XMFLOAT4X4>> KeyFrames;
+
+        std::vector<std::vector<FbxKeyFrameTrs>> KeyFrameTrs;
     };
 
     // カメラGPUデータ

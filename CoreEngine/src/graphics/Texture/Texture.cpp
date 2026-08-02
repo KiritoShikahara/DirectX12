@@ -22,13 +22,30 @@ namespace graphics
 	{
 		Release();
 	}
-	bool Texture::Create(const std::filesystem::path& FilePath)
+	bool Texture::Create(const std::filesystem::path& FilePath, bool isSRGB)
 	{
+ 
+		const ImageData imageData = LoadImageData(FilePath, isSRGB);
+		if (!imageData.Success) return false;
+
+		return CreateFromImageData(FilePath, isSRGB, imageData);
+	}
+
+	// CPU側の処理
+	Texture::ImageData Texture::LoadImageData(const std::filesystem::path& FilePath, bool isSRGB)
+	{
+		ImageData result;
+
+		if (FilePath.empty() || FilePath.string().find_first_not_of(" \t\r\n") == std::string::npos)
+		{
+			DEBUG_LOG(sys::eLogLevel::Error, "Texture: FilePath is empty or invalid.");
+			return result;
+		}
 
 		if (fs::exists(FilePath) == false || fs::is_regular_file(FilePath) == false)
 		{
 			DEBUG_LOG(sys::eLogLevel::Error, "Texture: File not found or is not a regular file: {}", FilePath.string());
-			return false;
+			return result;
 		}
 
 		//	拡張子
@@ -74,10 +91,51 @@ namespace graphics
 		}
 		if (FAILED(hr))
 		{
-			//DEBUG_LOG(sys::eLogLevel::Error, "Texture: Failed to load texture file: {}", FilePath.string());
-			return false;
+			return result;
 		}
 
+		// ミップマップがない画像は生成
+		// ちらつき防止
+		if (metaData.mipLevels <= 1 && metaData.IsVolumemap() == false)
+		{
+			// sRGB用テクスチャはガンマ空間のまま縮小フィルタすると暗部が変色するため、
+			// 線形空間に変換してからフィルタするフラグを付ける。
+			const DirectXTex::TEX_FILTER_FLAGS filterFlags = isSRGB
+				? DirectXTex::TEX_FILTER_SRGB
+				: DirectXTex::TEX_FILTER_DEFAULT;
+
+			DirectX::ScratchImage mipChain;
+			HRESULT mipHr = DirectXTex::GenerateMipMaps(
+				scratchImage.GetImages(), scratchImage.GetImageCount(), metaData,
+				filterFlags, 0, mipChain);
+
+			if (SUCCEEDED(mipHr))
+			{
+				scratchImage = std::move(mipChain);
+				metaData = scratchImage.GetMetadata();
+			}
+			else
+			{
+				DEBUG_LOG(sys::eLogLevel::Warning,
+					"Texture: Failed to generate mipmaps (using single mip level): {}", FilePath.string());
+			}
+		}
+
+		result.Success = true;
+		result.MetaData = metaData;
+		result.ScratchImage = std::move(scratchImage);
+		return result;
+	}
+
+	// GPU側の処理
+	bool Texture::CreateFromImageData(const std::filesystem::path& FilePath, bool isSRGB, const ImageData& imageData)
+	{
+		if (!imageData.Success) return false;
+
+		const DirectX::TexMetadata& metaData = imageData.MetaData;
+		const DirectX::ScratchImage& scratchImage = imageData.ScratchImage;
+
+		HRESULT hr = S_FALSE;
 		auto& DX12Device = graphics::DX12Device::Get();
 		auto device = DX12Device.GetDevice();
 		auto allocator = DX12Device.GetMAAllocator();
@@ -137,8 +195,9 @@ namespace graphics
 		}
 
 		// SRVの作成
+		// isSRGB指定時はGPUリソース自体はUNORMのまま、SRVの解釈のみをSRGBにする。
 		D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-		srvDesc.Format = metaData.format;
+		srvDesc.Format = isSRGB ? DirectXTex::MakeSRGB(metaData.format) : metaData.format;
 		srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 		if (metaData.IsCubemap())
 		{

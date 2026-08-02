@@ -1,16 +1,19 @@
 #pragma once
 
 #include <DirectXMath.h>
-#include<Utility/Export/Export.h>
+#include <Utility/Export/Export.h>
 
 namespace sys { class Window; }
 
 namespace ecs
 {
-	struct Transform;
+    struct Transform;
 
-	struct CameraComponent
-	{
+    /// <summary>
+    /// カメラコンポーネント
+    /// </summary>
+    struct CameraComponent
+    {
         /// <summary>垂直視野角（度）</summary>
         float Fov = 60.f;
 
@@ -26,39 +29,27 @@ namespace ecs
         /// <summary>このカメラをメインカメラとして使用するか</summary>
         bool IsMainCamera = false;
 
-        /*
-        * 計算済みの行列
-        */
+        /// <summary>ビュー行列</summary>
         DirectX::XMFLOAT4X4 ViewMatrix = {};
+        /// <summary>プロジェクション行列</summary>
         DirectX::XMFLOAT4X4 ProjectionMatrix = {};
+        /// <summary>ビュープロジェクション行列</summary>
         DirectX::XMFLOAT4X4 ViewProjectionMatrix = {};
 
         /// <summary>カメラワールド座標（シェーダへ渡す用）</summary>
         DirectX::XMFLOAT3   Position = {};
 
-        /*
-        * 操作API
-        */
-
-        /// <summary>
-        /// Window のバーチャル解像度からアスペクト比を設定するヘルパー。
-        /// Initialize 後に一度呼ぶか、リサイズ時に呼ぶ。
-        /// </summary>
+        /// <summary>Window のバーチャル解像度からアスペクト比を設定する</summary>
         void SetAspectRatioFromWindow(const sys::Window& window);
 
-        /// <summary>
-        /// Transform の位置・姿勢から View / Projection / VP 行列を再計算。
-        /// FbxRenderer::UpdateAndDraw() 内で自動的に呼ばれる。
-        /// </summary>
+        /// <summary>Transform の位置・姿勢から行列を再計算する</summary>
         void UpdateMatrices(const Transform& transform);
 
-        /*
-        * 行列アクセサ
-        */ 
+        /// <summary>ビュー行列を取得する</summary>
         DirectX::XMMATRIX GetViewMatrix()           const;
+        /// <summary>プロジェクション行列を取得する</summary>
         DirectX::XMMATRIX GetProjectionMatrix()     const;
+        /// <summary>ビュープロジェクション行列を取得する</summary>
         DirectX::XMMATRIX GetViewProjectionMatrix() const;
-	};
+    };
 }
-
-

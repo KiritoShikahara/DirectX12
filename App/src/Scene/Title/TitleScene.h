@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include<system/Scene/IScene.h>
 
@@ -38,6 +38,16 @@ namespace scene
 		/// 操作誘導テキスト
 		/// </summary>
 		static void CreatePromptText();
+
+		/// <summary>
+		/// 操作案内(スタートボタン名。入力デバイスに応じてTitleInputSystemが毎フレーム更新する)
+		/// </summary>
+		static void CreateControlGuide();
+
+		///<summary>
+		///ゲーム終了確認ダイアログの状態・UIを生成する
+		///</summary>
+		static void CreateExitConfirmUi();
 
 	};
 }

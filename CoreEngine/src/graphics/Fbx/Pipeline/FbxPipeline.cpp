@@ -50,15 +50,17 @@ namespace graphics
 
         // Static Sampler x2
         // s0: 通常テクスチャ用 Linear サンプラー
-        // s1: PCF 用比較サンプラー (COMPARISON_LESS_EQUAL)
+        // s1: PCF 用比較サンプラー
         CD3DX12_STATIC_SAMPLER_DESC samplers[2];
 
         samplers[0].Init(
             0, // s0
-            D3D12_FILTER_MIN_MAG_MIP_LINEAR,
+            D3D12_FILTER_ANISOTROPIC,
             D3D12_TEXTURE_ADDRESS_MODE_WRAP,
             D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-            D3D12_TEXTURE_ADDRESS_MODE_WRAP);
+            D3D12_TEXTURE_ADDRESS_MODE_WRAP,
+            0.0f,   // MipLODBias
+            16);    // MaxAnisotropy: 斜め角度で見た際のテクスチャのボケを軽減
 
         samplers[1].Init(
             1, // s1
@@ -97,7 +99,6 @@ namespace graphics
         return true;
     }
 
-    // ── PSO ──────────────────────────────────────────────────────
 
     bool FbxPipeline::CreatePipeline(ID3D12Device* device, ShaderManager& shaderManager)
     {

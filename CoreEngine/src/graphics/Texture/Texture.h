@@ -4,6 +4,7 @@
 #include<graphics/Dx12/Dx12Type.h>
 #include<graphics/GraphicsDescriptorHeap/GraphicsDescriptorHeap.h>
 
+#include<DirectXTex.h>
 #include<filesystem>
 
 namespace graphics
@@ -15,42 +16,62 @@ namespace graphics
 		virtual ~Texture();
 
 		/// <summary>
-		/// ƒŠƒ\[ƒX‚Ìì¬
+		/// ç”Ÿæˆ
 		/// </summary>
-		/// <param name="FilePath">ƒeƒNƒXƒ`ƒƒƒtƒ@ƒCƒ‹‚ÌƒpƒX</param>
-		/// <returns>ì¬‚É¬Œ÷‚µ‚½ê‡‚ÍtrueA¸”s‚µ‚½ê‡‚Ífalse</returns>
-		bool Create(const std::filesystem::path& FilePath);
+		/// <param name="FilePath"></param>
+		/// <param name="isSRGB"></param>
+		/// <returns></returns>
+		bool Create(const std::filesystem::path& FilePath, bool isSRGB = false);
+		
+		/// <summary>
+		/// CPUå´ã®ç”»åƒãƒ‡ãƒ¼ã‚¿
+		/// </summary>
+		struct ImageData
+		{
+			bool Success = false;
+			DirectX::TexMetadata MetaData = {};
+			DirectX::ScratchImage ScratchImage;
+		};
 
 		/// <summary>
-		/// ƒŠƒ\[ƒX‚Ì‰ğ•ú
+		/// CPUå´ã®ç”»åƒãƒ‡ãƒ¼ã‚¿ã‚’ãƒ­ãƒ¼ãƒ‰ã™ã‚‹
+		/// </summary>
+		static ImageData LoadImageData(const std::filesystem::path& FilePath, bool isSRGB);
+
+		/// <summary>
+		/// GPUå´ã®ãƒ†ã‚¯ã‚¹ãƒãƒ£ã‚’ç”Ÿæˆã™ã‚‹
+		/// </summary>
+		bool CreateFromImageData(const std::filesystem::path& FilePath, bool isSRGB, const ImageData& imageData);
+
+		/// <summary>
+		/// ãƒªã‚½ãƒ¼ã‚¹è§£æ”¾
 		/// </summary>
 		void Release();
 
 		/// <summary>
-		/// Š„‚è“–‚Ä‚ç‚ê‚½ƒCƒ“ƒfƒbƒNƒX
+		/// ãƒ‡ã‚£ã‚¹ã‚¯ãƒªãƒ—ã‚¿ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã‚’å–å¾—
 		/// </summary>
 		/// <returns></returns>
 		uint32_t GetDescriptorIndex() const;
 
 		/// <summary>
-		/// Š„‚è“–‚Ä‚ç‚ê‚½Gpuƒnƒ“ƒhƒ‹‚Ìæ“¾
+		/// GPUãƒãƒ³ãƒ‰ãƒ«ã®å–å¾—
 		/// </summary>
 		/// <returns></returns>
 		D3D12_GPU_DESCRIPTOR_HANDLE GetGpuHandle() const;
 
 		/// <summary>
-		/// ƒeƒNƒXƒ`ƒƒ‚Ì•
+		/// æ¨ªã‚µã‚¤ã‚º
 		/// </summary>
-		/// <returns></returns>
 		float GetWidth()const;
+
 		/// <summary>
-		/// ƒeƒNƒXƒ`ƒƒ‚Ì‚‚³
+		/// ç¸¦ã‚µã‚¤ã‚º
 		/// </summary>
-		/// <returns></returns>
 		float GetHeight()const;
 
 		/// <summary>
-		/// ƒŠƒ\[ƒX‚Ìæ“¾
+		/// ãƒªã‚½ãƒ¼ã‚¹ã®å–å¾—
 		/// </summary>
 		/// <returns></returns>
 		ID3D12Resource* GetResource() const;
@@ -58,25 +79,27 @@ namespace graphics
 		bool IsValid()   const { return mSrvHeap.IsValid(); }
 	private:
 		/// <summary>
-		/// ƒŠƒ\[ƒX
+		/// ãƒªã‚½ãƒ¼ã‚¹
 		/// </summary>
 		Resource mResource;
+
 		/// <summary>
-		/// ƒƒ‚ƒŠŠ„‚è“–‚Äî•ñ
+		/// MAãƒªã‚½ãƒ¼ã‚¹
 		/// </summary>
 		MAAllocation mAllocation;
 
 		/// <summary>
-		/// SRV—p‚ÌƒfƒBƒXƒNƒŠƒvƒ^ƒXƒƒbƒg
+		/// GDHã®ã‚¹ãƒ­ãƒƒãƒˆ
 		/// </summary>
 		graphics::GDescriptorHeap mSrvHeap;
 
 		/// <summary>
-		/// ƒeƒNƒXƒ`ƒƒ‰¡•
+		/// æ¨ªã‚µã‚¤ã‚º
 		/// </summary>
 		float mWidth;
+
 		/// <summary>
-		/// ƒeƒNƒXƒ`ƒƒc•
+		/// ç¸¦ã‚µã‚¤ã‚º
 		/// </summary>
 		float mHeight;
 	};

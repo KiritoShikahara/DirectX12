@@ -1,10 +1,12 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "PhysicsManager.h"
 
 
 // Jolt
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Core/Factory.h>
+
+#include "../System/PhysicsSystem.h"
 
 using namespace JPH;
 using namespace JPH::literals;
@@ -15,41 +17,38 @@ namespace sys
 {
     static void TraceImpl(const char* inFMT, ...)
     {
-        // Format the message
+        // メッセージ出力
         va_list list;
         va_start(list, inFMT);
         char buffer[1024];
         vsnprintf(buffer, sizeof(buffer), inFMT, list);
         va_end(list);
 
-        // Print to the TTY
+        // TTYに出力
         std::cout << buffer << std::endl;
     }
 
 #ifdef JPH_ENABLE_ASSERTS
 
-    // Callback for asserts, connect this to your own assert handler if you have one
+    // アサート時のコールバック
     static bool AssertFailedImpl(const char* inExpression, const char* inMessage, const char* inFile, uint inLine)
     {
-        // Print to the TTY
+        // TTYの出力
         std::cout << inFile << ":" << inLine << ": (" << inExpression << ") " << (inMessage != nullptr ? inMessage : "") << std::endl;
-
-        // Breakpoint
         return true;
     };
 #endif
 
 	bool PhysicsManager::sJoltGlobalInitialized = false;
 
-    // ==============================================================
-    //  BroadPhaseLayerInterfaceImpl
-    // =============================================================
+    // 対応付け用
     PhysicsManager::BroadPhaseLayerInterfaceImpl::BroadPhaseLayerInterfaceImpl()
     {
         // ObjectLayer → BroadPhaseLayer のマッピング
         mObjectToBroadPhase[PhysicsLayer::NonMoving] = BroadPhaseLayer::NonMoving;
         mObjectToBroadPhase[PhysicsLayer::Moving] = BroadPhaseLayer::Moving;
         mObjectToBroadPhase[PhysicsLayer::Sensor] = BroadPhaseLayer::Moving; // センサーは Moving と同じ BP
+        mObjectToBroadPhase[PhysicsLayer::EnemyMoving] = BroadPhaseLayer::Moving; // 敵も Moving と同じ BP
     }
 
     uint32_t PhysicsManager::BroadPhaseLayerInterfaceImpl::GetNumBroadPhaseLayers() const
@@ -77,9 +76,7 @@ namespace sys
     }
 #endif
 
-    // ==============================================================
-    //  ObjectVsBroadPhaseLayerFilterImpl
-    // ==============================================================
+    /// ブロードフェーズのレイヤー判定
     bool PhysicsManager::ObjectVsBroadPhaseLayerFilterImpl::ShouldCollide(
         JPH::ObjectLayer layer, JPH::BroadPhaseLayer bpLayer) const
     {
@@ -89,8 +86,9 @@ namespace sys
             // 静的オブジェクトは Moving とだけ衝突する
             return bpLayer == BroadPhaseLayer::Moving;
         case PhysicsLayer::Moving:
+        case PhysicsLayer::EnemyMoving:
         case PhysicsLayer::Sensor:
-            // 動的・センサーは全てと衝突する
+            // 動的・敵・センサーは全てと衝突する(細かい除外はObjectLayerPairFilterImpl側で行う)
             return true;
         default:
             JPH_ASSERT(false);
@@ -98,20 +96,21 @@ namespace sys
         }
     }
 
-    // ==============================================================
-    //  ObjectLayerPairFilterImpl
-    // ==============================================================
+    // 衝突レイヤー判定用
     bool PhysicsManager::ObjectLayerPairFilterImpl::ShouldCollide(
         JPH::ObjectLayer obj1, JPH::ObjectLayer obj2) const
     {
         switch (obj1)
         {
         case PhysicsLayer::NonMoving:
-            return obj2 == PhysicsLayer::Moving || obj2 == PhysicsLayer::Sensor;
+            return obj2 == PhysicsLayer::Moving || obj2 == PhysicsLayer::EnemyMoving || obj2 == PhysicsLayer::Sensor;
         case PhysicsLayer::Moving:
             return true; // Moving は全レイヤーと衝突
+        case PhysicsLayer::EnemyMoving:
+            // EnemyMoving同士だけは衝突させない。
+            return obj2 != PhysicsLayer::EnemyMoving;
         case PhysicsLayer::Sensor:
-            return obj2 == PhysicsLayer::Moving; // センサーは動的オブジェクトとのみ
+            return obj2 == PhysicsLayer::Moving || obj2 == PhysicsLayer::EnemyMoving; // センサーは動的オブジェクト全般とのみ
         default:
             JPH_ASSERT(false);
             return false;
@@ -194,6 +193,10 @@ namespace sys
         mContactListener = std::make_unique<ContactListener>(registry);
         mPhysicsSystem->SetContactListener(mContactListener.get());
 
+        // RigidBodyComponentが破棄される直前に
+        // Jolt 側の Body を確実に除去する
+        registry.on_destroy<ecs::RigidBodyComponent>().connect<&PhysicsSystem::OnRigidBodyComponentDestroyed>();
+
         mIsInitialized = true;
         return true;
     }
@@ -210,7 +213,7 @@ namespace sys
         mJobSystem.reset();
         mTempAllocator.reset();
 
-        // Factory は最後に解放（他より長生きする必要がある）
+        // ファクトリの解放
         if (sJoltGlobalInitialized)
         {
             JPH::UnregisterTypes();

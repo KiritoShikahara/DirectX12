@@ -41,6 +41,9 @@ namespace sys
         /// <summary>接続台数</summary>
         [[nodiscard]] size_t GetConnectedCount() const;
 
+        /// <summary>接続中のいずれかのパッドに入力があったか</summary>
+        [[nodiscard]] bool IsAnyInput() const;
+
         /// <summary>ImGuiのデバック表示</summary>
         void ImGuiUpdate();
 

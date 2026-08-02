@@ -87,8 +87,13 @@ namespace audio
 	void AudioManager::ClearSceneSounds()
 	{
 		std::lock_guard lock(mMtx);
-		this->StopBGM();
 		std::erase_if(mSoundEffects, [](const SoundEffect& s) { return !s.IsPersistent(); });
+	}
+
+	bool AudioManager::IsBgmPlaying()
+	{
+		std::lock_guard lock(mMtx);
+		return mActiveBgm != nullptr;
 	}
 
 	void AudioManager::DataCallback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)

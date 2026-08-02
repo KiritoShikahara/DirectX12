@@ -15,13 +15,6 @@ namespace graphics
 
     /// <summary>
     /// スプライト1件分のシェーダー定数データ。
-    /// SpriteRenderer から StructuredBuffer 経由でシェーダーへ渡す。
-    ///
-    /// 重要: #pragma pack は使用しない。
-    /// HLSL の StructuredBuffer 要素は暗黙的に「1メンバーが16バイト境界を跨がない」
-    /// パッキングルールが適用されるため、C++ 側もそれに明示的に合わせる必要がある。
-    /// (#pragma pack(1) で詰めると、HLSL 側が自動挿入するパディングと食い違い、
-    ///  要素ごとにオフセットがずれて隣の要素のデータを読んでしまう)
     /// </summary>
     struct SpriteShaderData
     {

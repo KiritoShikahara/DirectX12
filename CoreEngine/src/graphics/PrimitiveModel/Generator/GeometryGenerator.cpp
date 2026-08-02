@@ -18,7 +18,7 @@ namespace graphics
         v.UV = uv;
         v.Normal = normal;
         v.Tangent = tangent;
-        // Bone / Weight はゼロ初期化済み (スキニング不要)
+        // Bone / Weight はゼロ初期化済み
         return v;
     }
 
@@ -208,7 +208,7 @@ namespace graphics
         const float tau = pi * 2.f;
         const float hh = height * 0.5f;
 
-        // ---- 側面 ----
+        // 側面
         for (uint32_t st = 0; st <= stacks; ++st)
         {
             float t = static_cast<float>(st) / stacks; // 0(下) .. 1(上)

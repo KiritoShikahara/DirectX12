@@ -27,6 +27,33 @@
     <ClInclude Include="src\Utility\Export\Export.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\Utility\Thread\ThreadPool.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ecs\component\Common\NameComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ecs\component\Common\AssetKeyComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ecs\Serialization\ComponentReflection.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ecs\Serialization\PlaceableComponentReflection.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ecs\Serialization\EditorSerialization.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Editor\EditorManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Editor\EditorSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Editor\EditorUI.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="src\pch\pch.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -106,6 +133,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\Time\Time.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Time\PerformanceMonitor.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\Texture\Texture.h">
@@ -240,6 +270,9 @@
     <ClInclude Include="src\ecs\component\collider\ColliderComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\ecs\component\Debug\DebugWireSphereComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
     <ClInclude Include="src\ecs\component\rigidbody\RigidbodyComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -271,6 +304,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\graphics\Line\Renderer\PhysicsDebugRenderer.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\graphics\Line\Renderer\LightDebugRenderer.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\system\Scene\IScene.h">
@@ -375,6 +411,12 @@
     <ClInclude Include="src\ecs\system\collision\SpriteCollsion.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="src\ecs\component\PlayerController\PlayerController.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Time\TimeManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics\Dx12\Dx12Device.cpp">
@@ -422,6 +464,21 @@
     <ClCompile Include="src\system\Logger\Logger.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\Utility\Thread\ThreadPool.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ecs\Serialization\EditorSerialization.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Editor\EditorManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Editor\EditorSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Editor\EditorUI.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="src\graphics\GraphicsDescriptorHeap\GraphicsDescriptorHeapManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -438,6 +495,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\system\Time\Time.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Time\PerformanceMonitor.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\Texture\Texture.cpp">
@@ -560,6 +620,9 @@
     <ClCompile Include="src\graphics\Line\Renderer\PhysicsDebugRenderer.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\Line\Renderer\LightDebugRenderer.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="src\graphics\Transition\TransitionRenderer.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -631,12 +694,12 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="Assets\Shader\Sprite\SpriteHeader.hlsli" />
     <None Include="Assets\Shader\Fbx\FbxShader.hlsli" />
     <None Include="doc\初期化順序.md" />
     <None Include="doc\導入ライブラリ.md" />
     <None Include="Assets\Shader\Shape\ShapeHeader.hlsli" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Assets\Shader\Sprite\PS_Sprite.hlsl" />

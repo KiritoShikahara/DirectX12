@@ -1,4 +1,5 @@
 #pragma once
+
 #include <vector>
 #include <string>
 #include <DirectXMath.h>
@@ -8,51 +9,55 @@ namespace graphics { class FbxResource; }
 
 namespace ecs
 {
-    // ============================================================
-    //  FbxAnimComponent  (ModelAnimComponent 相当)
-    //
-    //  アニメーション方式:
-    //    FbxAnalyzer が 60fps でベイクしたローカル行列配列を使用
-    //    ブレンド時は TRS 分解 → Lerp/Slerp → 再合成 で行う
-    //
-    //  BoneMatrices は CalcBoneMatrices() が転置済みで格納する
-    //  (FbxRenderer::Submit() はそのまま BoneBuffer に積む)
-    // ============================================================
+    /// <summary>
+    /// FBXアニメーションコンポーネント
+    /// </summary>
     struct ENGINE_API FbxAnimComponent
     {
-        // ── 再生状態 ──────────────────────────────────────────
+        /// <summary>現在のクリップインデックス</summary>
         int   CurrentClipIndex = 0;
+        /// <summary>現在の再生時間</summary>
         float CurrentTime = 0.f;
+        /// <summary>再生速度</summary>
         float PlaySpeed = 1.f;
+        /// <summary>ループ再生するかどうか</summary>
         bool  IsLoop = true;
+        /// <summary>再生中かどうか</summary>
         bool  IsPlaying = true;
 
-        // ── クロスフェード用 ───────────────────────────────────
-        int   PrevClipIndex = -1;    // -1 = ブレンドなし
+        /// <summary>クロスフェード前のクリップインデックス</summary>
+        int   PrevClipIndex = -1;
+        /// <summary>クロスフェード前の再生時間</summary>
         float PrevTime = 0.f;
+        /// <summary>ブレンド経過時間</summary>
         float BlendTime = 0.f;
+        /// <summary>ブレンドにかかる時間</summary>
         float BlendDuration = 0.2f;
 
-        /// <summary>
-        /// CalcBoneMatrices() が生成するスキニング行列配列
-        /// HLSL 用に転置済み (FbxRenderer::Submit でそのまま BoneBuffer へ積む)
-        /// </summary>
+        /// <summary>スキニング行列配列</summary>
         std::vector<DirectX::XMFLOAT4X4> BoneMatrices;
 
-        // ── 再生制御 ──────────────────────────────────────────
+        /// <summary>アニメーションを再生する</summary>
         void Play(int clipIndex = 0, bool loop = true);
+        /// <summary>アニメーションを再生する</summary>
         void Play(const graphics::FbxResource& resource,
             const std::string& clipName, bool loop = true);
 
+        /// <summary>クロスフェードでアニメーションを切り替える</summary>
         void CrossFade(int newClipIndex, float blendDuration = 0.2f, bool loop = true);
+        /// <summary>クロスフェードでアニメーションを切り替える</summary>
         void CrossFade(const graphics::FbxResource& resource,
             const std::string& clipName,
             float blendDuration = 0.2f, bool loop = true);
 
+        /// <summary>一時停止する</summary>
         void Pause() { IsPlaying = false; }
+        /// <summary>再開する</summary>
         void Resume() { IsPlaying = true; }
+        /// <summary>巻き戻す</summary>
         void Rewind() { CurrentTime = 0.f; }
 
+        /// <summary>ブレンド係数を取得する</summary>
         float GetBlendFactor() const
         {
             return (BlendDuration > 0.f)
@@ -60,26 +65,27 @@ namespace ecs
                 : 1.f;
         }
 
-        /// <summary>再生時間を deltaTime だけ進める (ループ・ブレンド時間の管理も行う)</summary>
+        /// <summary>再生時間を進める</summary>
         void Update(float deltaTime, const graphics::FbxResource& resource);
 
-        /// <summary>
-        /// 現フレームのスキニング行列を BoneMatrices に書き込む
-        /// Update() の後に呼ぶこと
-        /// </summary>
+        /// <summary>スキニング行列を計算して書き込む</summary>
         void CalcBoneMatrices(const graphics::FbxResource& resource);
 
     private:
-        // 指定クリップ/時刻の全ボーン ローカル行列を返す
+        /// <summary>ローカル行列を評価する</summary>
         static void EvalLocalMats(
             const graphics::FbxResource& resource,
             int clipIndex, float time,
             std::vector<DirectX::XMMATRIX>& outLocal);
 
-        // ローカル行列配列からスキン行列を構築して BoneMatrices へ書き込む
+        /// <summary>スキン行列を構築する</summary>
         void BuildSkinMatrices(
             const graphics::FbxResource& resource,
             const std::vector<DirectX::XMMATRIX>& localMats);
-    };
 
-} // namespace ecs
+        std::vector<DirectX::XMMATRIX> mCurrLocal;
+        std::vector<DirectX::XMMATRIX> mPrevLocal;
+        std::vector<DirectX::XMMATRIX> mBlendedLocal;
+        std::vector<DirectX::XMMATRIX> mWorldMats;
+    };
+}

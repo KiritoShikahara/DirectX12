@@ -38,7 +38,7 @@ namespace graphics
 		/// <summary>
 		/// 初期化。依存するオブジェクトをすべて引数で受け取る。
 		/// </summary>
-		/// <param name="device">GPU デバイス（バッファ作成・PSO 作成）</param>
+		/// <param name="device">GPU デバイス</param>
 		/// <param name="heapManager">ディスクリプタヒープの供給元</param>
 		/// <param name="shaderManager">シェーダーのコンパイル・キャッシュ管理</param>
 		/// <param name="window">仮想解像度の取得元</param>
@@ -91,6 +91,13 @@ namespace graphics
 			uint32_t                    startIndex = 0;
 		};
 
+		// UpdateAndDraw() 内で収集する描画対象1件分
+		struct RenderItem
+		{
+			const ecs::Transform* Transform = nullptr;
+			const ecs::Sprite*    Sprite = nullptr;
+		};
+
 		// GPU オブジェクト
 		std::unique_ptr<SpritePipeline>    mPipeline;
 		std::unique_ptr<StructuredBuffer>  mInstanceBuffer;
@@ -99,6 +106,9 @@ namespace graphics
 		// フレームデータ
 		std::vector<SpriteShaderData>      mReservedData;
 		std::vector<DrawCall>              mDrawCalls;
+
+		// UpdateAndDraw()の一時バッファ
+		std::vector<RenderItem>            mRenderItems;
 
 		// 依存オブジェクト
 		GDescriptorHeapManager* mHeapManager = nullptr;

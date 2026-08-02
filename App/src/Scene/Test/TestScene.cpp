@@ -1,6 +1,6 @@
-#include "TestScene.h"
+﻿#include "TestScene.h"
 
-// コンポーネント
+// 繧ｳ繝ｳ繝昴・繝阪Φ繝・
 #include<ecs/component/transform/TransformComponent.h>
 #include<ecs/component/sprite/SpriteComponent.h>
 #include<ecs/component/camera/CameraComponent.h>
@@ -14,7 +14,7 @@
 #include<ecs/component/Effect/EffectComponent.h>
 #include<ecs/component/Shape/ShapeComponent.h>
 
-// リソース
+// 繝ｪ繧ｽ繝ｼ繧ｹ
 #include<graphics/Texture/TextureManager.h>
 #include<graphics/PrimitiveModel/Resource/PrimitiveResourceManager.h>
 #include<ecs/entity/EntityManager.h>
@@ -24,7 +24,7 @@
 #include<graphics/Texture/Texture.h>
 #include<audio/Resource/AudioResourceManager.h>
 
-// システム
+// 繧ｷ繧ｹ繝・Β
 #include<system/Window/Window.h>
 #include<system/Scene/Factory/SceneFactory.h>
 
@@ -50,14 +50,16 @@ namespace scene
 
 	}
 
+	auto str = "Assets/Fbx/Arissa/Arissa.fbx.bin";
 
 	void TestScene::LoadResource()
 	{
 		{
 			auto& manager = graphics::FbxResourceManager::Get();
-			auto res = manager.Load("Assets/Fbx/Faul.fbx.bin");
-			bool ret = manager.LoadAnm("Assets/Fbx/Faul.fbx.bin", "Assets/Fbx/Animation/Attack_A.fbx.anm", "Attack_A");
-			ret = manager.LoadAnm("Assets/Fbx/Faul.fbx.bin", "Assets/Fbx/Animation/Attack_B.fbx.anm", "Attack_B");
+			auto res = manager.Load(str);
+			bool ret = manager.LoadAnm(str, "Assets/Fbx/Arissa/Animation/run.fbx.anm", "Run");
+			ret = manager.LoadAnm(str, "Assets/Fbx/Arissa/Animation/idle.fbx.anm", "Idle");
+			ret = manager.LoadAnm(str, "Assets/Fbx/Arissa/Animation/spell.fbx.anm", "spell");
 		}
 		{
 			auto& ResManager = audio::AudioResourceManager::Get();
@@ -79,7 +81,7 @@ namespace scene
 		auto& manager = ecs::EntityManager::Get();
 		auto& reg = manager.GetRegistry();
 
-		auto res = graphics::FbxResourceManager::Get().Load("Assets/Fbx/Faul.fbx.bin");
+		auto res = graphics::FbxResourceManager::Get().Load(str);
 		float scale = 0.2f;
 
 		auto entity = manager.CreateEntity();
@@ -92,10 +94,10 @@ namespace scene
 		fbx.CustomColor = { 1,1,1,1 };
 
 		auto& anim = manager.AddComponent<ecs::FbxAnimComponent>(entity);
-		anim.Play(*fbx.Resource, "Attack_A", true);
+		anim.Play(*fbx.Resource, "spell", true);
 
 		reg.emplace<ecs::ColliderComponent>(entity, ecs::ColliderComponent::MakeBox({ 1,3,1 }));
-		reg.emplace<ecs::RigidBodyComponent>(entity, ecs::RigidBodyComponent::MakeDynamic());
+		reg.emplace<ecs::RigidBodyComponent>(entity, ecs::RigidBodyComponent::MakeKinematic());
 	}
 	void TestScene::CreateSound()
 	{
@@ -126,7 +128,7 @@ namespace scene
 		registry.emplace<ecs::Transform>(entity);
 
 		auto& light = registry.emplace<ecs::DirectionalLightComponent>(entity);
-		light.Direction = { 0.3f, -1.0f, 0.5f }; // 斜め下向き
+		light.Direction = { 0.3f, -1.0f, 0.5f };
 		light.Color = { 1.0f,  1.0f, 1.0f };
 		light.Intensity = 1.0f;
 		light.IsActive = true;
@@ -182,6 +184,7 @@ namespace scene
 		effect.Asset = graphics::EffekseerManager::Get().GetEffect("Assets/Effect/Light3.efk");
 		effect.IsLoop = true;
 		effect.Effect.Play(effect.Asset, effect.Offset);
+		graphics::EffekseerManager::MarkSpawnHidden(effect);
 	}
 	void TestScene::CreateSkybox()
 	{

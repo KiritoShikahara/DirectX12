@@ -48,6 +48,8 @@ namespace sys
         /// <summary>このフレームのホイール量 (1.0 = 1ノッチ)</summary>
         [[nodiscard]] float GetWheel() const;
 
+        /// <summary>何かしらのマウス入力があったかどうか</summary>
+        [[nodiscard]] bool IsAnyInput() const;
     private:
         [[nodiscard]] static eMouseButton ToMouseButton(UINT message, WPARAM wParam);
         [[nodiscard]] static bool         IsValid(eMouseButton button);

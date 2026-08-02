@@ -18,8 +18,8 @@ namespace graphics
             std::vector<uint32_t>& outIndices);
 
         /// <summary>UV球 (中心原点)</summary>
-        /// @param slices 経線分割数 (>=3)
-        /// @param stacks 緯線分割数 (>=2)
+        /// @param slices 経線分割数
+        /// @param stacks 緯線分割数
         static void CreateSphere(
             float radius,
             uint32_t slices, uint32_t stacks,
@@ -42,7 +42,6 @@ namespace graphics
             std::vector<uint32_t>& outIndices);
 
         /// <summary>カプセル (Y軸方向, 中心原点)</summary>
-        /// シリンダー部分の高さ = height、上下に半球を追加
         static void CreateCapsule(
             float radius, float height,
             uint32_t slices, uint32_t hemisphereStacks,

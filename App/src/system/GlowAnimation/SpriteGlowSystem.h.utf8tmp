@@ -1,0 +1,13 @@
+#pragma once
+
+#include<ecs/system/manager/IComponentSystem.h>
+
+namespace ecs
+{
+
+	class SpriteGlowSystem : public IUserSystem
+	{
+	public: 
+		void Update(entt::registry& registry, float deltaTime, float rawDeltaTime) override;
+	private:
+		// 郢ｧ・ｷ郢ｧ・ｹ郢

@@ -15,9 +15,7 @@ namespace sys
 #endif
     }
 
-    /**
-     * @brief 自身、もしくはその「直下のディレクトリ」にマーカーがあるか探しながら遡る
-     */
+    // 自身、またはその直下のディレクトリにマーカーがあるか探しながら遡る。
     static std::filesystem::path FindRootByMarker(
         const std::filesystem::path& startDir,
         const std::string& marker)
@@ -27,12 +25,12 @@ namespace sys
         // 階層が深い場合を考慮して20回遡る
         for (int i = 0; i < 20; ++i)
         {
-            // 1. このディレクトリ直下にマーカーがあるか？
+            // このディレクトリ直下にマーカーがあるか
             if (std::filesystem::exists(dir / marker)) {
                 return dir;
             }
 
-            // 2. このディレクトリの「直下のサブディレクトリ」にマーカーがあるか？
+            // このディレクトリの直下のサブディレクトリにマーカーがあるか
             // これにより、Appと並列にあるEngineフォルダの中のマーカーを見つけられる
             try {
                 if (std::filesystem::is_directory(dir)) {
@@ -57,7 +55,7 @@ namespace sys
         auto exeDir = GetExeDir();
         auto cwd = std::filesystem::current_path();
 
-        // --- /Game/ ---
+        // Game
         if (!gameContentDir.empty()) {
             mRoots["Game"] = gameContentDir;
         }
@@ -67,7 +65,7 @@ namespace sys
             if (mRoots["Game"].empty()) mRoots["Game"] = FindRootByMarker(exeDir, ".game_root");
         }
 
-        // --- /Engine/ ---
+        // Engine
         if (!engineRootDir.empty()) {
             mRoots["Engine"] = engineRootDir;
         }

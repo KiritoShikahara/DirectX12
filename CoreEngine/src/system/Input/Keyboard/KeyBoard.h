@@ -39,6 +39,9 @@ namespace sys
 		/// <summary>このフレームで離された (前フレームは押されていた)</summary>
 		[[nodiscard]] bool IsReleased(eKeyCode keyCode) const;
 
+		/// <summary>いずれかのキーが押されているか</summary>
+		[[nodiscard]] bool IsAnyKeyHeld() const;
+
 		/// <summary>ImGui デバッグ表示 (InputManager::ImGuiUpdate から呼ぶ)</summary>
 		void ImGuiUpdate() const;
 	private:

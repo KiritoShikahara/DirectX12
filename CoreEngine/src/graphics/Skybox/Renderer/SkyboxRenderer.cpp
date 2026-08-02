@@ -26,7 +26,6 @@ namespace graphics
 
     void SkyboxRenderer::Finalize()
     {
-        // パイプライン（ComPtr/UniquePtr）のリセット
         if (mPipeline)
         {
             // 必要に応じて SkyboxPipeline 側にもリセット処理を追加
@@ -50,48 +49,52 @@ namespace graphics
 
 	void SkyboxRenderer::UpdateAndDraw(entt::registry& registry)
 	{
-        struct Entry
-        {
-            int                          Priority;
-            float                        Weight;
-            const std::filesystem::path* TexturePath;
-        };
-
-        std::vector<Entry> entries;
-        entries.reserve(8);
+        // 毎フレームのvector生成を避けるため、メンバ変数を使い回す
+        mEntries.clear();
 
         registry.view<ecs::SkyboxComponent>().each(
             [&](const ecs::SkyboxComponent& comp)
             {
-                entries.push_back({ comp.Priority, comp.Weight, &comp.TexturePath });
+                mEntries.push_back({ comp.Priority, comp.Weight, &comp.TexturePath });
             });
 
-        if (entries.empty()) return;
+        if (mEntries.empty()) return;
 
-        std::sort(entries.begin(), entries.end(),
+        std::sort(mEntries.begin(), mEntries.end(),
             [](const Entry& a, const Entry& b) { return a.Priority > b.Priority; });
 
         auto& texMgr = TextureManager::Get();
 
-        // A 側 (最高優先度)
-        const Texture* texA = texMgr.GetOrLoad(*entries[0].TexturePath);
+        const std::filesystem::path& pathA = *mEntries[0].TexturePath;
+        if (mCachedTexA == nullptr || pathA != mCachedPathA)
+        {
+            mCachedTexA = texMgr.GetOrLoad(pathA);
+            mCachedPathA = pathA;
+        }
+        const Texture* texA = mCachedTexA;
         if (!texA || !texA->IsValid())
         {
             DEBUG_LOG(sys::eLogLevel::Warning, "SkyboxRenderer: Texture A is invalid, skip draw.");
             return;
         }
 
-        // B 側 (2番目。存在しない場合は A と同じテクスチャで Weight=0)
+        // B 側 
         const Texture* texB = texA;
         float          weight = 0.0f;
 
-        if (entries.size() >= 2)
+        if (mEntries.size() >= 2)
         {
-            const Texture* candidate = texMgr.GetOrLoad(*entries[1].TexturePath);
-            if (candidate && candidate->IsValid())
+            const std::filesystem::path& pathB = *mEntries[1].TexturePath;
+            if (mCachedTexB == nullptr || pathB != mCachedPathB)
             {
-                texB = candidate;
-                weight = std::clamp(entries[1].Weight, 0.0f, 1.0f);
+                mCachedTexB = texMgr.GetOrLoad(pathB);
+                mCachedPathB = pathB;
+            }
+
+            if (mCachedTexB && mCachedTexB->IsValid())
+            {
+                texB = mCachedTexB;
+                weight = std::clamp(mEntries[1].Weight, 0.0f, 1.0f);
             }
         }
 
@@ -110,27 +113,26 @@ namespace graphics
         cmdList->SetGraphicsRootSignature(mPipeline->GetRootSignature());
         cmdList->SetPipelineState(mPipeline->GetPipelineState());
 
-        // ヒープ (FbxRenderer::End() と同じヒープを使い回す)
+        // ヒープ
         ID3D12DescriptorHeap* heaps[] = { mHeapManager->GetNativeHeap() };
         cmdList->SetDescriptorHeaps(_countof(heaps), heaps);
 
-        // SLOT_BLEND_WEIGHT (b0): BlendWeight を float 1個として渡す
         cmdList->SetGraphicsRoot32BitConstant(
             SkyboxPipeline::SLOT_BLEND_WEIGHT,
             *reinterpret_cast<const UINT*>(&mBlendWeight),
             0);
 
-        // SLOT_SCENE_BUFFER (t8, space0): FbxRenderer::mSceneBuffer の GPU ハンドルを共有
+		// GPUハンドルをセットする。SLOT_SCENE_BUFFER は t8 space0 で、FbxRenderer::mSceneBuffer の内容を参照する。
         cmdList->SetGraphicsRootDescriptorTable(
             SkyboxPipeline::SLOT_SCENE_BUFFER,
             sceneBufferGpuHandle);
 
-        // SLOT_SKYBOX_TEX_A (t0, space1): キューブマップ A
+        // SLOT_SKYBOX_TEX_A
         cmdList->SetGraphicsRootDescriptorTable(
             SkyboxPipeline::SLOT_SKYBOX_TEX_A,
             mTexA->GetGpuHandle());
 
-        // SLOT_SKYBOX_TEX_B (t1, space1): キューブマップ B
+        // SLOT_SKYBOX_TEX_B
         cmdList->SetGraphicsRootDescriptorTable(
             SkyboxPipeline::SLOT_SKYBOX_TEX_B,
             mTexB->GetGpuHandle());
@@ -140,7 +142,7 @@ namespace graphics
         cmdList->IASetVertexBuffers(0, 0, nullptr);
         cmdList->IASetIndexBuffer(nullptr);
 
-        // フルスクリーントライアングル (3頂点, 1インスタンス)
+        // フルスクリーントライアングル
         cmdList->DrawInstanced(3, 1, 0, 0);
     }
 }

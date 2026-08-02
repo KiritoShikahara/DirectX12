@@ -1,25 +1,27 @@
 #pragma once
 
-#include"../Registry/DataRegistry.h"
-#include"../Registry/ConfigRegistry.h"
-#include"../Reflection.h"
-#include<ImGui/imgui.h>
-#include<string>
-#include<unordered_map>
-#include<functional>
-#include<stdexcept>
+#include "../Registry/DataRegistry.h"
+#include "../Registry/ConfigRegistry.h"
+#include "../Reflection.h"
+#include <ImGui/imgui.h>
+#include <string>
+#include <unordered_map>
+#include <functional>
+#include <stdexcept>
 
 namespace data
 {
-    /// <summary>
-    /// ImGuiEditVisitor  （ImGui ウィジェットでフィールドを編集）
-    /// </summary>
+    /// <summary>ImGuiEditVisitor （ImGui ウィジェットでフィールドを編集）</summary>
     class ImGuiEditVisitor final : public IFieldVisitor
     {
     public:
+        /// <summary>何らかの値が変更されたかどうか</summary>
         bool  AnyChanged = false;
+        /// <summary>主キーが変更されたかどうか</summary>
         bool  PkChanged = false;
+        /// <summary>現在の行インデックス</summary>
         int   Row = 0;
+        /// <summary>現在の列インデックス</summary>
         int   Col = 0;
 
         void OnInt(const std::string& name, int& v, eFieldFlag flags) override
@@ -49,12 +51,11 @@ namespace data
         }
     };
 
-    /// <summary>
-    /// ImGuiDragVisitor  （ConfigManager 向け DragInt/DragFloat）
-    /// </summary>
+    /// <summary>ImGuiDragVisitor （ConfigManager 向け DragInt/DragFloat）</summary>
     class ImGuiDragVisitor final : public IFieldVisitor
     {
     public:
+        /// <summary>何らかの値が変更されたかどうか</summary>
         bool AnyChanged = false;
 
         void OnInt(const std::string& name, int& v, eFieldFlag) override
@@ -77,23 +78,27 @@ namespace data
         }
     };
 
-
-    /// <summary>
-    /// ImGuiのテーブルエディタ
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <summary>ImGuiのテーブルエディタ</summary>
     template<typename T>
     class DataInspector
     {
     public:
         explicit DataInspector(DataManager<T>& mgr) : mMgr(mgr) {}
 
+        /// <summary>単独ウィンドウとして表示する(Begin/Endを含む)</summary>
         void Draw(const char* windowLabel = nullptr)
         {
-            const auto& fields = TypeDescriptor<T>::Fields();
             const char* label = windowLabel ? windowLabel : TypeDescriptor<T>::TableName();
 
             if (!ImGui::Begin(label)) { ImGui::End(); return; }
+            DrawContent();
+            ImGui::End();
+        }
+
+        /// <summary>中身(ツールバー+テーブル)だけを描画する(Begin/Endを含まない)</summary>
+        void DrawContent()
+        {
+            const auto& fields = TypeDescriptor<T>::Fields();
 
             // ステータス（mLastMessage はRelease でも保持されているため安全）
             if (!mMgr.GetLastMessage().empty())
@@ -183,7 +188,6 @@ namespace data
             }
 
             ImGui::Text("Total: %d rows", (int)mMgr.GetAll().size());
-            ImGui::End();
         }
 
     private:
@@ -199,9 +203,7 @@ namespace data
         DataManager<T>& mMgr;
     };
 
-    /// <summary>
-    /// ConfigManager<T> の ImGui キーバリューエディタ
-    /// </summary>
+    /// <summary>ConfigManager<T> の ImGui キーバリューエディタ</summary>
     template<typename T>
     class ConfigEditor
     {
@@ -239,9 +241,7 @@ namespace data
         ConfigManager<T>& mMgr;
     };
 
-    /// <summary>
-    ///  DataRegistryInspector  （DataRegistry 全体のランチャーウィンドウ）
-    /// </summary>
+    /// <summary>DataRegistryInspector （DataRegistry 全体のランチャーウィンドウ）</summary>
     class DataRegistryInspector
     {
     public:
@@ -266,12 +266,10 @@ namespace data
         }
 
     private:
-        bool mWindowOpen[64] = {};   // 最大64型まで対応（必要なら動的化可）
+        bool mWindowOpen[64] = {};    // 最大64型まで対応（必要なら動的化可）
     };
 
-    /// <summary>
-    /// ConfigRegistryEditor  （ConfigRegistry 全体のランチャーウィンドウ）
-    /// </summary>
+    /// <summary>ConfigRegistryEditor （ConfigRegistry 全体のランチャーウィンドウ）</summary>
     class ConfigRegistryEditor
     {
     public:

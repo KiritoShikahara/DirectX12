@@ -1,26 +1,21 @@
-#pragma once
+﻿#pragma once
 
 #include <Effekseer.h>
 #include <DirectXMath.h>
 
 namespace graphics
 {
-    /// <summary>
-    /// Effekseer のハンドルをラップするクラス。
-    /// Play / Stop / SetLocation などの操作を EffekseerManager 経由で行う。
-    /// EffectComponent のメンバーとして使用する。
-    /// </summary>
+    ///<summary>Effekseerのハンドルをラップするクラス。EffectComponentのメンバーとして使う</summary>
     class EffectObject
     {
     public:
         EffectObject() = default;
         ~EffectObject() { Stop(); }
 
-        // コピー禁止（ハンドルの二重解放防止）
+        ///<summary>コピー禁止(ハンドルの二重解放防止)</summary>
         EffectObject(const EffectObject&) = delete;
         EffectObject& operator=(const EffectObject&) = delete;
 
-        // ムーブは許可
         EffectObject(EffectObject&& other) noexcept
             : mHandle(other.mHandle), mSpeed(other.mSpeed), mIsAutoDelete(other.mIsAutoDelete)
         {
@@ -39,9 +34,6 @@ namespace graphics
             return *this;
         }
 
-        // -----------------------------------------------------------------------
-        //  操作
-        // -----------------------------------------------------------------------
         void Play(Effekseer::EffectRef effect,
             const DirectX::XMFLOAT3& position,
             bool autoDelete = false);
@@ -54,9 +46,9 @@ namespace graphics
         void SetSpeed(float speed);
         void SetVisible(bool visible);
 
-        // -----------------------------------------------------------------------
-        //  状態取得
-        // -----------------------------------------------------------------------
+        ///<summary>表示のみ切替(Pauseしない)。ループ再始動直後の1フレーム隠しに使う</summary>
+        void SetRenderingVisible(bool visible);
+
         bool IsPlaying()     const;
         bool ShouldDestroy() const { return mIsAutoDelete && !IsPlaying(); }
 

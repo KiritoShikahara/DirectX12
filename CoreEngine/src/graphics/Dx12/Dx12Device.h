@@ -1,19 +1,19 @@
-#pragma once
+ï»¿#pragma once
 
-#include  <utility/Singleton/Singleton.hpp>
+#include <utility/Singleton/Singleton.hpp>
 #include <Utility/Export/Export.h>
-#include<vector>
-#include<mutex>
-
+#include <vector>
+#include <mutex>
 #include "Dx12Type.h"
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "dxguid.lib")
+
 namespace graphics
 {
 	/// <summary>
-	/// Dx12ƒfƒoƒCƒXŠÇ—
+	/// DX12ãƒ‡ãƒã‚¤ã‚¹ç®¡ç†
 	/// </summary>
 	class ENGINE_API DX12Device : public utility::Singleton<DX12Device>
 	{
@@ -23,52 +23,50 @@ namespace graphics
 		SINGLETON_ACCESSOR(DX12Device);
 
 		/// <summary>
-		/// ‰Šú‰»
+		/// åˆæœŸåŒ–
 		/// </summary>
-		/// <returns>true:¬Œ÷@</returns>
+		/// <returns>true:æˆåŠŸ</returns>
 		bool Initialize();
 
 		/// <summary>
-		/// I—¹ˆ—
+		/// çµ‚äº†å‡¦ç†
 		/// </summary>
-		/// <returns></returns>
+		/// <returns>true:æˆåŠŸ</returns>
 		bool Finalize();
 
 		/// <summary>
-		/// Dx12ƒfƒoƒCƒX‚ÌŽæ“¾
+		/// DX12ãƒ‡ãƒã‚¤ã‚¹ã®å–å¾—
 		/// </summary>
 		ID3D12Device* GetDevice();
 
 		/// <summary>
-		/// DXGIƒtƒ@ƒNƒgƒŠ[‚ÌŽæ“¾
+		/// DXGIãƒ•ã‚¡ã‚¯ãƒˆãƒªãƒ¼ã®å–å¾—
 		/// </summary>
 		IDXGIFactory7* GetFactory();
 
 		/// <summary>
-		/// D3D12MAƒAƒƒP[ƒ^[‚ÌŽæ“¾
+		/// D3D12MAã‚¢ãƒ­ã‚±ãƒ¼ã‚¿ãƒ¼ã®å–å¾—
 		/// </summary>
 		D3D12MA::Allocator* GetMAAllocator();
 
 		/// <summary>
-		/// GPU‚ÉƒeƒNƒXƒ`ƒƒƒŠƒ\[ƒX‚ð“]‘—‚·‚éB
-		/// ê—p‚ÌƒAƒbƒvƒ[ƒhƒLƒ…[‚ÅŽÀs‚·‚é‚½‚ß•`‰æƒ‹[ƒv‚ÉˆË‘¶‚µ‚È‚¢B
+		/// GPUã«ãƒ†ã‚¯ã‚¹ãƒãƒ£ãƒªã‚½ãƒ¼ã‚¹ã‚’è»¢é€ã™ã‚‹ã€‚
+		/// å°‚ç”¨ã®ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰ã‚­ãƒ¥ãƒ¼ã§å®Ÿè¡Œã™ã‚‹ãŸã‚æç”»ãƒ«ãƒ¼ãƒ—ã«ä¾å­˜ã—ãªã„ã€‚
 		/// </summary>
-		/// <param name="pResource">“]‘—æƒŠƒ\[ƒX</param>
-		/// <param name="subresources">“]‘—‚·‚éƒTƒuƒŠƒ\[ƒX‚Ìƒf[ƒ^</param>
-		/// <returns>true:¬Œ÷</returns>
+		/// <param name="pResource">è»¢é€å…ˆãƒªã‚½ãƒ¼ã‚¹</param>
+		/// <param name="subresources">è»¢é€ã™ã‚‹ã‚µãƒ–ãƒªã‚½ãƒ¼ã‚¹ã®ãƒ‡ãƒ¼ã‚¿</param>
+		/// <returns>true:æˆåŠŸ</returns>
 		bool UploadTextureData(ID3D12Resource* pResource,
 			const std::vector<D3D12_SUBRESOURCE_DATA>& subresources);
 
 		/// <summary>
-		/// GPU ‚Éƒoƒbƒtƒ@ƒf[ƒ^‚ð“]‘—‚·‚éB
-		/// UploadTextureData ‚Æ“¯‚¶‚­ê—pƒAƒbƒvƒ[ƒhƒLƒ…[‚Å“¯Šú“I‚ÉŠ®Œ‹‚·‚éB
-		/// ƒXƒŒƒbƒhƒZ[ƒt (“à•”‚Å mutex ‚É‚æ‚Á‚Ä”r‘¼§Œä‚³‚ê‚é)B
-		/// cmdList ‚Í•s—vB•`‰æƒ‹[ƒv‚ÉˆË‘¶‚µ‚È‚¢B
+		/// GPU ã«ãƒãƒƒãƒ•ã‚¡ãƒ‡ãƒ¼ã‚¿ã‚’è»¢é€ã™ã‚‹ã€‚
+		/// UploadTextureData ã¨åŒæ§˜å°‚ç”¨ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰ã‚­ãƒ¥ãƒ¼ã§åŒæœŸçš„ã«å®Ÿè¡Œã™ã‚‹ã€‚
 		/// </summary>
-		/// <param name="pResource">“]‘—æƒŠƒ\[ƒX (DEFAULT heap, COPY_DEST ó‘Ô‚Åì¬Ï‚Ý)</param>
-		/// <param name="data">“]‘—‚·‚éƒf[ƒ^ƒ|ƒCƒ“ƒ^ (nullptr ‹ÖŽ~)</param>
-		/// <param name="size">“]‘—ƒoƒCƒg” (0 ‹ÖŽ~)</param>
-		/// <param name="targetState">“]‘—Š®—¹Œã‚ÌƒŠƒ\[ƒXó‘Ô</param>
+		/// <param name="pResource">è»¢é€å…ˆãƒªã‚½ãƒ¼ã‚¹ (DEFAULT heap, COPY_DEST ã‚¹ãƒ†ãƒ¼ã‚¿ã‚¹ã§ä½œæˆæ¸ˆã¿)</param>
+		/// <param name="data">è»¢é€å…ƒãƒ‡ãƒ¼ã‚¿ãƒã‚¤ãƒ³ã‚¿ (nullptr åŽ³ç¦)</param>
+		/// <param name="size">è»¢é€ãƒã‚¤ãƒˆæ•° (0 åŽ³ç¦)</param>
+		/// <param name="targetState">è»¢é€å®Œäº†å¾Œã®ãƒªã‚½ãƒ¼ã‚¹ã‚¹ãƒ†ãƒ¼ãƒˆ</param>
 		bool UploadBufferData(
 			ID3D12Resource* pResource,
 			const void* data,
@@ -77,57 +75,57 @@ namespace graphics
 
 	private:
 		/// <summary>
-		/// ƒfƒoƒbƒOƒŒƒCƒ„[‚Ì—LŒø‰»iƒfƒoƒbƒOƒrƒ‹ƒh‚Ì‚Ýj
+		/// ãƒ‡ãƒãƒƒã‚°ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®æœ‰åŠ¹åŒ– (ãƒ‡ãƒãƒƒã‚°ãƒ“ãƒ«ãƒ‰ã®ã¿)
 		/// </summary>
 		void DebugLayerOn();
 
 		/// <summary>
-		/// DXGIƒtƒ@ƒNƒgƒŠ[‚Ì‰Šú‰»
+		/// DXGIãƒ•ã‚¡ã‚¯ãƒˆãƒªãƒ¼ã®åˆæœŸåŒ–
 		/// </summary>
 		bool InitializeFactory();
 
 		/// <summary>
-		/// ƒfƒoƒCƒX‚ÆD3D12MAƒAƒƒP[ƒ^[‚Ì‰Šú‰»
+		/// ãƒ‡ãƒã‚¤ã‚¹ã¨D3D12MAã‚¢ãƒ­ã‚±ãƒ¼ã‚¿ãƒ¼ã®åˆæœŸåŒ–
 		/// </summary>
 		bool InitializeDevice();
 
 		/// <summary>
-		/// ƒAƒbƒvƒ[ƒhê—pƒRƒ“ƒeƒLƒXƒg‚Ì‰Šú‰»
-		/// iƒRƒ}ƒ“ƒhƒLƒ…[EƒAƒƒP[ƒ^[EƒRƒ}ƒ“ƒhƒŠƒXƒgEƒtƒFƒ“ƒXj
+		/// ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰ç”¨ã‚³ãƒ³ãƒ†ã‚­ã‚¹ãƒˆã®åˆæœŸåŒ–
+		/// (ã‚³ãƒžãƒ³ãƒ‰ã‚­ãƒ¥ãƒ¼ãƒ»ã‚¢ãƒ­ã‚±ãƒ¼ã‚¿ãƒ¼ãƒ»ã‚³ãƒžãƒ³ãƒ‰ãƒªã‚¹ãƒˆãƒ»ãƒ•ã‚§ãƒ³ã‚¹)
 		/// </summary>
 		bool InitializeUploadContext();
 
 	private:
-		/// <summary>GPU‚Æ‚Ì’ÊM‘‹Œû</summary>
+		/// <summary>GPUã¨ã®é€šä¿¡ã‚¤ãƒ³ã‚¿ãƒ¼ãƒ•ã‚§ãƒ¼ã‚¹</summary>
 		Device          mDevice;
-		/// <summary>ƒXƒƒbƒvƒ`ƒFƒCƒ“‚âƒAƒ_ƒvƒ^‚Ìì¬‚ÉŽg‚¤</summary>
+		/// <summary>ã‚¹ãƒ¯ãƒƒãƒ—ãƒã‚§ã‚¤ãƒ³ã€ã‚¢ãƒ€ãƒ—ã‚¿ãƒ¼ã®ä½œæˆã«ä½¿ã†</summary>
 		Factory         mFactory;
-		/// <summary>D3D12MA‚Ìƒƒ‚ƒŠƒAƒƒP[ƒ^[</summary>
+		/// <summary>D3D12MAã®ãƒ¡ãƒ¢ãƒªãƒ­ã‚±ãƒ¼ã‚¿ãƒ¼</summary>
 		MAAllocator     mMAAllocator;
-		/// <summary>ƒŠƒ\[ƒX˜R‚êŒŸ’miƒfƒoƒbƒOƒrƒ‹ƒh‚Ì‚Ý—LŒøj</summary>
+		/// <summary>ãƒªã‚½ãƒ¼ã‚¹ãƒªãƒ¼ã‚¯æ¤œçŸ¥(ãƒ‡ãƒãƒƒã‚°ãƒ“ãƒ«ãƒ‰ã®ã¿æœ‰åŠ¹)</summary>
 		DebugDevice     mDebugDevice;
 
-		// ---- ƒAƒbƒvƒ[ƒhê—pƒRƒ“ƒeƒLƒXƒg ----
-		/// <summary>ƒAƒbƒvƒ[ƒhê—pƒRƒ}ƒ“ƒhƒLƒ…[i•`‰æƒLƒ…[‚Æ•ª—£j</summary>
+		// ---- ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰ç”¨ã‚³ãƒ³ãƒ†ã‚­ã‚¹ãƒˆ ----
+		/// <summary>ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰ç”¨ã‚³ãƒžãƒ³ãƒ‰ã‚­ãƒ¥ãƒ¼(æç”»ã‚­ãƒ¥ãƒ¼ã¨ã¯åˆ¥)</summary>
 		CmdQueue        mUploadCmdQueue;
-		/// <summary>ƒAƒbƒvƒ[ƒhê—pƒRƒ}ƒ“ƒhƒAƒƒP[ƒ^[</summary>
+		/// <summary>ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰ç”¨ã‚³ãƒžãƒ³ãƒ‰ã‚¢ãƒ­ã‚±ãƒ¼ã‚¿ãƒ¼</summary>
 		CmdAlloc        mUploadAllocator;
-		/// <summary>ƒAƒbƒvƒ[ƒhê—pƒRƒ}ƒ“ƒhƒŠƒXƒg</summary>
+		/// <summary>ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰ç”¨ã‚³ãƒžãƒ³ãƒ‰ãƒªã‚¹ãƒˆ</summary>
 		CmdList         mUploadCmdList;
-		/// <summary>ƒAƒbƒvƒ[ƒhŠ®—¹“¯Šú—pƒtƒFƒ“ƒX</summary>
+		/// <summary>ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰å®Œäº†å¾…ã¡ç”¨ãƒ•ã‚§ãƒ³ã‚¹</summary>
 		Fence           mUploadFence;
-		/// <summary>ƒAƒbƒvƒ[ƒh—pƒtƒFƒ“ƒXƒJƒEƒ“ƒ^[</summary>
+		/// <summary>ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰ç”¨ãƒ•ã‚§ãƒ³ã‚¹ã‚«ã‚¦ãƒ³ã‚¿ãƒ¼</summary>
 		UINT64          mUploadFenceValue = 0;
-		/// <summary>ƒAƒbƒvƒ[ƒhŠ®—¹‘Ò‚¿ƒCƒxƒ“ƒgƒnƒ“ƒhƒ‹</summary>
+		/// <summary>ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰å®Œäº†å¾…ã¡ã‚¤ãƒ™ãƒ³ãƒˆãƒãƒ³ãƒ‰ãƒ«</summary>
 		HANDLE          mUploadEvent = nullptr;
 
 		/// <summary>
-		/// ƒAƒbƒvƒ[ƒhƒRƒ“ƒeƒLƒXƒg—p‚Ì”r‘¼§Œä
-		///  UploadTextureData / UploadBufferData ‚ð•¡”ƒXƒŒƒbƒh‚©‚ç“¯Žž‚ÉŒÄ‚ñ‚¾ê‡‚É
-        /// mUploadAllocator / mUploadCmdList ‚Ö‚Ì“¯ŽžƒAƒNƒZƒX‚ð–h‚®
+		/// ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰ã‚³ãƒ³ãƒ†ã‚­ã‚¹ãƒˆç”¨ã®æŽ’ä»–åˆ¶å¾¡
+		/// UploadTextureData / UploadBufferData ã‚’è¤‡æ•°ã‚¹ãƒ¬ãƒƒãƒ‰åŒæ™‚ã«å‘¼ã‚“ã å ´åˆç­‰ã€
+		/// mUploadAllocator / mUploadCmdList ã¸ã®åŒæ™‚ã‚¢ã‚¯ã‚»ã‚¹ã‚’é˜²ã
 		/// </summary>
 		std::mutex mUploadMutex;
+
+		bool mDebugLayerEnabled = false;
 	};
 }
-
-

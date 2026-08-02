@@ -79,6 +79,9 @@ namespace sys
         /// </summary>
         [[nodiscard]] Gamepad GetGamepad() const { return mGamepad; }
 
+        /// <summary>このフレームに何らかのパッド入力があったか（ボタン・トリガー・スティック）</summary>
+        [[nodiscard]] bool IsAnyInput() const;
+
         /// <summary>
         /// ImGUiデバック表示
         /// </summary>

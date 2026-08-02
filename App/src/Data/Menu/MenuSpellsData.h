@@ -1,17 +1,15 @@
-#pragma once
+﻿#pragma once
 
-#include<string>
-#include<Data/Storage/Reflection.h>
+#include <string>
+#include <Data/Storage/Reflection.h>
 
 namespace data
 {
-	/// <summary>
-	/// メニュー画面のスペル紹介の画像とID
-	/// </summary>
+	/// <summary>初期武器選択画面(MenuScene)の1件分。IDと武器アイコン画像のパスを持つ</summary>
 	struct SpellMenuData
 	{
 		int ID = 0;
-		std::string TexPath;
+		std::string TexPath; // 武器アイコン画像のパス
 
 		REFLECT_BEGIN(SpellMenuData, "spell_menu")
 			REFLECT_FIELD_ID(ID)
@@ -20,4 +18,4 @@ namespace data
 	};
 }
 
-REFLECT_REGISTER(::data::SpellMenuData)
+REFLECT_REGISTER(::data::SpellMenuData);

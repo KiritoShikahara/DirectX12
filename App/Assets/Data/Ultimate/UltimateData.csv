@@ -1,0 +1,2 @@
+Id,RequiredKillCount,Damage,RiseSpeed,RiseHeight,MaxBeamDuration,MaxMainDuration,CameraDistance,CameraHeight,CameraLookOffset,BeamDownOffset,AuraScale,BeamScale,ActivationScale,ActivationHeightOffset,AuraEffectPath,BeamEffectPath,ActivationEffectPath
+0,15,50,150,450,5,5,80,700,20,20,5,16,56,5,Assets/Effect/Light3.efk,Assets/Effect/hougu_pre.efk,Assets/Effect/hougu_main.efk

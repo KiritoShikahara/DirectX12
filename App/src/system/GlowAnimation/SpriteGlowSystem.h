@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include<ecs/system/manager/IComponentSystem.h>
 
@@ -10,7 +10,7 @@ namespace ecs
 	public: 
 		void Update(entt::registry& registry, float deltaTime, float rawDeltaTime) override;
 	private:
-		// システムの起動からの累積時間
+		// 繧ｷ繧ｹ繝・Β縺ｮ襍ｷ蜍輔°繧峨・邏ｯ遨肴凾髢・
 		float mTotalTime = 0;
 
 	};

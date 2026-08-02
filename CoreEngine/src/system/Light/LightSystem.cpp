@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "LightSystem.h"
 
 #include <ecs/component/Light/LightComponent.h>
@@ -11,12 +11,12 @@ namespace sys
 {
     void LightSystem::Update(entt::registry& registry)
     {
-        std::vector<graphics::LightData> lights;
+        // 毎フレームのvector生成を避けるため、関数static変数として使い回す
+        static std::vector<graphics::LightData> lights;
+        lights.clear();
         lights.reserve(16);
 
-        // ── Directional Light ─────────────────────────────────────
-        // Shadow を落とす Directional Light は必ず先頭 (index 0) に積む。
-        // FbxRenderer / シェーダー側が index 0 固定で Shadow Map を参照するため。
+        // 指向ライト
         registry.view<ecs::DirectionalLightComponent>().each(
             [&](ecs::DirectionalLightComponent& c)
             {
@@ -30,14 +30,13 @@ namespace sys
                 XMVECTOR dir = XMVector3Normalize(XMLoadFloat3(&c.Direction));
                 XMStoreFloat3(&d.Direction, dir);
 
-                // ── Shadow Map 設定 ───────────────────────────────
+                // シャドウマップデータ
                 if (c.CastShadow)
                 {
                     d.CastShadow = 1u;
                     d.ShadowBias = c.ShadowBias;
 
-                    // ライト位置 = 注視点からライト方向の逆向きに ShadowDistance だけ離れた位置
-                    // (ライト方向は「光が向かう方向」なので逆向きがライト座標)
+                    // ライト位置
                     XMVECTOR target = XMLoadFloat3(&c.ShadowTarget);
                     XMVECTOR lightPos = XMVectorSubtract(
                         target,
@@ -45,18 +44,20 @@ namespace sys
 
                     // View 行列
                     XMVECTOR up = XMVectorSet(0.f, 1.f, 0.f, 0.f);
-                    // ライト方向がほぼ真上/真下のとき up が平行になるので回避
-                    if (XMVectorGetX(XMVector3Dot(dir, up)) > 0.99f)
+
+                    if (std::fabs(XMVectorGetX(XMVector3Dot(dir, up))) > 0.99f)
+                    {
                         up = XMVectorSet(0.f, 0.f, 1.f, 0.f);
+                    }
 
                     XMMATRIX lightView = XMMatrixLookAtLH(lightPos, target, up);
 
-                    // 正射影 Proj 行列 (Directional Light は平行光源)
+                    // 正射影 Proj 行列
                     XMMATRIX lightProj = XMMatrixOrthographicLH(
                         c.ShadowRange, c.ShadowRange,
                         c.ShadowNear, c.ShadowFar);
 
-                    // CPU 側で転置して格納 (シェーダーは column-major で受け取る)
+                    // CPU 側で転置して格納
                     XMMATRIX lightVP = lightView * lightProj;
                     XMStoreFloat4x4(&d.LightViewProj, XMMatrixTranspose(lightVP));
                 }
@@ -64,13 +65,12 @@ namespace sys
                 {
                     d.CastShadow = 0u;
                     d.ShadowBias = 0.f;
-                    // LightViewProj はゼロ初期化のまま (シェーダー側で CastShadow==0 なら参照しない)
                 }
 
                 lights.push_back(d);
             });
 
-        // ── Point Light ───────────────────────────────────────────
+        // ポイントライト
         registry.view<ecs::PointLightComponent, ecs::Transform>().each(
             [&](ecs::PointLightComponent& c, ecs::Transform& tr)
             {
@@ -88,7 +88,7 @@ namespace sys
                 lights.push_back(d);
             });
 
-        // ── Spot Light ────────────────────────────────────────────
+        // スポットライト
         registry.view<ecs::SpotLightComponent, ecs::Transform>().each(
             [&](ecs::SpotLightComponent& c, ecs::Transform& tr)
             {
@@ -116,7 +116,7 @@ namespace sys
 
     void LightSystem::DebugUI(entt::registry& registry)
     {
-#if defined(_DEBUG) || defined(DEV_TOOL_ENABLED)
+#if DEV_TOOL_ENABLED
         sys::ImGuiManager::Get().AddDebugUI([&registry]()
             {
                 if (!ImGui::Begin("Light Debug", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
@@ -146,7 +146,7 @@ namespace sys
                             ImGui::Checkbox("Active", &light.IsActive);
                             ImGui::Separator();
 
-                            // ── 方位角 / 仰角 ─────────────────────────────
+                            // 方位角と仰角 
                             XMVECTOR dir = XMVector3Normalize(XMLoadFloat3(&light.Direction));
                             XMFLOAT3 d;
                             XMStoreFloat3(&d, dir);
@@ -183,7 +183,7 @@ namespace sys
 
                             ImGui::Separator();
 
-                            // ── Color / Intensity ─────────────────────────
+                            // 色・光度
                             ImGui::Text("Color");
                             float col[3] = { light.Color.x, light.Color.y, light.Color.z };
                             if (ImGui::ColorEdit3("##Color", col,
@@ -194,7 +194,38 @@ namespace sys
 
                             ImGui::Separator();
 
-                            // ── Shadow 設定 ───────────────────────────────
+                            // 座標
+                            {
+                                const XMVECTOR dirV = XMVector3Normalize(XMLoadFloat3(&light.Direction));
+                                const XMVECTOR targetV = XMLoadFloat3(&light.ShadowTarget);
+                                const XMVECTOR lightPosV = XMVectorSubtract(
+                                    targetV, XMVectorScale(dirV, light.ShadowDistance));
+
+                                XMFLOAT3 lightPos;
+                                XMStoreFloat3(&lightPos, lightPosV);
+
+                                float posBuf[3] = { lightPos.x, lightPos.y, lightPos.z };
+                                if (ImGui::DragFloat3("Light Position", posBuf, 0.1f, -1000.f, 1000.f, "%.1f"))
+                                {
+                                    // Distance は維持したまま、指定位置に来るよう Target を逆算する
+                                    const XMVECTOR newPosV = XMLoadFloat3(reinterpret_cast<XMFLOAT3*>(posBuf));
+                                    const XMVECTOR newTargetV = XMVectorAdd(
+                                        newPosV, XMVectorScale(dirV, light.ShadowDistance));
+                                    XMStoreFloat3(&light.ShadowTarget, newTargetV);
+                                }
+
+                                float tgt[3] = { light.ShadowTarget.x, light.ShadowTarget.y, light.ShadowTarget.z };
+                                if (ImGui::DragFloat3("Aim Target", tgt, 0.1f, -1000.f, 1000.f, "%.1f"))
+                                    light.ShadowTarget = { tgt[0], tgt[1], tgt[2] };
+
+                                ImGui::DragFloat("Distance", &light.ShadowDistance, 0.5f, 1.f, 500.f, "%.1f");
+
+                                ImGui::TextDisabled("Light Position = Aim Target - Direction * Distance");
+                            }
+
+                            ImGui::Separator();
+
+                            // シャドウ設定
                             if (ImGui::CollapsingHeader("Shadow Settings"))
                             {
                                 ImGui::Checkbox("Cast Shadow", &light.CastShadow);
@@ -204,14 +235,7 @@ namespace sys
                                     ImGui::DragFloat("Shadow Range", &light.ShadowRange, 0.5f, 1.f, 500.f, "%.1f");
                                     ImGui::DragFloat("Shadow Near", &light.ShadowNear, 0.01f, 0.01f, 10.f, "%.3f");
                                     ImGui::DragFloat("Shadow Far", &light.ShadowFar, 1.f, 1.f, 1000.f, "%.1f");
-                                    ImGui::DragFloat("Shadow Distance", &light.ShadowDistance, 0.5f, 1.f, 500.f, "%.1f");
                                     ImGui::DragFloat("Shadow Bias", &light.ShadowBias, 0.0001f, 0.f, 0.1f, "%.4f");
-
-                                    float tgt[3] = { light.ShadowTarget.x, light.ShadowTarget.y, light.ShadowTarget.z };
-                                    if (ImGui::DragFloat3("Shadow Target", tgt, 0.1f, -1000.f, 1000.f, "%.1f"))
-                                        light.ShadowTarget = { tgt[0], tgt[1], tgt[2] };
-
-                                    ImGui::TextDisabled("Light pos = Target - Direction * Distance");
                                 }
                             }
 

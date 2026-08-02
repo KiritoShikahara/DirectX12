@@ -1,9 +1,9 @@
 #pragma once
 
-#include<DirectXMath.h>
-#include<Utility/Export/Export.h>
-#include<entt/entt.hpp>
-#include<vector>
+#include <DirectXMath.h>
+#include <Utility/Export/Export.h>
+#include <entt/entt.hpp>
+#include <vector>
 
 namespace ecs
 {
@@ -17,24 +17,27 @@ namespace ecs
         Capsule,
     };
 
+    /// <summary>
+    /// コライダーコンポーネント
+    /// </summary>
     struct ENGINE_API ColliderComponent
     {
-        // 共通
+        /// <summary>コライダーの形状種別</summary>
         eColliderShape Shape = eColliderShape::Box;
 
-        // Box
-		DirectX::XMFLOAT3 HalfExtent = { 0.5f, 0.5f, 0.5f };
+        /// <summary>ボックスの半サイズ</summary>
+        DirectX::XMFLOAT3 HalfExtent = { 0.5f, 0.5f, 0.5f };
 
-        // Sphere 
-		float Radius = 0.5f;
-        
-        // Capsule
-		float HalfHeight = 1.0f;
+        /// <summary>球の半径</summary>
+        float Radius = 0.5f;
 
-        // オフセット
+        /// <summary>カプセルの半高</summary>
+        float HalfHeight = 1.0f;
+
+        /// <summary>オフセット座標</summary>
         DirectX::XMFLOAT3 Offset = { 0.0f, 0.0f, 0.0f };
 
-        // ファクトリ関数
+        /// <summary>ボックスコライダーを作成する</summary>
         static ColliderComponent MakeBox(DirectX::XMFLOAT3 halfExtent, DirectX::XMFLOAT3 offset = {})
         {
             ColliderComponent c;
@@ -43,6 +46,8 @@ namespace ecs
             c.Offset = offset;
             return c;
         }
+
+        /// <summary>スフィアコライダーを作成する</summary>
         static ColliderComponent MakeSphere(float radius, DirectX::XMFLOAT3 offset = {})
         {
             ColliderComponent c;
@@ -51,6 +56,8 @@ namespace ecs
             c.Offset = offset;
             return c;
         }
+
+        /// <summary>カプセルコライダーを作成する</summary>
         static ColliderComponent MakeCapsule(float radius, float halfHeight, DirectX::XMFLOAT3 offset = {})
         {
             ColliderComponent c;
@@ -63,24 +70,43 @@ namespace ecs
     };
 
     /// <summary>
-	/// 衝突開始イベント。衝突が開始したフレームに発行される。
+    /// 衝突開始イベント
     /// </summary>
     struct ENGINE_API CollisionEnterEvent
     {
+        /// <summary>衝突した相手のエンティティ一覧</summary>
         std::vector<entt::entity> OtherEntities;
     };
 
     /// <summary>
-	/// センサーへの侵入イベント。センサーに他のエンティティが侵入したフレームに発行される。
+    /// 衝突継続イベント
+    /// </summary>
+    struct ENGINE_API CollisionStayEvent
+    {
+        /// <summary>衝突している相手のエンティティ一覧</summary>
+        std::vector<entt::entity> OtherEntities;
+    };
+
+    /// <summary>
+    /// センサーへの侵入イベント
     /// </summary>
     struct ENGINE_API SensorEnterEvent
     {
+        /// <summary>侵入した訪問者のエンティティ一覧</summary>
         std::vector<entt::entity> Visitors;
     };
 
+    /// <summary>
+    /// センサー継続侵入イベント
+    /// </summary>
+    struct ENGINE_API SensorStayEvent
+    {
+        /// <summary>侵入している訪問者のエンティティ一覧</summary>
+        std::vector<entt::entity> Visitors;
+    };
 
     /// <summary>
-    /// センサー（当たり判定のみで物理演算に影響されないオブジェクト）を示すタグコンポーネント。
+    /// センサータグコンポーネント
     /// </summary>
     struct ENGINE_API SensorTagComponent {};
 }

@@ -54,13 +54,20 @@ namespace graphics
 			{ { 1.0f, 1.0f, 0.0f }, { 1.0f, 1.0f } }, // 右下
 		};
 
+		//mVB = std::make_unique<VertexBuffer>();
+		//if (!mVB->CreateDynamic(sizeof(vertices), sizeof(SpriteVertex)))
+		//{
+		//	DEBUG_LOG(sys::eLogLevel::Error, "ShapeRenderer: Failed to create vertex buffer.");
+		//	return false;
+		//}
+		//mVB->Update(vertices, sizeof(vertices));
+
 		mVB = std::make_unique<VertexBuffer>();
-		if (!mVB->CreateDynamic(sizeof(vertices), sizeof(SpriteVertex)))
+		if (!mVB->CreateStaticSync(vertices, sizeof(vertices), sizeof(SpriteVertex)))
 		{
-			DEBUG_LOG(sys::eLogLevel::Error, "ShapeRenderer: Failed to create vertex buffer.");
+			DEBUG_LOG(sys::eLogLevel::Error, "SpriteRenderer: Failed to create vertex buffer.");
 			return false;
 		}
-		mVB->Update(vertices, sizeof(vertices));
 
 		// 依存オブジェクトの保存
 		mHeapManager = &heapManager;
@@ -119,7 +126,7 @@ namespace graphics
 		cmdList->SetPipelineState(mPipeline->GetPipelineState());
 		cmdList->SetGraphicsRootSignature(mPipeline->GetRootSignature());
 
-		// SRV ヒープのセット（SetDescriptorHeaps は Flip 前の最後呼び出しが有効）
+		// SRV ヒープのセット
 		ID3D12DescriptorHeap* heaps[] = { mHeapManager->GetNativeHeap() };
 		cmdList->SetDescriptorHeaps(_countof(heaps), heaps);
 
@@ -127,7 +134,7 @@ namespace graphics
 		mVB->Set(cmdList, 0);
 		cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-		// [t0] StructuredBuffer（全図形の定数データ）
+		// 全図形の定数データ
 		cmdList->SetGraphicsRootDescriptorTable(0, mInstanceBuffer->GetGpuHandle());
 
 		// テクスチャの差し替えが無いため、全インスタンスを 1 回の DrawInstanced で発行
@@ -140,38 +147,29 @@ namespace graphics
 	/// </summary>
 	void ShapeRenderer::UpdateAndDraw(entt::registry& registry)
 	{
-		// Transform + Shape を持つエンティティを収集
+		// 毎フレームのvector生成を避けるため、メンバ変数(mRenderItems)を使い回す
+		mRenderItems.clear();
 		auto view = registry.view<ecs::Transform, ecs::Shape>();
-
-		struct RenderItem
-		{
-			const ecs::Transform* transform;
-			const ecs::Shape* shape;
-		};
-
-		std::vector<RenderItem> items;
-		items.reserve(view.size_hint());
+		mRenderItems.reserve(view.size_hint());
 
 		view.each([&](auto, ecs::Transform& tr, ecs::Shape& sp)
 			{
 				if (!sp.IsVisible) return;
-				items.push_back({ &tr, &sp });
+				mRenderItems.push_back({ &tr, &sp });
 			});
 
-		// Layer 昇順でソート（値が小さいほど手前＝後から描く）
-		// テクスチャ依存のバッチングが無いため、ソートは純粋に描画順保証のため。
-		std::sort(items.begin(), items.end(),
+		// レイヤーでソート
+		std::sort(mRenderItems.begin(), mRenderItems.end(),
 			[](const RenderItem& a, const RenderItem& b)
 			{
-				return a.shape->Layer < b.shape->Layer;
+				return a.Shape->Layer < b.Shape->Layer;
 			});
 
-		// SV_InstanceID はバッファ内の連続インデックスとして使われるため、
-		// ソート順 = mReservedData への追加順をそのまま反映させる。
-		for (const auto& item : items)
+		// ソート順で反映
+		for (const auto& item : mRenderItems)
 		{
 			const ShapeShaderData shaderData =
-				CalculateShaderData(*item.transform, *item.shape);
+				CalculateShaderData(*item.Transform, *item.Shape);
 			Draw(shaderData);
 		}
 	}
@@ -183,11 +181,11 @@ namespace graphics
 	{
 		using namespace DirectX;
 
-		// 仮想解像度（毎フレーム取得せず Window 参照で取得）
+		// 仮想解像度
 		const float vWidth = static_cast<float>(mWindow->GetVirtualWidth());
 		const float vHeight = static_cast<float>(mWindow->GetVirtualHeight());
 
-		// 描画サイズの決定（Shape はテクスチャを持たないため Size は常に明示値を使用）
+		// 描画サイズの決定
 		const float w = sp.Size.x * sp.DrawScale.x;
 		const float h = sp.Size.y * sp.DrawScale.y;
 
@@ -195,9 +193,7 @@ namespace graphics
 		const XMFLOAT2 pos2D = tr.Get2DPosition();
 		const float    rotRad = tr.Get2DRotation();
 
-		// ワールド行列の合成:
-		//   Pivot（基準点オフセット） → Scale + Flip → Rotation(Z) → Translation
-		// Sprite と完全に同一の合成順序・意味を採用する。
+		// ワールド行列の合成
 		const XMMATRIX mPivot = XMMatrixTranslation(-sp.Pivot.x, -sp.Pivot.y, 0.0f);
 		const XMMATRIX mScale = XMMatrixScaling(w * sp.Flip.x, h * sp.Flip.y, 1.0f);
 		const XMMATRIX mRot = XMMatrixRotationZ(rotRad);

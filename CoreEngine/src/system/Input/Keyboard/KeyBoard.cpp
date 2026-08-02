@@ -5,18 +5,13 @@
 
 namespace sys
 {
-    // -----------------------------------------------------------------------
- //  コンストラクタ
- // -----------------------------------------------------------------------
     Keyboard::Keyboard()
     {
         mCurrKeys.fill(false);
         mPrevKeys.fill(false);
     }
 
-    // -----------------------------------------------------------------------
-    //  ウィンドウメッセージ処理
-    // -----------------------------------------------------------------------
+    // ウィンドウメッセージ
     bool Keyboard::ProcessEvent(UINT message, WPARAM vkCode)
     {
         if (message == WM_KEYDOWN || message == WM_SYSKEYDOWN)
@@ -32,17 +27,13 @@ namespace sys
         return false;
     }
 
-    // -----------------------------------------------------------------------
-    //  フレーム更新
-    // -----------------------------------------------------------------------
+    // フレーム更新
     void Keyboard::Update()
     {
         mPrevKeys = mCurrKeys;
     }
 
-    // -----------------------------------------------------------------------
-    //  状態クエリ
-    // -----------------------------------------------------------------------
+    // 状態クエリ
     bool Keyboard::IsPressed(eKeyCode keyCode) const
     {
         if (!IsValid(keyCode)) return false;
@@ -63,9 +54,16 @@ namespace sys
         return !mCurrKeys[idx] && mPrevKeys[idx];
     }
 
-    // -----------------------------------------------------------------------
-    //  private ヘルパー
-    // -----------------------------------------------------------------------
+    bool Keyboard::IsAnyKeyHeld() const
+    {
+        for (int i = 0; i < kKeyCount; ++i)
+        {
+            if (mCurrKeys[i]) return true;
+        }
+        return false;
+    }
+
+    // Privateヘルパー
     void Keyboard::SetKeyState(WPARAM vkCode, bool isDown)
     {
         const eKeyCode code = ToKeyCode(vkCode);
@@ -305,7 +303,7 @@ namespace sys
         case VK_SUBTRACT: return eKeyCode::Subtract;
         case VK_MULTIPLY: return eKeyCode::Multiply;
         case VK_DIVIDE:   return eKeyCode::Divide;
-        case VK_DECIMAL:  return eKeyCode::NumpadPeriod; // 修正: Period との衝突を解消
+        case VK_DECIMAL:  return eKeyCode::NumpadPeriod;
 
             // ファンクションキー
         case VK_F1:  return eKeyCode::F1;

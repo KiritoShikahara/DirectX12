@@ -73,6 +73,14 @@ namespace graphics
         mgr.GetManager()->SetPaused(mHandle, !visible);
     }
 
+    void EffectObject::SetRenderingVisible(bool visible)
+    {
+        if (mHandle < 0) return;
+        auto& mgr = EffekseerManager::Get();
+        if (!mgr.IsInitialized()) return;
+        mgr.GetManager()->SetShown(mHandle, visible);
+    }
+
     bool EffectObject::IsPlaying() const
     {
         if (mHandle < 0) return false;

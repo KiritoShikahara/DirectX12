@@ -1,4 +1,0 @@
-～現状
-：初期化に関してはAPP側でEngine::Initializeを呼ぶような感じになっている。
-それに関して：SceneFactoryにようなシステムは本来Engine::Initializeの前に設定を保存しているファイル（DB）から取得してセットしたい。
-時間があれば実装するので現状は今のEngineの前に初期化する感じで。

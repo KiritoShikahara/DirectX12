@@ -85,9 +85,7 @@ namespace sys
         return (std::abs(value) < deadZone) ? 0.0f : value;
     }
 
-    // -----------------------------------------------------------------------
- //  ボタンクエリ
- // -----------------------------------------------------------------------
+    // ボタンクエリ
     bool Pad::IsPressed(ePadButton button) const
     {
         const int li = static_cast<int>(TriggerSide::Left);
@@ -142,9 +140,7 @@ namespace sys
         }
     }
 
-    // -----------------------------------------------------------------------
-    //  スティック取得
-    // -----------------------------------------------------------------------
+    // スティック取得
     DirectX::XMFLOAT2 Pad::GetLeftStick3D() const
     {
         return mLeftStick;
@@ -165,9 +161,22 @@ namespace sys
         return { mRightStick.x, -mRightStick.y };
     }
 
-    // -----------------------------------------------------------------------
-    //  ImGui デバッグ表示
-    // -----------------------------------------------------------------------
+    bool Pad::IsAnyInput() const
+    {
+        // ボタン
+        if (mCurrButtons != 0) return true;
+
+        // トリガー（デッドゾーン適用済み）
+        if (mLeftTrigger > 0.0f || mRightTrigger > 0.0f) return true;
+
+        // スティック（デッドゾーン適用済みなので 0 でなければ入力あり）
+        if (mLeftStick.x != 0.0f || mLeftStick.y != 0.0f) return true;
+        if (mRightStick.x != 0.0f || mRightStick.y != 0.0f) return true;
+
+        return false;
+    }
+
+    // ImGuiデバック表示
     void Pad::ImGuiUpdate()
     {
 #ifdef _DEBUG

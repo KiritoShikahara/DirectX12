@@ -75,17 +75,7 @@
 #include<system/AssetPath/AssetPathManager.h>
 
 //// デバック用機能
-#if defined(_DEBUG)
-    // デバッグビルドならデフォルトで有効
-#define DEV_TOOL_ENABLED  (1)
-#define ENABLE_ASSERT     (1)
-#define DEBUG_DRAW_COLLISION (DEV_TOOL_ENABLED)
-#else
-    // リリースビルドでも開発ツールを使いたい場合はここを (1) にする
-#define DEV_TOOL_ENABLED  (0)
-#define ENABLE_ASSERT     (0)
-#define DEBUG_DRAW_COLLISION (0)
-#endif
+#include<Utility/config/DebugConfig.h>
 
 #endif //PCH_H
 

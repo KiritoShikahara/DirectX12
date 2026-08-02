@@ -6,6 +6,19 @@ endif()
 
 project(Effekseer C CXX)
 
+# 本来はvendor元のEffekseerリポジトリのルートCMakeLists.txtで定義されている関数だが、
+# このプロジェクトはsrc/以下のみを取り込んでいるため未定義になっていた。
+# source_group()でIDE上のフィルタ分けをするだけの関数でビルド成果物には影響しないため、
+# 各サブディレクトリのCMakeLists.txtからの呼び出しをそのまま通すためにここで補う。
+function(FilterFolder DirPath)
+    foreach(_source IN ITEMS ${DirPath})
+        get_filename_component(_source_path "${_source}" PATH)
+        string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}" "" _group_path "${_source_path}")
+        string(REPLACE "/" "\\" _group_path "${_group_path}")
+        source_group("${_group_path}" FILES "${_source}")
+    endforeach()
+endfunction()
+
 # C++ version
 if(APPLE)
     set(CMAKE_CXX_STANDARD 14)

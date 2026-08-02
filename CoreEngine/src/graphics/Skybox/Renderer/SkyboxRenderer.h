@@ -3,6 +3,8 @@
 #include<Utility/Singleton/Singleton.hpp>
 
 #include<memory>
+#include<vector>
+#include<filesystem>
 #include<entt/entt.hpp>
 
 #include"../Pipeline/SkyboxPipeline.h"
@@ -39,14 +41,30 @@ namespace graphics
         /// <param name="sceneBufferGpuHandle">FbxRenderer::mSceneBuffer の GPU ハンドル (t8)</param>
         void End(ID3D12GraphicsCommandList* cmdList, D3D12_GPU_DESCRIPTOR_HANDLE sceneBufferGpuHandle);
 	private:
+        // UpdateAndDraw() 内で収集する描画対象1件分
+        struct Entry
+        {
+            int                          Priority = 0;
+            float                        Weight = 0.0f;
+            const std::filesystem::path* TexturePath = nullptr;
+        };
+
         std::unique_ptr<SkyboxPipeline> mPipeline;
         GDescriptorHeapManager* mHeapManager = nullptr;
 
-        // UpdateAndDraw() → End() へ渡す描画パラメータ
+        // UpdateAndDraw()の一時バッファ。毎フレームclear()して再利用する
+        std::vector<Entry> mEntries;
+
+        // UpdateAndDraw()からEnd() へ渡す描画パラメータ
         const Texture* mTexA = nullptr;
         const Texture* mTexB = nullptr;
         float          mBlendWeight = 0.0f;
         bool           mHasDraw = false;
+
+        std::filesystem::path mCachedPathA;
+        const Texture*        mCachedTexA = nullptr;
+        std::filesystem::path mCachedPathB;
+        const Texture*        mCachedTexB = nullptr;
 	};
 }
 

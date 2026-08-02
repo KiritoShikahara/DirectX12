@@ -27,6 +27,12 @@
 #include<graphics/Fbx/Renderer/FbxRenderer.h>
 #include<graphics/Sprite/Renderer/SpriteRenderer.h>
 #include<graphics/Line/Renderer/PhysicsDebugRenderer.h>
+#include<graphics/Line/Renderer/LightDebugRenderer.h>
+
+// Editor (_DEBUG専用の配置/選択/Play-Stopワークフロー)
+#include<system/Editor/EditorManager.h>
+#include<system/Editor/EditorSystem.h>
+#include<system/Editor/EditorUI.h>
 #include<graphics/Transition/TransitionRenderer.h>
 
 // Resource
@@ -40,6 +46,8 @@
 #include<system/Light/LightSystem.h>
 #include<ecs/entity/EntityManager.h>
 #include<ecs/system/manager/ComponentSystemManager.h>
+#include<system/Time/TimeManager.h>
+#include<system/Time/PerformanceMonitor.h>
 
 // Physics
 #include<system/Physics/System/PhysicsSystem.h>
@@ -78,6 +86,10 @@ namespace sys
         wctx.VirtualWidth = 1920;
         wctx.VirtualHeight = 1080;
         data::ApplyWindowConfig(WindowCfg, wctx);
+#if !DEV_TOOL_ENABLED
+        // Releaseビルドのみ、設定ファイルの値に関わらず強制的にフルスクリーンで起動する
+        wctx.IsFullScreen = true;
+#endif
         return EngineContext({ wctx });
     }
 
@@ -87,7 +99,10 @@ namespace sys
 
         SINGLETON_REF(sys::AssetPathManager, AssetManager);
         sys::AssetPathManager::Get().Initialize();
-        mTime.Initialize();
+
+        mTimeManager = &::sys::TimeManager::Get();
+
+        mTimeManager->Initialize();
 
         // コア部分の初期化（Window Dx12など）
         if (this->InitializeCore() == false) return false;
@@ -138,6 +153,10 @@ namespace sys
         if (mDX12Renderer != nullptr)
             mDX12Renderer->WaitForGPU();
 
+        // 描画コマンド記録用ワーカーを停止する（以降 Render() は呼ばれない）
+        if (mRenderThreadPool != nullptr)
+            mRenderThreadPool->Finalize();
+
         FbxRenderer::Get().Finalize();
         SkyboxRenderer::Get().Finalize();
         PrimitiveResourceManager::Get().Finalize();
@@ -147,24 +166,28 @@ namespace sys
         ShapeRenderer::Get().Finalize();
         TransitionRenderer::Get().Finalize();
 
-#ifdef _DEBUG
+        sys::PerformanceMonitor::Get().Finalize();
+
+#if DEV_TOOL_ENABLED
         graphics::PhysicsDebugRenderer::Get().Finalize();
+        graphics::LightDebugRenderer::Get().Finalize();
+        sys::EditorUI::Get().Finalize();
 #endif
 
-        // 2. リソースマネージャーのクリア（ここで Texture 等のディスクリプタが解放される）
+        // リソースマネージャーのクリア
         FbxResourceManager::Get().Clear();
         TextureManager::Get().Clear();
 
-        // 3. UIの終了
+        // UIの終了
         ImGuiManager::Get().Finalize();
 
-        // 4. 物理エンジンなどの終了
+        // 物理エンジンなどの終了
         sys::PhysicsManager::Get().Finalize();
 
-        // 5. 基盤（ヒープマネージャ）の終了（すべてが解放された後に呼ぶ）
+        // 基盤（ヒープマネージャ）の終了（すべてが解放された後に呼ぶ）
         graphics::GDescriptorHeapManager::Get().Finalize();
 
-        // 6. DX12 デバイス/レンダラーの破棄
+        // DX12 デバイス/レンダラーの破棄
         mDX12Renderer->Finalize();
         mDX12Renderer = nullptr;
 
@@ -210,6 +233,10 @@ namespace sys
             *mWindow, *mDevice,
             *mDX12Renderer->GetContext(),
             descriptorHeapManager) == false) return false;
+
+        // 描画コマンド記録用ワーカープール（Shadow / Scene / Sprite の3チャネル分）
+        mRenderThreadPool = std::make_unique<utility::ThreadPool>();
+        mRenderThreadPool->Initialize(3);
 
         return true;
     }
@@ -278,8 +305,10 @@ namespace sys
         // 物理
         SINGLETON_REF(sys::PhysicsManager, PhysicsManager);
         if (PhysicsManager.Initialize(mEntityManager->GetRegistry()) == false) return false;
-#ifdef _DEBUG
+#if DEV_TOOL_ENABLED
         if (graphics::PhysicsDebugRenderer::Get().Initialize() == false) return false;
+        if (graphics::LightDebugRenderer::Get().Initialize() == false) return false;
+        if (sys::EditorUI::Get().Initialize(mEntityManager->GetRegistry()) == false) return false;
 #endif
         // データベース初期化
         ::data::DataRegistry::Get().Init("Assets/Bin/DB/db.db");
@@ -309,35 +338,70 @@ namespace sys
     {
         auto& registry = mEntityManager->GetRegistry();
         sys::LightSystem::DebugUI(registry);
+
+        sys::PerformanceMonitor::Get().Initialize();
     }
 
     void Engine::Update()
     {
-        { mTime.Update(); }
+        auto& time = GetTime();
+        time.Update();
 
         auto& registry = ecs::EntityManager::Get().GetRegistry();
-        auto  dt = mTime.GetDeltaTime();
-        float rawDt = mTime.GetRawDeltaTime();
+        auto  dt = time.GetDeltaTime();
+        float rawDt = time.GetRawDeltaTime();
+
+        sys::PerformanceMonitor::Get().RecordFrame(rawDt);
+
+#if DEV_TOOL_ENABLED
+        // Editモード中はゲームロジック・物理・アニメ・エフェクトを一切動かさず、
+        // 表示に必要な最小限のシステムとエディタ操作(選択/配置/ドラッグ)のみ実行する。
+        // Playモードでは従来通りフル更新する。
+        if (sys::EditorManager::Get().IsPlaying())
+        {
+            UpdateGameplay(dt, rawDt, registry);
+        }
+        else
+        {
+            sys::CameraSystem::Get().Update(registry);
+            sys::LightSystem::Update(registry);
+            sys::EditorSystem::Get().Update(registry);
+        }
+#else
+        // Releaseビルドにはエディタ機能自体が無いため、常にフル更新する。
+        UpdateGameplay(dt, rawDt, registry);
+#endif
+    }
+
+    void Engine::UpdateGameplay(float dt, float rawDt, entt::registry& registry)
+    {
+        auto& time = GetTime();
 
         {
+            sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::GameplayUpdate);
             mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PreUpdate, registry, dt, rawDt);
             mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::Update, registry, dt, rawDt);
+            sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::GameplayUpdate);
 
-            // シーン切り替えリクエスト（ChangeSceneWithTransition 等）は上記の Update フェーズ内、
-            // 例えば TitleInputSystem::Update で発行される。
-            // そのため SceneManager::Update（フェード進行）は各システムの実行後に呼び、
-            // 同フレーム中にリクエストされたトランジションを 1フレーム遅延なく開始できるようにする。
+            sys::PhysicsSystem::ClearCollisionEvents(registry);
+
             mSceneManager->Update(rawDt);
 
+            sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::Physics);
             sys::PhysicsSystem::BuildPendingBodies(registry);
             sys::PhysicsSystem::SyncFromTransform(registry);
 
-            while (mTime.AccumulateFixedStep())
-                sys::PhysicsSystem::Update(registry, mTime.GetFixedDeltaTime());
+            ::sys::PhysicsSystem::ApplyMoveVelocity(registry, time.GetFixedDeltaTime());
+
+            while (time.AccumulateFixedStep())
+                sys::PhysicsSystem::Update(registry, time.GetFixedDeltaTime());
 
             sys::PhysicsSystem::SyncToTransform(registry);
+            sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::Physics);
 
+            sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::GameplayUpdate);
             mComponentSystemManager->ExecutePhase(ecs::eUpdatePhase::PostUpdate, registry, dt, rawDt);
+            sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::GameplayUpdate);
         }
 
         {
@@ -347,82 +411,138 @@ namespace sys
             // ライト更新 (LightViewProj の計算も含む)
             sys::LightSystem::Update(registry);
 
+            sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::EffectUpdate);
             graphics::EffekseerManager::Get().Update(registry, dt);
+            sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::EffectUpdate);
         }
     }
 
+    /// <summary>
+    /// 描画。
+    /// フレームは以下の 2 フェーズ
+    /// 収集フェーズ  Begin() / UpdateAndDraw()
+    ///
+    /// 記録フェーズ  End() / Flush()
+    /// </summary>
     void Engine::Render()
     {
+        using namespace graphics;
+
         auto  context = mDX12Renderer->GetContext();
         auto& registry = mEntityManager->GetRegistry();
-        auto  cmdList = context->GetCommandList();
 
-        // Begin
+        // begin
         {
             mDX12Renderer->BeginFrame();
-            graphics::RenderContext::Get().SetFrameIndex(context->GetCurrentFrameIndex());
             mImGuiManager->NewFrame();
             mImGuiManager->Update();
         }
 
-        // Draw
+        SINGLETON_REF(graphics::FbxRenderer, fbxRenderer);
+        SINGLETON_REF(graphics::SkyboxRenderer, skyboxRenderer);
+        SINGLETON_REF(graphics::SpriteRenderer, spriteRenderer);
+        SINGLETON_REF(graphics::ShapeRenderer, shapeRenderer);
+        SINGLETON_REF(graphics::TextRenderer, textRenderer);
+
+        // 収集フェーズ
         {
-            SINGLETON_REF(graphics::FbxRenderer, FbxRenderer);
+            sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::RenderCollect);
 
-            // フレームデータ取得
-            FbxRenderer.Begin();
-            FbxRenderer.UpdateAndDraw(registry);
+            fbxRenderer.Begin();
+            fbxRenderer.UpdateAndDraw(registry);
 
-            //    RTV を外して Shadow Map (DSV) に深度を書き込む。
-            FbxRenderer.DrawShadowPass(cmdList);
+            skyboxRenderer.Begin();
+            skyboxRenderer.UpdateAndDraw(registry);
 
-            // メインのRTV/DSV ビューポートを再セット
-            context->RestoreMainRenderTarget(cmdList);
-
-            // 通常描画パス (Shadow Map は SRV として t10 にバインド済み)
-            FbxRenderer.End(cmdList);
-
-
-            // skybox
-            SINGLETON_REF(graphics::SkyboxRenderer, SkyboxRenderer);
-            SkyboxRenderer.Begin();
-            SkyboxRenderer.UpdateAndDraw(registry);
-            SkyboxRenderer.End(cmdList, FbxRenderer.GetSceneBufferGpuHandle());
-
-            // effect
-            graphics::EffekseerManager::Get().Draw(registry, cmdList);
-
-            // 2D Sprite
-            SINGLETON_REF(graphics::SpriteRenderer, spriteRenderer);
             spriteRenderer.Begin();
             spriteRenderer.UpdateAndDraw(registry);
-            spriteRenderer.End(cmdList);
 
-            // Shape
-            SINGLETON_REF(graphics::ShapeRenderer, ShapeRenderer);
-            ShapeRenderer.Begin();
-            ShapeRenderer.UpdateAndDraw(registry);
-            ShapeRenderer.End(cmdList);
+            shapeRenderer.Begin();
+            shapeRenderer.UpdateAndDraw(registry);
 
-            // テキスト
-            SINGLETON_REF(graphics::TextRenderer, TextRenderer);
-            TextRenderer.Begin();
-            TextRenderer.UpdateAndDraw(registry);
-            TextRenderer.Flush(cmdList);
+            textRenderer.Begin();
+            textRenderer.UpdateAndDraw(registry);
 
-#ifdef _DEBUG
-            graphics::PhysicsDebugRenderer::Get().Draw(registry, cmdList);
+#if DEV_TOOL_ENABLED
+            SINGLETON_REF(graphics::PhysicsDebugRenderer, physicsDebugRenderer);
+            physicsDebugRenderer.Begin();
+            physicsDebugRenderer.UpdateAndDraw(registry);
+
+            SINGLETON_REF(graphics::LightDebugRenderer, lightDebugRenderer);
+            lightDebugRenderer.Begin();
+            lightDebugRenderer.UpdateAndDraw(registry);
 #endif
 
-            // シーントランジション（フェードイン/アウト）のフルスクリーンオーバーレイ。
-            // すべてのシーン描画コマンドの後、EndFrame() より前に発行する必要がある。
-            mSceneManager->DrawTransition(cmdList);
+            sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::RenderCollect);
+        }
+
+        // 記録フェーズ
+        {
+            std::function<void()> parallelTasks[3] =
+            {
+                // Shadow: RTV を外して Shadow Mapに深度を書き込む。
+                [&]()
+                {
+                    sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::ShadowPass);
+                    fbxRenderer.DrawShadowPass(
+                        context->GetCommandList(eRenderChannel::Shadow));
+                    sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::ShadowPass);
+                },
+                // Scene: 通常描画パスと Skybox
+                [&]()
+                {
+                    sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::ScenePass);
+                    auto* cmdList = context->GetCommandList(eRenderChannel::Scene);
+                    fbxRenderer.End(cmdList);
+                    skyboxRenderer.End(cmdList, fbxRenderer.GetSceneBufferGpuHandle());
+                    sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::ScenePass);
+                },
+                // Sprite: 2D 描画（Sprite → Shape → Text の順）
+                [&]()
+                {
+                    sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::SpritePass);
+                    auto* cmdList = context->GetCommandList(eRenderChannel::Sprite);
+                    spriteRenderer.End(cmdList);
+                    shapeRenderer.End(cmdList);
+                    textRenderer.Flush(cmdList);
+                    sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::SpritePass);
+                },
+            };
+            mRenderThreadPool->Dispatch(parallelTasks, 3);
+
+            // Effect: Effekseer はスレッドセーフでないため専用チャネルに隔離し、
+            //         ワーカーと並行してメインスレッドで記録する。
+            sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::EffectDraw);
+            EffekseerManager::Get().Draw(
+                registry, context->GetCommandList(eRenderChannel::Effect));
+            sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::EffectDraw);
+
+            // Debug: デバッグ描画・トランジション・ImGui。
+            //        いずれもスレッドセーフでないためメインスレッドで記録する。
+            {
+                sys::PerformanceMonitor::Get().BeginSection(sys::ePerfSection::Debug);
+                auto* cmdList = context->GetCommandList(eRenderChannel::Debug);
+
+#if DEV_TOOL_ENABLED
+                graphics::PhysicsDebugRenderer::Get().End(cmdList);
+                graphics::LightDebugRenderer::Get().End(cmdList);
+#endif
+                // シーントランジションのフルスクリーンオーバーレイ
+                mSceneManager->DrawTransition(cmdList);
+
+                // ImGui はスレッドセーフでないため Debug チャネルで記録する。
+                mImGuiManager->EndFrame(cmdList);
+                sys::PerformanceMonitor::Get().EndSection(sys::ePerfSection::Debug);
+            }
+
+            mRenderThreadPool->WaitAll();
         }
 
         // End
         {
-            mImGuiManager->EndFrame();
             mDX12Renderer->EndFrame();
+
+            mDX12Renderer->WaitForGPU();
         }
     }
 
@@ -430,6 +550,7 @@ namespace sys
     {
         mInputManager->Update();
         mSceneManager->PostUpdate();
+        ::sys::PhysicsSystem::ClearMoveVelocity(mEntityManager->GetRegistry());
     }
 
 } // namespace sys

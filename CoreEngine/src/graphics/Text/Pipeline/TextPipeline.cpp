@@ -12,9 +12,7 @@ namespace graphics
     {
         ID3D12Device* d3d = device.GetDevice();
 
-        // -----------------------------------------------------------------------
-        //  Root Signature
-        // -----------------------------------------------------------------------
+        // Root Signature
         CD3DX12_DESCRIPTOR_RANGE1 cbvRange, srvRange;
         cbvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0); // b0
         srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0
@@ -64,9 +62,7 @@ namespace graphics
             return false;
         }
 
-        // -----------------------------------------------------------------------
-        //  シェーダー読み込み
-        // -----------------------------------------------------------------------
+        // シェーダー
         auto vs = shaderManager.GetShader(ASSET_PATH("/Engine/Assets/Shader/Text/VS_Text.hlsl").string(), "main", "vs_6_0");
         auto ps = shaderManager.GetShader(ASSET_PATH("/Engine/Assets/Shader/Text/PS_Text.hlsl").string(), "main", "ps_6_0");
 
@@ -76,16 +72,14 @@ namespace graphics
             return false;
         }
 
-        // -----------------------------------------------------------------------
-        //  PSO
-        // -----------------------------------------------------------------------
+        // PSO
         D3D12_INPUT_ELEMENT_DESC layout[] =
         {
             { "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0,  0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
             { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0,  8, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         };
 
-        // アルファブレンド (src=SA, dst=1-SA)
+        // アルファブレンド
         D3D12_BLEND_DESC blend = {};
         blend.RenderTarget[0].BlendEnable = TRUE;
         blend.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;

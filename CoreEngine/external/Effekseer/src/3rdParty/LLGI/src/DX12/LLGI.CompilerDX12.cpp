@@ -25,9 +25,17 @@ CompilerDX12::CompileShaderResultDX12 CompilerDX12::CompileShader(const char* te
 		flag |= D3DCOMPILE_PACK_MATRIX_ROW_MAJOR;
 	}
 
-#if !_DEBUG
-	flag = flag | D3DCOMPILE_OPTIMIZATION_LEVEL3;
-#endif
+// [2026-07-21 bisecting] Disabled while diagnosing a bug where Effekseer particles
+// always render as flat untextured quads in optimized (!_DEBUG) builds only.
+// D3DCOMPILE_OPTIMIZATION_LEVEL3 is a known-risky flag with reported miscompilation
+// issues in the legacy FXC compiler (d3dcompiler.h), and this is where Effekseer's
+// built-in shaders get compiled at runtime. Debug builds (which never set this flag)
+// are unaffected, which is consistent with this being the cause.
+// If this fixes the issue, keep it disabled (default = level1 equivalent) for now.
+// If not, this is unrelated -- revert along with this comment.
+//#if !_DEBUG
+//	flag = flag | D3DCOMPILE_OPTIMIZATION_LEVEL3;
+//#endif
 
 	HRESULT hr;
 

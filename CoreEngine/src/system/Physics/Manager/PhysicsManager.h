@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include<Utility/Singleton/Singleton.hpp>
 
 #include <Jolt/Jolt.h>
@@ -24,7 +24,8 @@ namespace sys
 		static constexpr JPH::ObjectLayer NonMoving = 0; // 静的コライダー
 		static constexpr JPH::ObjectLayer Moving = 1; // 動的・キネマティック
 		static constexpr JPH::ObjectLayer Sensor = 2; // センサー（トリガー）
-		static constexpr JPH::ObjectLayer Count = 3;
+		static constexpr JPH::ObjectLayer EnemyMoving = 3;	// 動的だが同じレイヤー同士とは衝突しないオブジェクト用。
+		static constexpr JPH::ObjectLayer Count = 4;
 	}
 
 	/// <summary>
@@ -73,6 +74,12 @@ namespace sys
 		bool                     IsInitialized() const { return mIsInitialized; }
 
 		JPH::JobSystemThreadPool& GetJobSystem() { return *mJobSystem; }
+
+		/// <summary>
+		/// 衝突イベントリスナーの取得。
+		/// PhysicsSystem::Update() の直後に FlushPendingEvents() を呼ぶために使う。
+		/// </summary>
+		ContactListener& GetContactListener() { return *mContactListener; }
 
 	private:
 

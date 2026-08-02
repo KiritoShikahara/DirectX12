@@ -14,18 +14,14 @@ namespace graphics
 		ShapePipeline() = default;
 		~ShapePipeline() = default;
 
-		// Copy/move disabled (sole owner of GPU objects)
 		ShapePipeline(const ShapePipeline&) = delete;
 		ShapePipeline& operator=(const ShapePipeline&) = delete;
 		ShapePipeline(ShapePipeline&&) = delete;
 		ShapePipeline& operator=(ShapePipeline&&) = delete;
 
 		/// <summary>
-		/// Creates the root signature and PSO.
+		/// 生成
 		/// </summary>
-		/// <param name="device">GPU device</param>
-		/// <param name="shaderManager">Shader compile/cache manager</param>
-		/// <returns>true on success</returns>
 		bool Create(DX12Device& device, ShaderManager& shaderManager);
 
 		ID3D12RootSignature* GetRootSignature() const;

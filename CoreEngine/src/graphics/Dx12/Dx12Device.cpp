@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "Dx12Device.h"
 #include<initguid.h>
 #include<d3dx12.h>
@@ -21,41 +21,48 @@ namespace graphics
 
 	bool DX12Device::Initialize()
 	{
-#if defined(_DEBUG) || ECSE_DEV_TOOL_ENABLED 
-		//	ƒfƒoƒbƒN‚¾‚¯ƒŠƒ\[ƒXŒŸ’m‚È‚Ç‚ğ—LŒø‚É
+#if DEV_TOOL_ENABLED 
+		//	ãƒ‡ãƒãƒƒã‚¯æ™‚ã ã‘ãƒªã‚½ãƒ¼ã‚¹æ¤œçŸ¥ãªã©ã‚’æœ‰åŠ¹ã«
 		DebugLayerOn();
 #endif
 
-		// ƒtƒ@ƒNƒgƒŠ[‚Ì‰Šú‰»
+		// COMã®åˆæœŸåŒ–
+		HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+		if (FAILED(hr))
+		{
+			return false;
+		}
+
+		// ãƒ•ã‚¡ã‚¯ãƒˆãƒªãƒ¼ã®åˆæœŸåŒ–
 		if (InitializeFactory() == false)
 		{			
-			// TODO:ƒƒOo—Í
+			// TODO:ãƒ­ã‚°å‡ºåŠ›
 			return false;
 		}
 
-		// ƒfƒoƒCƒX‚ÆD3D12MAƒAƒƒP[ƒ^[‚Ì‰Šú‰»
+		// ãƒ‡ãƒã‚¤ã‚¹ã¨D3D12MAã‚¢ãƒ­ã‚±ãƒ¼ã‚¿ãƒ¼ã®åˆæœŸåŒ–
 		if (InitializeDevice() == false)
 		{
-			// TODO:ƒƒOo—Í
+			// TODO:ãƒ­ã‚°å‡ºåŠ›
 			return false;
 		}
 
-		// ƒAƒbƒvƒ[ƒhê—pƒRƒ“ƒeƒLƒXƒg‚Ì‰Šú‰»
+		// ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰å°‚ç”¨ã‚³ãƒ³ãƒ†ã‚­ã‚¹ãƒˆã®åˆæœŸåŒ–
 		if (InitializeUploadContext() == false)
 		{
-			// TODO:ƒƒOo—Í
+			// TODO:ãƒ­ã‚°å‡ºåŠ›
 			return false;
 		}
 
 
-		// TODO:ƒƒOo—Í
+		// TODO:ãƒ­ã‚°å‡ºåŠ›
 		return true;
 
 	}
 
 	bool DX12Device::Finalize()
 	{
-		// ƒAƒbƒvƒ[ƒh‚ÌŠ®—¹‚ğ‘Ò‚Á‚Ä‚©‚çƒŠƒ\[ƒX‚ğ‰ğ•ú‚·‚é
+		// ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰ã®å®Œäº†ã‚’å¾…ã£ã¦ã‹ã‚‰ãƒªã‚½ãƒ¼ã‚¹ã‚’è§£æ”¾ã™ã‚‹
 		if (mUploadCmdQueue && mUploadFence)
 		{
 			mUploadFenceValue++;
@@ -81,7 +88,7 @@ namespace graphics
 		mMAAllocator.Reset();
 		mFactory.Reset();
 
-#if defined(_DEBUG) || ECSE_DEV_TOOL_ENABLED
+#if DEV_TOOL_ENABLED
 		if (mDebugDevice != nullptr)
 		{
 			mDebugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL | D3D12_RLDO_IGNORE_INTERNAL);
@@ -98,14 +105,18 @@ namespace graphics
 	{
 		if (pResource == nullptr || subresources.empty()) return false;
 
-		// ƒAƒƒP[ƒ^[‚ÆƒRƒ}ƒ“ƒhƒŠƒXƒg‚ğƒŠƒZƒbƒg
+		// UploadBufferData ã¨åŒã˜ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰ã‚³ãƒ³ãƒ†ã‚­ã‚¹ãƒˆ(mUploadAllocator/mUploadCmdList/mUploadFence)
+		// ã‚’å…±æœ‰ã—ã¦ã„ã‚‹ãŸã‚ã€åŒã˜ mUploadMutex ã§æ’ä»–åˆ¶å¾¡ã™ã‚‹ã€‚
+		std::lock_guard<std::mutex> lock(mUploadMutex);
+
+		// ã‚¢ãƒ­ã‚±ãƒ¼ã‚¿ãƒ¼ã¨ã‚³ãƒãƒ³ãƒ‰ãƒªã‚¹ãƒˆã‚’ãƒªã‚»ãƒƒãƒˆ
 		mUploadAllocator->Reset();
 		mUploadCmdList->Reset(mUploadAllocator.Get(), nullptr);
 
 		const UINT   numSub = static_cast<UINT>(subresources.size());
 		const UINT64 uploadBufferSize = GetRequiredIntermediateSize(pResource, 0, numSub);
 
-		// D3D12MA‚ğg‚Á‚Ä’†ŠÔƒoƒbƒtƒ@iƒXƒe[ƒWƒ“ƒOƒoƒbƒtƒ@j‚ğŠm•Û
+		// D3D12MAã‚’ä½¿ã£ã¦ä¸­é–“ãƒãƒƒãƒ•ã‚¡ï¼ˆã‚¹ãƒ†ãƒ¼ã‚¸ãƒ³ã‚°ãƒãƒƒãƒ•ã‚¡ï¼‰ã‚’ç¢ºä¿
 		D3D12MA::ALLOCATION_DESC uploadAllocDesc = {};
 		uploadAllocDesc.HeapType = D3D12_HEAP_TYPE_UPLOAD;
 
@@ -123,22 +134,22 @@ namespace graphics
 
 		if (FAILED(hr))
 		{
-			// TODO:ƒƒOo—Í
+			// TODO:ãƒ­ã‚°å‡ºåŠ›
 			return false;
 		}
 
-		// ’†ŠÔƒoƒbƒtƒ@Œo—R‚ÅVRAMƒŠƒ\[ƒX‚ÖƒRƒs[
+		// ä¸­é–“ãƒãƒƒãƒ•ã‚¡çµŒç”±ã§VRAMãƒªã‚½ãƒ¼ã‚¹ã¸ã‚³ãƒ”ãƒ¼
 		UpdateSubresources(mUploadCmdList.Get(), pResource, uploadRes.Get(),
 			0, 0, numSub, subresources.data());
 
-		// “]‘—Š®—¹ŒãAƒsƒNƒZƒ‹ƒVƒF[ƒ_[‚Å“Ç‚ß‚éó‘Ô‚Ö‘JˆÚ
+		// è»¢é€å®Œäº†å¾Œã€ãƒ”ã‚¯ã‚»ãƒ«ã‚·ã‚§ãƒ¼ãƒ€ãƒ¼ã§èª­ã‚ã‚‹çŠ¶æ…‹ã¸é·ç§»
 		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 			pResource,
 			D3D12_RESOURCE_STATE_COPY_DEST,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 		mUploadCmdList->ResourceBarrier(1, &barrier);
 
-		// ƒRƒ}ƒ“ƒh‘—M‚ÆŠ®—¹‘Ò‚¿iê—pƒLƒ…[‚ÅÀs‚·‚é‚½‚ß•`‰æƒ‹[ƒv‚ÉˆË‘¶‚µ‚È‚¢j
+		// ã‚³ãƒãƒ³ãƒ‰é€ä¿¡ã¨å®Œäº†å¾…ã¡ï¼ˆå°‚ç”¨ã‚­ãƒ¥ãƒ¼ã§å®Ÿè¡Œã™ã‚‹ãŸã‚æç”»ãƒ«ãƒ¼ãƒ—ã«ä¾å­˜ã—ãªã„ï¼‰
 		mUploadCmdList->Close();
 		ID3D12CommandList* ppCommandLists[] = { mUploadCmdList.Get() };
 		mUploadCmdQueue->ExecuteCommandLists(1, ppCommandLists);
@@ -156,27 +167,25 @@ namespace graphics
 	}
 
 	/// <summary>
-	/// GPU ‚Éƒoƒbƒtƒ@ƒf[ƒ^‚ğ“]‘—‚·‚éB
-	/// UploadTextureData ‚Æ“¯‚¶‚­ê—pƒAƒbƒvƒ[ƒhƒLƒ…[‚Å“¯Šú“I‚ÉŠ®Œ‹‚·‚éB
-	/// ƒXƒŒƒbƒhƒZ[ƒt (“à•”‚Å mutex ‚É‚æ‚Á‚Ä”r‘¼§Œä‚³‚ê‚é)B
-	/// cmdList ‚Í•s—vB•`‰æƒ‹[ƒv‚ÉˆË‘¶‚µ‚È‚¢B
+	/// GPU ã«ãƒãƒƒãƒ•ã‚¡ãƒ‡ãƒ¼ã‚¿ã‚’è»¢é€ã™ã‚‹ã€‚
+	/// UploadTextureData ã¨åŒã˜ãå°‚ç”¨ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰ã‚­ãƒ¥ãƒ¼ã§åŒæœŸçš„ã«å®Œçµã™ã‚‹ã€‚
 	/// </summary>
 	bool DX12Device::UploadBufferData(ID3D12Resource* pResource, const void* data, size_t size, D3D12_RESOURCE_STATES targetState)
 	{
 		if (!pResource || !data || size == 0)
 		{
-			// TODO: ƒƒOo—Í
+			// TODO: ãƒ­ã‚°å‡ºåŠ›
 			DEBUG_LOG(sys::eLogLevel::Error, "Fail UploadBufferData.");
 			return false;
 		}
 
-		// UploadTextureData ‚Æ“¯‚¶ƒAƒbƒvƒ[ƒhƒRƒ“ƒeƒLƒXƒg‚ğ”r‘¼“I‚Ég—p
+		// UploadTextureData ã¨åŒã˜ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰ã‚³ãƒ³ãƒ†ã‚­ã‚¹ãƒˆã‚’æ’ä»–çš„ã«ä½¿ç”¨
 		std::lock_guard<std::mutex> lock(mUploadMutex);
 
 		mUploadAllocator->Reset();
 		mUploadCmdList->Reset(mUploadAllocator.Get(), nullptr);
 
-		// ƒXƒe[ƒWƒ“ƒOƒoƒŠƒA
+		// ã‚¹ãƒ†ãƒ¼ã‚¸ãƒ³ã‚°ãƒãƒªã‚¢
 		D3D12MA::ALLOCATION_DESC uploadAllocDesc = {};
 		uploadAllocDesc.HeapType = D3D12_HEAP_TYPE_UPLOAD;
 
@@ -194,23 +203,23 @@ namespace graphics
 			return false;
 		}
 
-		// CPU->ƒXƒe[ƒWƒ“ƒO
+		// CPU->ã‚¹ãƒ†ãƒ¼ã‚¸ãƒ³ã‚°
 		void* mapped = nullptr;
 		uploadRes->Map(0, nullptr, &mapped);
 		std::memcpy(mapped, data, size);
 		uploadRes->Unmap(0, nullptr);
 		
-		// ƒXƒe[ƒWƒ“ƒO->GPU
+		// ã‚¹ãƒ†ãƒ¼ã‚¸ãƒ³ã‚°->GPU
 		mUploadCmdList->CopyBufferRegion(pResource, 0, uploadRes.Get(), 0, size);
 
-		// “]‘—Œã‚Ìó‘Ô‘JˆÚ
+		// è»¢é€å¾Œã®çŠ¶æ…‹é·ç§»
 		auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 			pResource,
 			D3D12_RESOURCE_STATE_COPY_DEST,
 			targetState);
 		mUploadCmdList->ResourceBarrier(1, &barrier);
 
-		// ƒRƒ}ƒ“ƒh‘—M + “¯Šú‘Ò‚¿
+		// ã‚³ãƒãƒ³ãƒ‰é€ä¿¡ + åŒæœŸå¾…ã¡
 		mUploadCmdList->Close();
 		ID3D12CommandList* ppCmdLists[] = { mUploadCmdList.Get() };
 		mUploadCmdQueue->ExecuteCommandLists(1, ppCmdLists);
@@ -228,11 +237,10 @@ namespace graphics
 	}
 
 	/// <summary>
-	/// ƒfƒoƒbƒOƒŒƒCƒ„[‚Ì—LŒø‰»iƒfƒoƒbƒOƒrƒ‹ƒh‚Ì‚İj
+	/// ãƒ‡ãƒãƒƒã‚°ãƒ¬ã‚¤ãƒ¤ãƒ¼ã®æœ‰åŠ¹åŒ–ï¼ˆãƒ‡ãƒãƒƒã‚°ãƒ“ãƒ«ãƒ‰ã®ã¿ï¼‰
 	/// </summary>
 	void DX12Device::DebugLayerOn()
 	{
-		// Debug5‚ÌƒCƒ“ƒ^[ƒtƒF[ƒX‚Å‹N“®
 		Debug5 debugLayer = nullptr;
 
 		HRESULT hr = D3D12GetDebugInterface(IID_PPV_ARGS(&debugLayer));
@@ -240,9 +248,8 @@ namespace graphics
 		{
 			debugLayer->EnableDebugLayer();
 			debugLayer->SetEnableAutoName(TRUE);
-			// TODO:ƒƒOo—Í
+			mDebugLayerEnabled = true;
 		}
-		//	D3D12GetDebugInterface‚Å¸”s‚·‚é‰Â”\«‚ª‚ ‚é‚ç‚µ‚¢‚Ì‚Åˆê‰•œ‹Œˆ—‚à“ü‚ê‚Ä‚¨‚«‚Ü‚·B
 		else
 		{
 			ComPtr<ID3D12Debug> debugBasic;
@@ -250,25 +257,41 @@ namespace graphics
 			if (SUCCEEDED(hr))
 			{
 				debugBasic->EnableDebugLayer();
-				// TODO:ƒƒOo—Í
+				mDebugLayerEnabled = true;
+			}
+			else
+			{
+				// ã‚°ãƒ©ãƒ•ã‚£ãƒƒã‚¯ã‚¹ãƒ„ãƒ¼ãƒ«æœªã‚¤ãƒ³ã‚¹ãƒˆãƒ¼ãƒ«ãªã©ã§å¤±æ•—ã€‚ãƒ‡ãƒãƒƒã‚°æ©Ÿèƒ½ãªã—ã§ç¶šè¡Œã€‚
+				DEBUG_LOG(sys::eLogLevel::Warning, "DebugLayer unavailable. Continuing without it.");
 			}
 		}
 	}
 
 	/// <summary>
-	/// DXGIƒtƒ@ƒNƒgƒŠ[‚Ì‰Šú‰»
+	/// DXGIãƒ•ã‚¡ã‚¯ãƒˆãƒªãƒ¼ã®åˆæœŸåŒ–
 	/// </summary>
 	bool DX12Device::InitializeFactory()
 	{
-
 		UINT factoryFlags = 0;
-#if defined(_DEBUG) || ECSE_DEV_TOOL_ENABLED
-		factoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
-#endif
-		const HRESULT hr = CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&mFactory));
+
+		// ãƒ‡ãƒãƒƒã‚°ãƒ¬ã‚¤ãƒ¤ãƒ¼ãŒå®Ÿéš›ã«æœ‰åŠ¹åŒ–ã§ããŸå ´åˆã®ã¿DXGIãƒ‡ãƒãƒƒã‚°ã‚‚è¦æ±‚ã™ã‚‹
+		if (mDebugLayerEnabled)
+		{
+			factoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
+		}
+
+		HRESULT hr = CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&mFactory));
+		if (FAILED(hr) && (factoryFlags & DXGI_CREATE_FACTORY_DEBUG))
+		{
+			// DXGIDebug.dllãŒç„¡ã„ç­‰ã§å¤±æ•—ã—ãŸå ´åˆã€ãƒ•ãƒ©ã‚°ç„¡ã—ã§ãƒªãƒˆãƒ©ã‚¤
+			DEBUG_LOG(sys::eLogLevel::Warning, "DXGIDebug unavailable. Retrying without debug flag.");
+			factoryFlags &= ~DXGI_CREATE_FACTORY_DEBUG;
+			hr = CreateDXGIFactory2(factoryFlags, IID_PPV_ARGS(&mFactory));
+		}
+
 		if (FAILED(hr))
 		{
-			// TODO:ƒƒOo—Í
+			// TODO:ãƒ­ã‚°å‡ºåŠ›
 			return false;
 		}
 
@@ -276,11 +299,11 @@ namespace graphics
 	}
 
 	/// <summary>
-	/// ƒfƒoƒCƒX‚ÆD3D12MAƒAƒƒP[ƒ^[‚Ì‰Šú‰»
+	/// ãƒ‡ãƒã‚¤ã‚¹ã¨D3D12MAã‚¢ãƒ­ã‚±ãƒ¼ã‚¿ãƒ¼ã®åˆæœŸåŒ–
 	/// </summary>
 	bool DX12Device::InitializeDevice()
 	{
-		// ˆ—”\—Í‚ª‚‚¢‡‚ÉGPU‚ğƒŠƒXƒgƒAƒbƒv‚µAÅ‰‚Éì‚ê‚½‚à‚Ì‚ğg‚¤
+		// å‡¦ç†èƒ½åŠ›ãŒé«˜ã„é †ã«GPUã‚’ãƒªã‚¹ãƒˆã‚¢ãƒƒãƒ—ã—ã€æœ€åˆã«ä½œã‚ŒãŸã‚‚ã®ã‚’ä½¿ã†
 		Adapter adapter;
 		for (UINT i = 0;
 			mFactory->EnumAdapterByGpuPreference(
@@ -290,14 +313,14 @@ namespace graphics
 			DXGI_ADAPTER_DESC3 desc;
 			adapter->GetDesc3(&desc);
 
-			// ƒ\ƒtƒgƒEƒFƒAƒŒƒ“ƒ_ƒ‰[iMicrosoft Basic Render Driver“™j‚ÍœŠO
+			// ã‚½ãƒ•ãƒˆã‚¦ã‚§ã‚¢ãƒ¬ãƒ³ãƒ€ãƒ©ãƒ¼ï¼ˆMicrosoft Basic Render Driverç­‰ï¼‰ã¯é™¤å¤–
 			if (desc.Flags & DXGI_ADAPTER_FLAG3_SOFTWARE) continue;
 
-			// D3D_FEATURE_LEVEL_12_1 ˆÈã‚ğ—v‹
+			// D3D_FEATURE_LEVEL_12_1 ä»¥ä¸Šã‚’è¦æ±‚
 			HRESULT hr = D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_1, IID_PPV_ARGS(&mDevice));
 			if (SUCCEEDED(hr))
 			{
-				// D3D12MAƒAƒƒP[ƒ^[‚Ìì¬
+				// D3D12MAã‚¢ãƒ­ã‚±ãƒ¼ã‚¿ãƒ¼ã®ä½œæˆ
 				D3D12MA::ALLOCATOR_DESC allocatorDesc = {};
 				allocatorDesc.pDevice = mDevice.Get();
 				allocatorDesc.pAdapter = adapter.Get();
@@ -305,7 +328,7 @@ namespace graphics
 				hr = D3D12MA::CreateAllocator(&allocatorDesc, &mMAAllocator);
 				if (FAILED(hr))
 				{
-					// TODO:ƒƒOo—Í
+					// TODO:ãƒ­ã‚°å‡ºåŠ›
 					return false;
 				}
 				break;
@@ -314,29 +337,29 @@ namespace graphics
 
 		if (mDevice == nullptr)
 		{
-			// TODO:ƒƒOo—Í
+			// TODO:ãƒ­ã‚°å‡ºåŠ›
 			return false;
 		}
 
-#if defined(_DEBUG) || ECSE_DEV_TOOL_ENABLED
+#if DEV_TOOL_ENABLED
 		if (FAILED(mDevice.As(&mDebugDevice)))
 		{
-			// TODO:ƒƒOo—Í
+			// TODO:ãƒ­ã‚°å‡ºåŠ›
 		}
 #endif
 		return true;
 	}
 
 	/// <summary>
-	/// ƒAƒbƒvƒ[ƒhê—pƒRƒ“ƒeƒLƒXƒg‚Ì‰Šú‰»
-	/// iƒRƒ}ƒ“ƒhƒLƒ…[EƒAƒƒP[ƒ^[EƒRƒ}ƒ“ƒhƒŠƒXƒgEƒtƒFƒ“ƒXj
+	/// ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰å°‚ç”¨ã‚³ãƒ³ãƒ†ã‚­ã‚¹ãƒˆã®åˆæœŸåŒ–
+	/// ï¼ˆã‚³ãƒãƒ³ãƒ‰ã‚­ãƒ¥ãƒ¼ãƒ»ã‚¢ãƒ­ã‚±ãƒ¼ã‚¿ãƒ¼ãƒ»ã‚³ãƒãƒ³ãƒ‰ãƒªã‚¹ãƒˆãƒ»ãƒ•ã‚§ãƒ³ã‚¹ï¼‰
 	/// </summary>
 	bool DX12Device::InitializeUploadContext()
 	{
 		HRESULT hr = S_OK;
 
-		// •`‰æƒLƒ…[‚Æ‚Í“Æ—§‚µ‚½ê—p‚Ìƒ_ƒCƒŒƒNƒgƒLƒ…[‚ğì¬
-		// iCOPYƒLƒ…[‚ÍGetRequiredIntermediateSize‚ÌŒİŠ·«ãADIRECT‚ğg—pj
+		// æç”»ã‚­ãƒ¥ãƒ¼ã¨ã¯ç‹¬ç«‹ã—ãŸå°‚ç”¨ã®ãƒ€ã‚¤ãƒ¬ã‚¯ãƒˆã‚­ãƒ¥ãƒ¼ã‚’ä½œæˆ
+		// ï¼ˆCOPYã‚­ãƒ¥ãƒ¼ã¯GetRequiredIntermediateSizeã®äº’æ›æ€§ä¸Šã€DIRECTã‚’ä½¿ç”¨ï¼‰
 		D3D12_COMMAND_QUEUE_DESC queueDesc = {};
 		queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 		queueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
@@ -346,7 +369,7 @@ namespace graphics
 		hr = mDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&mUploadCmdQueue));
 		if (FAILED(hr))
 		{
-			// TODO:ƒƒOo—Í
+			// TODO:ãƒ­ã‚°å‡ºåŠ›
 			return false;
 		}
 
@@ -359,7 +382,7 @@ namespace graphics
 			IID_PPV_ARGS(&mUploadCmdList));
 		if (FAILED(hr)) return false;
 
-		// Å‰‚Í‹L˜^‚µ‚È‚¢ó‘Ô‚É‚µ‚Ä‚¨‚­
+		// æœ€åˆã¯è¨˜éŒ²ã—ãªã„çŠ¶æ…‹ã«ã—ã¦ãŠã
 		mUploadCmdList->Close();
 
 		hr = mDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mUploadFence));
@@ -370,13 +393,13 @@ namespace graphics
 		mUploadEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 		if (mUploadEvent == nullptr) return false;
 
-		// TODO:ƒƒOo—Í
+		// TODO:ãƒ­ã‚°å‡ºåŠ›
 		return true;
 
 	}
 
 	/// <summary>
-	/// Dx12ƒfƒoƒCƒX‚Ìæ“¾
+	/// Dx12ãƒ‡ãƒã‚¤ã‚¹ã®å–å¾—
 	/// </summary>
 	ID3D12Device* graphics::DX12Device::GetDevice()
 	{
@@ -384,7 +407,7 @@ namespace graphics
 	}
 
 	/// <summary>
-	/// DXGIƒtƒ@ƒNƒgƒŠ[‚Ìæ“¾
+	/// DXGIãƒ•ã‚¡ã‚¯ãƒˆãƒªãƒ¼ã®å–å¾—
 	/// </summary>
 	IDXGIFactory7* DX12Device::GetFactory()
 	{
@@ -392,7 +415,7 @@ namespace graphics
 	}
 
 	/// <summary>
-	/// D3D12MAƒAƒƒP[ƒ^[‚Ìæ“¾
+	/// D3D12MAã‚¢ãƒ­ã‚±ãƒ¼ã‚¿ãƒ¼ã®å–å¾—
 	/// </summary>
 	D3D12MA::Allocator* DX12Device::GetMAAllocator()
 	{

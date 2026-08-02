@@ -1,19 +1,17 @@
-#include"pch.h"
+ï»¿#include"pch.h"
 #include "TextureManager.h"
 #include"Texture.h"
 
+#include<functional>
+
 namespace graphics
 {
-	/// <summary>
-	/// ƒeƒNƒXƒ`ƒƒ‚Ìæ“¾Aƒ~ƒ[ƒh‚È‚çƒ[ƒh‚·‚éB
-	/// </summary>
-	/// <param name="FilePath">ƒtƒ@ƒCƒ‹ƒpƒX</param>
-	/// <returns>QÆ—p‚Ìƒ|ƒCƒ“ƒ^</returns>
-	Texture* TextureManager::GetOrLoad(const std::filesystem::path& FilePath)
-	{
-		std::string key = std::filesystem::absolute(FilePath).generic_string();
 
-		// ŒŸõ
+	Texture* TextureManager::GetOrLoad(const std::filesystem::path& FilePath, bool isSRGB)
+	{
+		const std::string key = MakeCacheKey(FilePath, isSRGB);
+
+		// æ¤œç´¢
 		{
 			std::lock_guard<std::mutex> lock(mMutex);
 			auto it = mResources.find(key);
@@ -23,32 +21,112 @@ namespace graphics
 			}
 		}
 
-		// ƒ[ƒh
+		// ãƒ­ãƒ¼ãƒ‰
 		auto newTexture = std::make_unique<Texture>();
-		if (!newTexture->Create(FilePath))
+		if (!newTexture->Create(FilePath, isSRGB))
 		{
 			return nullptr;
 		}
 
-		// “o˜^
+		// ç™»éŒ²
 		{
 			std::lock_guard<std::mutex> lock(mMutex);
-			auto [it, inserted] = mResources.emplace(key, std::move(newTexture));
-			if (inserted)
-			{
-				return it->second.get();
-			}
+			auto it = mResources.emplace(key, std::move(newTexture)).first;
+			return it->second.get();
 		}
-
-		return nullptr;
 	}
 
-	/// <summary>
-	/// ‚·‚×‚Ä‚ÌƒeƒNƒXƒ`ƒƒ‚ğ‰ğ•ú‚·‚éB
-	/// </summary>
 	void TextureManager::Clear()
 	{
 		std::lock_guard<std::mutex> lock(mMutex);
 		mResources.clear();
+	}
+
+	// åŒã˜ãƒ‘ã‚¹ã§ã‚‚è‰²ç©ºé–“ã®è§£é‡ˆ(isSRGB)ãŒç•°ãªã‚Œã°åˆ¥ãƒ†ã‚¯ã‚¹ãƒãƒ£ã¨ã—ã¦æ‰±ã†ã€‚
+	std::string TextureManager::MakeCacheKey(const std::filesystem::path& FilePath, bool isSRGB)
+	{
+		std::string key = std::filesystem::absolute(FilePath).generic_string();
+		if (isSRGB)
+		{
+			key += "|srgb";
+		}
+		return key;
+	}
+
+
+	void TextureManager::PreloadBatchDecode(const std::vector<std::filesystem::path>& FilePaths, bool isSRGB)
+	{
+		if (FilePaths.empty()) return;
+
+		if (!mLoadThreadPoolStarted)
+		{
+			mLoadThreadPool.Initialize();
+			mLoadThreadPoolStarted = true;
+		}
+
+		// æœªã‚­ãƒ£ãƒƒã‚·ãƒ¥ã®ãƒ‘ã‚¹ã ã‘ã‚’å¯¾è±¡ã«ã™ã‚‹
+		std::vector<PendingItem> pending;
+		pending.reserve(FilePaths.size());
+		{
+			std::lock_guard<std::mutex> lock(mMutex);
+			for (const auto& path : FilePaths)
+			{
+				std::string key = MakeCacheKey(path, isSRGB);
+				if (mResources.find(key) != mResources.end()) continue; // æ—¢ã«ãƒ­ãƒ¼ãƒ‰æ¸ˆã¿
+				pending.push_back({ path, std::move(key), isSRGB, {} });
+			}
+		}
+		if (pending.empty()) return;
+
+		// CPUå´ã®ãƒ‡ã‚³ãƒ¼ãƒ‰ã ã‘ã‚’ãƒ¯ãƒ¼ã‚«ãƒ¼ã‚¹ãƒ¬ãƒƒãƒ‰ã¸åˆ†é…ã™ã‚‹
+		const size_t workerCount = std::max<size_t>(mLoadThreadPool.WorkerCount(), 1);
+		std::vector<std::function<void()>> tasks(workerCount);
+
+		for (size_t offset = 0; offset < pending.size(); offset += workerCount)
+		{
+			const size_t chunk = std::min(workerCount, pending.size() - offset);
+			for (size_t i = 0; i < chunk; ++i)
+			{
+				PendingItem* load = &pending[offset + i];
+				tasks[i] = [load, isSRGB]()
+					{
+						load->Data = Texture::LoadImageData(load->Path, isSRGB);
+					};
+			}
+			mLoadThreadPool.Dispatch(tasks.data(), chunk);
+			mLoadThreadPool.WaitAll();
+		}
+
+		{
+			std::lock_guard<std::mutex> lock(mMutex);
+			for (auto& item : pending)
+			{
+				mPendingParsed.push_back(std::move(item));
+			}
+		}
+	}
+
+	void TextureManager::PreloadBatchResolve(const std::function<void()>& onItemLoaded)
+	{
+		std::vector<PendingItem> pending;
+		{
+			std::lock_guard<std::mutex> lock(mMutex);
+			pending = std::move(mPendingParsed);
+			mPendingParsed.clear();
+		}
+
+		for (auto& load : pending)
+		{
+			if (!load.Data.Success) continue;
+
+			auto texture = std::make_unique<Texture>();
+			if (!texture->CreateFromImageData(load.Path, load.IsSRGB, load.Data)) continue;
+
+			{
+				std::lock_guard<std::mutex> lock(mMutex);
+				mResources.emplace(load.Key, std::move(texture));
+			}
+			if (onItemLoaded) onItemLoaded();
+		}
 	}
 }

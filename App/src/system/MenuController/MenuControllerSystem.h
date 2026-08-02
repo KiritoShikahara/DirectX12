@@ -1,51 +1,42 @@
-#pragma once
+﻿#pragma once
 
 #include<ecs/system/manager/IComponentSystem.h>
 
-// システムの順番は
-// PreUpdate : MenuInputSystem
-// Update : MenuPagingSystem  → MenuSlideSystem
-
 namespace ecs
 {
-	/// <summary>
-	/// MenuSlideComp::TargetX へ Transform の2D位置を補間させるシステム。
-	/// </summary>
+	///<summary>
+	///MenuSlideComp::TargetXへTransformの2D位置を補間させるシステム
+	///</summary>
 	class MenuSlideSystem : public IUserSystem
 	{
 	public:
 		void Update(entt::registry& registry, float deltaTime, float rawDeltaTime) override;
 	};
 
-	/// <summary>
-	/// MenuControllerComp::CurrentlySelectedIdx を基準に、
-	/// 各ページの MenuSlideComp::TargetX と
-	/// MenuControllerComp::ActiveSpellID を毎フレーム再計算するシステム。
-	/// </summary>
+	///<summary>
+	///MenuControllerComp::CurrentlySelectedIdxを基準に各ページのMenuSlideComp::TargetXとMenuControllerComp::ActiveSpellIDを毎フレーム再計算するシステム。MenuInputSystemの後に実行すること
+	///</summary>
 	class MenuPagingSystem : public IUserSystem
 	{
 	public:
 		void Update(entt::registry& registry, float deltaTime, float rawDeltaTime) override;
 	};
 
-	/// <summary>
-	/// 左右入力を読んで MenuControllerComp::CurrentlySelectedIdx を更新するシステム。
-	/// </summary>
+	///<summary>
+	///左右入力を読んでMenuControllerComp::CurrentlySelectedIdxを更新するシステム
+	///</summary>
 	class MenuInputSystem : public IUserSystem
 	{
 	public:
 		void Update(entt::registry& registry, float deltaTime, float rawDeltaTime) override;
 	};
 
-	/// <summary>
-	/// メニュー画面の入力からの画面遷移管理
-	/// </summary>
+	///<summary>
+	///メニュー画面の入力からの画面遷移管理
+	///</summary>
 	class MenuSelectInputSystem : public IUserSystem
 	{
 	public:
 		void Update(entt::registry& registry, float deltaTime, float rawDeltaTime) override;
 	};
 }
-	 
-
-

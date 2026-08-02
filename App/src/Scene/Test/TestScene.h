@@ -1,20 +1,20 @@
-#pragma once
+﻿#pragma once
 
-#include<system/Scene/IScene.h>
+#include <system/Scene/IScene.h>
 
 namespace scene
 {
 	class TestScene : public ::sys::IScene
 	{
 	public:
-		virtual void Initialize()override;
-		virtual void Finalize()override;
+		virtual void Initialize() override;
+		virtual void Finalize() override;
 
 	private:
 		// リソース読み込み
 		void LoadResource();
 
-		// 画像
+		// スプライト
 		void CreateSprite();
 
 		// Fbx
@@ -26,13 +26,13 @@ namespace scene
 		// メインカメラ
 		void CreateCamera();
 
-		// ディレクションライト
+		// ディレクショナルライト
 		void CreateLight();
 
 		// フィールド
 		void CreateField();
 
-		// 文字
+		// テキスト
 		void CreateText();
 
 		// エフェクト
@@ -41,12 +41,7 @@ namespace scene
 		// スカイボックス
 		void CreateSkybox();
 
-		// Shape
+		// シェイプ
 		void CreateShape();
-
 	};
 }
-
-
-
-

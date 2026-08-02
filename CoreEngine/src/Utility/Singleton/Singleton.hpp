@@ -29,14 +29,17 @@ namespace utility
             return instance;
         }
 
-        // ----------------------------------------------------------
-        //  インスタンスが生成済みかを確認する
-        //  (Meyers' Singleton では「最初の getInstance 後は常に true」)
-        // ----------------------------------------------------------
+        /// <summary>
+        /// インスタンスの生成済み判定
+        /// </summary>
+        /// <returns>true:生成済み</returns>
         static bool HasInstance() noexcept {
             return mInitialized;
         }
 
+        /// <summary>
+        /// 破棄時にフラグの破棄
+        /// </summary>
         static void DestroyInstance() noexcept {
             mInitialized = false;
 #ifdef SINGLETON_POLICY_NO_REVIVE
@@ -44,9 +47,6 @@ namespace utility
 #endif
         }
 
-        // ----------------------------------------------------------
-        //  コピー / ムーブ を明示的に禁止
-        // ----------------------------------------------------------
         Singleton(const Singleton&) = delete;
         Singleton& operator=(const Singleton&) = delete;
         Singleton(Singleton&&) = delete;
@@ -67,28 +67,11 @@ namespace utility
 }
 
 
-// ============================================================
-//  便利マクロ集
-// ============================================================
-
-/**
- * @brief Singleton<T> をフレンド宣言する。
- *        private コンストラクタを持つ派生クラスで必須。
- */
+// フレンド指定用
 #define SINGLETON_FRIEND(T) \
     friend class Singleton<T>
 
- /**
-  * @brief クラス宣言のボイラープレートを一括定義する。
-  *        継承・フレンド宣言・コピー禁止・デフォルト private コンストラクタを自動生成。
-  *
-  *  使い方:
-  *    class AppConfig : public Singleton<AppConfig> {
-  *        SINGLETON_CLASS(AppConfig);
-  *    public:
-  *        void load(const std::string& path);
-  *    };
-  */
+// フレンド指定とPrivateコンストラクタ系の定義
 #define SINGLETON_CLASS(T) \
     SINGLETON_FRIEND(T);   \
 private:                   \
@@ -96,40 +79,17 @@ private:                   \
     ~T() = default
 
 
-  /**
-   * @brief 引数付きコンストラクタを持つクラス向けボイラープレート。
-   *        コンストラクタ定義は自分で書く。フレンド宣言とコピー禁止のみ生成。
-   *
-   *  使い方:
-   *    class Connection : public Singleton<Connection> {
-   *        SINGLETON_CLASS_CUSTOM_CTOR(Connection);
-   *    public:
-   *        explicit Connection(const std::string& host, int port);
-   *    };
-   *
-   *    // 初回だけ引数を渡す
-   *    auto& conn = Connection::getInstance("localhost", 5432);
-   */
+// 引数アリのコンストラクタ定義用
 #define SINGLETON_CLASS_CUSTOM_CTOR(T) \
     SINGLETON_FRIEND(T);               \
 private:                               \
     ~T() = default
 
-   /**
-    * @brief T::get() という短縮アクセサを静的メソッドとして追加する。
-    */
+// 省略用：Getで取得できるように
 #define SINGLETON_ACCESSOR(T) \
     static T& Get() { return T::GetInstance(); }
 
-    /**
-     * @brief 指定シングルトンのインスタンス参照をローカル変数に束縛する。
-     *        関数内で複数回使う際の記述を短縮する。
-     *
-     *  使い方:
-     *    void foo() {
-     *        SINGLETON_REF(Logger, log);
-     *        log.write("message");
-     *    }
-     */
+// ローカル変数で参照する用
+// なくても別に問題ないけどボイラーコード減らすため
 #define SINGLETON_REF(T, name) \
     T& name = T::GetInstance()

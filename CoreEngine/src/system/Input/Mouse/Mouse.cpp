@@ -3,18 +3,13 @@
 
 namespace sys
 {
-    // -----------------------------------------------------------------------
- //  コンストラクタ
- // -----------------------------------------------------------------------
     Mouse::Mouse()
     {
         mCurrButtons.fill(false);
         mPrevButtons.fill(false);
     }
 
-    // -----------------------------------------------------------------------
-    //  ウィンドウメッセージ処理
-    // -----------------------------------------------------------------------
+    // ウィンドウメッセージ処理
     bool Mouse::ProcessEvent(UINT message, WPARAM wParam, LPARAM lParam)
     {
         // マウス関連メッセージなら座標を更新
@@ -49,9 +44,7 @@ namespace sys
         }
     }
 
-    // -----------------------------------------------------------------------
-    //  フレーム更新
-    // -----------------------------------------------------------------------
+    // フレーム更新
     void Mouse::Update()
     {
         mDeltaPosition.x = mPosition.x - mPrevPosition.x;
@@ -61,9 +54,7 @@ namespace sys
         mWheel = 0.0f;
     }
 
-    // -----------------------------------------------------------------------
-    //  状態クエリ
-    // -----------------------------------------------------------------------
+    // 状態クエリ
     bool Mouse::IsPressed(eMouseButton button) const
     {
         if (!IsValid(button)) return false;
@@ -99,9 +90,7 @@ namespace sys
         return mWheel;
     }
 
-    // -----------------------------------------------------------------------
-    //  private ヘルパー
-    // -----------------------------------------------------------------------
+    // Privateヘルパー
     void Mouse::SetButtonState(eMouseButton button, bool isDown)
     {
         if (IsValid(button))
@@ -136,5 +125,21 @@ namespace sys
         default:
             return eMouseButton::Unknown;
         }
+    }
+
+    bool Mouse::IsAnyInput() const
+    {
+        for (int i = 0; i < kButtonCount; ++i)
+        {
+            if (mCurrButtons[i]) return true;
+        }
+
+        // ホイール操作
+        if (mWheel != 0.0f) return true;
+
+        // 座標の移動（Update() 前なので mPosition と mPrevPosition を直接比較する）
+        constexpr float kMoveEpsilon = 0.5f; // ピクセル単位。わずかな揺れは無視する
+        return std::abs(mPosition.x - mPrevPosition.x) > kMoveEpsilon
+            || std::abs(mPosition.y - mPrevPosition.y) > kMoveEpsilon;
     }
 }

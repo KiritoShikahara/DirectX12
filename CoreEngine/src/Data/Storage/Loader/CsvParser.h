@@ -1,15 +1,16 @@
 #pragma once
-#include"../Reflection.h"
-#include<string>
-#include<vector>
-#include<fstream>
-#include<sstream>
-#include<stdexcept>
+
+#include "../Reflection.h"
+#include <string>
+#include <vector>
+#include <fstream>
+#include <sstream>
+#include <stdexcept>
 
 namespace data
 {
     /// <summary>
-    /// 読み込み抽象化用
+    /// CSV読み込み（デシリアライズ）用ビジター
     /// </summary>
     class CsvDeserializeVisitor final : public IFieldVisitor
     {
@@ -26,7 +27,7 @@ namespace data
     };
 
     /// <summary>
-    /// 書き込み抽象化
+    /// CSV書き込み（シリアライズ）用ビジター
     /// </summary>
     class CsvSerializeVisitor final : public IFieldVisitor
     {
@@ -59,11 +60,12 @@ namespace data
     };
 
     /// <summary>
-    /// CSV読み込み
+    /// CSVパーサー（読み込み・書き込み）
     /// </summary>
     class CsvParser
     {
     public:
+        /// <summary>CSVファイルを読み込む</summary>
         template<typename T>
         static std::vector<T> Load(const std::string& filePath)
         {
@@ -116,6 +118,7 @@ namespace data
             return result;
         }
 
+        /// <summary>CSVファイルに書き込む</summary>
         template<typename T>
         static void Save(const std::string& filePath, const std::vector<T>& items)
         {
@@ -146,6 +149,7 @@ namespace data
         }
 
     private:
+        /// <summary>CSVの1行をカンマ区切りで分割する</summary>
         static std::vector<std::string> SplitCsv(const std::string& line)
         {
             std::vector<std::string> result;
@@ -174,6 +178,7 @@ namespace data
             return result;
         }
 
+        /// <summary>文字列の前後の空白文字を削除する</summary>
         static std::string Trim(const std::string& s)
         {
             const size_t start = s.find_first_not_of(" \t\r\n");
@@ -182,5 +187,4 @@ namespace data
             return s.substr(start, end - start + 1);
         }
     };
-
 }

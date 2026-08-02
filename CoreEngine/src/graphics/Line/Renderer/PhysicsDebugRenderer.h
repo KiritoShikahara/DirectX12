@@ -15,7 +15,7 @@ namespace graphics
 	class GDescriptorHeapManager;
 
 	/// <summary>
-	/// 当たり判定のデバック用のワイヤーフレームを表示する
+	/// 当たり判定のデバック用のワイヤーフレームを表示する。
 	/// </summary>
 	class PhysicsDebugRenderer : public utility::Singleton<PhysicsDebugRenderer>
 	{
@@ -26,8 +26,6 @@ namespace graphics
 
 		/// <summary>
 		/// パイプライン・バッファを初期化する。
-		/// DX12Renderer::Initialize() の後、アプリ起動時に一度だけ呼ぶ。
-		/// ImGuiManager にデバッグウィンドウも登録する。
 		/// </summary>
 		bool Initialize();
 
@@ -35,26 +33,38 @@ namespace graphics
 		void Finalize();
 
 		/// <summary>
-		/// コライダーのワイヤーフレームを描画する。
-		/// DX12Renderer::BeginFrame() の後・EndFrame() の前に呼ぶこと。
-		/// IsEnabled() == false のとき即リターンする。
+		/// 前フレームの描画データをクリアする。
 		/// </summary>
-		void Draw(entt::registry& registry, ID3D12GraphicsCommandList* cmdList);
+		void Begin();
+
+		/// <summary>
+		/// registry と Jolt からコライダー形状を収集し、
+		/// カメラ定数バッファと頂点バッファへ転送する。
+		/// </summary>
+		void UpdateAndDraw(entt::registry& registry);
+
+		/// <summary>
+		/// 収集済みデータを GPU コマンドとして発行する。
+		/// </summary>
+		void End(ID3D12GraphicsCommandList* cmdList);
+
+		bool IsEnabled() const { return mEnabled; }
 
 	private:
 
-		/// <summary>ワイヤーフレーム頂点（Position + Color）</summary>
+		/// <summary>ワイヤーフレーム頂点</summary>
 		struct WireVertex
 		{
 			DirectX::XMFLOAT3 Position;
 			DirectX::XMFLOAT4 Color;
 		};
 
-		/// <summary>カメラ StructuredBuffer の要素型</summary>
+		/// <summary>カメラ ConstantBuffer の要素型</summary>
 		struct CameraData
 		{
 			DirectX::XMFLOAT4X4 ViewProjection; // CPU 側で転置済み
 		};
+
 	private:
 
 		/// <summary>
@@ -76,6 +86,15 @@ namespace graphics
 			const DirectX::XMFLOAT3& to,
 			const DirectX::XMFLOAT4& color);
 
+		/// <summary>
+		/// ワイヤーフレーム球を構築する（XY/XZ/YZの3つの円で近似）。
+		/// DebugWireSphereComponent の可視化用。
+		/// </summary>
+		void PushWireSphere(
+			const DirectX::XMFLOAT3& center,
+			float radius,
+			const DirectX::XMFLOAT4& color);
+
 	private:
 		std::unique_ptr<graphics::LinePipeline> mPipeline;
 
@@ -88,14 +107,22 @@ namespace graphics
 		graphics::GDescriptorHeapManager* mHeapManager = nullptr;
 		bool mIsInitialized = false;
 
+#ifdef _DEBUG
+		bool              mEnabled = true;
+#else
 		bool              mEnabled = false;
+#endif
 		DirectX::XMFLOAT4 mDynamicColor = { 1.f, 0.f, 0.f, 1.f }; // 動的（赤）
 		DirectX::XMFLOAT4 mStaticColor = { 0.f, 1.f, 0.f, 1.f }; // 静的（緑）
 		DirectX::XMFLOAT4 mKinematicColor = { 0.f, 0.5f, 1.f, 1.f }; // キネマティック（青）
 		DirectX::XMFLOAT4 mSensorColor = { 1.f, 1.f,  0.f, 1.f }; // センサー（黄）
 
+		/// <summary>収集フェーズで構築される頂点リスト</summary>
 		std::vector<WireVertex> mLineVertices;
+
+		/// <summary>
+		/// 今フレームに描画する頂点数。
+		/// </summary>
+		UINT mDrawVertexCount = 0;
 	};
 }
-
-

@@ -14,7 +14,7 @@ namespace graphics
 
         if (!ParseJson(jsonPath)) return false;
 
-        // PNG は既存 Texture::Create() (DirectXTex WIC ルート) に委譲
+        // PNG は既存 Texture::Create()に委譲
         mTexture = TextureManager::Get().GetOrLoad(pngPath);
         if (mTexture == nullptr)
         {
@@ -51,9 +51,7 @@ namespace graphics
         return mTexture->GetGpuHandle();
     }
 
-    // -----------------------------------------------------------------------
-    //  JSON パース  (msdf-atlas-gen 出力フォーマット)
-    // -----------------------------------------------------------------------
+    // JSONパーズ
     bool TextAtlas::ParseJson(const std::string& jsonPath)
     {
         std::ifstream f(jsonPath);

@@ -31,10 +31,7 @@ namespace graphics
 	class ShaderManager;
 
 	/// <summary>
-	/// ShapeHeader.hlsli の ShapeShaderData と同一レイアウトの CPU 側ミラー。
-	/// SpriteShaderData が graphics/Data/GraphicsData.h で定義されているのと同様、
-	/// 本来はそちらに追記するのが望ましいが、当ファイルでは単独定義する。
-	/// HLSL 側のフィールド順・型・パディングと完全に一致させること。
+	/// ShapeHeader.hlsli の ShapeShaderData と同一レイアウトの CPU 側ミラー
 	/// </summary>
 	struct ShapeShaderData
 	{
@@ -103,6 +100,13 @@ namespace graphics
 		// 図形描画予約最大数
 		static constexpr uint32_t MAX_SHAPE_COUNT = 4096;
 
+		// UpdateAndDraw() 内で収集する描画対象1件分
+		struct RenderItem
+		{
+			const ecs::Transform* Transform = nullptr;
+			const ecs::Shape*     Shape = nullptr;
+		};
+
 		// GPU オブジェクト
 		std::unique_ptr<ShapePipeline>     mPipeline;
 		std::unique_ptr<StructuredBuffer>  mInstanceBuffer;
@@ -110,6 +114,9 @@ namespace graphics
 
 		// フレームデータ
 		std::vector<ShapeShaderData>       mReservedData;
+
+		// UpdateAndDraw()の一時バッファ。毎フレームclear()して再利用する
+		std::vector<RenderItem>            mRenderItems;
 
 		// 依存オブジェクト
 		GDescriptorHeapManager* mHeapManager = nullptr;

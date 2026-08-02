@@ -16,14 +16,6 @@
 namespace graphics
 {
 
-	/// <summary>
-	/// 初期化。依存するオブジェクトをすべて引数で受け取る。
-	/// </summary>
-	/// <param name="device">GPU デバイス（バッファ作成・PSO 作成）</param>
-	/// <param name="heapManager">ディスクリプタヒープの供給元</param>
-	/// <param name="shaderManager">シェーダーのコンパイル・キャッシュ管理</param>
-	/// <param name="window">仮想解像度の取得元</param>
-	/// <returns>true:成功</returns>
 	bool SpriteRenderer::Initialize(
 		DX12Device& device,
 		GDescriptorHeapManager& heapManager,
@@ -54,13 +46,20 @@ namespace graphics
 			{ { 1.0f, 1.0f, 0.0f }, { 1.0f, 1.0f } }, // 右下
 		};
 
+		//mVB = std::make_unique<VertexBuffer>();
+		//if (!mVB->CreateDynamic(sizeof(vertices), sizeof(SpriteVertex)))
+		//{
+		//	DEBUG_LOG(sys::eLogLevel::Error, "SpriteRenderer: Failed to create vertex buffer.");
+		//	return false;
+		//}
+		//mVB->Update(vertices, sizeof(vertices));
+
 		mVB = std::make_unique<VertexBuffer>();
-		if (!mVB->CreateDynamic(sizeof(vertices), sizeof(SpriteVertex)))
+		if (!mVB->CreateStaticSync(vertices, sizeof(vertices), sizeof(SpriteVertex)))
 		{
 			DEBUG_LOG(sys::eLogLevel::Error, "SpriteRenderer: Failed to create vertex buffer.");
 			return false;
 		}
-		mVB->Update(vertices, sizeof(vertices));
 
 		// 依存オブジェクトの保存
 		mHeapManager = &heapManager;
@@ -147,11 +146,6 @@ namespace graphics
 		// [t0] StructuredBuffer（全スプライトの定数データ）
 		cmdList->SetGraphicsRootDescriptorTable(0, mInstanceBuffer->GetGpuHandle());
 
-		// バッチごとに [t1] テクスチャを差し替え、[b0] にインスタンス先頭オフセットをセットして
-		// DrawInstanced を発行する。
-		// 注意: SV_InstanceID の StartInstanceLocation 加算は GPU/ドライバ依存で信頼できないため、
-		// StartInstanceLocation には常に 0 を渡し、代わりに Root32BitConstant でオフセットを渡して
-		// VS 側 (InstanceOffset + SV_InstanceID) で手動加算する。
 		for (const auto& call : mDrawCalls)
 		{
 			cmdList->SetGraphicsRootDescriptorTable(1, call.textureHandle);
@@ -167,37 +161,31 @@ namespace graphics
 	/// </summary>
 	void SpriteRenderer::UpdateAndDraw(entt::registry& registry)
 	{
-		// Transform + Sprite を持つエンティティを収集
+		// 毎フレームのvector生成を避けるため、メンバ変数を使い回す
+		mRenderItems.clear();
 		auto view = registry.view<ecs::Transform, ecs::Sprite>();
-
-		struct RenderItem
-		{
-			const ecs::Transform* transform;
-			const ecs::Sprite* sprite;
-		};
-
-		std::vector<RenderItem> items;
-		items.reserve(view.size_hint());
+		mRenderItems.reserve(view.size_hint());
 
 		view.each([&](auto, ecs::Transform& tr, ecs::Sprite& sp)
 			{
 				if (!sp.IsVisible || !sp.Texture) return;
-				items.push_back({ &tr, &sp });
+				mRenderItems.push_back({ &tr, &sp });
 			});
 
 		// Layer 昇順でソート（値が小さいほど手前＝後から描く）
-		std::sort(items.begin(), items.end(),
+		std::sort(mRenderItems.begin(), mRenderItems.end(),
 			[](const RenderItem& a, const RenderItem& b)
 			{
-				return a.sprite->Layer < b.sprite->Layer;
+				return a.Sprite->Layer < b.Sprite->Layer;
 			});
 
-		// ソート済み順で Draw を発行（バッチ化のためテクスチャ順が重要）
-		for (const auto& item : items)
+		// ソート済み順で Draw を発行
+		// バッチ処理のため順番は重要
+		for (const auto& item : mRenderItems)
 		{
 			const SpriteShaderData shaderData =
-				CalculateShaderData(*item.transform, *item.sprite);
-			Draw(shaderData, item.sprite->Texture->GetGpuHandle());
+				CalculateShaderData(*item.Transform, *item.Sprite);
+			Draw(shaderData, item.Sprite->Texture->GetGpuHandle());
 		}
 	}
 
@@ -215,8 +203,11 @@ namespace graphics
 		// 描画サイズの決定（Size が 0 のときはテクスチャの実サイズを使用）
 		const float baseW = (sp.Size.x > 0.0f) ? sp.Size.x : sp.Texture->GetWidth();
 		const float baseH = (sp.Size.y > 0.0f) ? sp.Size.y : sp.Texture->GetHeight();
-		const float w = baseW * sp.DrawScale.x;
-		const float h = baseH * sp.DrawScale.y;
+
+		// Transform の Scale を反映（DrawScale と別軸で乗算する）
+		const XMFLOAT3& trScale = tr.GetScale();
+		const float w = baseW * sp.DrawScale.x * trScale.x;
+		const float h = baseH * sp.DrawScale.y * trScale.y;
 
 		// 統合 Transform から 2D 位置・回転を取得
 		const XMFLOAT2 pos2D = tr.Get2DPosition();
