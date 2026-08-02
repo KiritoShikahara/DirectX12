@@ -1,0 +1,11 @@
+Id,Name,FireInterval,ProjectileSpeed,Damage,ExplosionRadius,HitRadiusMultiplier,ProjectileLifeTime,HeightOffset,ExplosionAtGroundLevel,ProjectileEffectIds,ExplosionEffectIds
+1001,FireBolt,1.2,60,12,15,2,2,30,1,101,102
+1002,FireBolt,1.2,60,15,17,2,2,30,1,101,102
+1003,FireBolt,1.2,60,18,19,2,2,30,1,101,102
+1004,FireBolt,1.2,60,21,21,2,2,30,1,101,102
+1005,FireBolt,1.2,60,24,23,2,2,30,1,101,102
+1006,FireBolt,1.2,60,27,25,2,2,30,1,101,102
+1007,FireBolt,1.2,60,30,27,2,2,30,1,101,102
+1008,FireBolt,1.2,60,33,29,2,2,30,1,101,102
+1009,FireBolt,1.2,60,36,31,2,2,30,1,101,102
+1010,FireBolt,1.2,60,39,33,2,2,30,1,101,102

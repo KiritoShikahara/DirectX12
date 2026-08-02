@@ -1,0 +1,11 @@
+Id,Name,FireInterval,Damage,Radius,HitRadiusMultiplier,SearchRadius,MeteorCount,HeightOffset,EffectIds
+1001,Meteor,6,20,12,1.5,60,3,0,502
+1002,Meteor,6,25,13.5,1.5,60,3,0,502
+1003,Meteor,6,30,15,1.5,60,3,0,502
+1004,Meteor,6,35,16.5,1.5,60,3,0,502
+1005,Meteor,6,40,18,1.5,60,3,0,502
+1006,Meteor,6,45,19.5,1.5,60,3,0,502
+1007,Meteor,6,50,21,1.5,60,3,0,502
+1008,Meteor,6,55,22.5,1.5,60,3,0,502
+1009,Meteor,6,60,24,1.5,60,3,0,502
+1010,Meteor,6,65,25.5,1.5,60,3,0,502

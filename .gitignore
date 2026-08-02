@@ -1,7 +1,24 @@
-﻿################################################################################
+################################################################################
 # この .gitignore ファイルは Microsoft(R) Visual Studio によって自動的に作成されました。
 ################################################################################
 
+/.vs
+/CoreEngine/x64/Debug
+/App/x64/Debug
+/x64/Debug
+/App/ecse_log.txt
+/App/x64/Release
+/CoreEngine/x64/Release
+/x64/Release
+/doc/~$仕様書.xlsx
+/CoreEngine/CoreEngine/x64/Debug
+/App/App/x64/Debug
+/App/x64/Develop
+/CoreEngine/x64/Develop
+/x64/Develop
+/App/App/x64/Develop/App.tlog
+/App/App/x64/Develop
+/CoreEngine/CoreEngine/x64/Develop
 /.vs/DirectX12.slnx/v18
 /.vs
 /.github

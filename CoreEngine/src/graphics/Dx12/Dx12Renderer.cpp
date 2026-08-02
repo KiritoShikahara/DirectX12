@@ -1,0 +1,82 @@
+#include "pch.h"
+#include "DX12Renderer.h"
+#include "DX12Context.h"
+#include "Dx12Device.h"
+
+namespace graphics
+{
+    DX12Renderer::DX12Renderer()
+        : mContext(nullptr)
+        , mWidth(0)
+        , mHeight(0)
+        , mIsInitialized(false)
+    {
+    }
+
+    bool DX12Renderer::Initialize(DX12Device* pDevice, HWND WindowHandle, UINT Width, UINT Height)
+    {
+        if (pDevice == nullptr)     return false;
+        if (mIsInitialized)         return false;  // 二重初期化禁止
+
+        mWidth = Width;
+        mHeight = Height;
+
+        // DX12Context を生成・初期化
+        mContext = std::make_unique<DX12Context>();
+        if (!mContext->Initialize(pDevice, WindowHandle, Width, Height))
+        {
+            mContext.reset();
+            return false;
+        }
+
+        mIsInitialized = true;
+        return true;
+    }
+
+    bool DX12Renderer::Finalize()
+    {
+        if (!mIsInitialized) return false;
+
+        if (mContext)
+        {
+            mContext->Finalize();
+            mContext.reset();
+        }
+
+        mIsInitialized = false;
+        return true;
+    }
+
+    void DX12Renderer::BeginFrame()
+    {
+        if (!mIsInitialized) return;
+
+        // コンテキストに描画開始を委譲
+        mContext->BeginRendering();
+    }
+
+    void DX12Renderer::EndFrame()
+    {
+        if (!mIsInitialized) return;
+
+        mContext->Flip();
+    }
+
+    void DX12Renderer::WaitForGPU()
+    {
+        if (!mIsInitialized) return;
+
+        mContext->WaitForGPU();
+    }
+
+    DX12Context* DX12Renderer::GetContext() const
+    {
+        return mContext.get();
+    }
+
+    bool DX12Renderer::IsInitialized() const
+    {
+        return mIsInitialized;
+    }
+
+} // namespace graphics

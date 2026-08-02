@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Microsoft.Windows.CppWinRT.3.0.260520.1\build\native\Microsoft.Windows.CppWinRT.props" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.3.0.260520.1\build\native\Microsoft.Windows.CppWinRT.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -17,8 +18,13 @@
       <Configuration>Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-
-  </ItemGroup>
+  <ProjectConfiguration Include="Develop|Win32">
+      <Configuration>Develop</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration><ProjectConfiguration Include="Develop|x64">
+      <Configuration>Develop</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration></ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -39,41 +45,54 @@
     <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v145</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+  </PropertyGroup><PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Develop|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v145</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
-
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup><PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Develop|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <ImportGroup Label="Shared" >
+  <ImportGroup Label="Shared">
   </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-      <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-      <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-      <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    </ImportGroup>
-    <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-      <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    </ImportGroup>
-
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup><ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Develop|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup><ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Develop|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -84,7 +103,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -99,21 +118,44 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup><ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Develop|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>ECSE_DEV_TOOL=1;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;_DEBUG;_CONSOLE;JPH_PROFILE_ENABLED
+;JPH_DEBUG_RENDERER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)CoreEngine;$(SolutionDir)CoreEngine\src;$(SolutionDir)CoreEngine\external;$(ProjectDir)src;$(SolutionDir)CoreEngine\external\JoltPhysics;$(SolutionDir)CoreEngine\external\Effekseer\src;$(SolutionDir)CoreEngine\external\Effekseer\src\Effekseer;$(ProjectDir)src/pch;$(SolutionDir)CoreEngine\external\SQLite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>apppch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
-       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /Y /D "$(SolutionDir)CoreEngine\bin\dxc\*.dll" "$(TargetDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -121,18 +163,345 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;NDEBUG;_CONSOLE;JPH_RELEASE;JPH_PROFILE_ENABLED;JPH_DEBUG_RENDERER;JPH_FLOATING_POINT_EXCEPTIONS_ENABLED;JPH_OBJECT_STREAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)CoreEngine;$(SolutionDir)CoreEngine\src;$(SolutionDir)CoreEngine\external;$(ProjectDir)src;$(SolutionDir)CoreEngine\external\JoltPhysics;$(SolutionDir)CoreEngine\external\Effekseer\src;$(SolutionDir)CoreEngine\external\Effekseer\src\Effekseer;$(ProjectDir)src/pch;$(SolutionDir)CoreEngine\external\SQLite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>apppch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
-       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /Y /D "$(SolutionDir)CoreEngine\bin\dxc\*.dll" "$(TargetDir)"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup><ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Develop|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>ECSE_DEV_TOOL=1;NOMINMAX;NDEBUG;_CONSOLE;JPH_RELEASE;JPH_PROFILE_ENABLED;JPH_DEBUG_RENDERER;JPH_FLOATING_POINT_EXCEPTIONS_ENABLED;JPH_OBJECT_STREAM;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)CoreEngine;$(SolutionDir)CoreEngine\src;$(SolutionDir)CoreEngine\external;$(ProjectDir)src;$(SolutionDir)CoreEngine\external\JoltPhysics;$(SolutionDir)CoreEngine\external\Effekseer\src;$(SolutionDir)CoreEngine\external\Effekseer\src\Effekseer;$(ProjectDir)src/pch;$(SolutionDir)CoreEngine\external\SQLite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>apppch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>xcopy /Y /D "$(SolutionDir)CoreEngine\bin\dxc\*.dll" "$(TargetDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
-
-  <ItemGroup></ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\system\Player\AimSysten\PlayerAimSystem.cpp" />
+    <ClCompile Include="src\system\Enemy\Status\EnemyStatusDebugPanel.cpp" />
+    <ClCompile Include="src\system\Damage\PlayerContactDamage\PlayerContactDamageSystem.cpp" />
+    <ClCompile Include="src\system\Player\Status\PlayerCombatUtil.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\WeaponUpdateUtil.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\WeaponTypeRegistry.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\WeaponCooldownRegistry.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\WeaponIconRegistry.cpp" />
+    <ClCompile Include="src\system\Player\UI\WeaponIconBarSystem.cpp" />
+    <ClCompile Include="src\system\Player\Status\PlayerRegenSystem.cpp" />
+    <ClCompile Include="src\system\UI\DamageNumber\DamageNumberSystem.cpp" />
+    <ClCompile Include="src\system\UI\UiPanelUtility.cpp" />
+    <ClCompile Include="src\system\Player\UI\PlayerHpBarSystem.cpp" />
+    <ClCompile Include="src\system\Player\UI\PlayerUltimateGaugeSystem.cpp" />
+    <ClCompile Include="src\system\Enemy\Death\EnemyDeathSystem.cpp" />
+    <ClCompile Include="src\system\Player\Perk\PerkSelectSystem.cpp" />
+    <ClCompile Include="src\Scene\Game\Result\ResultSystem.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\AreaAttack\AreaAttackWeaponSystem.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\AreaAttack\AreaAttackAutoStrikeSystem.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\AreaAttack\AreaAttackHazardSpawner.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\AreaAttack\AreaAttackHazardSystem.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\Orbit\OrbitWeaponSystem.cpp" />
+    <ClCompile Include="src\system\Enemy\Move\EnemyChaseSystem.cpp" />
+    <ClCompile Include="src\Scene\Game\State\GameStateSystem.cpp" />
+    <ClCompile Include="src\system\RotateToMove\RotateToMoveSystem.cpp" />
+    <ClCompile Include="src\system\Player\State\PlayerStateSystem.cpp" />
+    <ClCompile Include="src\system\Light\DirLightFollowSystem.cpp" />
+    <ClCompile Include="src\system\Animation\LocomotionAnimationSystem.cpp" />
+    <ClCompile Include="src\system\Player\MovementSystem\PlayerMovementSystem.cpp" />
+    <ClCompile Include="src\system\Player\Boundary\PlayerBoundaryClampSystem.cpp" />
+    <ClCompile Include="src\system\Player\UI\PlayerExpBarSystem.cpp" />
+    <ClCompile Include="src\system\Player\InputSystem\PlayerInputSystem.cpp" />
+    <ClCompile Include="src\Scene\Game\Factory\GameSceneFactory.cpp" />
+    <ClCompile Include="src\system\CameraFollow\CameraPlayerFollowSystem.cpp" />
+    <ClCompile Include="src\Scene\Game\GameScene.cpp" />
+    <ClCompile Include="src\system\MenuController\MenuControllerSystem.cpp" />
+    <ClCompile Include="src\Scene\Menu\MenuScene.cpp" />
+    <ClCompile Include="src\Scene\Hub\HubScene.cpp" />
+    <ClCompile Include="src\Scene\StatusUpgrade\StatusUpgradeScene.cpp" />
+    <ClCompile Include="src\system\HubMenu\HubMenuInputSystem.cpp" />
+    <ClCompile Include="src\system\StatusUpgrade\StatusUpgradeInputSystem.cpp" />
+    <ClCompile Include="src\Data\Save\PlayerSaveDebugPanel.cpp" />
+    <ClCompile Include="src\system\GlowAnimation\SpriteGlowSystem.cpp" />
+    <ClCompile Include="src\main.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader><PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Develop|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\pch\apppch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">apppch.h</PrecompiledHeaderFile>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader><PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Develop|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">apppch.h</PrecompiledHeaderFile><PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Develop|x64'">apppch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <ClCompile Include="src\Scene\Title\TitleScene.cpp" />
+    <ClCompile Include="src\Scene\Test\TestScene.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader><PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Develop|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\system\TitleInputSystem\TitleInputSystem.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\SingleShot\SingleShotWeaponSystem.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\Projectile\ProjectileMovementSystem.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\Projectile\ProjectileCollisionSystem.cpp" />
+    <ClCompile Include="src\Scene\Game\Debug\GameStatusDebugPanel.cpp" />
+    <ClCompile Include="src\Scene\Game\Debug\GameDebugSettings.cpp" />
+    <ClCompile Include="src\Data\Settings\GameSettingsData.cpp" />
+    <ClCompile Include="src\system\Options\OptionsMenuSystem.cpp" />
+    <ClCompile Include="src\system\Player\Perk\PerkDebugPanel.cpp" />
+    <ClCompile Include="src\Scene\Game\Wave\EnemySpawnSystem.cpp" />
+    <ClCompile Include="src\Scene\Game\Wave\WaveTimerUiSystem.cpp" />
+    <ClCompile Include="src\Scene\Game\Wave\WaveDebugPanel.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\SingleShot\SingleShotWeaponDebugPanel.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\WeaponMasterDataDebugPanel.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\Ricochet\RicochetWeaponDebugPanel.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\AreaAttack\AreaAttackWeaponDebugPanel.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\BoneSpear\BoneSpearWeaponDebugPanel.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\ChainLightning\ChainLightningWeaponDebugPanel.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\Cleave\CleaveWeaponDebugPanel.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeWeaponDebugPanel.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\Homing\HomingMissileWeaponDebugPanel.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\Meteor\MeteorWeaponDebugPanel.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\Nova\NovaWeaponDebugPanel.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\Orbit\OrbitWeaponDebugPanel.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\VoidBeam\VoidBeamWeaponDebugPanel.cpp" />
+    <ClCompile Include="src\system\StatusUpgrade\StatUpgradeDebugPanel.cpp" />
+    <ClCompile Include="src\system\Effect\EffectAssetDebugPanel.cpp" />
+    <ClCompile Include="src\system\Loading\LoadingScreenUpdateSystem.cpp" />
+    <ClCompile Include="src\Scene\Loading\LoadingScene.cpp" />
+    <ClCompile Include="src\system\Enemy\Status\BossDebugPanel.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\Nova\NovaWeaponSystem.cpp" />
+    <ClCompile Include="src\Scene\Game\Debug\WeaponInventoryDebugPanel.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\Homing\HomingMissileWeaponSystem.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\Homing\HomingMissileSteeringSystem.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\ChainLightning\ChainLightningWeaponSystem.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\Meteor\MeteorWeaponSystem.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\VoidBeam\VoidBeamWeaponSystem.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\BoneSpear\BoneSpearWeaponSystem.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\Cleave\CleaveWeaponSystem.cpp" />
+    <ClCompile Include="src\system\Enemy\Knockback\EnemyKnockbackSystem.cpp" />
+    <ClCompile Include="src\system\Enemy\Status\EnemySlowStatusSystem.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeWeaponSystem.cpp" />
+    <ClCompile Include="src\system\Player\Weapon\Ricochet\RicochetWeaponSystem.cpp" />
+    <ClCompile Include="src\system\Enemy\EnemyTargetUtil.cpp" />
+    <ClCompile Include="src\system\Player\Ultimate\PlayerUltimateSystem.cpp" />
+    <ClCompile Include="src\system\Effect\EffectSpawnUtility.cpp" />
+    <ClCompile Include="src\system\Effect\TemporaryLifetimeSystem.cpp" />
+    <ClCompile Include="src\system\Player\Ultimate\UltimateDebugPanel.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CoreEngine\CoreEngine.vcxproj">
+      <Project>{97893723-60ef-4f20-a3e6-44975fcc4607}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\system\Player\AimSysten\PlayerAimSystem.h" />
+    <ClInclude Include="src\Data\Enemy\EnemyData.h" />
+    <ClInclude Include="src\Data\Enemy\BossData.h" />
+    <ClInclude Include="src\system\Enemy\Status\EnemyStatusDebugPanel.h" />
+    <ClInclude Include="src\system\Damage\PlayerContactDamage\PlayerContactDamageSystem.h" />
+    <ClInclude Include="src\system\Enemy\Attack\EnemyAttackComponent.h" />
+    <ClInclude Include="src\system\Enemy\Status\EnemyStatusComponent.h" />
+    <ClInclude Include="src\system\Player\AimSysten\PlayerAimComponent.h" />
+    <ClInclude Include="src\system\Player\UI\FillAmountLerp.h" />
+    <ClInclude Include="src\system\Player\UI\PlayerHpBarSystem.h" />
+    <ClInclude Include="src\system\Player\UI\PlayerUltimateGaugeSystem.h" />
+    <ClInclude Include="src\system\Enemy\Death\EnemyDeathSystem.h" />
+    <ClInclude Include="src\system\Player\Level\PlayerLevelComponent.h" />
+    <ClInclude Include="src\system\Player\Perk\PerkDefinition.h" />
+    <ClInclude Include="src\system\Player\Perk\PlayerPerkLevelComponent.h" />
+    <ClInclude Include="src\system\Player\Perk\PerkSelectComponent.h" />
+    <ClInclude Include="src\system\Player\Perk\PerkSelectSystem.h" />
+    <ClInclude Include="src\Scene\Game\Result\ResultComponent.h" />
+    <ClInclude Include="src\Scene\Game\Result\ResultSystem.h" />
+    <ClInclude Include="src\Data\Weapon\AreaAttackWeaponData.h" />
+    <ClInclude Include="src\system\Player\Weapon\AreaAttack\AreaAttackWeaponRuntimeComponent.h" />
+    <ClInclude Include="src\system\Player\Weapon\AreaAttack\AreaAttackWeaponSystem.h" />
+    <ClInclude Include="src\system\Player\Weapon\AreaAttack\AreaAttackAutoStrikeSystem.h" />
+    <ClInclude Include="src\system\Player\Weapon\AreaAttack\AreaAttackHazardSpawner.h" />
+    <ClInclude Include="src\system\Player\Weapon\AreaAttack\AreaAttackHazardComponent.h" />
+    <ClInclude Include="src\system\Player\Weapon\AreaAttack\AreaAttackHazardSystem.h" />
+    <ClInclude Include="src\Data\Weapon\OrbitWeaponData.h" />
+    <ClInclude Include="src\system\Player\Weapon\Orbit\OrbitWeaponRuntimeComponent.h" />
+    <ClInclude Include="src\system\Player\Weapon\Orbit\OrbitOrbComponent.h" />
+    <ClInclude Include="src\system\Player\Weapon\Orbit\OrbitWeaponSystem.h" />
+    <ClInclude Include="src\system\Enemy\Move\EnemyChaseSystem.h" />
+    <ClInclude Include="src\Scene\Game\State\GameStateSystem.h" />
+    <ClInclude Include="src\Scene\Game\State\GameState.h" />
+    <ClInclude Include="src\system\Enemy\Move\EnemyChaseComponent.h" />
+    <ClInclude Include="src\system\MoveDirection\MoveDirectionComponent.h" />
+    <ClInclude Include="src\system\Player\Status\PlayerStatusComponent.h" />
+    <ClInclude Include="src\system\Player\Status\PlayerCombatUtil.h" />
+    <ClInclude Include="src\system\Player\Weapon\WeaponUpdateUtil.h" />
+    <ClInclude Include="src\system\Player\Weapon\WeaponTypeRegistry.h" />
+    <ClInclude Include="src\system\Player\Weapon\WeaponCooldownRegistry.h" />
+    <ClInclude Include="src\system\Player\Weapon\WeaponIconRegistry.h" />
+    <ClInclude Include="src\system\Player\UI\WeaponIconBarSystem.h" />
+    <ClInclude Include="src\system\Player\Status\PlayerRegenSystem.h" />
+    <ClInclude Include="src\system\UI\DamageNumber\DamageNumberComponent.h" />
+    <ClInclude Include="src\system\UI\DamageNumber\DamageNumberSystem.h" />
+    <ClInclude Include="src\system\UI\UiPanelUtility.h" />
+    <ClInclude Include="src\system\Player\UI\PlayerUiTag.h" />
+    <ClInclude Include="src\system\Player\Weapon\Inventory\WeaponInventoryComponent.h" />
+    <ClInclude Include="src\system\RotateToMove\RotateToMoveSystem.h" />
+    <ClInclude Include="src\system\Player\State\PlayerStateSystem.h" />
+    <ClInclude Include="src\system\Light\DirLightFollowSystem.h" />
+    <ClInclude Include="src\system\Animation\LocomotionAnimationSystem.h" />
+    <ClInclude Include="src\system\Animation\ActionAnimLockComponent.h" />
+    <ClInclude Include="src\system\Player\MovementSystem\PlayerMovementSystem.h" />
+    <ClInclude Include="src\system\Player\Boundary\PlayerBoundaryClampSystem.h" />
+    <ClInclude Include="src\system\Player\UI\PlayerExpBarSystem.h" />
+    <ClInclude Include="src\system\Player\InputSystem\PlayerInputSystem.h" />
+    <ClInclude Include="src\Scene\Game\Factory\GameSceneFactory.h" />
+    <ClInclude Include="src\Scene\Game\Factory\FieldConstants.h" />
+    <ClInclude Include="src\system\CameraFollow\CameraFollowOffsetComponent.h" />
+    <ClInclude Include="src\system\CameraFollow\CameraOverrideComponent.h" />
+    <ClInclude Include="src\system\CameraFollow\CameraPlayerFollowSystem.h" />
+    <ClInclude Include="src\Scene\Game\GameScene.h" />
+    <ClInclude Include="src\system\MenuController\MenuControllerSystem.h" />
+    <ClInclude Include="src\Data\Menu\MenuSpellsData.h" />
+    <ClInclude Include="src\macros.h" />
+    <ClInclude Include="src\Scene\Menu\MenuScene.h" />
+    <ClInclude Include="src\Scene\Hub\HubScene.h" />
+    <ClInclude Include="src\Scene\StatusUpgrade\StatusUpgradeScene.h" />
+    <ClInclude Include="src\system\HubMenu\HubMenuComponent.h" />
+    <ClInclude Include="src\system\HubMenu\HubMenuInputSystem.h" />
+    <ClInclude Include="src\system\StatusUpgrade\StatusUpgradeInputSystem.h" />
+    <ClInclude Include="src\system\StatusUpgrade\StatusUpgradeComponent.h" />
+    <ClInclude Include="src\system\StatusUpgrade\StatusUpgradeLabels.h" />
+    <ClInclude Include="src\Data\Save\PlayerSaveData.h" />
+    <ClInclude Include="src\Data\Save\PlayerSaveDebugPanel.h" />
+    <ClInclude Include="src\Data\StatUpgrade\StatUpgradeData.h" />
+    <ClInclude Include="src\Data\Perk\PerkData.h" />
+    <ClInclude Include="src\system\GlowAnimation\SpriteGlowSystem.h" />
+    <ClInclude Include="src\system\GlowAnimation\GlowAnimationComp.h" />
+    <ClInclude Include="src\pch\apppch.h" />
+    <ClInclude Include="src\Scene\Title\TitleScene.h" />
+    <ClInclude Include="src\Scene\Test\TestScene.h" />
+    <ClInclude Include="src\system\MenuController\MenuControllerComp.h" />
+    <ClInclude Include="src\system\MenuController\WeaponSelectVisuals.h" />
+    <ClInclude Include="src\system\Input\InputGuideLabels.h" />
+    <ClInclude Include="src\system\Player\MovementSystem\PlayerMovementComponent.h" />
+    <ClInclude Include="src\system\Player\State\PlayerStateComponent.h" />
+    <ClInclude Include="src\system\RotateToMove\RotateToMoveComponent.h" />
+    <ClInclude Include="src\system\TitleInputSystem\TitleInputSystem.h" />
+    <ClInclude Include="src\Tag\EntityTag.h" />
+    <ClInclude Include="src\Data\Weapon\SingleShotWeaponData.h" />
+    <ClInclude Include="src\system\Player\Weapon\SingleShot\SingleShotWeaponRuntimeComponent.h" />
+    <ClInclude Include="src\system\Player\Weapon\SingleShot\SingleShotWeaponSystem.h" />
+    <ClInclude Include="src\system\Player\Weapon\Projectile\ProjectileComponent.h" />
+    <ClInclude Include="src\system\Player\Weapon\Projectile\ProjectileMovementSystem.h" />
+    <ClInclude Include="src\system\Player\Weapon\Projectile\ProjectileCollisionSystem.h" />
+    <ClInclude Include="src\Scene\Game\Debug\GameStatusDebugPanel.h" />
+    <ClInclude Include="src\Scene\Game\Debug\GameDebugSettings.h" />
+    <ClInclude Include="src\Data\Settings\GameSettingsData.h" />
+    <ClInclude Include="src\system\Options\OptionsMenuSystem.h" />
+    <ClInclude Include="src\system\Player\Perk\PerkDebugPanel.h" />
+    <ClInclude Include="src\Scene\Game\Wave\WaveComponent.h" />
+    <ClInclude Include="src\Scene\Game\Wave\EnemySpawnSystem.h" />
+    <ClInclude Include="src\Scene\Game\Wave\WaveTimerUiTag.h" />
+    <ClInclude Include="src\Scene\Game\Wave\WaveTimerUiSystem.h" />
+    <ClInclude Include="src\Scene\Game\Wave\WaveDebugPanel.h" />
+    <ClInclude Include="src\Data\Wave\WaveData.h" />
+    <ClInclude Include="src\system\Player\Weapon\SingleShot\SingleShotWeaponDebugPanel.h" />
+    <ClInclude Include="src\system\Player\Weapon\WeaponMasterDataDebugPanel.h" />
+    <ClInclude Include="src\system\Player\Weapon\Ricochet\RicochetWeaponDebugPanel.h" />
+    <ClInclude Include="src\system\Player\Weapon\AreaAttack\AreaAttackWeaponDebugPanel.h" />
+    <ClInclude Include="src\system\Player\Weapon\BoneSpear\BoneSpearWeaponDebugPanel.h" />
+    <ClInclude Include="src\system\Player\Weapon\ChainLightning\ChainLightningWeaponDebugPanel.h" />
+    <ClInclude Include="src\system\Player\Weapon\Cleave\CleaveWeaponDebugPanel.h" />
+    <ClInclude Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeWeaponDebugPanel.h" />
+    <ClInclude Include="src\system\Player\Weapon\Homing\HomingMissileWeaponDebugPanel.h" />
+    <ClInclude Include="src\system\Player\Weapon\Meteor\MeteorWeaponDebugPanel.h" />
+    <ClInclude Include="src\system\Player\Weapon\Nova\NovaWeaponDebugPanel.h" />
+    <ClInclude Include="src\system\Player\Weapon\Orbit\OrbitWeaponDebugPanel.h" />
+    <ClInclude Include="src\system\Player\Weapon\VoidBeam\VoidBeamWeaponDebugPanel.h" />
+    <ClInclude Include="src\system\StatusUpgrade\StatUpgradeDebugPanel.h" />
+    <ClInclude Include="src\system\Effect\EffectAssetDebugPanel.h" />
+    <ClInclude Include="src\system\Loading\LoadingScreenComponent.h" />
+    <ClInclude Include="src\system\Loading\LoadingScreenUpdateSystem.h" />
+    <ClInclude Include="src\Scene\Loading\LoadingScene.h" />
+    <ClInclude Include="src\system\Enemy\Status\BossDebugPanel.h" />
+    <ClInclude Include="src\Data\Weapon\NovaWeaponData.h" />
+    <ClInclude Include="src\system\Player\Weapon\Nova\NovaWeaponRuntimeComponent.h" />
+    <ClInclude Include="src\system\Player\Weapon\Nova\NovaWeaponSystem.h" />
+    <ClInclude Include="src\Scene\Game\Debug\WeaponInventoryDebugPanel.h" />
+    <ClInclude Include="src\Data\Weapon\HomingMissileWeaponData.h" />
+    <ClInclude Include="src\system\Player\Weapon\Homing\HomingMissileRuntimeComponent.h" />
+    <ClInclude Include="src\system\Player\Weapon\Homing\HomingMissileSteeringSystem.h" />
+    <ClInclude Include="src\system\Player\Weapon\Homing\HomingMissileWeaponSystem.h" />
+    <ClInclude Include="src\Data\Weapon\ChainLightningWeaponData.h" />
+    <ClInclude Include="src\system\Player\Weapon\ChainLightning\ChainLightningRuntimeComponent.h" />
+    <ClInclude Include="src\system\Player\Weapon\ChainLightning\ChainLightningWeaponSystem.h" />
+    <ClInclude Include="src\Data\Weapon\MeteorWeaponData.h" />
+    <ClInclude Include="src\system\Player\Weapon\Meteor\MeteorWeaponRuntimeComponent.h" />
+    <ClInclude Include="src\system\Player\Weapon\Meteor\MeteorWeaponSystem.h" />
+    <ClInclude Include="src\Data\Weapon\VoidBeamWeaponData.h" />
+    <ClInclude Include="src\system\Player\Weapon\VoidBeam\VoidBeamRuntimeComponent.h" />
+    <ClInclude Include="src\system\Player\Weapon\VoidBeam\VoidBeamWeaponSystem.h" />
+    <ClInclude Include="src\Data\Weapon\BoneSpearWeaponData.h" />
+    <ClInclude Include="src\system\Player\Weapon\BoneSpear\BoneSpearRuntimeComponent.h" />
+    <ClInclude Include="src\system\Player\Weapon\BoneSpear\BoneSpearWeaponSystem.h" />
+    <ClInclude Include="src\Data\Weapon\CleaveWeaponData.h" />
+    <ClInclude Include="src\system\Player\Weapon\Cleave\CleaveRuntimeComponent.h" />
+    <ClInclude Include="src\system\Player\Weapon\Cleave\CleaveWeaponSystem.h" />
+    <ClInclude Include="src\system\Enemy\Knockback\EnemyKnockbackComponent.h" />
+    <ClInclude Include="src\system\Enemy\Knockback\EnemyKnockbackSystem.h" />
+    <ClInclude Include="src\system\Enemy\Status\EnemySlowStatusComponent.h" />
+    <ClInclude Include="src\system\Enemy\Status\EnemySlowStatusSystem.h" />
+    <ClInclude Include="src\Data\Weapon\FlickerStrikeWeaponData.h" />
+    <ClInclude Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeRuntimeComponent.h" />
+    <ClInclude Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeComponent.h" />
+    <ClInclude Include="src\system\Player\Weapon\FlickerStrike\FlickerStrikeWeaponSystem.h" />
+    <ClInclude Include="src\Data\Weapon\RicochetWeaponData.h" />
+    <ClInclude Include="src\system\Player\Weapon\Ricochet\RicochetRuntimeComponent.h" />
+    <ClInclude Include="src\system\Player\Weapon\Ricochet\RicochetWeaponSystem.h" />
+    <ClInclude Include="src\system\Player\PowerCharge\PlayerPowerChargeComponent.h" />
+    <ClInclude Include="src\system\Player\PlayerActionLock.h" />
+    <ClInclude Include="src\system\Enemy\EnemyTargetUtil.h" />
+    <ClInclude Include="src\Data\Ultimate\UltimateData.h" />
+    <ClInclude Include="src\system\Player\Ultimate\PlayerUltimateComponent.h" />
+    <ClInclude Include="src\system\Player\Ultimate\PlayerUltimateSystem.h" />
+    <ClInclude Include="src\system\Effect\EffectSpawnUtility.h" />
+    <ClInclude Include="src\system\Effect\TemporaryLifetimeComponent.h" />
+    <ClInclude Include="src\system\Effect\TemporaryLifetimeSystem.h" />
+    <ClInclude Include="src\system\Player\Ultimate\UltimateDebugPanel.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\directxtex_desktop_win10.2026.5.8.1\build\native\directxtex_desktop_win10.targets" Condition="Exists('..\packages\directxtex_desktop_win10.2026.5.8.1\build\native\directxtex_desktop_win10.targets')" />
+    <Import Project="..\packages\Microsoft.Windows.CppWinRT.3.0.260520.1\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\packages\Microsoft.Windows.CppWinRT.3.0.260520.1\build\native\Microsoft.Windows.CppWinRT.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>このプロジェクトは、このコンピューター上にない NuGet パッケージを参照しています。それらのパッケージをダウンロードするには、[NuGet パッケージの復元] を使用します。詳細については、http://go.microsoft.com/fwlink/?LinkID=322105 を参照してください。見つからないファイルは {0} です。</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\directxtex_desktop_win10.2026.5.8.1\build\native\directxtex_desktop_win10.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\directxtex_desktop_win10.2026.5.8.1\build\native\directxtex_desktop_win10.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.3.0.260520.1\build\native\Microsoft.Windows.CppWinRT.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.3.0.260520.1\build\native\Microsoft.Windows.CppWinRT.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Windows.CppWinRT.3.0.260520.1\build\native\Microsoft.Windows.CppWinRT.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Windows.CppWinRT.3.0.260520.1\build\native\Microsoft.Windows.CppWinRT.targets'))" />
+  </Target>
 </Project>

@@ -1,0 +1,11 @@
+Id,Name,FireInterval,ProjectileSpeed,Damage,ExplosionRadius,HitRadiusMultiplier,PierceCount,ProjectileLifeTime,SearchRadius,HeightOffset,ProjectileEffectIds,ExplosionEffectIds
+1001,BoneSpear,2.1,45,9,4,1.5,2,3,80,30,401,303
+1002,BoneSpear,2.1,45,11.5,4.5,1.5,2,3,80,30,401,303
+1003,BoneSpear,2.1,45,14,5,1.5,2,3,80,30,401,303
+1004,BoneSpear,2.1,45,16.5,5.5,1.5,2,3,80,30,401,303
+1005,BoneSpear,2.1,45,19,6,1.5,2,3,80,30,401,303
+1006,BoneSpear,2.1,45,21.5,6.5,1.5,2,3,80,30,401,303
+1007,BoneSpear,2.1,45,24,7,1.5,2,3,80,30,401,303
+1008,BoneSpear,2.1,45,26.5,7.5,1.5,2,3,80,30,401,303
+1009,BoneSpear,2.1,45,29,8,1.5,2,3,80,30,401,303
+1010,BoneSpear,2.1,45,31.5,8.5,1.5,2,3,80,30,401,303

@@ -1,0 +1,4 @@
+Id,Name,HpMultiplier,AtkMultiplier,ScaleMultiplier,ExpMultiplier,GoldMultiplier
+0,MiniBoss,6,2,1.6,10,10
+1,MidBoss,15,3.5,2.2,25,25
+2,FinalBoss,35,5,3.2,60,60

@@ -1,0 +1,11 @@
+Id,Name,FireInterval,Damage,Radius,HitRadiusMultiplier,SearchRadius,MaxTargets,Duration,TickInterval,ForwardOffset,EffectIds,AutoStrikeCount
+1001,IceSpike,1.5,8,15,2,105,5,2,0.5,3,201,1
+1002,IceSpike,1.5,10,16.5,2,105,5,2,0.5,3,201,1
+1003,IceSpike,1.5,12,18,2,105,5,2,0.5,3,201,2
+1004,IceSpike,1.5,14,19.5,2,105,5,2,0.5,3,201,2
+1005,IceSpike,1.5,16,21,2,105,5,2,0.5,3,201,3
+1006,IceSpike,1.5,18,22.5,2,105,5,2,0.5,3,201,3
+1007,IceSpike,1.5,20,24,2,105,5,2,0.5,3,201,4
+1008,IceSpike,1.5,22,25.5,2,105,5,2,0.5,3,201,4
+1009,IceSpike,1.5,24,27,2,105,5,2,0.5,3,201,5
+1010,IceSpike,1.5,26,28.5,2,105,5,2,0.5,3,201,5

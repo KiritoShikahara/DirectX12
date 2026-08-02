@@ -1,0 +1,11 @@
+Id,Name,FireInterval,ProjectileSpeed,TurnSpeed,Damage,ExplosionRadius,HitRadiusMultiplier,ProjectileLifeTime,SearchRadius,HeightOffset,ProjectileEffectIds,ExplosionEffectIds
+1001,HomingMissile,0.9,55,320,6,10,2,4,80,30,501,304
+1002,HomingMissile,0.9,55,320,7.5,11.5,2,4,80,30,501,304
+1003,HomingMissile,0.9,55,320,9,13,2,4,80,30,501,304
+1004,HomingMissile,0.9,55,320,10.5,14.5,2,4,80,30,501,304
+1005,HomingMissile,0.9,55,320,12,16,2,4,80,30,501,304
+1006,HomingMissile,0.9,55,320,13.5,17.5,2,4,80,30,501,304
+1007,HomingMissile,0.9,55,320,15,19,2,4,80,30,501,304
+1008,HomingMissile,0.9,55,320,16.5,20.5,2,4,80,30,501,304
+1009,HomingMissile,0.9,55,320,18,22,2,4,80,30,501,304
+1010,HomingMissile,0.9,55,320,19.5,23.5,2,4,80,30,501,304
