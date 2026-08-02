@@ -5,13 +5,9 @@
 
 namespace ecs
 {
-    /// <summary>
-    /// EnemyKnockbackComponentを持つ敵へ、その間だけ吹き飛ばし速度を適用し続けるシステム。
-    /// RemainingTimeが尽きたらコンポーネントを取り外し、EnemyChaseSystemの通常追従へ
-    /// 制御を戻す。EnemyChaseSystem・EnemyKnockbackSystemのどちらも
-    /// RigidBodyComponent::MoveVelocityを書き込むため、EnemyChaseSystem側で
-    /// 本コンポーネント保持中はスキップするガードを設けて競合を避けている。
-    /// </summary>
+    ///<summary>
+    ///EnemyKnockbackComponentを持つ敵へその間だけ吹き飛ばし速度を適用し続けるシステム。時間切れでコンポーネントを外しEnemyChaseSystemの追従へ戻す
+    ///</summary>
     class EnemyKnockbackSystem : public ecs::IUserSystem
     {
     public:

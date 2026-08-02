@@ -20,15 +20,12 @@
 
 namespace
 {
-	// エフェクト素材は概ねこの半径感で作られている想定の暫定値(他の武器と同じ基準)。
 	constexpr float kEffectReferenceRadius = 2.0f;
-
-	// 判定半径可視化用ワイヤーの表示時間(秒)。
 	constexpr float kDebugWireLifetime = 0.3f;
 
-	// プロセス全体で1つの乱数エンジンを使い回す（毎フレーム再生成しない）
 	std::mt19937& GetRandomEngine()
 	{
+		// プロセス全体で1つの乱数エンジンを使い回す、毎フレーム再生成しない
 		static std::mt19937 engine = ::debug::GameDebugSettings::Get().MakeRandomEngine();
 		return engine;
 	}
@@ -38,8 +35,7 @@ namespace ecs
 {
 	void MeteorWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
-		// InGame中のみ発動する。必殺技演出中は他の攻撃を発動させない(自動発動武器のため
-		// Flicker Strike中は止めない設計。ecs::weaponutil::ShouldSkipAutoWeaponUpdate参照)
+		// InGame中のみ発動する。必殺技演出中は他の攻撃を発動させない
 		if (ecs::weaponutil::ShouldSkipAutoWeaponUpdate(registry)) return;
 
 		registry.view<ecs::WeaponComponent, ecs::MeteorWeaponRuntimeComponent>().each(
@@ -57,11 +53,10 @@ namespace ecs
 				const auto* masterData = DATA_MGR(data::MeteorWeaponData).GetById(ecs::weaponutil::ComputeWeaponDataId(weapon));
 				if (masterData == nullptr) return;
 
-				// SearchRadius内に敵が1体も見つからなければクールダウンを消費せず待機する
-				// （対象なしで空撃ちしないため。他の自動発動武器と同じ方針）
+				// SearchRadius内に敵が1体も見つからなければクールダウンを消費せず待機する、空撃ち防止
 				if (!Fire(registry, weapon, *masterData)) return;
 
-				// 攻撃回数パーク(AttackCountUp)分だけ追加で発動を繰り返す(1回目は上のFireで消費済み)
+				// 攻撃回数パーク分だけ追加で発動を繰り返す、1回目は上のFireで消費済み
 				const int attackCount = ecs::combatutil::GetAttackCount(registry, weapon.Owner);
 				for (int i = 1; i < attackCount; ++i)
 				{
@@ -72,8 +67,6 @@ namespace ecs
 			});
 	}
 
-	/// <summary>発動: SearchRadius内の敵からランダムに最大MeteorCount体を選び、
-	/// それぞれの座標へ隕石(範囲ダメージ+エフェクト)を落とす</summary>
 	bool MeteorWeaponSystem::Fire(
 		entt::registry& registry,
 		const ecs::WeaponComponent& weapon,
@@ -100,12 +93,11 @@ namespace ecs
 		std::shuffle(mEnemies.begin(), mEnemies.end(), GetRandomEngine());
 		const int count = std::min<int>(masterData.MeteorCount, static_cast<int>(mEnemies.size()));
 
-		// AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
+		// AtkPowerパークの強化分をCurrent/Base比で反映する
 		const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
 		const float damage = masterData.Damage * atkMultiplier;
 		const float radius = masterData.Radius;
-		// 当たり判定半径は見た目基準半径(radius)とは別にHitRadiusMultiplierで拡大する。
-		// エフェクトの見た目サイズは従来通りradius基準のままにするため、ここで分離する。
+		// 当たり判定半径は見た目基準半径radiusとは別にHitRadiusMultiplierで拡大する
 		const float hitRadius = radius * masterData.HitRadiusMultiplier;
 
 		for (int i = 0; i < count; ++i)
@@ -125,7 +117,6 @@ namespace ecs
 		return true;
 	}
 
-	/// <summary>1体分の隕石落下：範囲ダメージを与えワンショットエフェクトを再生する</summary>
 	void MeteorWeaponSystem::Strike(
 		entt::registry& registry,
 		const DirectX::XMFLOAT3& position,
@@ -142,10 +133,7 @@ namespace ecs
 			ecs::combatutil::ApplyDamageToEnemy(registry, entity, damage);
 		}
 
-		// 実際の判定半径(hitRadius)を可視化する（ImGui「Physics Debug」→「Show Colliders」）。
-		// EffectComponentのautoDeleteに乗らないため、TemporaryLifetimeComponentで
-		// 明示的に一定時間後に破棄する（付け忘れると永久に残り続けるバグになる）。
-		// トグルOFF中は描画されず無駄なため、ONの時だけ生成する。
+		// 実際の判定半径を可視化する、付け忘れると永久に残り続けるためTemporaryLifetimeComponentで明示的に破棄する
 		if (graphics::PhysicsDebugRenderer::Get().IsEnabled())
 		{
 			auto& manager = ::ecs::EntityManager::Get();
@@ -158,8 +146,7 @@ namespace ecs
 			manager.AddComponent<ecs::TemporaryLifetimeComponent>(wireEntity).RemainingTime = kDebugWireLifetime;
 		}
 
-		// 見た目のサイズは判定半径(hitRadius)ではなくvisualRadius(見た目基準)に合わせる。
-		// EffectIdsは';'区切りの素材ID列で複数指定可能(ecs::effectutil::ResolveEffectIds/PlayOneShotCombined参照)。
+		// 見た目のサイズは判定半径hitRadiusではなくvisualRadius基準に合わせる
 		const float scale = visualRadius / kEffectReferenceRadius;
 		const std::string effectPath = ecs::effectutil::ResolveEffectIds(masterData.EffectIds);
 		ecs::effectutil::PlayOneShotCombined(effectPath, position, scale);

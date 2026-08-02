@@ -17,9 +17,9 @@
 
 namespace
 {
-	// プロセス全体で1つの乱数エンジンを使い回す（毎フレーム再生成しない。Meteorと同じ方針）
 	std::mt19937& GetRandomEngine()
 	{
+		// プロセス全体で1つの乱数エンジンを使い回す、毎フレーム再生成しない
 		static std::mt19937 engine = ::debug::GameDebugSettings::Get().MakeRandomEngine();
 		return engine;
 	}
@@ -29,8 +29,7 @@ namespace ecs
 {
 	void AreaAttackAutoStrikeSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
-		// InGame中のみ発動する。必殺技演出中は他の攻撃を発動させない(自動発動武器のため
-		// Flicker Strike中は止めない設計。ecs::weaponutil::ShouldSkipAutoWeaponUpdate参照)
+		// InGame中のみ発動する。必殺技演出中は他の攻撃を発動させない
 		if (ecs::weaponutil::ShouldSkipAutoWeaponUpdate(registry)) return;
 
 		registry.view<ecs::WeaponComponent, ecs::AreaAttackWeaponRuntimeComponent>().each(
@@ -49,16 +48,13 @@ namespace ecs
 				const auto* masterData = DATA_MGR(data::AreaAttackWeaponData).GetById(ecs::weaponutil::ComputeWeaponDataId(weapon));
 				if (masterData == nullptr) return;
 
-				// SearchRadius内に敵が1体も見つからなければクールダウンを消費せず待機する
-				// （対象なしで空撃ちしないため。Meteor等の他の自動発動武器と同じ方針）
+				// SearchRadius内に敵が1体も見つからなければクールダウンを消費せず待機する、空撃ち防止
 				if (!Fire(registry, weapon, *masterData)) return;
 
 				runtime.AutoStrikeCooldownTimer = masterData->FireInterval * ecs::combatutil::GetCooldownRate(registry, weapon.Owner);
 			});
 	}
 
-	/// <summary>発動: SearchRadius内の敵からランダムに最大AutoStrikeCount体を選び、
-	/// それぞれの座標へ氷柱(ハザード)を落とす</summary>
 	bool AreaAttackAutoStrikeSystem::Fire(
 		entt::registry& registry,
 		const ecs::WeaponComponent& weapon,
@@ -85,7 +81,7 @@ namespace ecs
 		std::shuffle(mEnemies.begin(), mEnemies.end(), GetRandomEngine());
 		const int count = std::min<int>(masterData.AutoStrikeCount, static_cast<int>(mEnemies.size()));
 
-		// ダメージ/半径は手動発動(AreaAttackWeaponSystem::Fire)と全く同じ値を使う
+		// ダメージ/半径は手動発動のAreaAttackWeaponSystem::Fireと全く同じ値を使う
 		const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
 		const float damage = masterData.Damage * atkMultiplier;
 		const float radius = masterData.Radius;

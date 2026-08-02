@@ -6,16 +6,9 @@
 
 namespace ecs
 {
-	/// <summary>
-	/// GameState::Result 状態の一連の処理を担当する。
-	/// - Result状態に入った最初のフレームで、クリア/ゲームオーバーに応じたUIを生成する
-	/// - ゲームクリア: Select確定でタイトルへ
-	/// - ゲームオーバー: MenuLeft/MenuRightでRetry/Titleを選択、Selectで確定
-	/// - 確定後は SceneManager でシーン遷移する
-	///
-	/// GameStateSystem はステート遷移のみを担当し、リザルト固有の知識を持たせない
-	/// （PerkSelectSystem と同じ疎結合の設計方針）。
-	/// </summary>
+	///<summary>
+	///GameState::Result状態の処理を担当する。UI生成・入力処理・確定後のシーン遷移まで行う
+	///</summary>
 	class ResultSystem : public IUserSystem
 	{
 	public:

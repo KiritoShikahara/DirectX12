@@ -1,14 +1,11 @@
 ﻿#pragma once
 
-#include<string>
-#include<Data/Storage/Reflection.h>
+#include <string>
+#include <Data/Storage/Reflection.h>
 
 namespace data
 {
-	/// <summary>
-	/// StatUpgradeData::Idと対応する強化対象ステータスの種別。
-	/// PlayerSaveDataの各レベルフィールドと1対1で対応する。
-	/// </summary>
+	/// <summary>StatUpgradeData::Idと対応する強化対象ステータスの種別</summary>
 	enum class eStatUpgradeType : int
 	{
 		MaxHp = 0,
@@ -16,25 +13,17 @@ namespace data
 		Defense = 2,
 		CooldownRate = 3,
 		MoveSpeed = 4,
-		GoldGainRate = 5,       // EnemyDeathSystem::AwardGoldの倍率(PlayerStatusComponentには接続しない)
-		HpRegen = 6,            // PlayerStatusComponent.Base.HpRegenPerSecondへ加算(ecs::PlayerRegenSystem参照)
-		ExperienceGainRate = 7, // EnemyDeathSystem::AwardExperienceの倍率(PlayerStatusComponentには接続しない)
+		GoldGainRate = 5,       
+		HpRegen = 6,            
+		ExperienceGainRate = 7, 
 
-		AttackCount = 8,          // PlayerStatusComponent.Modifier.MulAttackCountへ加算(パークのAttackCountUpと同じ加算先)
-		Revive = 9,               // PlayerStatusComponent.ReviveCountへ加算(パークのReviveと同じ加算先。MaxLevel=1想定)
-		PostHitInvincibility = 10,// PlayerStatusComponent.Base.PostHitInvincibleDurationへ加算(被弾直後の無敵時間、秒)
-		PerkChoiceCount = 11,     // PerkSelectComponent::ChoiceCountへ反映(PlayerStatusComponentには接続しない。MaxLevel=1想定)
+		AttackCount = 8,         
+		Revive = 9,               
+		PostHitInvincibility = 10,
+		PerkChoiceCount = 11,
 	};
 
-	/// <summary>
-	/// ステータス恒久強化のバランス調整データ(CSV/DB)。対象ステータス1件につき1行。
-	/// Id(eStatUpgradeTypeと対応)・表示名・コスト曲線・効果量・レベル上限を持つ。
-	/// GUIからの調整はDataInspector経由(専用デバッグパネルは現状未整備、必要になり次第追加)。
-	///
-	/// コスト = BaseCost + CostGrowthPerLevel × 現在レベル（レベルが上がるごとに高くなる）。
-	/// ValuePerLevelはPlayerStatusComponent::Baseへ加算する量
-	/// （CooldownRateは下げたいため負値を設定する想定）。
-	/// </summary>
+	/// <summary>ステータス恒久強化のバランス調整データ(CSV/DB)</summary>
 	struct StatUpgradeData
 	{
 		int Id = 0;
@@ -52,7 +41,7 @@ namespace data
 			REFLECT_FIELD_FLOAT(CostGrowthPerLevel)
 			REFLECT_FIELD_FLOAT(ValuePerLevel)
 			REFLECT_FIELD_INT(MaxLevel)
-		REFLECT_END()
+			REFLECT_END()
 	};
 }
 

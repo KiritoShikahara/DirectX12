@@ -4,11 +4,9 @@
 
 namespace debug
 {
-    /// <summary>
-    /// プレイヤー/敵のランタイムステータス(CurrentHp等)をImGuiで確認するためのデバッグパネル。
-    /// EnemyStatusDebugPanel(マスタデータの編集)とは異なり、生成済みエンティティの
-    /// 現在値を読み取って表示するだけ。
-    /// </summary>
+    ///<summary>
+    ///プレイヤーと敵のランタイムステータスをImGuiで確認するデバッグパネル。生成済みエンティティの現在値を表示するだけ
+    ///</summary>
     class GameStatusDebugPanel
     {
     public:
@@ -21,7 +19,9 @@ namespace debug
     private:
         void Draw();
 
-        // ImGuiManager 登録・解除に使うキー
+        ///<summary>
+        ///ImGuiManager登録・解除に使うキー
+        ///</summary>
         std::string mDebugKey;
     };
 }

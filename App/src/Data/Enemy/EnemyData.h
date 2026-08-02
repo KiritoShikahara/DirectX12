@@ -1,14 +1,11 @@
 ﻿#pragma once
 
-#include<string>
-#include<Data/Storage/Reflection.h>
+#include <string>
+#include <Data/Storage/Reflection.h>
 
 namespace data
 {
-    /// <summary>
-    /// 敵の基礎ステータスのマスタデータ(CSV/DB)。EnemyStatusComponent::Baseへ対応する。
-    /// CSVヘッダー名は各フィールド名と一致させること。
-    /// </summary>
+    /// <summary>敵の基礎ステータスのマスタデータ(CSV/DB)。EnemyStatusComponent::Baseへ対応する</summary>
     struct EnemyData
     {
         int         Id = 0;            // 敵の種類ID(主キー。EnemyStatusComponent::EnemyIdと対応)

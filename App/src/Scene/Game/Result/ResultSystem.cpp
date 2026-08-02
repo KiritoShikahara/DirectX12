@@ -14,7 +14,6 @@ namespace ecs
 {
 	namespace
 	{
-		// レイアウト定数（個人開発プロトタイプの暫定値。文字幅の厳密な計測はせず概算でセンタリングする）
 		constexpr float kTitleTextSize = 64.0f;
 		constexpr float kOptionTextSize = 36.0f;
 		constexpr float kOptionSpacingX = 200.0f;
@@ -40,8 +39,7 @@ namespace ecs
 		auto* result = registry.try_get<ResultComponent>(controllerEntity);
 		if (result == nullptr)
 		{
-			// Resultへ入った最初のフレーム：クリア/ゲームオーバーに応じたUIを生成する。
-			// 入力受付は次フレームから（生成と同一フレームでの誤入力を避ける）。
+			// Resultへ入った最初のフレームでクリア/ゲームオーバーに応じたUIを生成する。入力受付は次フレームから
 			EnterResult(registry, controllerEntity, gameState.ResultType);
 			return;
 		}
@@ -69,11 +67,10 @@ namespace ecs
 		const float centerX = static_cast<float>(window.GetVirtualWidth()) * 0.5f;
 		const float centerY = static_cast<float>(window.GetVirtualHeight()) * 0.5f;
 
-		// 背景(ゲーム画面)の上に文字が直接乗ると読みづらいため、生成したテキストの実測範囲から
-		// 黒半透明の板を動的にサイズして下へ敷く(OptionsMenuSystemと同じ手法)
+		// 背景の上に文字が直接乗ると読みづらいため、テキストの実測範囲から黒半透明の板を動的にサイズして敷く
 		std::vector<entt::entity> textEntities;
 
-		// タイトル文言(GAME CLEAR / GAME OVER)
+		// タイトル文言、GAME CLEARまたはGAME OVER
 		{
 			auto entity = manager.CreateEntity();
 			auto& text = manager.AddComponent<TextComponent>(entity);
@@ -101,7 +98,7 @@ namespace ecs
 		}
 		else
 		{
-			// ゲームオーバーはRetry/Titleの2択（先頭カーソルはRetry）
+			// ゲームオーバーはRetry/Titleの2択。先頭カーソルはRetry
 			const wchar_t* labels[2] = { L"Retry", L"Title" };
 			const float offsets[2] = { -kOptionSpacingX - 40.0f, kOptionSpacingX - 40.0f };
 
@@ -172,9 +169,7 @@ namespace ecs
 		{
 			if (result.SelectedIndex == 0)
 			{
-				// TODO: LoadingScene経由の非同期先読みはDevelop構成で原因未特定のクラッシュが
-				// 再現したため一旦見送り、以前と同じ「GameScene::Initialize()内で同期的に
-				// リソース読み込みする」方式に戻す(フェード中の一瞬のスパイクは許容する)。
+				// TODO: LoadingScene経由の非同期先読みは原因未特定のクラッシュが再現したため見送り、同期読み込み方式に戻す
 				::sys::SceneManager::Get().ChangeSceneWithTransition<scene::GameScene>();
 			}
 			else

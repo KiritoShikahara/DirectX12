@@ -22,22 +22,13 @@ namespace data
 
 namespace debug
 {
-    /// <summary>
-    /// 全武器種別(SingleShot/AreaAttack/BoneSpear/ChainLightning/Cleave/FlickerStrike/
-    /// HomingMissile/Meteor/Nova/Orbit/Ricochet/VoidBeam)のマスタデータ編集パネルを
-    /// 1つのウィンドウへ統合したもの。
-    ///
-    /// 以前は武器種別ごとに個別のImGuiウィンドウ(XxxWeaponDebugPanel)を持っていたため、
-    /// 画面上にウィンドウが12個も散らばって見づらかった。本パネルは単一のウィンドウ内に
-    /// 武器種別ごとのCollapsingHeader(折りたたみ/展開セクション)としてまとめる。
-    /// 中身の描画はDataInspector&lt;T&gt;::DrawContent()(Begin/Endを含まない版)に委譲する。
-    ///
-    /// IUserSystemは継承せず、生成時にImGuiManagerへ登録・破棄時に解除する。
-    /// </summary>
+    ///<summary>
+    ///全武器種別のマスタデータ編集パネルを、個別ウィンドウ乱立を避けて1つのウィンドウへ統合したもの
+    ///</summary>
     class WeaponMasterDataDebugPanel
     {
     public:
-        /// <param name="debugKey">ImGuiManager 登録・解除に使うキー（シーンごとに一意にすること）</param>
+        /// <param name="debugKey">ImGuiManager登録・解除に使うキー、シーンごとに一意にすること</param>
         explicit WeaponMasterDataDebugPanel(std::string debugKey = "WeaponMasterDataDebug");
         ~WeaponMasterDataDebugPanel();
 

@@ -25,9 +25,13 @@ namespace ecs
         registry.view<ecs::DamageNumberComponent, ecs::TextComponent>().each(
             [&](entt::entity entity, ecs::DamageNumberComponent& number, ecs::TextComponent& text)
             {
+                // ダメージ数値を上方向へ移動
                 number.WorldPosition.y += number.RiseSpeed * deltaTime;
+
+                // 残り表示時間を更新
                 number.RemainingTime -= deltaTime;
 
+                // 表示時間が終了したら削除対象に追加
                 if (number.RemainingTime <= 0.0f)
                 {
                     mExpired.push_back(entity);
@@ -42,15 +46,16 @@ namespace ecs
                 XMFLOAT3 ndcResult;
                 XMStoreFloat3(&ndcResult, ndc);
 
-                // NDC([-1,1], Y上向き) からスクリーン座標(左上原点、Y下向き)へ変換する
+                // ワールド座標をスクリーン座標へ変換
                 text.X = (ndcResult.x * 0.5f + 0.5f) * screenWidth;
                 text.Y = (1.0f - (ndcResult.y * 0.5f + 0.5f)) * screenHeight;
 
-                // 残り時間の割合でフェードアウトする
+                // 残り時間に応じて透明度を更新
                 const float alpha = std::clamp(number.RemainingTime / number.TotalTime, 0.0f, 1.0f);
                 text.Color.w = alpha;
             });
 
+        // 表示が終了したエンティティを削除
         for (entt::entity entity : mExpired)
         {
             registry.destroy(entity);

@@ -21,21 +21,15 @@ namespace ecs
 {
 	namespace
 	{
-		// 敵の湧き出し高さ(地面のY座標。GameSceneFactory::CreatePlayerの初期Y座標(0.1)と合わせる)。
-		// プレイヤーの現在のY座標(playerPos.y)を使うと、必殺技での上昇中に敵がプレイヤーと
-		// 同じ高さ(=空中)で湧いてしまい、あたかも空まで追いかけてきたように見えるバグになるため、
-		// 地面は常に平面である前提でこの固定値を使う
 		constexpr float kSpawnGroundY = 0.1f;
 
-		// プロセス全体で1つの乱数エンジンを使い回す（毎フレーム再生成しない）
 		std::mt19937& GetRandomEngine()
 		{
+			// プロセス全体で使い回す
 			static std::mt19937 engine = ::debug::GameDebugSettings::Get().MakeRandomEngine();
 			return engine;
 		}
 
-		/// <summary>data::EnemyDataに登録されている敵の種類から一様ランダムに1つ選ぶ
-		/// （1種類も登録されていない場合はId=0を返す）</summary>
 		int PickRandomEnemyId()
 		{
 			const auto& enemies = DATA_MGR(data::EnemyData).GetAll();
@@ -45,13 +39,9 @@ namespace ecs
 			return enemies[dist(GetRandomEngine())].Id;
 		}
 
-		/// <summary>
-		/// 経過時間から「stepInterval秒ごとにgrowthPerStep分だけ段階的に増加する」倍率を求める共通ヘルパー。
-		/// 滑らかな連続成長ではなく階段状にすることで、経過時間に対する体感のメリハリを付ける。
-		/// 敵ステータス成長(ComputeWaveModifier)とスポーン数成長(EnemySpawnSystem::Update)の両方で使う。
-		/// </summary>
 		float ComputeStepGrowth(float elapsedTime, float stepInterval, float growthPerStep)
 		{
+			// 階段状に成長させる共通ヘルパー。滑らかな連続成長にしないことで経過時間に対する体感のメリハリを付ける
 			const float safeStepInterval = std::max(stepInterval, 1.0f); // 0除算防止
 			const float stepCount = std::floor(elapsedTime / safeStepInterval);
 			return 1.0f + growthPerStep * stepCount;
@@ -75,7 +65,7 @@ namespace ecs
 
 		wave.ElapsedTime += deltaTime;
 
-		// クリア判定（これ以降のスポーン処理は行わない）
+		// クリア判定。これ以降のスポーン処理は行わない
 		if (wave.ElapsedTime >= wave.ClearTime)
 		{
 			gameState.GameClearRequested = true;
@@ -85,16 +75,11 @@ namespace ecs
 		const ecs::EnemyWaveModifier waveModifier =
 			ComputeWaveModifier(wave.ElapsedTime, wave.StatGrowthStepInterval, wave.StatGrowthPerStep);
 
-		// 通常の敵の継続スポーン（1回のタイミングでSpawnCountPerTick体まとめて湧かせる。
-		// 重なって湧かないよう、1体ごとに独立してランダムな位置を求める。
-		// 敵の種類もdata::EnemyDataに登録されている中からランダムに選ぶ）
-		// MaxAliveEnemyが有効(1以上)な場合のみ、生存数が上限に達している間は
-		// スポーンを間引く。0以下は「上限なし」を意味する(ecs::WaveComponent参照)
+		// 通常の敵の継続スポーン。1回でSpawnCountPerTick体を独立した位置にまとめて湧かせ、種類はEnemyDataからランダムに選ぶ。MaxAliveEnemyが有効なら上限に達している間は間引く
 		wave.SpawnTimer -= deltaTime;
 		if (wave.SpawnTimer <= 0.0f)
 		{
-			// 終盤ほど大量の敵が出現するよう、1回のスポーン数もSpawnCountGrowthStepInterval秒ごとに
-			// SpawnCountGrowthPerStep分だけ階段状に増やす(敵ステータス成長と同じ式を使い回す)
+			// 終盤ほど多く出現するようSpawnCountGrowthStepInterval秒ごとにSpawnCountGrowthPerStep分だけ階段状にスポーン数を増やす
 			const float spawnCountGrowth = ComputeStepGrowth(
 				wave.ElapsedTime, wave.SpawnCountGrowthStepInterval, wave.SpawnCountGrowthPerStep);
 			int spawnCount = std::max(1, static_cast<int>(std::round(wave.SpawnCountPerTick * spawnCountGrowth)));
@@ -114,8 +99,7 @@ namespace ecs
 			wave.SpawnTimer = wave.SpawnInterval;
 		}
 
-		// ボース出現（通常の敵よりさらに奥から出す。種類は常にId=0の強化版、階級の倍率はdata::BossData）。
-		// 小ボースは周期的に繰り返し、中ボース・最強ボースはそれぞれ1回だけ出現する。
+		// ボス出現は通常の敵よりさらに奥から出す。種類は常にId=0の強化版で階級の倍率はdata::BossData。小ボスは周期的、中ボス・最強ボスは1回だけ
 		if (wave.ElapsedTime >= wave.NextMiniBossSpawnTime)
 		{
 			const XMFLOAT3 spawnPos = ComputeSpawnPosition(
@@ -141,7 +125,6 @@ namespace ecs
 		}
 	}
 
-	/// <summary>画面外(画面に映っている範囲の半径 + マージン)のリング上にランダムなスポーン位置を求める</summary>
 	DirectX::XMFLOAT3 EnemySpawnSystem::ComputeSpawnPosition(
 		entt::registry& registry,
 		const DirectX::XMFLOAT3& playerPos,
@@ -158,11 +141,7 @@ namespace ecs
 		float x = playerPos.x + std::cos(angle) * radius;
 		float z = playerPos.z + std::sin(angle) * radius;
 
-		// プレイヤー相対の計算だけだと、プレイヤーがフィールド境界(見えない壁、
-		// FieldConstants::kPlayableHalfExtent)付近にいる場合、外側方向への抽選で
-		// 壁の外にスポーンしてしまい、その敵が壁に阻まれて二度とフィールド内に
-		// 入れなくなる(=進行不能)不具合になっていた。壁の内側へ確実に収まるよう、
-		// 少し余裕を持たせてクランプする。
+		// プレイヤーがフィールド境界付近にいると壁の外にスポーンし進行不能になるため、壁の内側へ収まるようクランプする
 		constexpr float kSpawnBoundaryMargin = 50.0f;
 		const float limit = FieldConstants::kPlayableHalfExtent - kSpawnBoundaryMargin;
 		x = std::clamp(x, -limit, limit);
@@ -171,10 +150,6 @@ namespace ecs
 		return { x, kSpawnGroundY, z };
 	}
 
-	/// <summary>
-	/// 現在のカメラ設定で、プレイヤーの足元平面上に画面(四隅)が投影される範囲の半径を求める。
-	/// カメラは常にプレイヤーへ一定オフセットで追従するため、この値は実質プレイ中一定になる。
-	/// </summary>
 	float EnemySpawnSystem::ComputeVisibleRadius(entt::registry& registry, const DirectX::XMFLOAT3& playerPos)
 	{
 		constexpr float kFallbackRadius = 30.0f;
@@ -210,11 +185,6 @@ namespace ecs
 		return anyHit ? std::sqrt(maxDistSq) : kFallbackRadius;
 	}
 
-	/// <summary>
-	/// 経過時間から現在の敵ステータス成長倍率を求める。滑らかな連続成長ではなく、
-	/// stepInterval(秒)ごとにgrowthPerStep分だけ段階的に強くなる階段状にする
-	/// (例: 2分ごとに+40%なら、0-2分=等倍、2-4分=1.4倍、4-6分=1.8倍…と2分単位で跳ね上がる)。
-	/// </summary>
 	ecs::EnemyWaveModifier EnemySpawnSystem::ComputeWaveModifier(float elapsedTime, float stepInterval, float growthPerStep)
 	{
 		ecs::EnemyWaveModifier modifier;
@@ -224,7 +194,7 @@ namespace ecs
 		modifier.MulMaxHp = growth;
 		modifier.MulAtkPower = growth;
 
-		// 移動速度は意図的にスケールしない（敵がプレイヤーより速くなり続けるのを防ぐため）
+		// 移動速度は意図的にスケールしない。敵がプレイヤーより速くなり続けるのを防ぐため
 		modifier.MulMoveSpeed = 1.0f;
 
 		return modifier;

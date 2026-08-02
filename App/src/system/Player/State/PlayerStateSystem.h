@@ -7,9 +7,9 @@ namespace ecs
 {
 	struct PlayerStateComponent;
 
-	/// <summary>
-	/// プレイヤーの状態管理
-	/// </summary>
+	///<summary>
+	///プレイヤーの状態管理
+	///</summary>
 	class PlayerStateSystem : public ecs::IUserSystem
 	{
 	public:

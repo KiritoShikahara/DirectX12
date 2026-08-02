@@ -16,8 +16,7 @@ namespace ecs
 {
     void VoidBeamWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
     {
-        // InGame中のみ発動する。必殺技演出中は他の攻撃を発動させない(自動発動武器のため
-        // Flicker Strike中は止めない設計。ecs::weaponutil::ShouldSkipAutoWeaponUpdate参照)
+        // InGame中のみ発動する。必殺技演出中は他の攻撃を発動させない
         if (ecs::weaponutil::ShouldSkipAutoWeaponUpdate(registry)) return;
 
         registry.view<ecs::WeaponComponent, ecs::VoidBeamRuntimeComponent>().each(
@@ -40,8 +39,7 @@ namespace ecs
 
                 const DirectX::XMFLOAT3& ownerPos = ownerTransform->GetPosition();
 
-                // SearchRadius内に敵がいなければクールダウンを消費せず待機する
-                // （狙う相手がいない状態で空撃ちしないため、Homing/Chainと同じ方針）
+                // SearchRadius内に敵がいなければクールダウンを消費せず待機する、狙う相手がいない状態で空撃ちしないため
                 const entt::entity target = ecs::targetutil::FindNearestInRadius(
                     registry, ownerPos, masterData->SearchRadius);
                 if (!registry.valid(target)) return;
@@ -59,7 +57,7 @@ namespace ecs
                     direction = { dx * invLen, 0.0f, dz * invLen };
                 }
 
-                // 攻撃回数パーク(AttackCountUp)分だけ扇状にビームを放つ
+                // 攻撃回数パーク分だけ扇状にビームを放つ
                 constexpr float kMultiBeamSpreadDegrees = 8.0f;
                 const int attackCount = ecs::combatutil::GetAttackCount(registry, weapon.Owner);
                 for (int i = 0; i < attackCount; ++i)
@@ -73,7 +71,6 @@ namespace ecs
             });
     }
 
-    /// <summary>directionへ向けてBeamLength・BeamWidthの直線範囲内にいる敵全員へダメージを与える</summary>
     void VoidBeamWeaponSystem::Fire(
         entt::registry& registry,
         const ecs::WeaponComponent& weapon,
@@ -81,18 +78,15 @@ namespace ecs
         const DirectX::XMFLOAT3& direction,
         const data::VoidBeamWeaponData& masterData)
     {
-        // AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
+        // AtkPowerパークの強化分をCurrent/Base比で反映する
         const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
         const float damage = masterData.Damage * atkMultiplier;
 
         // ビーム全体を包含する球でまず候補を集め、線分への垂線距離で直線上の敵だけに絞り込む
-        // （新規の物理クエリ形状(カプセル等)を増やさず、既存のOverlapSphere+数式フィルタで完結させる）。
         mCandidates.clear();
         ::sys::PhysicsSystem::OverlapSphere(registry, origin, masterData.BeamLength, mCandidates);
 
-        // ダメージは貫通ヒットする全員に入れるが、ヒットエフェクトはMaxHitEffects体分までしか
-        // 再生しない(敵が密集していると1回のビームで数十体に同時ヒットしうるため、
-        // Effekseerエフェクトの同時生成数を抑える)
+        // ダメージは貫通ヒットする全員に入れるが、密集地での同時生成数を抑えるためヒットエフェクトはMaxHitEffects体分までしか再生しない
         int spawnedEffects = 0;
         // ループ内で毎回ID解決しないよう、ヒットエフェクトのパスは事前に1回だけ解決しておく
         const std::string hitEffectPath = ecs::effectutil::ResolveEffectIds(masterData.HitEffectIds);
@@ -108,7 +102,7 @@ namespace ecs
             const float ex = enemyPos.x - origin.x;
             const float ez = enemyPos.z - origin.z;
 
-            // ビーム方向への射影距離(t)。0未満(背後)・BeamLengthを超える(射程外)は対象外
+            // ビーム方向への射影距離t。0未満は背後、BeamLengthを超えるのは射程外として対象外
             const float t = ex * direction.x + ez * direction.z;
             if (t < 0.0f || t > masterData.BeamLength) continue;
 

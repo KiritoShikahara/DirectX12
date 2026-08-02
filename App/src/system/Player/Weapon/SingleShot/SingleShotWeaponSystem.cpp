@@ -15,7 +15,6 @@ namespace ecs
 	void SingleShotWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
 		// InGame中のみ発射する。必殺技演出中は他の攻撃を発動させない
-		// (手動発動武器のためIsPlayerActionLocked()を使う。ecs::weaponutil::ShouldSkipManualWeaponUpdate参照)
 		if (ecs::weaponutil::ShouldSkipManualWeaponUpdate(registry)) return;
 
 		registry.view<ecs::WeaponComponent, ecs::SingleShotWeaponRuntimeComponent>().each(
@@ -30,7 +29,7 @@ namespace ecs
 				}
 				if (runtime.CooldownTimer > 0.0f) return;
 
-				// Auto: クールダウンが明けたら自動で撃つ / Manual: "Attack"入力(左クリック)が押された瞬間のみ撃つ
+				// Auto: クールダウンが明けたら自動で撃つ / Manual: Attack入力が押された瞬間のみ撃つ
 				bool wantsToFire = weapon.Control == ecs::eWeaponControl::Auto;
 				if (weapon.Control == ecs::eWeaponControl::Manual)
 				{
@@ -42,7 +41,7 @@ namespace ecs
 				const auto* masterData = DATA_MGR(data::SingleShotWeaponData).GetById(ecs::weaponutil::ComputeWeaponDataId(weapon));
 				if (masterData == nullptr) return;
 
-				// 攻撃回数パーク(AttackCountUp)分だけ扇状に発射する
+				// 攻撃回数パーク分だけ扇状に発射する
 				const int attackCount = ecs::combatutil::GetAttackCount(registry, weapon.Owner);
 				for (int i = 0; i < attackCount; ++i)
 				{
@@ -55,12 +54,9 @@ namespace ecs
 
 	namespace
 	{
-		// 攻撃回数パークで複数発射する際の、1ショットあたりの扇状スプレッド角度(度)
 		constexpr float kMultiShotSpreadDegrees = 8.0f;
 	}
 
-	/// <summary>狙い方向(shotCount>1の場合は扇状に広げたshotIndex番目の方向)へ
-	/// ProjectileComponent エンティティを1体生成する</summary>
 	void SingleShotWeaponSystem::Fire(
 		entt::registry& registry,
 		const ecs::WeaponComponent& weapon,
@@ -85,12 +81,11 @@ namespace ecs
 			ownerPos.z + direction.z * kSpawnOffset,
 		};
 
-		// AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
+		// AtkPowerパークの強化分をCurrent/Base比で反映する
 		const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
 		const float damage = masterData.Damage * atkMultiplier;
 		const float radius = masterData.ExplosionRadius;
-		// 当たり判定半径は見た目基準半径(radius)とは別にHitRadiusMultiplierで拡大する。
-		// エフェクトの見た目サイズは従来通りradius基準のままにするため、ここで分離する。
+		// 当たり判定半径は見た目基準半径radiusとは別にHitRadiusMultiplierで拡大する
 		const float hitRadius = radius * masterData.HitRadiusMultiplier;
 
 		auto& manager = ::ecs::EntityManager::Get();
@@ -122,9 +117,7 @@ namespace ecs
 			auto& effect = manager.AddComponent<ecs::EffectComponent>(entity);
 			effect.Asset = graphics::EffekseerManager::Get().GetEffect(projectileEffectPath);
 			effect.IsLoop = true;
-			// effect.Offset(常に原点)ではなく実際の発射位置を渡す。
-			// ここを Offset のまま渡すと、次フレームの EffekseerManager::Update による
-			// Transform追従が効くまでの1フレームだけ原点に表示されてしまう。
+			// 常に原点のeffect.Offsetではなく実際の発射位置を渡す、Transform追従が効くまでの1フレームのズレを防ぐため
 			effect.Effect.Play(effect.Asset, spawnPos);
 			graphics::EffekseerManager::MarkSpawnHidden(effect);
 		}

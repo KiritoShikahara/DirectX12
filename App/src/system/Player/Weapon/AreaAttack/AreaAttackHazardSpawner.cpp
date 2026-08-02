@@ -10,10 +10,7 @@
 
 namespace
 {
-	// エフェクト素材のだいたいの基準半径。見た目のスケール計算に使う
 	constexpr float kEffectReferenceRadius = 2.0f;
-
-	// 見た目だけをもう一段階小さくするための倍率(判定半径には影響しない)
 	constexpr float kVisualScaleMultiplier = 0.5f;
 }
 
@@ -39,11 +36,10 @@ namespace ecs::areaattack
 		hazard.Radius = hitRadius;
 		hazard.Damage = damage;
 		hazard.RemainingDuration = masterData.Duration;
-		hazard.TickTimer = 0.0f; // 0start: 生成した次のフレームで即座に1回目のダメージを与える
+		hazard.TickTimer = 0.0f; // 0スタート、生成した次のフレームで即座に1回目のダメージを与える
 		hazard.TickInterval = masterData.TickInterval;
 
-		// 実際の判定半径を可視化する（ImGui「Physics Debug」→「Show Colliders」）。
-		// トグルOFF中は描画されず無駄なため、ONの時だけ生成する。
+		// 実際の判定半径を可視化する、トグルONの時だけ生成する
 		if (graphics::PhysicsDebugRenderer::Get().IsEnabled())
 		{
 			auto& wire = manager.AddComponent<ecs::DebugWireSphereComponent>(entity);
@@ -58,7 +54,7 @@ namespace ecs::areaattack
 			effect.Asset = graphics::EffekseerManager::Get().GetEffect(effectPath);
 			// 見た目は着弾時に1回だけ。判定側の継続ダメージはAreaAttackHazardSystemが別に担う
 			effect.IsLoop = false;
-			// 見た目のスケールはradius基準(判定だけ拡大しても見た目は変えない)
+			// 見た目のスケールはradius基準、判定だけ拡大しても見た目は変えない
 			const float scale = (radius / kEffectReferenceRadius) * kVisualScaleMultiplier;
 			effect.Scale = { scale, scale, scale };
 			effect.Effect.Play(effect.Asset, position);

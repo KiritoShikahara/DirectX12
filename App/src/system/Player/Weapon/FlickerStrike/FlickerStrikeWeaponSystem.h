@@ -12,25 +12,18 @@ namespace ecs
     struct WeaponComponent;
     struct PlayerFlickerStrikeComponent;
 
-    /// <summary>
-    /// FlickerStrike型武器(WeaponComponent::Type == FlickerStrike)の発動ロジック。
-    /// 狙い方向(PlayerAimComponent::Direction)へ直線状に敵を探し、最初に見つかった敵へ
-    /// ワープして初撃を与える(方向上に敵がいなければ何も起きない)。命中した場合のみ、
-    /// 所持しているパワーチャージ(PlayerPowerChargeComponent)を全消費し、チャージ1個につき
-    /// ChargeHitCount回の追加ワープ攻撃を近くの敵へ次々行う。ワープシーケンス自体の状態は
-    /// プレイヤー側のPlayerFlickerStrikeComponentが保持し、演出中は
-    /// ecs::IsPlayerActionLocked()経由で他の武器・プレイヤー操作を一時停止させる
-    /// (PlayerUltimateSystemと同じ設計方針)。ただし演出中に他の手動スキル(Attack/Attack2/
-    /// Ultimate)の入力があった場合は、プレイヤーの操作意思を優先してシーケンスを打ち切る。
-    /// </summary>
+    ///<summary>
+    ///FlickerStrike型武器の発動ロジック。狙い方向の最初の敵へワープして初撃を与え、パワーチャージを全消費して追加ワープ攻撃を連続で行う
+    ///</summary>
     class FlickerStrikeWeaponSystem : public ecs::IUserSystem
     {
     public:
         void Update(entt::registry& registry, float deltaTime, float rawDeltaTime) override;
 
     private:
-        /// <summary>originからdirection方向へInitialTargetMaxRange・InitialSearchWidthの
-        /// 直線範囲内にいる、最も近い敵を返す(無ければentt::null)</summary>
+        ///<summary>
+        ///originからdirection方向へ直線範囲内にいる最も近い敵を返す、無ければentt::null
+        ///</summary>
         entt::entity PickDirectionalTarget(
             entt::registry& registry,
             const DirectX::XMFLOAT3& origin,
@@ -38,7 +31,9 @@ namespace ecs
             float maxRange,
             float width);
 
-        /// <summary>シーケンスを開始する：パワーチャージを全消費し、初撃を与える</summary>
+        ///<summary>
+        ///シーケンスを開始する、パワーチャージを全消費し初撃を与える
+        ///</summary>
         static void StartSequence(
             entt::registry& registry,
             const ecs::WeaponComponent& weapon,
@@ -46,8 +41,9 @@ namespace ecs
             entt::entity initialTarget,
             const data::FlickerStrikeWeaponData& masterData);
 
-        /// <summary>シーケンス中の毎フレーム処理：他スキル入力による中断、ワープ間隔の消化、
-        /// 次の対象探索、終了判定</summary>
+        ///<summary>
+        ///シーケンス中の毎フレーム処理、他スキル入力による中断・ワープ間隔の消化・次の対象探索・終了判定を行う
+        ///</summary>
         void UpdateActiveSequence(
             entt::registry& registry,
             const ecs::WeaponComponent& weapon,
@@ -55,30 +51,41 @@ namespace ecs
             const data::FlickerStrikeWeaponData& masterData,
             float deltaTime);
 
-        /// <summary>対象の近くへ瞬時にワープし、ダメージ・ヒットエフェクトを与える</summary>
+        ///<summary>
+        ///対象の近くへ瞬時にワープし、ダメージ・ヒットエフェクトを与える
+        ///</summary>
         static void WarpAndHit(
             entt::registry& registry,
             const ecs::WeaponComponent& weapon,
             entt::entity target,
             const data::FlickerStrikeWeaponData& masterData);
 
-        /// <summary>シーケンスを終了する：無敵化解除、状態リセット</summary>
+        ///<summary>
+        ///シーケンスを終了する、無敵化解除と状態リセットを行う
+        ///</summary>
         static void EndSequence(
             entt::registry& registry,
             entt::entity playerEntity,
             ecs::PlayerFlickerStrikeComponent& flicker);
 
-        /// <summary>ワープ着弾の瞬間に攻撃アニメーションを再生する(非ループ・高速再生)。
-        /// WarpAndHit内から呼ぶ(初撃・追撃どちらもWarpAndHitを通るため、ここが一本化ポイント)</summary>
+        ///<summary>
+        ///ワープ着弾の瞬間に攻撃アニメーションを再生する、非ループ・高速再生
+        ///</summary>
         static void PlayAttackAnimation(entt::registry& registry, entt::entity playerEntity);
 
-        /// <summary>攻撃アニメーションの再生が終わっていれば、次のワープまでの待機中は
-        /// 移動アニメーション(Run)へ戻す。WarpTimerの残りに関係なく毎フレーム呼ぶこと</summary>
+        ///<summary>
+        ///攻撃アニメーションの再生が終わっていれば、次のワープまでの待機中は移動アニメーションへ戻す
+        ///</summary>
         static void UpdateTravelAnimation(entt::registry& registry, entt::entity playerEntity);
 
-        // PickDirectionalTarget()のOverlapSphere結果の一時バッファ。毎回clear()して再利用する
+        ///<summary>
+        ///PickDirectionalTargetのOverlapSphere結果の一時バッファ、毎回clearして再利用する
+        ///</summary>
         std::vector<entt::entity> mDirectionalCandidates;
-        // UpdateActiveSequence()内: 次のワープ先探索の一時バッファ(ワープのたびにclear()して再利用)
+
+        ///<summary>
+        ///UpdateActiveSequence内で使う次のワープ先探索の一時バッファ、ワープのたびにclearして再利用する
+        ///</summary>
         std::vector<entt::entity> mWarpCandidates;
     };
 }

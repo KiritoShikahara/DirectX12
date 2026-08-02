@@ -17,8 +17,7 @@ namespace ecs
 		const bool wantsToFire = INPUT_MANAGER.IsActionPressed("Attack");
 		const bool wantsToFireSecondary = INPUT_MANAGER.IsActionPressed("Attack2");
 		const bool wantsToFireTertiary = INPUT_MANAGER.IsActionPressed("FlickerStrike");
-		// 必殺技/Flicker Strikeの演出中、および設定メニュー(OptionsMenuSystem)表示中は
-		// プレイヤー操作を一切受け付けない（移動・攻撃とも入力を無視する）
+		// 必殺技/Flicker Strikeの演出中、および設定メニュー表示中はプレイヤー操作を一切受け付けない
 		const bool inputBlocked = ecs::IsPlayerActionLocked(registry) || ecs::IsOptionsMenuOpen(registry);
 
 		registry.view<ecs::PlayerMovementComponent, ecs::PlayerStateComponent, ecs::PlayerAimComponent, ecs::PlayerTag>().each(

@@ -26,8 +26,7 @@ namespace ecs
 					return;
 				}
 
-				// PlayerStatusComponent::Current.MoveSpeed(繝代・繧ｯ縺ｧ蠑ｷ蛹悶＆繧後ｋ蛟､)縺ｯ
-				// MaxSpeed縺ｨ縺ｯ蜊倅ｽ阪′逡ｰ縺ｪ繧九◆繧√。ase豈斐・豈皮紫縺ｨ縺励※謗帙￠蜷医ｏ縺帙ｋ
+				// PlayerStatusComponent::Current.MoveSpeedはMaxSpeedと単位が異なるためBase比の倍率として掛け合わせる
 				float speedMultiplier = 1.0f;
 				if (const auto* status = registry.try_get<ecs::PlayerStatusComponent>(entity);
 					status != nullptr && status->Base.MoveSpeed > 0.0f)

@@ -44,5 +44,10 @@ namespace scene
 		/// </summary>
 		static void CreateControlGuide();
 
+		///<summary>
+		///ゲーム終了確認ダイアログの状態・UIを生成する
+		///</summary>
+		static void CreateExitConfirmUi();
+
 	};
 }

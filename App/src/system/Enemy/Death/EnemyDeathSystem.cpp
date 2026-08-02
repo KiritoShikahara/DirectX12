@@ -16,8 +16,6 @@
 
 namespace
 {
-	// 敵撃破時の消滅演出。毎撃破ごとに発生する高頻度イベントのため小さく軽量なものを使う
-	// (PlayOneShotCombinedの同時再生数/パーティクル数上限で暴走はしない)
 	constexpr const char* kDeathEffectPath = "Assets/Effect/AttackHit.efk";
 }
 
@@ -28,8 +26,7 @@ namespace ecs
 		std::vector<entt::entity> dead;
 		float totalExperience = 0.0f;
 		float totalGold = 0.0f;
-		// 必殺技自身の範囲ダメージで倒した敵は、必殺技ゲージへ加算しない対象
-		// (EnemyStatusComponent::DamagedByUltimate参照)のため、通常撃破数と分けて数える
+		// 必殺技自身の範囲ダメージで倒した敵はゲージ加算対象外のため、通常撃破数と分けて数える
 		int ultimateChargeableKillCount = 0;
 
 		registry.view<EnemyTag, EnemyStatusComponent>().each(
@@ -88,8 +85,7 @@ namespace ecs
 		auto& level = registry.get<PlayerLevelComponent>(playerEntity);
 		auto& gameState = registry.get<GameStateComponent>(*stateView.begin());
 
-		// 経験値獲得量強化(data::eStatUpgradeType::ExperienceGainRate、永続)と
-		// ExperienceGainUpパーク(level.MulExperienceGain、今回のプレイのみ)の両方を乗算する
+		// 経験値獲得量強化と今回のプレイ限定のExperienceGainUpパークの両方を乗算する
 		data::EnsurePlayerSaveDataLoaded();
 		const auto& save = data::ConfigRegistry::Get().GetManager<data::PlayerSaveData>().Get();
 		float permanentMultiplier = 1.0f;
@@ -100,10 +96,7 @@ namespace ecs
 
 		level.Experience += experience * level.MulExperienceGain * permanentMultiplier;
 
-		// ボース撃破・必殺技の全体ダメージ等で複数レベル分のXPが一度に入ることがあるため、
-		// whileループで超過した回数分だけレベルアップさせる。GameStateComponent::
-		// PendingLevelUpCountへその回数分を積み、パーク選択もレベルアップ回数分だけ
-		// 連続で提示する(GameStateSystem参照)。
+		// ボス撃破等で複数レベル分のXPが一度に入ることがあるため、whileループで超過回数分だけレベルアップさせPendingLevelUpCountへ積む
 		while (level.Experience >= level.ExperienceToNextLevel)
 		{
 			level.Experience -= level.ExperienceToNextLevel;
@@ -113,7 +106,6 @@ namespace ecs
 		}
 	}
 
-	/// <summary>撃破数を必殺技ゲージへ加算する（ゲージ満タン中・発動中は加算しない）</summary>
 	void EnemyDeathSystem::AwardUltimateCharge(entt::registry& registry, int killCount)
 	{
 		auto playerView = registry.view<PlayerTag, PlayerUltimateComponent>();
@@ -125,15 +117,13 @@ namespace ecs
 		ultimate.KillCount += killCount;
 	}
 
-	/// <summary>撃破で得た合計ゴールドへゴールド獲得量強化(data::eStatUpgradeType::GoldGainRate)
-	/// の倍率をかけ、PlayerSaveData(永続化データ)へ加算し即座に保存する</summary>
 	void EnemyDeathSystem::AwardGold(float gold)
 	{
 		data::EnsurePlayerSaveDataLoaded();
 		auto& saveMgr = data::ConfigRegistry::Get().GetManager<data::PlayerSaveData>();
 		auto& save = saveMgr.Get();
 
-		// CooldownRateのBaseと同じ「1.0を基準に加算する」方式(ValuePerLevel×レベル)
+		// CooldownRateのBaseと同じ、1.0を基準に加算する方式
 		float goldGainMultiplier = 1.0f;
 		if (const auto* upgradeData = DATA_MGR(data::StatUpgradeData).GetById(static_cast<int>(data::eStatUpgradeType::GoldGainRate)))
 		{
@@ -144,8 +134,6 @@ namespace ecs
 		saveMgr.Save();
 	}
 
-	/// <summary>撃破数をパワーチャージへ加算する（ComputeMaxPowerCharge=プレイヤーレベルに
-	/// 応じて増加する上限で頭打ち）</summary>
 	void EnemyDeathSystem::AwardPowerCharge(entt::registry& registry, int killCount)
 	{
 		auto playerView = registry.view<PlayerTag, PlayerPowerChargeComponent>();

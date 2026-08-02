@@ -15,7 +15,9 @@ namespace sys
 		void Update(entt::registry& registry, float deltaTime, float rawDeltaTime);
 
 	private:
-		// 縺薙％縺ｧ蜷・ｨｮ驕ｷ遘ｻ譎ゅ・繝｡繧ｽ繝・ラ菴懈・
+		///<summary>
+		///Result状態への遷移処理
+		///</summary>
 		void EnterResult(::ecs::GameStateComponent& controller);
 	};
 }

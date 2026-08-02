@@ -15,11 +15,7 @@
 
 namespace
 {
-    // エフェクト素材は概ねこの半径感で作られている想定の暫定値(他の武器と同じ基準)。
     constexpr float kEffectReferenceRadius = 2.0f;
-
-    // 判定半径可視化用ワイヤーの表示時間(秒)。EffectComponentのautoDeleteに乗らない
-    // デバッグ専用エンティティのため、TemporaryLifetimeComponentで明示的に破棄する。
     constexpr float kDebugWireLifetime = 0.3f;
 }
 
@@ -27,8 +23,7 @@ namespace ecs
 {
     void NovaWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
     {
-        // InGame中のみ発動する。必殺技演出中は他の攻撃を発動させない(自動発動武器のため
-        // Flicker Strike中は止めない設計。ecs::weaponutil::ShouldSkipAutoWeaponUpdate参照)
+        // InGame中のみ発動する。必殺技演出中は他の攻撃を発動させない
         if (ecs::weaponutil::ShouldSkipAutoWeaponUpdate(registry)) return;
 
         registry.view<ecs::WeaponComponent, ecs::NovaWeaponRuntimeComponent>().each(
@@ -46,7 +41,7 @@ namespace ecs
                 const auto* masterData = DATA_MGR(data::NovaWeaponData).GetById(ecs::weaponutil::ComputeWeaponDataId(weapon));
                 if (masterData == nullptr) return;
 
-                // 攻撃回数パーク(AttackCountUp)分だけ発動を繰り返す
+                // 攻撃回数パーク分だけ発動を繰り返す
                 const int attackCount = ecs::combatutil::GetAttackCount(registry, weapon.Owner);
                 for (int i = 0; i < attackCount; ++i)
                 {
@@ -57,7 +52,6 @@ namespace ecs
             });
     }
 
-    /// <summary>発動: 所有者中心に球形ダメージを与え、ワンショットエフェクトを再生する</summary>
     void NovaWeaponSystem::Pulse(
         entt::registry& registry,
         const ecs::WeaponComponent& weapon,
@@ -69,7 +63,7 @@ namespace ecs
         const DirectX::XMFLOAT3& ownerPos = ownerTransform->GetPosition();
         const DirectX::XMFLOAT3 center = { ownerPos.x, ownerPos.y + masterData.HeightOffset, ownerPos.z };
 
-        // AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
+        // AtkPowerパークの強化分をCurrent/Base比で反映する
         const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
         const float damage = masterData.Damage * atkMultiplier;
         const float radius = masterData.Radius;
@@ -83,10 +77,7 @@ namespace ecs
             ecs::combatutil::ApplyDamageToEnemy(registry, entity, damage);
         }
 
-        // 実際の判定半径(hitRadius)を可視化する（ImGui「Physics Debug」→「Show Colliders」）。
-        // EffectComponentのautoDeleteに乗らないため、TemporaryLifetimeComponentで
-        // 明示的に一定時間後に破棄する（付け忘れると永久に残り続けるバグになる）。
-        // トグルOFF中は描画されず無駄なため、ONの時だけ生成する。
+        // 実際の判定半径を可視化する、付け忘れると永久に残り続けるためTemporaryLifetimeComponentで明示的に破棄する
         if (graphics::PhysicsDebugRenderer::Get().IsEnabled())
         {
             auto& manager = ::ecs::EntityManager::Get();
@@ -99,8 +90,7 @@ namespace ecs
             manager.AddComponent<ecs::TemporaryLifetimeComponent>(wireEntity).RemainingTime = kDebugWireLifetime;
         }
 
-        // 見た目のサイズは判定半径(hitRadius)ではなくradius(見た目基準)に合わせる。
-        // EffectIdsは';'区切りの素材ID列で複数指定可能(ecs::effectutil::ResolveEffectIds/PlayOneShotCombined参照)。
+        // 見た目のサイズは判定半径hitRadiusではなくradius基準に合わせる
         const float scale = radius / kEffectReferenceRadius;
         const std::string effectPath = ecs::effectutil::ResolveEffectIds(masterData.EffectIds);
         ecs::effectutil::PlayOneShotCombined(effectPath, center, scale);

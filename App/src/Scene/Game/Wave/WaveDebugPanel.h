@@ -11,16 +11,13 @@ namespace data
 
 namespace debug
 {
-    /// <summary>
-    /// ウェーブサバイバルのコアループ用バランス調整データ(WaveData)のデバッグパネル。
-    /// DataInspectorによるテーブル編集(CSV/DB・Id含む全フィールド)に加え、
-    /// 編集内容を実行中のWaveComponentへ再適用する機能を持つ。
-    /// IUserSystemは継承せず、生成時にImGuiManagerへ登録・破棄時に解除する。
-    /// </summary>
+    ///<summary>
+    ///ウェーブサバイバルのコアループ用バランス調整データWaveDataのデバッグパネル。DataInspectorでのテーブル編集に加え編集内容を実行中のWaveComponentへ再適用する機能を持つ
+    ///</summary>
     class WaveDebugPanel
     {
     public:
-        /// <param name="debugKey">ImGuiManager 登録・解除に使うキー（シーンごとに一意にすること）</param>
+        /// <param name="debugKey">ImGuiManager登録・解除に使うキー。シーンごとに一意にすること</param>
         explicit WaveDebugPanel(std::string debugKey = "WaveDebug");
         ~WaveDebugPanel();
 
@@ -31,10 +28,14 @@ namespace debug
         void Draw();
         void ApplyToRunningWave();
 
-        // 唯一のテーブルエディタ（Id含む全フィールド編集・CSV/DB操作）
+        ///<summary>
+        ///唯一のテーブルエディタ、Id含む全フィールド編集とCSV/DB操作
+        ///</summary>
         std::unique_ptr<data::DataInspector<data::WaveData>> mInspector;
 
-        // ImGuiManager 登録・解除に使うキー
+        ///<summary>
+        ///ImGuiManager登録・解除に使うキー
+        ///</summary>
         std::string mDebugKey;
     };
 }

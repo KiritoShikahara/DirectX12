@@ -2,15 +2,14 @@
 #include "LocomotionAnimationSystem.h"
 #include "ActionAnimLockComponent.h"
 
-#include<graphics/Fbx/Resource/FbxResource.h>          // FindClipIndex / CrossFade(resource,...)用
-#include<system/MoveDirection/MoveDirectionComponent.h> // IsMoving(移動判定)
+#include<graphics/Fbx/Resource/FbxResource.h>
+#include<system/MoveDirection/MoveDirectionComponent.h>
 
 namespace ecs
 {
 	void LocomotionAnimationSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
-		// ActionAnimLockComponent(Attack_A等の単発アクション再生中)の残り時間を減らし、
-		// 尽きたものは外す(以後は下のIdle/Run切り替えの対象に戻る)
+		// ActionAnimLockComponentの残り時間を減らし、尽きたものは外す
 		mExpiredLocks.clear();
 		registry.view<ActionAnimLockComponent>().each(
 			[&](entt::entity entity, ActionAnimLockComponent& lock)
@@ -31,15 +30,14 @@ namespace ecs
 			{
 				if (fbx.Resource == nullptr) return;
 
-				// ロック中(Attack_A等を再生中)はIdle/Runへ自動で戻さない
+				// ロック中はIdle/Runへ自動で戻さない
 				if (registry.all_of<ActionAnimLockComponent>(entity)) return;
 
 				const char* desiredClip = moveDir.IsMoving ? "Run" : "Idle";
 				const int desiredIndex = fbx.Resource->FindClipIndex(desiredClip);
-				if (desiredIndex < 0) return; // クリップ未登録なら切り替えない(現在の再生を維持)
+				if (desiredIndex < 0) return; // クリップ未登録なら切り替えない、現在の再生を維持
 
-				// 目的クリップが現在と違うときだけCrossFadeする。毎フレーム呼ぶと
-				// ブレンドが再始動し続けてしまうため、切り替わりの瞬間のみ発火させる。
+				// 目的クリップが現在と違うときだけCrossFadeする。毎フレーム呼ぶとブレンドが再始動し続けるため
 				if (anim.CurrentClipIndex != desiredIndex)
 				{
 					anim.CrossFade(*fbx.Resource, desiredClip, 0.2f, true);

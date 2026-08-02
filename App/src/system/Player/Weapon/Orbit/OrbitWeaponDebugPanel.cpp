@@ -1,6 +1,6 @@
 ﻿#include "apppch.h"
 #include "OrbitWeaponDebugPanel.h"
-#include <Utility/config/DebugConfig.h> // DEV_TOOL_ENABLED(Debug/Develop両方で有効)を参照するため直接include
+#include <Utility/config/DebugConfig.h>
 
 #include<Data/Weapon/OrbitWeaponData.h>
 

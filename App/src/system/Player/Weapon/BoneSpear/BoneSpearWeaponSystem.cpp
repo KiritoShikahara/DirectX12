@@ -37,7 +37,7 @@ namespace ecs
 
                 const DirectX::XMFLOAT3& ownerPos = ownerTransform->GetPosition();
 
-                // 敵がいなければクールダウンを消費せず待機する(無駄撃ち防止)
+                // 敵がいなければクールダウンを消費せず待機する、無駄撃ち防止
                 const entt::entity target = ecs::targetutil::FindNearestInRadius(
                     registry, ownerPos, masterData->SearchRadius);
                 if (!registry.valid(target)) return;
@@ -55,7 +55,7 @@ namespace ecs
                     direction = { dx * invLen, 0.0f, dz * invLen };
                 }
 
-                // 攻撃回数パーク(AttackCountUp)分だけ扇状に発射する
+                // 攻撃回数パーク分だけ扇状に発射する
                 constexpr float kMultiShotSpreadDegrees = 6.0f;
                 const int attackCount = ecs::combatutil::GetAttackCount(registry, weapon.Owner);
                 for (int i = 0; i < attackCount; ++i)
@@ -69,7 +69,6 @@ namespace ecs
             });
     }
 
-    /// <summary>最も近い敵の方向へ ProjectileComponent エンティティを1体生成する</summary>
     void BoneSpearWeaponSystem::Fire(
         entt::registry& registry,
         const ecs::WeaponComponent& weapon,
@@ -90,15 +89,13 @@ namespace ecs
             ownerPos.z + direction.z * kSpawnOffset,
         };
 
-        // AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
+        // AtkPowerパークの強化分をCurrent/Base比で反映する
         const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
         const float damage = masterData.Damage * atkMultiplier;
         const float radius = masterData.ExplosionRadius;
         // 判定半径は見た目のradiusとは別にHitRadiusMultiplierで拡大する
         const float hitRadius = radius * masterData.HitRadiusMultiplier;
-        // 着弾エフェクトの見た目だけを底上げする倍率(判定半径・ダメージには一切影響しない。
-        // ProjectileComponent::VisualRadiusはExplosionRadiusと分離されている前提を利用)。
-        // BoneSpearはExplosionRadiusが他武器(Fire/Area等)より小さく、エフェクトが見劣りしていたための調整
+        // 着弾エフェクトの見た目だけを底上げする倍率、判定半径・ダメージには影響しない
         constexpr float kVisualScaleBoost = 2.5f;
 
         auto& manager = ::ecs::EntityManager::Get();
@@ -122,7 +119,7 @@ namespace ecs
         projectile.ExplosionEffectPath = ecs::effectutil::ResolveEffectIds(masterData.ExplosionEffectIds);
         projectile.LifeTime = masterData.ProjectileLifeTime;
         projectile.Owner = weapon.Owner;
-        projectile.PierceCount = masterData.PierceCount; // 誘導はしない(IsHoming=falseのまま)、貫通のみ設定
+        projectile.PierceCount = masterData.PierceCount; // 誘導はしない、貫通のみ設定
 
         const std::string projectileEffectPath = ecs::effectutil::ResolveEffectIds(masterData.ProjectileEffectIds);
         if (!projectileEffectPath.empty())
@@ -130,7 +127,7 @@ namespace ecs
             auto& effect = manager.AddComponent<ecs::EffectComponent>(entity);
             effect.Asset = graphics::EffekseerManager::Get().GetEffect(projectileEffectPath);
             effect.IsLoop = true;
-            // 原点(Offset)ではなく実際の発射位置を渡す(1フレーム目の表示ズレ防止)
+            // 原点Offsetではなく実際の発射位置を渡す、1フレーム目の表示ズレ防止
             effect.Effect.Play(effect.Asset, spawnPos);
             graphics::EffekseerManager::MarkSpawnHidden(effect);
         }

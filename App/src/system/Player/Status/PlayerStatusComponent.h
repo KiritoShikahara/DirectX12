@@ -5,31 +5,32 @@
 
 namespace ecs
 {
-    /// <summary>
-    /// 素のステータス(パーク適用前の初期値)。
-    /// </summary>
+    ///<summary>
+    ///素のステータス、パーク適用前の初期値
+    ///</summary>
     struct BaseStatus
     {
         float MaxHp = 100.0f;    // 最大体力
         float MoveSpeed = 5.0f;  // 移動速度
         float AtkPower = 10.0f;  // 攻撃力
 
-        // 被ダメージ軽減に使う防御力。PlayerContactDamageSystemの半減点方式(kDefenseHalfPoint)が
-        // 基準のため、0のままだとMulDefenseが何倍でも0のままになってしまう
+        ///<summary>
+        ///被ダメージ軽減に使う防御力。PlayerContactDamageSystemの半減点方式が基準のため、0のままだとMulDefenseが何倍でも0のままになる
+        ///</summary>
         float Defense = 20.0f;
 
-        float CooldownRate = 1.0f;     // クールダウン倍率(1.0=等倍、<1で短縮)
-        float HpRegenPerSecond = 0.0f; // 秒間HP自然回復量(PlayerRegenSystemが加算)
+        float CooldownRate = 1.0f;     // クールダウン倍率、1.0で等倍、1未満で短縮
+        float HpRegenPerSecond = 0.0f; // 秒間HP自然回復量、PlayerRegenSystemが加算
 
-        // 敵からの接触ダメージを受けた直後、この秒数だけ無敵になる(PlayerContactDamageSystemが管理)。
-        // ショップ強化(data::eStatUpgradeType::PostHitInvincibility)でのみ加算される(パークからは未接続)
+        ///<summary>
+        ///敵からの接触ダメージを受けた直後、この秒数だけ無敵になる。ショップ強化でのみ加算されパークからは未接続
+        ///</summary>
         float PostHitInvincibleDuration = 0.0f;
     };
 
-    /// <summary>
-    /// パークで積み上がる乗算バフ(1.0=影響なし)。
-    /// 例: 防御+20%のパークを取ったら MulDefense += 0.2f
-    /// </summary>
+    ///<summary>
+    ///パークで積み上がる乗算バフ。1.0が影響なし
+    ///</summary>
     struct StatusModifier
     {
         float MulMaxHp = 1.0f;
@@ -38,14 +39,13 @@ namespace ecs
         float MulDefense = 1.0f;
         float MulCooldownRate = 1.0f;
 
-        // 1回の発動で攻撃を繰り返す回数の倍率。武器側はecs::combatutil::GetAttackCount()経由で参照する
+        // 1回の発動で攻撃を繰り返す回数の倍率。武器側はecs::combatutil::GetAttackCountを経由して参照する
         float MulAttackCount = 1.0f;
     };
 
-    /// <summary>
-    /// 実効ステータス(Base×Modifierの計算結果)。ゲームロジックはこちらを参照する。
-    /// Recompute()を呼んだときだけ更新される(毎フレーム計算はしない)。
-    /// </summary>
+    ///<summary>
+    ///実効ステータス、BaseとModifierの計算結果。ゲームロジックはこちらを参照し、Recomputeを呼んだときだけ更新される
+    ///</summary>
     struct CurrentStatus
     {
         float MaxHp = 100.0f;
@@ -58,9 +58,9 @@ namespace ecs
         float PostHitInvincibleDuration = 0.0f;
     };
 
-    /// <summary>
-    /// プレイヤーのステータスコンポーネント。
-    /// </summary>
+    ///<summary>
+    ///プレイヤーのステータスコンポーネント
+    ///</summary>
     struct ENGINE_API PlayerStatusComponent
     {
         BaseStatus     Base;
@@ -68,24 +68,24 @@ namespace ecs
         CurrentStatus  Current;
         float          CurrentHp = 100.0f;
 
-        /// <summary>trueの間は被ダメージを無効化する(必殺技演出中等)</summary>
+        ///<summary>
+        ///trueの間は被ダメージを無効化する。必殺技演出中等
+        ///</summary>
         bool           IsInvincible = false;
 
-        /// <summary>
-        /// 残りの復活回数(パーク「復活」・ショップ強化「復活回数」で加算)。HPが0になったとき
-        /// 1以上あれば1消費して全回復し、死亡を取り消す(PlayerContactDamageSystemが判定)。
-        /// </summary>
+        ///<summary>
+        ///残りの復活回数。パーク復活・ショップ強化復活回数で加算。HPが0になったとき1以上あれば1消費して全回復し死亡を取り消す
+        ///</summary>
         int            ReviveCount = 0;
 
-        /// <summary>
-        /// 被弾後無敵の残り時間(秒)。Current.PostHitInvincibleDuration > 0のショップ強化を
-        /// 取っている場合のみ、接触ダメージを受けるたびにPlayerContactDamageSystemが
-        /// この値をCurrent.PostHitInvincibleDurationへリセットする。IsInvincibleとは別枠
-        /// (Ultimate/Flicker Strikeの排他演出用フラグと衝突させないため、OR判定で扱う)。
-        /// </summary>
+        ///<summary>
+        ///被弾後無敵の残り時間、秒。ショップ強化を取っている場合のみ接触ダメージのたびにPlayerContactDamageSystemがリセットする。IsInvincibleとは別枠でOR判定される
+        ///</summary>
         float          PostHitInvincibleTimer = 0.0f;
 
-        /// <summary>Base×ModifierをCurrentへ反映する。パーク適用後に呼ぶこと。</summary>
+        ///<summary>
+        ///BaseとModifierをCurrentへ反映する。パーク適用後に呼ぶこと
+        ///</summary>
         void Recompute()
         {
             Current.MaxHp = Base.MaxHp * Modifier.MulMaxHp;
@@ -93,9 +93,7 @@ namespace ecs
             Current.AtkPower = Base.AtkPower * Modifier.MulAtkPower;
             Current.Defense = Base.Defense * Modifier.MulDefense;
 
-            // 短縮系パークが積み重なっても発射間隔が0以下にならないようクランプする。
-            // 0.1(10倍速)だと短縮パーク(CooldownDown/Berserk/AllStatsUp)が重なった際に
-            // 攻撃間隔が実質無くなってしまうため、0.35(約2.9倍速が上限)まで引き上げた
+            // 短縮系パークが積み重なっても発射間隔が0以下にならないようクランプする
             constexpr float kMinCooldownRate = 0.35f;
             Current.CooldownRate = std::max(kMinCooldownRate, Base.CooldownRate * Modifier.MulCooldownRate);
 

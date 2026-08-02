@@ -1,30 +1,38 @@
 ﻿#pragma once
 
-#include<system/Scene/IScene.h>
-#include<entt/entt.hpp>
+#include <system/Scene/IScene.h>
+#include <entt/entt.hpp>
 
 namespace scene
 {
+	/// <summary>
+	/// メニュー画面
+	/// </summary>
 	class MenuScene : public ::sys::IScene
 	{
 	public:
-		virtual void Initialize()override;
-		virtual void Finalize()override;
+		virtual void Initialize() override;
+		virtual void Finalize() override;
+
 	private:
-		// 繝・・繧ｿ
+		/// <summary>
+		/// データ読み込み
+		/// </summary>
 		void LoadData();
 
-		// 繧ｷ繧ｹ繝・Β縺ｮ霑ｽ蜉
+		/// <summary>
+		/// ユーザーシステムの追加
+		/// </summary>
 		void CreateUserSystem();
 
-		// 閭梧勹
+		/// <summary>
+		/// 背景の生成
+		/// </summary>
 		void CreateBG();
 
-		// 繧ｹ繝壹Ν縺ｮ菴懈・
+		/// <summary>
+		/// スペルの生成
+		/// </summary>
 		void CreateSpells();
-
 	};
 }
-	 
-
-

@@ -26,12 +26,7 @@ namespace scene
 
 		CreateLoadingUi();
 
-		// 完了フラグを持つコントローラーエンティティを生成し、バックグラウンドスレッドで
-		// preloadFn(CPU専用処理)を実行する。スレッドへ渡すのはshared_ptr/std::functionの
-		// コピーのみで、thisやレジストリへの参照は渡さない(LoadingScene自体の生存期間・
-		// スレッド安全性に依存しないようにするため)。resolveFn(GPUリソース生成)は
-		// このスレッドからは呼ばず、LoadingScreenUpdateSystemがIsCpuDoneを検知した時点で
-		// メインスレッドから呼ぶ(LoadingScreenComponentのコメント参照)。
+		// スレッドにはshared_ptr/std::functionのコピーのみを渡し、thisやレジストリへの参照は渡さない
 		auto& manager = ::ecs::EntityManager::Get();
 		auto entity = manager.CreateEntity();
 		auto& loading = manager.AddComponent<::ecs::LoadingScreenComponent>(entity);
@@ -54,9 +49,7 @@ namespace scene
 	{
 		::ecs::ComponentSystemManager::Get().ClearUserSystems();
 
-		// preloadFn完了(IsCpuDone==true)を確認してからOnComplete経由でシーン切り替えを
-		// 要求する設計のため、ここに来る時点でスレッドは完了しているか完了間際のはずだが、
-		// 念のため明示的にjoinしてから終了する(joinable()チェックで二重join/未起動を防ぐ)。
+		// 二重joinや未起動を防ぐためjoinable判定してからjoinする
 		if (mLoadingThread.joinable())
 		{
 			mLoadingThread.join();
@@ -72,7 +65,7 @@ namespace scene
 		const float centerX = static_cast<float>(window.GetVirtualWidth()) * 0.5f;
 		const float centerY = static_cast<float>(window.GetVirtualHeight()) * 0.5f;
 
-		// 背景(全画面の黒フィル。白テクスチャを黒着色して流用する、他画面のパネルと同じ手法)
+		// 背景。白テクスチャを黒着色して全画面を覆う、他画面のパネルと同じ手法
 		{
 			auto entity = manager.CreateEntity();
 			auto& transform = manager.AddComponent<::ecs::Transform>(entity);
@@ -86,7 +79,7 @@ namespace scene
 			sprite.SetLayer(::ecs::SpriteLayer::Background);
 		}
 
-		// スピナー(回転アイコン、LoadingScreenUpdateSystemが毎フレーム回転させる)
+		// スピナー。LoadingScreenUpdateSystemが毎フレーム回転させる
 		{
 			constexpr float kSpinnerSize = 96.0f;
 
@@ -103,7 +96,7 @@ namespace scene
 			registry.emplace<::ecs::LoadingSpinnerUiTag>(entity);
 		}
 
-		// "Loading..."テキスト(中央揃え)
+		// Loadingテキスト。中央揃え
 		{
 			constexpr float kTextSize = 32.0f;
 			const std::wstring label = L"Loading...";
@@ -121,9 +114,7 @@ namespace scene
 			text.Layer = 10;
 		}
 
-		// 進捗バー(枠+塗り。塗りはSprite::FillAmountで左から右へ塗り進める。
-		// FillAmountはUV空間でのクリップなのでSize/位置は枠と同一で構わない)。
-		// 画面下部に大きく表示する(視認性優先。横幅は画面幅基準の可変値にする)。
+		// 進捗バー。枠と塗りの2枚構成で、塗りはSprite::FillAmountで左から右へ埋める
 		{
 			const float kBarWidth = static_cast<float>(window.GetVirtualWidth()) * 0.6f;
 			constexpr float kBarHeight = 32.0f;
@@ -131,7 +122,7 @@ namespace scene
 
 			auto texture = ::graphics::TextureManager::Get().GetOrLoad("Assets/Effect/Texture/White.png");
 
-			// 枠(背景)
+			// 枠、背景
 			{
 				auto entity = manager.CreateEntity();
 				auto& transform = manager.AddComponent<::ecs::Transform>(entity);
@@ -144,7 +135,7 @@ namespace scene
 				sprite.SetLayer(::ecs::SpriteLayer::UI, 0);
 			}
 
-			// 塗り(進捗に応じてFillAmountが0-1で更新される)
+			// 塗り、進捗に応じてFillAmountが更新される
 			{
 				auto entity = manager.CreateEntity();
 				auto& transform = manager.AddComponent<::ecs::Transform>(entity);
@@ -160,7 +151,7 @@ namespace scene
 				registry.emplace<::ecs::LoadingProgressBarFillTag>(entity);
 			}
 
-			// パーセントテキスト(バーの下)
+			// パーセントテキスト、バーの下
 			{
 				constexpr float kPercentTextSize = 36.0f;
 				const std::wstring label = L"0%";

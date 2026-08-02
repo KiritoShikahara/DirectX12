@@ -22,10 +22,7 @@ namespace ecs
 
 				if (clampedX == pos.x && clampedZ == pos.z) return;
 
-				// SetPosition()だけだとJoltの物理ボディ位置は次の物理ステップで元の(壁の外の)
-				// 位置に上書きされてしまうため、TransformDirtyTagでPhysicsSystem::SyncFromTransform
-				// に明示的にJolt側へも反映させる(FlickerStrikeWeaponSystem/PlayerUltimateSystemの
-				// テレポート処理と同じ作法)
+				// SetPositionだけだと次の物理ステップでJolt側の位置に上書きされるため、TransformDirtyTagでPhysicsSystem::SyncFromTransformにも反映させる
 				transform.SetPosition(clampedX, pos.y, clampedZ);
 				registry.emplace_or_replace<ecs::TransformDirtyTag>(entity);
 			});

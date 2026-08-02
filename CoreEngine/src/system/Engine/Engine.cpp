@@ -86,6 +86,10 @@ namespace sys
         wctx.VirtualWidth = 1920;
         wctx.VirtualHeight = 1080;
         data::ApplyWindowConfig(WindowCfg, wctx);
+#if !DEV_TOOL_ENABLED
+        // Releaseビルドのみ、設定ファイルの値に関わらず強制的にフルスクリーンで起動する
+        wctx.IsFullScreen = true;
+#endif
         return EngineContext({ wctx });
     }
 

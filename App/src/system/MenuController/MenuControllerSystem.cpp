@@ -3,7 +3,7 @@
 
 #include"MenuControllerComp.h"
 #include"WeaponSelectVisuals.h"
-#include<graphics/Text/Renderer/TextRenderer.h> // テキストの水平中央揃えTargetXの計算に使う
+#include<graphics/Text/Renderer/TextRenderer.h>
 #include<system/Input/InputGuideLabels.h>
 #include<Scene/Hub/HubScene.h>
 #include<Scene/Game/GameScene.h>
@@ -14,7 +14,7 @@ namespace ecs
 {
 	void MenuSlideSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
-		// Sprite/Shape(円・アイコン等、Transformで座標を持つ要素)
+		// Sprite/Shape、円・アイコン等、Transformで座標を持つ要素
 		registry.view<Transform, MenuSlideComp>().each(
 			[deltaTime](Transform& transform, MenuSlideComp& slide)
 			{
@@ -26,9 +26,7 @@ namespace ecs
 				transform.Set2DPosition(newX, pos.y);
 			});
 
-		// ラベル等のテキスト要素。TextComponentはTransformを使わずX/Yを直接持つため
-		// (TextComponent::Xのコメント参照)、Transform版とは別に同じ補間をここで行う。
-		// これが無いとページ送りでアイコンだけスライドしてラベルが取り残される。
+		// ラベル等のテキスト要素はTransformを使わずX/Yを直接持つため、Transform版とは別に同じ補間を行う。無いとページ送りでラベルが取り残される
 		registry.view<TextComponent, MenuSlideComp>().each(
 			[deltaTime](TextComponent& text, MenuSlideComp& slide)
 			{
@@ -48,10 +46,7 @@ namespace ecs
 		auto& controller = controllerView.get<MenuControllerComp>(controllerView.front());
 		const float centerX = controller.WindowWidth * 0.5f;
 
-		// Sprite/Shape(円・アイコン等)。ページ中心のX座標そのものがTargetXでよい
-		// (TextComponentを持つエンティティは下の別ループで処理するため、ここでは除外する。
-		// 除外しないと、テキストの水平中央揃えオフセット(-文字幅/2)がここで上書きされ、
-		// 毎フレーム位置がズレていくバグになる)。
+		// Sprite/Shapeはページ中心のX座標がTargetXでよい。TextComponentは別ループで処理するため除外しないと中央揃えオフセットが上書きされ続けるバグになる
 		registry.view<SpellMenuDataComp, MenuSlideComp>(entt::exclude<TextComponent>).each(
 			[&controller, centerX](const SpellMenuDataComp& spellData, MenuSlideComp& slide)
 			{
@@ -64,8 +59,7 @@ namespace ecs
 				}
 			});
 
-		// ラベル・説明文等のテキスト要素。文字幅の半分だけ左にずらした位置が
-		// 水平中央揃えのTargetXになる(MenuScene::CreateSpellsの初期配置計算と一致させる)。
+		// ラベル・説明文は文字幅の半分だけ左にずらした位置が水平中央揃えのTargetXになる
 		auto& textRenderer = ::graphics::TextRenderer::Get();
 		registry.view<SpellMenuDataComp, MenuSlideComp, TextComponent>().each(
 			[&controller, centerX, &textRenderer](const SpellMenuDataComp& spellData, MenuSlideComp& slide, const TextComponent& text)
@@ -112,9 +106,7 @@ namespace ecs
 		// 操作案内。最後に使われた入力デバイスに応じてボタン表示名を切り替える
 		{
 			const ::sys::eInputDevice device = ::sys::InputManager::Get().GetLastInputDevice();
-			// text.Xは中央揃えのため毎フレーム書き換えられる値なので、基準はここで都度
-			// 画面幅から求める(text.Xを基準にすると書き換え後の値を元に再計算してしまい、
-			// 位置がズレ続けるバグになる。StatusUpgradeCardUiTag::CenterXと同じ注意点)。
+			// text.Xは中央揃えのため毎フレーム書き換えられる値なので、基準は都度画面幅から求める。text.Xを基準にすると再計算がズレ続けるバグになる
 			const float screenCenterX = static_cast<float>(::sys::Window::Get().GetVirtualWidth()) * 0.5f;
 			auto& textRenderer = ::graphics::TextRenderer::Get();
 
@@ -146,15 +138,13 @@ namespace ecs
 			}
 			auto& controller = controllerView.get<MenuControllerComp>(controllerView.front());
 
-			// TODO: LoadingScene経由の非同期先読みはDevelop構成で原因未特定のクラッシュが
-			// 再現したため一旦見送り、以前と同じ「GameScene::Initialize()内で同期的に
-			// リソース読み込みする」方式に戻す(フェード中の一瞬のスパイクは許容する)。
+			// TODO: LoadingScene経由の非同期先読みは原因未特定のクラッシュが再現したため見送り、同期読み込み方式に戻す
 			::sys::SceneManager::Get().ChangeSceneWithTransition<::scene::GameScene>(::sys::FadeOptions{}, controller.ActiveSpellID);
 			PLAY_SE("Assets/Sound/SE/SE_Select.aud", false, 1, false);
 			return;
 		}
 
-		// 戻るならハブ画面（タイトルへ直接戻すと2択の前段が飛ばされてしまうため）
+		// 戻るならハブ画面。タイトルへ直接戻すと2択の前段が飛ばされてしまうため
 		if (input.IsActionPressed("Cancel") == true)
 		{
 			::sys::SceneManager::Get().ChangeSceneWithTransition<::scene::HubScene>();

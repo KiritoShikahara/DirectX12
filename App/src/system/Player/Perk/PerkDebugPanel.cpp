@@ -43,7 +43,7 @@ namespace debug
         }
         ImGui::End();
 
-        // 唯一のテーブルエディタ（Load/Save CSV・DB、Id含む全セル編集）
+        // 唯一のテーブルエディタ、Load/Save CSV・DB、Id含む全セル編集
         mInspector->Draw("Perk Master");
     }
 #else

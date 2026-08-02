@@ -5,11 +5,9 @@
 
 namespace ecs
 {
-    /// <summary>
-    /// TemporaryLifetimeComponentを持つエンティティのRemainingTimeを減算し、
-    /// 0以下になったものを破棄する。デバッグ可視化専用エンティティ等、
-    /// EffekseerのautoDeleteに乗らない一時エンティティの後始末を一括して担当する。
-    /// </summary>
+    ///<summary>
+    ///TemporaryLifetimeComponentを持つエンティティのRemainingTimeを減算し、0以下になったものを破棄する
+    ///</summary>
     class TemporaryLifetimeSystem : public ecs::IUserSystem
     {
     public:

@@ -4,12 +4,9 @@
 
 namespace sys
 {
-    /// <summary>
-    /// 攻撃方向(PlayerAimComponent::Direction)を更新する。
-    /// パッドは右スティック、マウスはカーソル方向を採用する。
-    /// 方向が定まらないフレームは前回値を維持する。
-    /// PreUpdateで登録し、各FireSystem(Update)より前に確定させる。
-    /// </summary>
+    ///<summary>
+    ///攻撃方向を更新する。パッドは右スティック、マウスはカーソル方向を採用し、方向が定まらないフレームは前回値を維持する
+    ///</summary>
     class PlayerAimSystem : public ecs::IUserSystem
     {
     public:

@@ -128,7 +128,7 @@ namespace scene
 		registry.emplace<ecs::Transform>(entity);
 
 		auto& light = registry.emplace<ecs::DirectionalLightComponent>(entity);
-		light.Direction = { 0.3f, -1.0f, 0.5f }; // 譁懊ａ荳句髄縺・
+		light.Direction = { 0.3f, -1.0f, 0.5f };
 		light.Color = { 1.0f,  1.0f, 1.0f };
 		light.Intensity = 1.0f;
 		light.IsActive = true;

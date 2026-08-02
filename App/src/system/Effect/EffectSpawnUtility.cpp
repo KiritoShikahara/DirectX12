@@ -8,15 +8,10 @@
 
 namespace
 {
-    /// <summary>
-    /// ';'区切りの文字列を空要素を除いてトークンへ分割し、1つずつfuncへ渡す。
-    /// ワンショット演出はヒットの度に呼ばれるため、std::vector<std::string>を
-    /// 返す実装（分割ごとにvector+string確保）を避け、string_viewをコールバックへ
-    /// 渡す方式にしてヒープ確保を発生させない。
-    /// </summary>
     template<typename Func>
     void ForEachPath(const std::string& delimited, Func&& func)
     {
+        // string_viewをコールバックへ渡し、分割ごとのvector/string確保を避ける
         size_t start = 0;
 
         while (start <= delimited.size())
@@ -31,37 +26,10 @@ namespace
         }
     }
 
-    /// <summary>
-    /// PlayOneShotCombined()で生成したエンティティにのみ付与するタグ。同時に存在する
-    /// ワンショットエフェクト数を数えるためのもので、PlayLoopingCombined由来の
-    /// オーラ・軌跡等(間引きたくない、数も少ない)とは区別する。
-    /// </summary>
     struct OneShotEffectTag {};
 
-    /// <summary>
-    /// 同時に存在してよいワンショットエフェクトエンティティ数の目安上限。これを超えている間は
-    /// 新規のワンショット演出(PlayOneShotCombined)の生成を間引いて負荷を抑える
-    /// (ダメージ判定は各武器側で既に適用済みのため、間引かれるのは見た目の演出のみ)。
-    /// 攻撃回数パーク×複数武器×大量の敵が同時に絡むと、個々の武器側の上限
-    /// (VoidBeamWeaponData::MaxHitEffects等)だけでは防ぎきれない組み合わせ的な増加が
-    /// 起きうるため、ここで全体の安全弁を設ける。
-    /// </summary>
     constexpr size_t kMaxConcurrentOneShotEffects = 300;
 
-    /// <summary>
-    /// 同時に存在してよいパーティクルインスタンス数の目安上限。
-    ///
-    /// 上のエンティティ数上限(300)は「演出をいくつ再生中か」しか見ておらず、
-    /// 実際の負荷を決めるパーティクル数とは対応しない。1つの演出が何百個の
-    /// パーティクルを持つ素材もあるため、実測では300エンティティで
-    /// 18,000〜23,000インスタンスに達し、Effekseerの更新・頂点生成が
-    /// CPU時間の大半を占めていた(いずれもインスタンス数にほぼ比例する)。
-    ///
-    /// そこで負荷の実体であるインスタンス数そのものを予算として持ち、
-    /// 超過中は新規のワンショット演出を間引く。密集戦闘でのみ効き、
-    /// 通常時の見た目は変わらない(間引かれるのは演出だけで、ダメージ判定は
-    /// 各武器側で適用済みのためゲーム挙動には影響しない)。
-    /// </summary>
     constexpr int32_t kMaxConcurrentParticleInstances = 12000;
 }
 
@@ -77,10 +45,7 @@ namespace ecs::effectutil
     {
         auto& registry = ecs::EntityManager::Get().GetRegistry();
 
-        // bypassBudget=true の演出(必殺技のビーム/メイン等の必須シネマティック)は間引かない。
-        // 通常のヒット演出は負荷対策で間引くが、必殺技演出は「発動時に他エフェクトを一時停止
-        // (破棄ではない)する」ため、それらのインスタンスがGetLastInstanceCountに残り続け、
-        // 戦闘中は容易に上限超過して必須演出まで弾かれてしまう。必須演出は必ず再生させる。
+        // bypassBudget=trueの演出は間引かない。必殺技演出は他エフェクトを一時停止するだけでインスタンス数が残り続けるため、通常の間引きだと必須演出まで弾かれてしまう
         if (!bypassBudget)
         {
             if (registry.view<OneShotEffectTag>().size() >= kMaxConcurrentOneShotEffects)
@@ -88,9 +53,7 @@ namespace ecs::effectutil
                 return;
             }
 
-            // 負荷の実体であるパーティクル数で間引く(kMaxConcurrentParticleInstances参照)。
-            // 直近フレームの実測値を使うため1フレーム遅れるが、
-            // 予算超過が続く間は抑制され続けるので制御としては十分
+            // 負荷の実体であるパーティクル数で間引く。直近フレームの実測値のため1フレーム遅れるが制御としては十分
             if (graphics::EffekseerManager::Get().GetLastInstanceCount() >= kMaxConcurrentParticleInstances)
             {
                 return;
@@ -113,8 +76,7 @@ namespace ecs::effectutil
             registry.emplace<OneShotEffectTag>(entity);
             // autoDelete=true: 再生終了フレームでEffekseerManager::Updateがこのエンティティを破棄する
             effect.Effect.Play(effect.Asset, position, true);
-            // Play()直後の1フレーム目は次のEffekseerManager::Updateまで反映されないため、
-            // 生成直後から正しい向きで表示されるようここで先行して適用する
+            // Play直後の1フレーム目は次のUpdateまで反映されないため、生成直後から正しい向きで表示されるようここで先行して適用する
             effect.Effect.SetRotation(rotation);
             graphics::EffekseerManager::MarkSpawnHidden(effect);
 

@@ -1,17 +1,14 @@
 ﻿#pragma once
 
-#include<Data/Storage/Reflection.h>
-#include<Data/Storage/Registry/ConfigRegistry.h>
+#include <Data/Storage/Reflection.h>
+#include <Data/Storage/Registry/ConfigRegistry.h>
 
 namespace data
 {
-	/// <summary>
-	/// プレイヤーの永続的な進行状況（所持ゴールド・ステータス恒久強化レベル）。
-	/// ConfigManager&lt;T&gt;によりAssets/Bin/Save/player_save.jsonへ自動保存/読込する。
-	/// </summary>
+	/// <summary>プレイヤーの永続的な進行状況（所持ゴールド・ステータス恒久強化レベル）</summary>
 	struct PlayerSaveData
 	{
-		/// <summary>所持ゴールド。INGameで敵を倒すことで加算される(EnemyDeathSystem参照)</summary>
+		/// <summary>所持ゴールド</summary>
 		int Gold = 0;
 
 		// 各ステータスの強化レベル(0始まり)。上限はStatUpgradeData::MaxLevel(CSV/DB)で管理する。
@@ -42,15 +39,10 @@ namespace data
 			REFLECT_FIELD_INT(ReviveLevel)
 			REFLECT_FIELD_INT(PostHitInvincibilityLevel)
 			REFLECT_FIELD_INT(PerkChoiceCountLevel)
-		REFLECT_END()
+			REFLECT_END()
 	};
 
-	/// <summary>
-	/// PlayerSaveDataをConfigRegistryへ未登録なら登録し、ディスクから読み込む。
-	/// 既に登録済みなら何もしない(プロセス全体で1つの状態を共有し、二重ロードで
-	/// 未保存の変更を失わないようにするため)。呼び出し側は
-	/// ConfigRegistry::Get().GetManager&lt;PlayerSaveData&gt;()で取得して使う。
-	/// </summary>
+	/// <summary>PlayerSaveDataをConfigRegistryへ未登録なら登録し、ディスクから読み込む</summary>
 	inline void EnsurePlayerSaveDataLoaded()
 	{
 		auto& configReg = ::data::ConfigRegistry::Get();

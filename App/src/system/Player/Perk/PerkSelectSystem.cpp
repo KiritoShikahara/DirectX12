@@ -10,12 +10,12 @@
 #include<Scene/Game/Debug/GameDebugSettings.h>
 #include<Data/Save/PlayerSaveData.h>
 #include<Tag/EntityTag.h>
-#include<graphics/Text/Renderer/TextRenderer.h> // テキスト幅を測って画像中央へ揃えるため
-#include<system/Window/Window.h>                // 画面中心(仮想解像度)を基準に配置するため
-#include<system/Player/Weapon/WeaponIconRegistry.h> // 武器種別→アイコンの対応表(WeaponIconBarSystemと共通)
+#include<graphics/Text/Renderer/TextRenderer.h>
+#include<system/Window/Window.h>
+#include<system/Player/Weapon/WeaponIconRegistry.h>
 #include<system/UI/UiPanelUtility.h>
 #include<system/Effect/EffectSpawnUtility.h>
-#include<system/Input/InputGuideLabels.h> // 操作説明の文言(デバイスに応じたボタン名)
+#include<system/Input/InputGuideLabels.h>
 
 #include<algorithm>
 #include<random>
@@ -24,50 +24,32 @@ namespace ecs
 {
 	namespace
 	{
-		// プロセス全体で1つの乱数エンジンを使い回す（毎フレーム再生成しない）
 		std::mt19937& GetRandomEngine()
 		{
+			// プロセス全体で使い回す
 			static std::mt19937 engine = ::debug::GameDebugSettings::Get().MakeRandomEngine();
 			return engine;
 		}
 
-		// レイアウト定数。テキスト/スプライトとも同一座標系(ウィンドウ仮想解像度・左上原点)で配置する。
-		// 選択肢は「大きめのアイコン画像の上にテキストを重ねたカード」を、画面中心を基準に横へ均等配置する
-		// (2つ目のカード中心が画面中心に一致)。メリット+デメリット系のトレードオフパークは
-		// PerkDefinition側で"\n"を挟んで2行にしてあり(横幅溢れ対策)、EnterPerkSelectが
-		// 実際の行数を見てカード表示領域の高さを動的に広げる。個人開発プロトタイプの暫定値。
-		constexpr float kOptionTextSize = 32.0f; // 選択肢テキストの文字高さ(px)
+		constexpr float kOptionTextSize = 32.0f;
 
 		const DirectX::XMFLOAT4 kNormalColor = { 0.7f, 0.7f, 0.7f, 1.0f };
 		const DirectX::XMFLOAT4 kSelectedColor = { 1.0f, 0.9f, 0.2f, 1.0f };
 
-		// カード(アイコン画像 + その上に重ねるテキスト)のレイアウト。
-		constexpr float kCardSize = 180.0f;      // アイコン画像の表示サイズ(px、正方形)。元画像サイズに依らず一定
-		constexpr float kCardSpacingX = 360.0f;  // カード中心どうしの横間隔(px)。3つを横に均等配置するのに使う
-		constexpr float kIconTextGapY = 40.0f;   // アイコン画像の下端からテキスト(ベースライン)までの間隔(px)
+		constexpr float kCardSize = 180.0f;
+		constexpr float kCardSpacingX = 360.0f;
+		constexpr float kIconTextGapY = 40.0f;
 
-		// 選択肢全体を囲む黒半透明ウィンドウ(視認性向上用)のパラメータ。
-		// アイコンより奥へ敷く必要があるが、Shapeは描画順がSprite→Shape→Textでアイコン(Sprite)の
-		// 上に来てしまうため使えない。UiPanelUtility(白テクスチャをColorで黒+半透明に着色した
-		// Spriteで代用)で敷く。描画は「Layerが大きいほど前面」(painter順。SpriteRenderer参照)
-		// なので、ウィンドウは小さいLayer(奥)、アイコンは大きいLayer(手前)に置く。テキストは別パスで最前面。
-		constexpr float kWindowPadX = 200.0f;    // ウィンドウ左右の余白(px)。大きいほどウィンドウが横に広がる
-		constexpr float kWindowPadY = 170.0f;    // ウィンドウ上下の余白(px)。大きいほどウィンドウが縦に広がる
+		constexpr float kWindowPadX = 200.0f;
+		constexpr float kWindowPadY = 170.0f;
 
-		// 背景(タイトル画像)の不透明度。ほとんど見えない程度のうっすらした背景にする(0=透明,1=不透明)
 		constexpr float kBackgroundAlpha = 0.12f;
 
-		// パーク確定演出。低頻度イベントのため常時ヒットするエフェクトより多少リッチなものを使う
 		constexpr const char* kPerkConfirmEffectPath = "Assets/Effect/Herald.efk";
 
-		/// <summary>
-		/// パーク1件に対応する表示アイコンのパスを返す。
-		/// 専用アイコンが未作成のパークは代用アイコン(kFallbackIcon)を返す
-		/// (あとで専用アイコンを Assets/Icon に追加したら、ここの割り当てを差し替えるだけでよい)。
-		/// </summary>
 		const char* GetPerkIconPath(const PerkDefinition& perk)
 		{
-			// 未作成アイコンの代用(後で差し替える前提のプレースホルダ)
+			// 未作成アイコンは代用アイコンで済ませ、後で差し替える
 			constexpr const char* kFallbackIcon = "Assets/Icon/loading.png";
 
 			switch (perk.Type)
@@ -86,8 +68,7 @@ namespace ecs
 			case ePerkEffectType::Reckless:    return "Assets/Icon/attack_up.png"; // 攻撃回数系の暫定割当
 
 			case ePerkEffectType::AcquireWeapon:
-				// 所持武器バー(WeaponIconBarSystem)と同じ対応表を使い、選択画面とバーで
-				// アイコンが食い違わないようにする(WeaponIconRegistry参照)。
+				// 所持武器バーと同じ対応表を使い、選択画面とバーでアイコンが食い違わないようにする
 				return ecs::weaponutil::GetWeaponIconPath(perk.AcquireWeaponType);
 
 			default:
@@ -96,7 +77,6 @@ namespace ecs
 			}
 		}
 
-		/// <summary>プレイヤーの所持武器のうち、レベルアップ可能なものが1つでもあるか</summary>
 		bool HasUpgradableWeapon(entt::registry& registry)
 		{
 			auto playerView = registry.view<PlayerTag, WeaponInventoryComponent>();
@@ -115,7 +95,6 @@ namespace ecs
 			return false;
 		}
 
-		/// <summary>プレイヤーが指定の武器(種別+ID)を既に所持しているか</summary>
 		bool HasWeapon(entt::registry& registry, ecs::eWeaponType type, int weaponId)
 		{
 			auto playerView = registry.view<PlayerTag, WeaponInventoryComponent>();
@@ -134,7 +113,6 @@ namespace ecs
 			return false;
 		}
 
-		/// <summary>プレイヤーの所持武器が上限未満で、新規武器を取得できるか</summary>
 		bool HasFreeWeaponSlot(entt::registry& registry)
 		{
 			auto playerView = registry.view<PlayerTag, WeaponInventoryComponent>();
@@ -160,16 +138,12 @@ namespace ecs
 		auto* select = registry.try_get<PerkSelectComponent>(controllerEntity);
 		if (select == nullptr)
 		{
-			// PerkSelectへ入った最初のフレーム：3択を生成しUIを表示する。
-			// 入力受付は次フレームから（生成と同一フレームでの誤入力を避ける）。
+			// PerkSelectへ入った最初のフレームで3択を生成しUIを表示する。入力受付は次フレームから
 			EnterPerkSelect(registry, controllerEntity);
 			return;
 		}
 
-		// 設定メニュー(OptionsMenuSystem)が開いている間はパーク選択の入力を止める。
-		// Escapeキーは"Option"と"Cancel"の両方に割り当てられているため、これが無いと
-		// メニューを開いた直後にMenuUp/Down/Selectがパーク選択のカーソル移動・確定としても
-		// 二重に処理されてしまう(パーク選択が意図せず同時に進んでしまう問題への対処)。
+		// 設定メニューが開いている間はパーク選択の入力を止める。無いとメニューを開いた直後の入力がパーク選択としても二重処理されてしまう
 		if (gameState.IsOptionsMenuOpen)
 		{
 			return;
@@ -181,7 +155,7 @@ namespace ecs
 	int PerkSelectSystem::TakeByType(
 		std::vector<int>& candidates, const std::vector<PerkDefinition>& pool, ePerkEffectType type)
 	{
-		// 同じ種別が複数ある(新武器は武器ごとに1件ある)ため、その中からランダムに1つ選ぶ
+		// 同じ種別が複数ある、新武器は武器ごとに1件あるため、その中からランダムに1つ選ぶ
 		std::vector<int> matched;
 		for (size_t i = 0; i < candidates.size(); ++i)
 		{
@@ -202,8 +176,6 @@ namespace ecs
 		std::vector<int>& candidates, const std::vector<PerkDefinition>& pool)
 	{
 		// 新武器獲得・武器レベルアップも含めた全種別からPerkData::Weightの重み付きで抽選する
-		// (以前は1・2番目の枠に武器系を固定で割り当てていたため対象外にしていたが、
-		// 全ての枠を等しく抽選するよう統合した)
 		float totalWeight = 0.0f;
 		for (int index : candidates)
 		{
@@ -234,8 +206,7 @@ namespace ecs
 		const bool hasUpgradableWeapon = HasUpgradableWeapon(registry);
 		const bool hasFreeWeaponSlot = HasFreeWeaponSlot(registry);
 
-		// パーク種別ごとの最大レベル(data::PerkData::MaxLevel)判定用。
-		// プレイヤーが未生成/コンポーネント未付与の場合は判定をスキップする(全て候補に残す)
+		// パーク種別ごとの最大レベル判定用。プレイヤー未生成の場合は判定をスキップする
 		const std::vector<int>* pickCounts = nullptr;
 		auto perkLevelView = registry.view<PlayerTag, PlayerPerkLevelComponent>();
 		if (perkLevelView.begin() != perkLevelView.end())
@@ -243,9 +214,7 @@ namespace ecs
 			pickCounts = &registry.get<PlayerPerkLevelComponent>(*perkLevelView.begin()).PickCounts;
 		}
 
-		// レベルアップ可能な武器が無ければ WeaponLevelUp を、
-		// 空きスロットが無い/既に所持している武器なら AcquireWeapon を、
-		// 種別ごとの選択回数がMaxLevelに達していれば候補から除外する
+		// レベルアップ可能な武器が無ければWeaponLevelUpを、空きスロットが無い/既に所持している武器ならAcquireWeaponを、選択回数がMaxLevelに達していれば候補から除外する
 		std::vector<int> validIndices;
 		validIndices.reserve(pool.size());
 		for (int i = 0; i < static_cast<int>(pool.size()); ++i)
@@ -257,28 +226,20 @@ namespace ecs
 				(*pickCounts)[i] >= GetPerkMaxLevel(pool[i].Type)) continue;
 			validIndices.push_back(i);
 		}
-		if (validIndices.empty()) return; // 提示できるパークが無い（現状のプールでは基本発生しない）
+		if (validIndices.empty()) return; // 提示できるパークが無い、現状のプールでは基本発生しない
 
 		auto& select = registry.emplace<PerkSelectComponent>(controllerEntity);
 		select.SelectedIndex = 0;
 
-		// ショップ強化「パーク選択肢+1」(PerkChoiceCountLevel>0)を取得していれば4択、
-		// 未取得ならデフォルトの3択にする
+		// ショップ強化パーク選択肢+1を取得していれば4択、未取得ならデフォルトの3択にする
 		data::EnsurePlayerSaveDataLoaded();
 		const auto& save = data::ConfigRegistry::Get().GetManager<data::PlayerSaveData>().Get();
 		select.ChoiceCount = (save.PerkChoiceCountLevel > 0)
 			? PerkSelectComponent::kMaxChoiceCount
 			: PerkSelectComponent::kDefaultChoiceCount;
 
-		// ── 枠ごとの役割に沿って選択肢を決める ──────────────────────
-		// 1番目: 新武器獲得か武器レベルアップかを半々のランダムで決める
-		//        (以前は新武器獲得を優先し、出せない場合だけレベルアップにフォールバックしていたが、
-		//        常に半々のランダムにしてほしいという要望のため。選んだ方が候補に無ければ
-		//        もう一方にフォールバックする)
-		// 2番目以降: 新武器獲得・武器レベルアップも含めた全種別をPerkData::Weightによる
-		//        重み付き抽選で決める(以前は2番目を武器レベルアップ固定にしていたが、
-		//        他のパークと同じ抽選に統合してほしいという要望のため)
-		// 既に選んだものは候補から除外し、同じ選択肢が重複して並ばないようにする
+		// 枠ごとの役割に沿って選択肢を決める。1番目は新武器獲得か武器レベルアップかを半々のランダムで決め、無ければもう一方にフォールバックする。
+		// 2番目以降は全種別をPerkData::Weightで重み付き抽選する。選んだものは候補から除外し重複を防ぐ
 		std::vector<int> remaining = validIndices;
 
 		const bool preferAcquire = std::uniform_int_distribution<int>(0, 1)(GetRandomEngine()) == 0;
@@ -296,35 +257,31 @@ namespace ecs
 			select.ChoiceIndices[i] = TakeWeighted(remaining, pool);
 		}
 
-		// それでも埋まらない場合(候補が選択肢数より少ない)は、
-		// 既に提示済みのものを循環させて埋める
+		// それでも埋まらない場合は、既に提示済みのものを循環させて埋める
 		int fallbackSource = -1;
 		for (int i = 0; i < select.ChoiceCount; ++i)
 		{
 			if (select.ChoiceIndices[i] >= 0) { fallbackSource = select.ChoiceIndices[i]; break; }
 		}
-		if (fallbackSource < 0) return; // 1つも選べなかった(通常発生しない)
+		if (fallbackSource < 0) return; // 1つも選べなかった、通常発生しない
 
 		for (int i = 0; i < select.ChoiceCount; ++i)
 		{
 			if (select.ChoiceIndices[i] < 0) select.ChoiceIndices[i] = fallbackSource;
 		}
 
-		// 画面中心(仮想解像度の中央)を基準に、3つの選択肢カードを横へ均等配置する。
-		// 中央インデックス(2つ目)のカード中心を画面中心に一致させ、各カードは
-		// 「アイコン画像(中心=画面中心の高さ) + その下にテキスト」で構成する。
+		// 画面中心を基準に選択肢カードを横へ均等配置する。中央インデックスのカード中心を画面中心に一致させる
 		const float screenCenterX = static_cast<float>(::sys::Window::Get().GetVirtualWidth()) * 0.5f;
 		const float screenCenterY = static_cast<float>(::sys::Window::Get().GetVirtualHeight()) * 0.5f;
 
 		auto& manager = ENTITY_MANAGER;
 		auto& textRenderer = ::graphics::TextRenderer::Get();
 
-		// アイコン画像の中心は画面中心の高さに、テキストはその下(アイコン下端 + 余白)に置く
+		// アイコン画像の中心は画面中心の高さに、テキストはその下、アイコン下端+余白に置く
 		const float iconCenterY = screenCenterY;
 		const float textBaselineY = iconCenterY + kCardSize * 0.5f + kIconTextGapY;
 
-		// 選択肢名の最大行数("\n"区切り、トレードオフパークは2行)を求め、テキスト表示領域の
-		// 高さに反映する(1行分しか見込んでいないと2行目がウィンドウ外にはみ出るため)
+		// 選択肢名の最大行数を求めテキスト表示領域の高さに反映する
 		int maxOptionTextLines = 1;
 		for (int i = 0; i < select.ChoiceCount; ++i)
 		{
@@ -335,36 +292,30 @@ namespace ecs
 		const float optionTextBlockHeight =
 			kOptionTextSize + static_cast<float>(maxOptionTextLines - 1) * textRenderer.MeasureLineHeight(kOptionTextSize);
 
-		// ── 背景(タイトル画面の背景を流用)。黒ウィンドウのさらに奥に全画面で敷く ──
-		// パーク選択中は背後の3Dシーンの代わりにこの背景を見せ、メニュー画面らしくする。
-		// (スプライトチャンネルは3Dシーンより後に描画されるため、全画面スプライトでシーンを覆える)
+		// 背景、タイトル画面の背景を流用。パーク選択中は背後の3Dシーンの代わりにこの背景を見せる
 		{
 			auto bgEntity = manager.CreateEntity();
 			auto& bgTransform = manager.AddComponent<ecs::Transform>(bgEntity);
-			bgTransform.Set2DPosition(0.0f, 0.0f); // 左上原点(Pivot既定{0,0})で全画面を覆う
+			bgTransform.Set2DPosition(0.0f, 0.0f); // 左上原点、Pivot既定0,0で全画面を覆う
 
-			// TitleSceneと同じパス(Windowsは大小無視で実ファイルTX_TItleBG.pngに解決される)
+			// TitleSceneと同じパス、Windowsは大小無視で実ファイルへ解決される
 			auto bgTexture = ::graphics::TextureManager::Get().GetOrLoad("Assets/Texture/Title/TX_TitleBG.png");
 			auto& bgSprite = manager.AddComponent<ecs::Sprite>(bgEntity, bgTexture);
 			bgSprite.Size = { screenCenterX * 2.0f, screenCenterY * 2.0f };            // 仮想解像度全体
-			bgSprite.Color = ::graphics::Color(1.0f, 1.0f, 1.0f, kBackgroundAlpha);    // ほぼ透明(うっすら見える程度)
-			bgSprite.SetLayer(::ecs::SpriteLayer::UI, -1);                             // 黒ウィンドウ(offset0)より奥
+			bgSprite.Color = ::graphics::Color(1.0f, 1.0f, 1.0f, kBackgroundAlpha);    // ほぼ透明、うっすら見える程度
+			bgSprite.SetLayer(::ecs::SpriteLayer::UI, -1);                             // 黒ウィンドウのoffset0より奥
 
 			// ExitPerkSelectでまとめて破棄させる。TextComponentを持たないためハイライト対象外。
 			registry.emplace<PerkOptionUiTag>(bgEntity, -1);
 		}
 
-		// 操作説明(1行)のレイアウト。カードのテキスト下端(2行になる場合はその2行目の下端)から
-		// 間隔を空けて置き、ウィンドウはこの行を内側に収めるところまで下へ拡張する
-		// (以前は操作説明をウィンドウの外(下)に置いてしまい、黒背景から浮いて見えていたための修正)。
+		// 操作説明はカードのテキスト下端から間隔を空けて置き、ウィンドウはこの行を内側に収めるところまで下へ拡張する
 		constexpr float kHelpTextSize = 24.0f;
-		constexpr float kHelpGapY = 36.0f;       // カードのテキスト下端から操作説明までの間隔(px)
-		constexpr float kHelpBottomPadY = 50.0f; // 操作説明の下端からウィンドウ下端までの余白(px)
+		constexpr float kHelpGapY = 36.0f;       // カードのテキスト下端から操作説明までの間隔、px
+		constexpr float kHelpBottomPadY = 50.0f; // 操作説明の下端からウィンドウ下端までの余白、px
 		const float helpTextY = textBaselineY + optionTextBlockHeight + kHelpGapY;
 
-		// ── 選択肢全体を囲む黒半透明ウィンドウ(アイコンより奥) ──
-		// 横: 左右端カードのさらに外側までpad。縦: アイコン上端から操作説明の下端(+pad)までを覆う。
-		// windowBottomは操作説明テキストの配置にも使うため、ブロック外の変数に控えておく。
+		// 選択肢全体を囲む黒半透明ウィンドウ、アイコンより奥。横は左右端カードの外側までpad、縦はアイコン上端から操作説明下端+padまでを覆う
 		const float windowTop = iconCenterY - kCardSize * 0.5f - kWindowPadY;
 		const float windowBottom = helpTextY + kHelpTextSize + kHelpBottomPadY;
 		{
@@ -375,7 +326,7 @@ namespace ecs
 			auto windowEntity = ::ecs::uiutil::CreateTranslucentPanel(
 				screenCenterX, (windowTop + windowBottom) * 0.5f,
 				windowWidth, windowBottom - windowTop,
-				0); // アイコン(offset4)より奥(小さいLayer)
+				0); // アイコンのoffset4より奥、小さいLayer
 
 			// ExitPerkSelectでまとめて破棄させる。TextComponentを持たないためハイライト対象外。
 			registry.emplace<PerkOptionUiTag>(windowEntity, -1);
@@ -385,12 +336,12 @@ namespace ecs
 		{
 			const PerkDefinition& perk = pool[select.ChoiceIndices[i]];
 
-			// カード中心X。iを「中央からのオフセット」に変換して横に均等配置(i=1が画面中心)。
+			// カード中心X。iを中央からのオフセットに変換して横に均等配置する、i=1が画面中心
 			const float indexFromCenter =
 				static_cast<float>(i) - static_cast<float>(select.ChoiceCount - 1) * 0.5f;
 			const float cardCenterX = screenCenterX + indexFromCenter * kCardSpacingX;
 
-			// 大きめのアイコン画像(中心=画面中心の高さ)。未作成アイコンはGetPerkIconPathが代用画像を返す。
+			// 大きめのアイコン画像、中心は画面中心の高さ。未作成アイコンはGetPerkIconPathが代用画像を返す
 			auto iconEntity = manager.CreateEntity();
 			auto& iconTransform = manager.AddComponent<ecs::Transform>(iconEntity);
 			iconTransform.Set2DPosition(cardCenterX, iconCenterY);
@@ -399,12 +350,11 @@ namespace ecs
 			auto& iconSprite = manager.AddComponent<ecs::Sprite>(iconEntity, iconTexture);
 			iconSprite.Pivot = { 0.5f, 0.5f };              // Set2DPositionの座標を画像の中心に合わせる
 			iconSprite.Size = { kCardSize, kCardSize };     // 元画像サイズに依らず一定の大きさで表示
-			iconSprite.SetLayer(::ecs::SpriteLayer::UI, 4); // ウィンドウ(offset0)より手前
+			iconSprite.SetLayer(::ecs::SpriteLayer::UI, 4); // ウィンドウのoffset0より手前
 
 			registry.emplace<PerkOptionUiTag>(iconEntity, i);
 
-			// テキスト(アイコンの下)。cardCenterXへ水平中央揃え(MeasureWidthで実幅を測る)。
-			// テキストは別パスで描画されるため、アイコン・ウィンドウより常に前面に出る。
+			// テキストはアイコンの下、cardCenterXへ水平中央揃え。別パスで描画されるためアイコン・ウィンドウより常に前面に出る
 			const float textWidth = textRenderer.MeasureWidth(perk.Name, kOptionTextSize);
 
 			auto textEntity = manager.CreateEntity();
@@ -416,15 +366,11 @@ namespace ecs
 			text.Color = (i == select.SelectedIndex) ? kSelectedColor : kNormalColor;
 			text.Layer = 10;
 
-			// 画像・テキストとも同じタグを付け、ExitPerkSelectでまとめて破棄されるようにする。
-			// ハイライト処理(HandleInput)は PerkOptionUiTag+TextComponent のみを見るため、
-			// TextComponentを持たないアイコンには影響しない(アイコンは常に通常色で表示)。
+			// 画像・テキストとも同じタグを付けExitPerkSelectでまとめて破棄する。ハイライト処理はTextComponentを持つものだけを見るためアイコンには影響しない
 			registry.emplace<PerkOptionUiTag>(textEntity, i);
 		}
 
-		// ── 操作説明(黒ウィンドウ内、選択肢カードの下中央)。選択肢とは別に常時固定表示する ──
-		// 最後に使われた入力デバイスに応じてボタン名を出し分ける(OptionsMenuSystem::
-		// BuildControlsInfoLinesと同じくecs::uiutil::CreateTextLinesで生成する)。
+		// 操作説明、黒ウィンドウ内で選択肢カードの下中央。選択肢とは別に常時固定表示し、最後に使われた入力デバイスに応じてボタン名を出し分ける
 		{
 			const DirectX::XMFLOAT4 kHelpColor = { 0.85f, 0.85f, 0.85f, 1.0f };
 
@@ -437,7 +383,7 @@ namespace ecs
 				{ helpText }, ::ecs::uiutil::eTextHorizontalAlign::Center,
 				screenCenterX, helpTextY, 0.0f, kHelpTextSize, kHelpColor, 10);
 
-			// 選択肢ではないため-1タグ(ExitPerkSelectでまとめて破棄、ハイライト対象外)
+			// 選択肢ではないため-1タグ、ExitPerkSelectでまとめて破棄、ハイライト対象外
 			registry.emplace<PerkOptionUiTag>(entities[0], -1);
 		}
 	}
@@ -446,9 +392,7 @@ namespace ecs
 	{
 		auto& input = ::sys::InputManager::Get();
 
-		// 自動選択(性能計測の自動化用)。パーク選択中はTimeScale=0でゲームが停止するため、
-		// 入力しない限り永久に進まず、高負荷状態を継続して計測できない。
-		// 有効時は先頭の選択肢を即座に確定してゲームへ戻す
+		// 自動選択、性能計測の自動化用。パーク選択中はTimeScale=0で停止するため入力が無いと永久に進まない。有効時は先頭の選択肢を即座に確定する
 		if (::debug::GameDebugSettings::Get().IsAutoSelectPerk())
 		{
 			const auto& autoPool = GetPerkPool();
@@ -459,7 +403,7 @@ namespace ecs
 			return;
 		}
 
-		// 縦並びのため上下で移動する(左右も同じ動作にして取りこぼしを防ぐ)
+		// 縦並びのため上下で移動する、左右も同じ動作にして取りこぼしを防ぐ
 		if (input.IsActionPressed("MenuUp") || input.IsActionPressed("MenuLeft"))
 		{
 			select.SelectedIndex = (select.SelectedIndex + select.ChoiceCount - 1) % select.ChoiceCount;
@@ -476,8 +420,7 @@ namespace ecs
 				text.Color = (tag.OptionIndex == select.SelectedIndex) ? kSelectedColor : kNormalColor;
 			});
 
-		// マウスクリックでの誤確定を防ぐため、"Select"のマウス割り当ては無視する
-		// (キーボードのSpace/パッドのAボタンのみで決定する)
+		// マウスクリックでの誤確定を防ぐため、Selectのマウス割り当ては無視する
 		if (input.IsActionPressedExcludingMouse("Select"))
 		{
 			const auto& pool = GetPerkPool();
@@ -497,9 +440,7 @@ namespace ecs
 		const entt::entity playerEntity = *playerView.begin();
 		auto& status = registry.get<PlayerStatusComponent>(playerEntity);
 
-		// パーク確定時の演出(自動選択デバッグ経由も含め、ApplyPerkが呼ばれる箇所すべてで発生する)。
-		// レベルアップ〜確定は低頻度のイベントのため、常時ヒットするエフェクトより多少リッチな
-		// ものを使う(Herald.efk)。PlayOneShotCombinedの同時再生数上限で暴走はしない
+		// パーク確定時の演出。低頻度イベントのため常時ヒットするエフェクトより多少リッチなものを使う
 		if (const auto* transform = registry.try_get<Transform>(playerEntity))
 		{
 			ecs::effectutil::PlayOneShotCombined(kPerkConfirmEffectPath, transform->GetPosition(), 1.0f);
@@ -512,7 +453,7 @@ namespace ecs
 			const float beforeMaxHp = status.Current.MaxHp;
 			status.Modifier.MulMaxHp += perk.Magnitude;
 			status.Recompute();
-			// 増加分だけ現在HPも回復する（最大HPが増えただけでは体感しにくいため）
+			// 増加分だけ現在HPも回復する、最大HPが増えただけでは体感しにくいため
 			status.CurrentHp += (status.Current.MaxHp - beforeMaxHp);
 			break;
 		}
@@ -541,7 +482,7 @@ namespace ecs
 			break;
 		case ePerkEffectType::AllStatsUp:
 		{
-			// 攻撃間隔(CooldownRate)だけは「小さいほど速い」ため符号を反転して適用する
+			// 攻撃間隔のCooldownRateだけは小さいほど速いため符号を反転して適用する
 			const float beforeMaxHp = status.Current.MaxHp;
 			status.Modifier.MulMaxHp += perk.Magnitude;
 			status.Modifier.MulMoveSpeed += perk.Magnitude;
@@ -581,15 +522,14 @@ namespace ecs
 			status.Modifier.MulMaxHp -= perk.TradeoffMagnitude;
 			status.Recompute();
 
-			// 最大HPが減った分は現在HPからも引く。
-			// ただし0以下になると即死してしまうため、最低1は残す
+			// 最大HPが減った分は現在HPからも引く。ただし0以下になると即死するため最低1は残す
 			const float maxHpDelta = status.Current.MaxHp - beforeMaxHp;
 			status.CurrentHp = std::max(1.0f, std::min(status.CurrentHp + maxHpDelta, status.Current.MaxHp));
 			break;
 		}
 		case ePerkEffectType::Reckless:
 			status.Modifier.MulAttackCount += perk.Magnitude;
-			// 防御力は0未満にすると被ダメージ計算(半減点方式)が破綻するためクランプする
+			// 防御力は0未満にすると被ダメージ計算の半減点方式が破綻するためクランプする
 			status.Modifier.MulDefense = std::max(0.0f, status.Modifier.MulDefense - perk.TradeoffMagnitude);
 			status.Recompute();
 			break;
@@ -627,7 +567,6 @@ namespace ecs
 		}
 		case ePerkEffectType::AcquireWeapon:
 			// Nova/Chain Lightning/Homing Missileは全て狙い不要の自動発動想定のためAutoで追加する
-			// (将来Manual操作の追加武器を用意する場合はここの制御方式を見直す)
 			::ecs::GameSceneFactory::AddWeaponToPlayer(
 				playerEntity, perk.AcquireWeaponType, perk.AcquireWeaponId, ::ecs::eWeaponControl::Auto);
 			break;

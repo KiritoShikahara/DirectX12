@@ -29,7 +29,7 @@ namespace ecs
 				const auto* masterData = DATA_MGR(data::AreaAttackWeaponData).GetById(ecs::weaponutil::ComputeWeaponDataId(weapon));
 				if (masterData == nullptr) return;
 
-				// 探索範囲(センサー)の可視化は発動可否・クールダウンに関係なく毎フレーム更新する
+				// 探索範囲センサーの可視化は発動可否・クールダウンに関係なく毎フレーム更新する
 				UpdateSearchAreaVisual(registry, weaponEntity, weapon, *masterData);
 
 				if (runtime.CooldownTimer > 0.0f)
@@ -38,7 +38,7 @@ namespace ecs
 				}
 				if (runtime.CooldownTimer > 0.0f) return;
 
-				// SingleShot(左クリック/Attack)と同じ初期武器のため、右クリック(Attack2)で発動する
+				// SingleShotと同じ初期武器のため、右クリックのAttack2で発動する
 				bool wantsToFire = weapon.Control == ecs::eWeaponControl::Auto;
 				if (weapon.Control == ecs::eWeaponControl::Manual)
 				{
@@ -50,7 +50,7 @@ namespace ecs
 				DEBUG_LOG(sys::eLogLevel::Log, "AreaAttackWeaponSystem: Fire triggered (control={})",
 					weapon.Control == ecs::eWeaponControl::Auto ? "Auto" : "Manual");
 
-				// 攻撃回数パーク(AttackCountUp)分だけ発動を繰り返す
+				// 攻撃回数パーク分だけ発動を繰り返す
 				const int attackCount = ecs::combatutil::GetAttackCount(registry, weapon.Owner);
 				for (int i = 0; i < attackCount; ++i)
 				{
@@ -61,7 +61,6 @@ namespace ecs
 			});
 	}
 
-	/// <summary>探索範囲(センサー)を毎フレーム可視化する</summary>
 	void AreaAttackWeaponSystem::UpdateSearchAreaVisual(
 		entt::registry& registry,
 		entt::entity weaponEntity,
@@ -99,7 +98,6 @@ namespace ecs
 		wire->Radius = masterData.SearchRadius;
 	}
 
-	/// <summary>狙い方向の範囲内から敵を検出し、各敵の座標へ氷柱(ハザード)を生成する</summary>
 	void AreaAttackWeaponSystem::Fire(
 		entt::registry& registry,
 		const ecs::WeaponComponent& weapon,
@@ -110,7 +108,7 @@ namespace ecs
 		if (ownerTransform == nullptr || ownerAim == nullptr) return;
 
 		const DirectX::XMFLOAT3& ownerPos = ownerTransform->GetPosition();
-		// 向いている方向 = マウス座標/右スティックでの狙い方向（SingleShotと同じ基準）
+		// 向いている方向、マウス座標/右スティックでの狙い方向
 		const DirectX::XMFLOAT3& direction = ownerAim->Direction;
 
 		const DirectX::XMFLOAT3 searchCenter =
@@ -123,7 +121,7 @@ namespace ecs
 		mFound.clear();
 		::sys::PhysicsSystem::OverlapSphere(registry, searchCenter, masterData.SearchRadius, mFound);
 
-		// AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
+		// AtkPowerパークの強化分をCurrent/Base比で反映する
 		const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
 		const float damage = masterData.Damage * atkMultiplier;
 		const float radius = masterData.Radius;

@@ -5,7 +5,6 @@
 #include<system/CameraFollow/CameraFollowOffsetComponent.h>
 #include<Tag/EntityTag.h>
 
-// プレイヤー
 #include<system/Player/State/PlayerStateComponent.h>
 #include<system/Player/MovementSystem/PlayerMovementComponent.h>
 #include<system/Player/InputSystem/PlayerInputSystem.h>
@@ -21,7 +20,6 @@
 #include<system/Player/Perk/PlayerPerkLevelComponent.h>
 #include<system/Player/Perk/PerkDefinition.h>
 
-// 武器
 #include<system/Player/Weapon/Inventory/WeaponInventoryComponent.h>
 #include<system/Player/Weapon/WeaponTypeRegistry.h>
 #include<system/Player/Weapon/Orbit/OrbitWeaponRuntimeComponent.h>
@@ -29,20 +27,17 @@
 #include<system/Player/PowerCharge/PlayerPowerChargeComponent.h>
 #include<Data/Weapon/FlickerStrikeWeaponData.h>
 
-// 敵
 #include<system/Enemy/Move/EnemyChaseComponent.h>
 #include<system/Enemy/Attack/EnemyAttackComponent.h>
 #include<system/Enemy/Status/EnemyStatusComponent.h>
 #include<Data/Enemy/EnemyData.h>
 #include<Data/Enemy/BossData.h>
 
-// UI
 #include<system/Player/UI/PlayerUiTag.h>
 #include<system/GlowAnimation/GlowAnimationComp.h>
-#include<system/Window/Window.h> // 必殺ゲージを右端基準へ鏡像配置するため仮想解像度幅を取得する
-#include<graphics/Fbx/Resource/FbxResource.h> // FbxResource::FindClipIndex(クリップ重複追加ガード)を使うため
+#include<system/Window/Window.h>
+#include<graphics/Fbx/Resource/FbxResource.h>
 
-// 状態
 #include<Scene/Game/State/GameState.h>
 #include<Scene/Game/Wave/WaveComponent.h>
 #include<Scene/Game/Wave/WaveTimerUiTag.h>
@@ -58,8 +53,7 @@ namespace ecs
 		auto& state = manager.AddComponent<::ecs::GameStateComponent>(entity);
 		state.GameState = ::sys::eGameState::InGame;
 
-		// ウェーブサバイバルのコアループ管理（敵の継続スポーン・難易度上昇・ボース出現・クリア判定）
-		// 数値はWaveData(CSV/DB、WaveDebugPanelでGUI編集可能)から初期化する
+		// コアループ管理。数値はWaveDataから初期化する
 		auto& wave = manager.AddComponent<::ecs::WaveComponent>(entity);
 		if (const auto* waveData = DATA_MGR(data::WaveData).GetById(0))
 		{
@@ -80,10 +74,7 @@ namespace ecs
 			wave.ClearTime = waveData->ClearTime;
 		}
 
-		// TimeScaleはプロセス全体で共有されるシングルトンでシーンをまたいで持ち越される。
-		// PerkSelect/ResultはTimeScale=0.0で止めるが、GameStateはPreStartを経由せず
-		// 常にここで直接InGameへ入るため(=TimeScale=1.0へ戻すタイミングが他に無いため)、
-		// GameOver後のRetry等で0.0のまま残って固まって見えないよう、ここで必ず1.0へ戻す。
+		// TimeScaleはプロセス全体で共有されるため、GameOver後のRetry等で0のまま固まらないようここで1.0へ戻す
 		GetTime().SetTimeScale(1.0);
 	}
 
@@ -109,27 +100,24 @@ namespace ecs
 
 	void GameSceneFactory::CreateFieldBoundary()
 	{
-		// プレイヤーがフィールド外へ出られないようにする、描画を持たない静的コライダーの壁。
-		// FieldConstants::kPlayableHalfExtantの四辺に沿って、内向きの厚みを持つ薄い壁を4枚配置する
-		// (見た目はSkyboxで隠れるため、当たり判定だけを持てばよい)。
+		// プレイヤーがフィールド外へ出られないよう、描画を持たない静的コライダーの壁を4枚配置する
 		auto& manager = ENTITY_MANAGER;
 
 		const float half = FieldConstants::kPlayableHalfExtent;
 		const float thickness = FieldConstants::kWallHalfThickness;
 		const float height = FieldConstants::kWallHalfHeight;
 
-		// 各壁: {中心座標, 半径(halfExtent)}。壁の長さは隣接する壁の厚みぶん重なるよう
-		// (half + thickness)まで伸ばし、四隅に隙間ができないようにする。
+		// 各壁は中心座標と半径のペア。隣接壁の厚み分重ねて四隅の隙間を防ぐ
 		struct WallDef { DirectX::XMFLOAT3 Center; DirectX::XMFLOAT3 HalfExtent; };
 		const WallDef walls[4] =
 		{
-			// +Z側(奥)
+			// +Z側、奥
 			{ { 0.0f, height, half + thickness }, { half + thickness, height, thickness } },
-			// -Z側(手前)
+			// -Z側、手前
 			{ { 0.0f, height, -(half + thickness) }, { half + thickness, height, thickness } },
-			// +X側(右)
+			// +X側、右
 			{ { half + thickness, height, 0.0f }, { thickness, height, half + thickness } },
-			// -X側(左)
+			// -X側、左
 			{ { -(half + thickness), height, 0.0f }, { thickness, height, half + thickness } },
 		};
 
@@ -147,7 +135,7 @@ namespace ecs
 
 	void GameSceneFactory::CreateSkybox()
 	{
-		// フィールド外側(境界壁の向こう)に何もない虚無が見えないよう、キューブマップの空を敷く。
+		// フィールド外側に何もない虚無が見えないよう、キューブマップの空を敷く
 		auto& manager = ENTITY_MANAGER;
 
 		auto entity = manager.CreateEntity();
@@ -155,33 +143,13 @@ namespace ecs
 		skybox.TexturePath = "Assets/Skybox/skybox.dds";
 	}
 
-	// プレイヤー
 	void GameSceneFactory::CreatePlayer(const CreatePlayerContext& Context)
 	{
-		// 管理
 		auto& manager = ENTITY_MANAGER;
 		auto& registry = ENTT_REGISTRY;
 		auto player_res = ::graphics::FbxResourceManager::Get().Load("Assets/Fbx/Faul/Faul.fbx.bin");
 
-		// Idle/Run アニメーションクリップ(.anm)をFaulリソースへ登録する。
-		// ソースは App/Assets/Fbx/Faul/Animation/ の Faul骨格(99ボーン)アニメを FbxConverter で変換したもの
-		// (Idle.fbx.anm / Jog.fbx.anm)。Run には Jog を割り当てる。
-		//
-		// 【FbxConverter 変換フラグ(重要)】ファイル名の後にオプションを付ける:
-		//   FbxConverter.exe Idle.fbx --uemodel
-		//   FbxConverter.exe Jog.fbx  --uemodel --rootnomove
-		// ・--uemodel   : UE(Z-up)由来のFBXの軸をエンジン(Y-up)へ合わせる。付け忘れるとモデルが寝そべる。
-		// ・--rootnomove: ルートモーションを除去。移動は物理(RigidBody)制御のため、走りで前へずれないように
-		//                 Run(Jog)には必ず付ける。Idleは原地アニメのため不要。
-		//
-		// 【2026-07-24】以前はコンバータ側の--uemodelにバグ(main.cppでOptionUEModelがデフォルトtrue
-		// 固定でフラグの有無が反映されない)があり、正しく変換できなかったため、エンジン側
-		// (FbxResource::LoadAnm)に一時的なZ-up→Y-up補正(convertZUpToYUp引数)を追加して回避していた。
-		// コンバータのバグを修正した(リポジトリ: ~/source/repos/FbxConverter)ことで、正しいフラグを
-		// 付けて変換すれば.anm自体が最初からY-upになるため、根本原因(コンバータ)側で解決している。
-		// LoadAnmの第4引数は既定false(補正なし)のままでよい(渡すと二重補正で崩れるので付けないこと)。
-		// リソースはbinPathでキャッシュ共有(敵も同じFaulを使う)されるため、シーン再入場での
-		// 重複追加を FindClipIndex の既存チェックで防ぐ。
+		// Idle/Runアニメーションをリソースへ登録する。FbxConverterは--uemodelと--rootnomove付きで変換すること
 		if (player_res != nullptr)
 		{
 			constexpr const char* kFaulBin = "Assets/Fbx/Faul/Faul.fbx.bin";
@@ -195,7 +163,7 @@ namespace ecs
 				::graphics::FbxResourceManager::Get().LoadAnm(
 					kFaulBin, "Assets/Fbx/Faul/Animation/Jog.fbx.anm", "Run");
 			}
-			// Flicker Strike発動時の単発アクションアニメーション(FlickerStrikeWeaponSystem参照)
+			// Flicker Strike発動時の単発アクションアニメーション、FlickerStrikeWeaponSystem参照
 			if (player_res->FindClipIndex("Attack_A") < 0)
 			{
 				::graphics::FbxResourceManager::Get().LoadAnm(
@@ -216,7 +184,7 @@ namespace ecs
 		auto& fbx = manager.AddComponent<ecs::FbxComponent>(player);
 		fbx.Resource = player_res;
 
-		// アニメーション再生（既定はIdleループ。移動中はLocomotionAnimationSystemがRunへCrossFadeする）
+		// アニメーション再生。既定はIdleループ、移動中はLocomotionAnimationSystemがRunへCrossFadeする
 		auto& anim = manager.AddComponent<ecs::FbxAnimComponent>(player);
 		if (player_res != nullptr) anim.Play(*player_res, "Idle", true);
 
@@ -239,25 +207,23 @@ namespace ecs
 		rotate.InstantRotate = false;
 		manager.AddComponent<::ecs::MoveDirectionComponent>(player);
 
-		// ステータス（ゴールドで購入した恒久強化(PlayerSaveData)をBaseへ反映してからRecomputeする）
+		// ステータス。ゴールドで購入した恒久強化をBaseへ反映してからRecomputeする
 		auto& status = manager.AddComponent<::ecs::PlayerStatusComponent>(player);
 		ApplyStatUpgrades(status);
 		status.Recompute();
 		status.CurrentHp = status.Current.MaxHp;
 
-		// レベル・経験値（パークシステム用）
+		// レベル・経験値、パークシステム用
 		manager.AddComponent<::ecs::PlayerLevelComponent>(player);
 
-		// パーク種別ごとの選択回数(data::PerkData::MaxLevelの上限判定にPerkSelectSystemが使う)
+		// パーク種別ごとの選択回数。data::PerkData::MaxLevelの上限判定にPerkSelectSystemが使う
 		auto& perkLevel = manager.AddComponent<::ecs::PlayerPerkLevelComponent>(player);
 		perkLevel.PickCounts.assign(::ecs::GetPerkPool().size(), 0);
 
-		// 必殺技ゲージ（撃破数で蓄積、満タンで"Ultimate"アクションにより発動可能）
+		// 必殺技ゲージ。撃破数で蓄積し満タンでUltimateアクションにより発動可能
 		manager.AddComponent<::ecs::PlayerUltimateComponent>(player);
 
-		// パワーチャージ（撃破数で蓄積、Flicker Strike等のチャージ消費スキルで使用）。
-		// 開始時の所持数はFlickerStrikeWeaponData::InitialChargeに従う
-		// (パワーチャージの現状唯一の消費先のためここで管理する。MaxChargeと同じ方針)
+		// パワーチャージ。撃破数で蓄積しFlicker Strike等のチャージ消費スキルで使用、開始所持数はFlickerStrikeWeaponData::InitialChargeに従う
 		auto& powerCharge = manager.AddComponent<::ecs::PlayerPowerChargeComponent>(player);
 		if (const auto* flickerStrikeData = DATA_MGR(data::FlickerStrikeWeaponData).GetById(data::kFlickerStrikeGlobalConfigId))
 		{
@@ -268,24 +234,19 @@ namespace ecs
 		auto& fill = manager.AddComponent<::ecs::FillAmountLerp>(player);
 		fill.Speed = 0.5f;
 
-		// 狙い方向（マウス座標/右スティックでPlayerAimSystemが更新する）
+		// 狙い方向。マウス座標または右スティックでPlayerAimSystemが更新する
 		manager.AddComponent<::ecs::PlayerAimComponent>(player);
 
 		registry.emplace<::ecs::PlayerTag>(player);
 
 		manager.AddComponent<::ecs::WeaponInventoryComponent>(player);
 
-		// 初期武器: MenuScene(武器選択)で選べる3種(Fire/Lightning/Orb)はそれぞれ別の操作枠
-		// (Manual"Attack"/Manual"Attack2"/Auto)に属し、互いに競合しないため、選択に関わらず
-		// 3種類ともまず付与する。選んだ武器(Context.SelectSpellID)だけ選択の実感が出るよう
-		// Lv3スタートにし、他2つはLv1のままにする。
-		// WeaponID=0はいずれも対応するCSV(Assets/Data/Weapon/*.csv)のLv1レコードを指す。
-		// AddWeaponToPlayer()はパーク選択・デバッグ操作からの武器追加とも共通の経路にしてある。
+		// 初期武器はMenuSceneで選んだ武器をLv3、他2種をLv1で3種とも付与する。AddWeaponToPlayerはパーク選択・デバッグ操作とも共通の経路
 		constexpr int kSelectedWeaponStartLevel = 3;
 
-		const entt::entity fireWeapon = AddWeaponToPlayer(player, ::ecs::eWeaponType::SingleShot, 0, ::ecs::eWeaponControl::Manual);   // Fire: FireBolt（左クリックで発射）
-		const entt::entity lightningWeapon = AddWeaponToPlayer(player, ::ecs::eWeaponType::AreaAttack, 0, ::ecs::eWeaponControl::Manual); // Lightning: IceSpike（右クリック"Attack2"で発動）
-		// SelfDefense(FrostOrb)は発動トリガーの無い周回武器のためControlは意味を持たないが、区分上はAutoとする
+		const entt::entity fireWeapon = AddWeaponToPlayer(player, ::ecs::eWeaponType::SingleShot, 0, ::ecs::eWeaponControl::Manual);   // Fire: FireBolt、左クリックで発射
+		const entt::entity lightningWeapon = AddWeaponToPlayer(player, ::ecs::eWeaponType::AreaAttack, 0, ::ecs::eWeaponControl::Manual); // Lightning: IceSpike、右クリックAttack2で発動
+		// SelfDefenseのFrostOrbは発動トリガーが無くControlは意味を持たないが、区分上はAutoとする
 		const entt::entity orbWeapon = AddWeaponToPlayer(player, ::ecs::eWeaponType::SelfDefense, 0, ::ecs::eWeaponControl::Auto);      // Orb: FrostOrb
 
 		entt::entity selectedWeapon = fireWeapon; // 未知のIDが渡ってきた場合のフォールバック
@@ -322,13 +283,12 @@ namespace ecs
 		auto& weaponComp = manager.AddComponent<::ecs::WeaponComponent>(weapon);
 		weaponComp.WeaponID = weaponId;
 		weaponComp.Type = type;
-		weaponComp.MaxLevel = 10; // 全武器共通。各武器のCSVはLv1〜10の10行を持つ(data::XxxWeaponData参照)
+		weaponComp.MaxLevel = 10; // 全武器共通。各武器のCSVはLv1~10の10行を持つ、data::XxxWeaponData参照
 		weaponComp.Level = 1;
 		weaponComp.Owner = player;
 		weaponComp.Control = control;
 
-		// 武器種別ごとのランタイムコンポーネントを付与する(WeaponTypeRegistry参照。
-		// 新しい武器種別を追加する場合はそちらのテーブルへ1行追記するだけでよい)
+		// 武器種別ごとのランタイムコンポーネントを付与する。新しい武器種別はWeaponTypeRegistryへ1行追記するだけでよい
 		::ecs::weaponutil::AddWeaponRuntimeComponent(registry, type, weapon);
 
 		inventory->Weapons.push_back(weapon);
@@ -346,8 +306,7 @@ namespace ecs
 			weapons.erase(std::remove(weapons.begin(), weapons.end(), weaponEntity), weapons.end());
 		}
 
-		// SelfDefense(Orbit)は周回中の子エンティティ(オーブ)を保持しているため、
-		// 武器本体だけでなくオーブも合わせて破棄しないと孤立して残り続ける
+		// SelfDefenseのOrbitは周回中の子オーブを保持しているため、武器と一緒に破棄しないと孤立して残る
 		if (auto* orbitRuntime = registry.try_get<::ecs::OrbitWeaponRuntimeComponent>(weaponEntity))
 		{
 			for (entt::entity orb : orbitRuntime->Orbs)
@@ -362,8 +321,6 @@ namespace ecs
 		}
 	}
 
-	/// <summary>PlayerSaveData(ゴールドで購入した恒久強化レベル)×StatUpgradeData::ValuePerLevelを
-	/// Baseへ加算する。StatUpgradeData::Idはdata::eStatUpgradeTypeと対応する。</summary>
 	void GameSceneFactory::ApplyStatUpgrades(ecs::PlayerStatusComponent& status)
 	{
 		data::EnsurePlayerSaveDataLoaded();
@@ -397,9 +354,7 @@ namespace ecs
 		}
 		if (const auto* attackCount = dataMgr.GetById(static_cast<int>(data::eStatUpgradeType::AttackCount)))
 		{
-			// パークのAttackCountUpと同じMulAttackCountへ直接加算する(この値には「Base」に
-			// あたる概念が無く、1.0を基準に積み上げるだけの倍率のため、ショップ強化も
-			// Modifier側へ加算するのが素直。Recompute()はこの関数の呼び出し元が別途行う)
+			// パークのAttackCountUpと同じMulAttackCountへ直接加算する。Recomputeは呼び出し元が別途行う
 			status.Modifier.MulAttackCount += attackCount->ValuePerLevel * static_cast<float>(save.AttackCountLevel);
 		}
 		if (const auto* revive = dataMgr.GetById(static_cast<int>(data::eStatUpgradeType::Revive)))
@@ -410,9 +365,7 @@ namespace ecs
 		{
 			status.Base.PostHitInvincibleDuration += postHitInvincibility->ValuePerLevel * static_cast<float>(save.PostHitInvincibilityLevel);
 		}
-		// GoldGainRate/ExperienceGainRateはPlayerStatusComponentに接続しない
-		// (EnemyDeathSystem::AwardGold/AwardExperienceがPlayerSaveDataを直接参照する)。
-		// PerkChoiceCountも同様に接続しない(PerkSelectSystem::EnterPerkSelectがPlayerSaveDataを直接参照する)。
+		// GoldGainRate/ExperienceGainRate/PerkChoiceCountはPlayerStatusComponentに接続せず、EnemyDeathSystem/PerkSelectSystemがPlayerSaveDataを直接参照する
 	}
 
 	void GameSceneFactory::CreateCamera()
@@ -424,20 +377,15 @@ namespace ecs
 
 		auto& cam = manager.AddComponent<::ecs::CameraComponent>(entity);
 		cam.IsMainCamera = true;
-		// POE2のようなアイソメトリック的な見た目にするため、望遠寄りの狭いFOVにして
-		// パースの歪み(手前が大きく・奥が小さく見える)を抑える。狭いFOV分、
-		// 同程度の画角を保てるようカメラの距離(Offset)を後方・上方へ伸ばしてある。
+		// POE2のようなアイソメトリックの見た目にするため望遠寄りの狭いFOVにし、同じ画角を保てるようOffsetを後方・上方へ伸ばしてある
 		cam.Fov = 35.0f;
 		cam.Near = 0.1f;
-		// 【2026-07-24】フィールド拡張(半径2000、FieldConstants::kWorldHalfExtent)に伴い、
-		// 旧値1000のままだとフィールド遠方(や地平線方向のSkybox手前)がFar Clipで
-		// 描画されなくなるため、余裕を持って拡張する。
+		// フィールド拡張に伴い、Far Clipで地平線方向のSkyboxが描画されなくなるため余裕を持って拡張する
 		cam.Far = 3000.0f;
 		cam.SetAspectRatioFromWindow(sys::Window::Get());
 
 		auto& follow = manager.AddComponent<::ecs::CameraFollowOffsetComponent>(entity);
-		// 俯瞰角度が約70度(水平面基準)で真上に近すぎたとのフィードバックのため、約56度まで戻す
-		// (距離感が変わらないようOffsetの大きさはほぼ据え置き、比率のみ変更)
+		// 俯瞰角度が真上に近すぎるとのフィードバックのため56度まで戻す。距離感を保つためOffsetの比率のみ変更
 		follow.Offset = { 0.f, 440.f, -300.f };
 		follow.LookAtOffset = { 0.f, -10.f, 0.f };
 
@@ -451,29 +399,14 @@ namespace ecs
 		manager.AddComponent<::ecs::Transform>(entity);
 
 		auto& light = manager.AddComponent<ecs::DirectionalLightComponent>(entity);
-		// 影はDirectionの水平(X,Z)成分の向きへ伸びる。カメラはCreateCamera()のOffset(z=-300)通り
-		// -Z側から+Z方向(奥)を見ているため、以前のZ=+0.5だと影がカメラから見て奥へ伸びていた。
-		// 手前(カメラ側、-Z方向)へ影が伸びるよう、水平成分(X,Z)の符号を反転する
-		// (Y=高さ方向の差し込み角度は変えない)。
+		// 影はDirectionの水平成分の向きへ伸びる。カメラが手前を向くよう水平成分の符号を反転している
 		light.Direction = { -0.3f, -1.0f, -0.5f };
 		light.Color = { 1.0f,  1.0f, 1.0f };
 		light.Intensity = 7.5f;
 		light.IsActive = true;
 		light.CastShadow = true;
 
-		// 【2026-07-24】フィールド(Field.fbx.bin)は scale=20 適用後で約2000x2000ユニットあるのに対し、
-		// ShadowRangeは旧値50(=フィールドの2.5%程度)しかカバーしておらず、プレイヤーが原点から
-		// 少し離れるだけでShadow Mapの範囲外に出てしまっていた。SampleShadowPCF(FbxShader.hlsli)は
-		// 範囲外を「常に影なし」として扱うため、フィールドの大部分で陰影が付かず、
-		// 光がフィールド全体に届いていないように見える不具合になっていた。
-		//
-		// 対策は2段構え:
-		// 1. ShadowTargetをワールド原点固定ではなく、DirLightFollowSystem(PostUpdateフェーズ)で
-		//    毎フレームプレイヤー位置(XZ)へ追従させる。これにより影の解像度(2048x2048固定)を
-		//    落とさず、プレイヤーが今いる場所では常にシャドウ/陰影が機能する。
-		// 2. ShadowRangeも、戦闘中の実射程(VoidBeamのBeamLength=90、AreaAttackのSearchRadius=105等)
-		//    を余裕を持ってカバーできるよう150に拡大し、プレイヤー周辺の攻撃エフェクトが
-		//    範囲外に出ないようにする。
+		// ShadowTargetはDirLightFollowSystemが毎フレームプレイヤー位置へ追従させ、ShadowRangeは戦闘の実射程を余裕を持ってカバーする
 		light.ShadowRange = 300.0f;
 		light.ShadowTarget = { 0.0f, 0.0f, 0.0f }; // 初期値。以降はDirLightFollowSystemが更新する
 		light.ShadowDistance = 30.0f;
@@ -491,13 +424,13 @@ namespace ecs
 	{
 		// 体力バーのUI
 		CreatePlayerHpBar();
-		// 必殺技ゲージのUI（体力バーの鏡像。右下）
+		// 必殺技ゲージのUI、体力バーの鏡像で右下
 		CreatePlayerUltimateGauge();
-		// 所持武器アイコンバー（体力バーと必殺ゲージの間、画面中央下部）
+		// 所持武器アイコンバー、体力バーと必殺ゲージの間の画面中央下部
 		CreateWeaponIconBar();
 		// 制限時間のUI
 		CreateWaveTimerUI();
-		// 経験値バー・現在レベル表示のUI（画面上部）
+		// 経験値バー・現在レベル表示のUI、画面上部
 		CreatePlayerExpBar();
 	}
 
@@ -508,18 +441,17 @@ namespace ecs
 		int enemyId)
 	{
 		const bool isBoss = bossTier != eBossTier::None;
-		// ボース階級ごとの強化倍率(data::BossData)。通常の敵はnullptrのまま(倍率1.0扱い)
+		// ボス階級ごとの強化倍率、data::BossData。通常の敵はnullptrのまま倍率1.0扱い
 		const auto* bossData = isBoss ? DATA_MGR(data::BossData).GetById(static_cast<int>(bossTier)) : nullptr;
 
-		// 敵の種類ごとの色分け（専用モデルが用意されるまではプレイヤーモデルの色違いで代用する）。
-		// ボースは階級ごとにこの色を優先する(種類に関わらず、同じ階級なら同じ色)。
-		constexpr DirectX::XMFLOAT4 kMiniBossColor = { 1.0f, 0.5f, 0.1f, 1.0f };  // 小ボース: 橙
-		constexpr DirectX::XMFLOAT4 kMidBossColor = { 1.0f, 0.15f, 0.15f, 1.0f }; // 中ボース: 赤
-		constexpr DirectX::XMFLOAT4 kFinalBossColor = { 0.55f, 0.05f, 0.65f, 1.0f }; // 最強ボース: 紫
-		constexpr DirectX::XMFLOAT4 kGruntColor = { 1.0f, 1.0f, 0.5f, 1.0f };     // Id=0: 標準的な敵
-		constexpr DirectX::XMFLOAT4 kScoutColor = { 0.4f, 0.9f, 1.0f, 1.0f };    // Id=1: 高速・低HPな敵
-		constexpr DirectX::XMFLOAT4 kBruteColor = { 0.6f, 0.1f, 0.5f, 1.0f };    // Id=2: 低速・高HP・高火力な敵
-		constexpr DirectX::XMFLOAT4 kSprinterColor = { 0.5f, 1.0f, 0.3f, 1.0f }; // Id=3: 超高速・超低HPな敵
+		// 敵の種類ごとに色分けする。専用モデルが無いためプレイヤーモデルの色違いで代用し、ボスは階級ごとの色を優先する
+		constexpr DirectX::XMFLOAT4 kMiniBossColor = { 1.0f, 0.5f, 0.1f, 1.0f };  // 小ボス、橙
+		constexpr DirectX::XMFLOAT4 kMidBossColor = { 1.0f, 0.15f, 0.15f, 1.0f }; // 中ボス、赤
+		constexpr DirectX::XMFLOAT4 kFinalBossColor = { 0.55f, 0.05f, 0.65f, 1.0f }; // 最強ボス、紫
+		constexpr DirectX::XMFLOAT4 kGruntColor = { 1.0f, 1.0f, 0.5f, 1.0f };     // Id=0、標準的な敵
+		constexpr DirectX::XMFLOAT4 kScoutColor = { 0.4f, 0.9f, 1.0f, 1.0f };    // Id=1、高速・低HPな敵
+		constexpr DirectX::XMFLOAT4 kBruteColor = { 0.6f, 0.1f, 0.5f, 1.0f };    // Id=2、低速・高HP・高火力な敵
+		constexpr DirectX::XMFLOAT4 kSprinterColor = { 0.5f, 1.0f, 0.3f, 1.0f }; // Id=3、超高速・超低HPな敵
 
 		const auto* enemyData = DATA_MGR(data::EnemyData).GetById(enemyId);
 
@@ -539,7 +471,7 @@ namespace ecs
 		tr.SetScale(scale);
 		tr.SetPosition(position);
 
-		// 物理（コライダーは見た目のスケールに追従しないため、ボースは箱も合わせて拡大する）
+		// 物理。コライダーは見た目のスケールに追従しないためボスは箱も合わせて拡大する
 		const DirectX::XMFLOAT3 colliderHalfExtent = isBoss
 			? DirectX::XMFLOAT3{ 5.0f * bossScaleMultiplier, 30.0f * bossScaleMultiplier, 5.0f * bossScaleMultiplier }
 			: DirectX::XMFLOAT3{ 5.0f, 30.0f, 5.0f };
@@ -547,12 +479,10 @@ namespace ecs
 		auto& rigid = manager.AddComponent<ecs::RigidBodyComponent>(enemy, ecs::RigidBodyComponent::MakeDynamic());
 		rigid.GravityFactor = 0.0f;
 		rigid.LinearDamping = 10.0f;
-		// 敵同士は衝突させない(見た目上の押し合いはほぼ不要な一方、敵が密集すると
-		// Joltの接触解決コストが急増しFPS低下の主因になるため)。地面・プレイヤー・
-		// 各武器のセンサー判定とは通常通り衝突する
+		// 敵同士は衝突させない。密集時のJolt接触解決コストによるFPS低下を防ぐため
 		rigid.DisableSelfCollision = true;
 
-		// モデル（専用モデルが用意されるまではプレイヤーモデルを色違いで代用する）
+		// モデル。専用モデルが無いためプレイヤーモデルを色違いで代用する
 		auto& fbx = manager.AddComponent<ecs::FbxComponent>(enemy);
 		fbx.Resource = res;
 
@@ -569,28 +499,24 @@ namespace ecs
 			case 1: enemyColor = kScoutColor; break;
 			case 2: enemyColor = kBruteColor; break;
 			case 3: enemyColor = kSprinterColor; break;
-			default: break; // Id=0またはその他は標準色(kGruntColor)のまま
+			default: break; // Id=0またはその他は標準色kGruntColorのまま
 			}
 			break;
 		}
 		fbx.CustomColor = enemyColor;
 
-		// アニメーション再生（既定はIdleループ。移動中はLocomotionAnimationSystemがRunへCrossFadeする）。
-		// Idle/Runクリップは既にCreatePlayerがFaulリソースへ登録済み(敵は常にプレイヤー生成後に
-		// EnemySpawnSystemが生成するため、ここで再度LoadAnmを呼ぶ必要はない)。
+		// アニメーション再生。既定はIdleループで移動中はRunへCrossFadeし、クリップはCreatePlayerで登録済みのため再登録不要
 		auto& anim = manager.AddComponent<ecs::FbxAnimComponent>(enemy);
 		if (res != nullptr) anim.Play(*res, "Idle", true);
 
-		// 移動（EnemyData.csvのMoveSpeedを使用。プレイヤーの実移動速度
-		// PlayerMovementComponent::MaxSpeed(110)より遅くなるよう、各敵種のMoveSpeedを調整すること）
+		// 移動。EnemyData.csvのMoveSpeedを使用し、プレイヤーの実移動速度より遅くなるよう調整すること
 		auto& chase = manager.AddComponent<::ecs::EnemyChaseComponent>(enemy);
 		chase.MoveSpeed = enemyData != nullptr ? enemyData->MoveSpeed : 60.0f;
 		auto& rotate = manager.AddComponent<::ecs::RotateToMoveComponent>(enemy);
 		rotate.InstantRotate = false;
 		manager.AddComponent<::ecs::MoveDirectionComponent>(enemy);
 
-		// ステータス（EnemyData.csvの種類別ステータスを基準値とし、現在の難易度倍率を適用。
-		// ボースはさらに追加倍率をかける）
+		// ステータス。EnemyData.csvの種類別値に難易度倍率を適用し、ボスはさらに追加倍率をかける
 		auto& status = manager.AddComponent<::ecs::EnemyStatusComponent>(enemy);
 		status.EnemyId = enemyId;
 		if (enemyData != nullptr)
@@ -672,22 +598,18 @@ namespace ecs
 		auto& manager = ENTITY_MANAGER;
 		auto& registry = ENTT_REGISTRY;
 
-		// 体力バーと同じ画像・スケール・高さを流用し、左右反転して右下へ鏡像配置する。
-		// 反転は Flip.x=-1 で行い、X座標を「仮想解像度幅 - 元のX」へ置き換えることで、
-		// 左端基準だったスプライトを右端基準へ移す(SpriteRenderer::CalculateShaderData の
-		// mPivot→mScale(Flip)→translate の順により、Flip.x=-1 では基準点が右端になる)。
-		// 左下=HP / 右下=必殺 で左右対称の配置になる。
+		// 体力バーと同じ画像をFlip.xで左右反転し、X座標を仮想解像度幅基準に置き換えて右下へ鏡像配置する
 		const float virtualWidth = static_cast<float>(::sys::Window::Get().GetVirtualWidth());
 
-		// 体力バー(CreatePlayerHpBar)と同じレイアウト値。鏡像なので offset は右端からの距離になる
+		// 体力バーと同じレイアウト値。鏡像のためoffsetは右端からの距離になる
 		const float scale = 0.6f;
 		const float offset = 190.0f;
 		const float pos_y = 900.0f;
 
-		// 必殺ゲージの識別色(青)。体力バー(赤系)と一目で区別できるようにする
+		// 必殺ゲージの識別色は青。体力バーの赤系と一目で区別できるようにする
 		const ::graphics::Color kGaugeColor = ::graphics::Color::Blue;
 
-		// ベースの作成(元X=0 の鏡像 → 右端 virtualWidth に合わせる)
+		// ベースの作成、元X=0の鏡像を右端virtualWidthに合わせる
 		{
 			auto entity = manager.CreateEntity();
 			auto res = ::graphics::TextureManager::Get().GetOrLoad("Assets/Texture/UI/HpBar/bar_base.png");
@@ -703,7 +625,7 @@ namespace ecs
 			sprite.Color = kGaugeColor; // 青
 		}
 
-		// 本体(ゲージ)の作成(元X=offset の鏡像 → 右端から offset 内側へ)
+		// 本体ゲージの作成、元X=offsetの鏡像を右端からoffset内側へ
 		{
 			auto entity = manager.CreateEntity();
 			auto res = ::graphics::TextureManager::Get().GetOrLoad("Assets/Texture/UI/HpBar/bar1.png");
@@ -726,7 +648,7 @@ namespace ecs
 			glow.Frequency = 0.5f;
 			glow.PhaseOffset = 0.0f;
 
-			// FillAmount を目標値へ滑らかに追従させる(撃破のたびにゲージが滑らかに増える)
+			// FillAmountを目標値へ滑らかに追従させる。撃破のたびにゲージが滑らかに増える
 			auto& lerp = manager.AddComponent<::ecs::FillAmountLerp>(entity);
 			lerp.Target = 0.0f;
 			lerp.Speed = 2.0f;
@@ -737,32 +659,27 @@ namespace ecs
 
 	void GameSceneFactory::CreateWeaponIconBar()
 	{
-		// 体力バー・必殺ゲージ(いずれもpos_y=900)の間、画面中央下寄りに横5×縦2で所持武器アイコンを
-		// 並べる。各スロットは「アイコン本体」「クールダウン進捗を表す黒半透明オーバーレイ
-		// (Radial FillTypeで時計回りに消える)」「残り秒数のテキスト」「武器レベルのテキスト」の
-		// 4エンティティで構成し、実際の表示切り替え(所持武器の反映・クールダウン計算)は
-		// WeaponIconBarSystemが行う。ここでは10スロット分を先に生成し、空きスロットは
-		// 非表示(IsVisible=false)にしておく(毎フレームのエンティティ生成/破棄を避けるため)。
+		// 体力バーと必殺ゲージの間に横5×縦2で所持武器アイコンを並べ、表示切り替えはWeaponIconBarSystemが行う
 		auto& manager = ENTITY_MANAGER;
 		auto& registry = ENTT_REGISTRY;
 
 		constexpr int kColumns = 5;
 		constexpr int kRows = 2;
-		// WeaponIconBarSystem::kSlotCountと一致させること(WeaponInventoryComponent::MaxSlotsと同数)
+		// WeaponIconBarSystem::kSlotCountと一致させること。WeaponInventoryComponent::MaxSlotsと同数
 		constexpr int kSlotCount = kColumns * kRows;
 
 		constexpr float kIconSize = 76.0f;  // アイコンサイズ
-		constexpr float kSpacing = 94.0f;   // スロット中心どうしの間隔(px)。アイコンサイズに応じて隙間を保つ
-		constexpr float kCenterY = 945.0f;  // 体力バー・必殺ゲージ(pos_y=900)より少し下
+		constexpr float kSpacing = 94.0f;   // スロット中心どうしの間隔、px。アイコンサイズに応じて隙間を保つ
+		constexpr float kCenterY = 945.0f;  // 体力バー・必殺ゲージのpos_y=900より少し下
 
 		// 武器レベルのテキストをアイコン右下に重ねるためのオフセット
 		constexpr float kLevelTextOffset = kIconSize * 0.32f;
 
 		const float centerX = static_cast<float>(::sys::Window::Get().GetVirtualWidth()) * 0.5f;
 
-		// クールダウン進捗の黒半透明オーバーレイ用の単色板(パーク選択のウィンドウ背景と同じ白テクスチャ)
+		// クールダウン進捗の黒半透明オーバーレイ用の単色板。パーク選択のウィンドウ背景と同じ白テクスチャ
 		constexpr const char* kOverlayTexturePath = "Assets/Effect/Texture/White.png";
-		// 空きスロット状態(IsVisible=false)の間だけ使うダミーテクスチャ
+		// 空きスロット状態の間だけ使うダミーテクスチャ
 		constexpr const char* kPlaceholderIconPath = "Assets/Icon/loading.png";
 
 		for (int slot = 0; slot < kSlotCount; ++slot)
@@ -772,7 +689,7 @@ namespace ecs
 			const float x = centerX + (static_cast<float>(col) - (kColumns - 1) * 0.5f) * kSpacing;
 			const float y = kCenterY + (static_cast<float>(row) - (kRows - 1) * 0.5f) * kSpacing;
 
-			// アイコン本体(武器種別に応じたテクスチャはWeaponIconBarSystemが差し替える)
+			// アイコン本体。武器種別に応じたテクスチャはWeaponIconBarSystemが差し替える
 			{
 				auto entity = manager.CreateEntity();
 				auto& tr = manager.AddComponent<ecs::Transform>(entity);
@@ -789,7 +706,7 @@ namespace ecs
 					::ecs::WeaponIconSlotTag{ slot, ::ecs::eWeaponIconElement::Icon, x });
 			}
 
-			// クールダウン進捗オーバーレイ(アイコンの真上に重ねる)
+			// クールダウン進捗オーバーレイ、アイコンの真上に重ねる
 			{
 				auto entity = manager.CreateEntity();
 				auto& tr = manager.AddComponent<ecs::Transform>(entity);
@@ -802,14 +719,14 @@ namespace ecs
 				sprite.Color = ::graphics::Color(0.0f, 0.0f, 0.0f, 0.65f); // 黒・65%不透明
 				sprite.FType = ::ecs::FillType::Radial; // 時計回りにクールダウン経過を表現する
 				sprite.FillAmount = 0.0f;
-				sprite.SetLayer(::ecs::SpriteLayer::UI, 4); // アイコン(offset3)より手前
+				sprite.SetLayer(::ecs::SpriteLayer::UI, 4); // アイコンのoffset3より手前
 				sprite.IsVisible = false;
 
 				registry.emplace<::ecs::WeaponIconSlotTag>(entity,
 					::ecs::WeaponIconSlotTag{ slot, ::ecs::eWeaponIconElement::Overlay, x });
 			}
 
-			// 残りクールダウン秒数のテキスト(アイコン中央に重ねる。別描画パスのため常に最前面)
+			// 残りクールダウン秒数のテキスト。アイコン中央に重ね、別描画パスのため常に最前面
 			{
 				auto entity = manager.CreateEntity();
 				auto& text = manager.AddComponent<ecs::TextComponent>(entity);
@@ -825,7 +742,7 @@ namespace ecs
 					::ecs::WeaponIconSlotTag{ slot, ::ecs::eWeaponIconElement::Text, x });
 			}
 
-			// 武器レベルのテキスト(アイコン右下に重ねる。常時表示、クールダウンとは独立)
+			// 武器レベルのテキスト。アイコン右下に重ね、常時表示でクールダウンとは独立
 			{
 				const float levelX = x + kLevelTextOffset;
 				const float levelY = y + kLevelTextOffset;
@@ -835,8 +752,8 @@ namespace ecs
 				text.Text = L"";
 				text.X = levelX; // WeaponIconBarSystemがMeasureWidthで中央揃えに書き換える
 				text.Y = levelY;
-				text.Size = 22.0f; // クールダウン秒数(20.0f)より少し大きく、視認性を優先する
-				text.Color = { 1.0f, 0.9f, 0.4f, 1.0f }; // 淡い黄色でクールダウン秒数(白)と区別する
+				text.Size = 22.0f; // クールダウン秒数の20.0fより少し大きく、視認性を優先する
+				text.Color = { 1.0f, 0.9f, 0.4f, 1.0f }; // 淡い黄色でクールダウン秒数の白と区別する
 				text.Layer = 10;
 				text.IsVisible = false;
 
@@ -871,21 +788,19 @@ namespace ecs
 
 		const float virtualWidth = static_cast<float>(::sys::Window::Get().GetVirtualWidth());
 
-		// 画面上部に横長のバーを配置する。専用のバー画像は無いため、パーク選択のウィンドウ背景
-		// 等と同じ白テクスチャ(Color着色)で代用し、任意の幅にストレッチする(UiPanelUtilityと同じ手法)。
-		// WaveTimerUI(X=880,Y=30,Size48)と縦に被らないよう、バーはその上(Y=8〜24)に収める。
+		// 画面上部に横長のバーを配置する。専用画像が無いため白テクスチャを着色してストレッチする
 		constexpr float kBarHeight = 16.0f;
 		constexpr float kBarY = 8.0f;
 		constexpr float kBarLeftMargin = 110.0f; // 左側にレベルテキストの表示余地を空ける
 		constexpr float kBarRightMargin = 40.0f;
 		const float barWidth = virtualWidth - kBarLeftMargin - kBarRightMargin;
 
-		// 経験値バーの識別色(黄緑)。HPバー(赤系)・必殺ゲージ(青)と一目で区別できるようにする
+		// 経験値バーの識別色は黄緑。HPバーの赤系・必殺ゲージの青と一目で区別できるようにする
 		const ::graphics::Color kExpColor = ::graphics::Color(0.5f, 0.9f, 0.3f, 1.0f);
 
 		constexpr const char* kWhiteTexturePath = "Assets/Effect/Texture/White.png";
 
-		// 背景(空の状態、暗いグレー半透明)
+		// 背景、空の状態で暗いグレー半透明
 		{
 			auto entity = manager.CreateEntity();
 			auto res = ::graphics::TextureManager::Get().GetOrLoad(kWhiteTexturePath);
@@ -899,7 +814,7 @@ namespace ecs
 			sprite.SetLayer(::ecs::SpriteLayer::UI, 1);
 		}
 
-		// 本体(経験値の充填分。開始時は空、以降PlayerExpBarSystemが充填率で更新する)
+		// 本体、経験値の充填分。開始時は空で以降PlayerExpBarSystemが充填率で更新する
 		{
 			auto entity = manager.CreateEntity();
 			auto res = ::graphics::TextureManager::Get().GetOrLoad(kWhiteTexturePath);
@@ -912,9 +827,9 @@ namespace ecs
 			sprite.Color = kExpColor;
 			sprite.FType = ::ecs::FillType::Horizontal;
 			sprite.FillAmount = 0.0f;
-			sprite.SetLayer(::ecs::SpriteLayer::UI, 2); // 背景(offset1)より手前
+			sprite.SetLayer(::ecs::SpriteLayer::UI, 2); // 背景のoffset1より手前
 
-			// FillAmountを目標値へ滑らかに追従させる(HPバー・必殺ゲージと同じ手法)
+			// FillAmountを目標値へ滑らかに追従させる。HPバー・必殺ゲージと同じ手法
 			auto& lerp = manager.AddComponent<::ecs::FillAmountLerp>(entity);
 			lerp.Target = 0.0f;
 			lerp.Speed = 2.0f;
@@ -922,15 +837,13 @@ namespace ecs
 			registry.emplace<::ecs::PlayerExpBarTag>(entity);
 		}
 
-		// 現在レベル表示("Lv.1"。バーの左側に配置)
+		// 現在レベル表示はLv.1形式。バーの左側に配置
 		{
 			auto entity = manager.CreateEntity();
 			auto& text = manager.AddComponent<::ecs::TextComponent>(entity);
 			text.Text = L"Lv.1"; // PlayerExpBarSystem が毎フレーム上書きする
 			text.X = 20.0f;
-			// TextComponent::Yはベースライン基準(TextRenderer::Submit参照。文字はここから上へ伸びる)。
-			// kBarY(=8)をそのまま使うとベースラインが画面上端付近になり、文字の大部分が
-			// Y<0(画面外)にはみ出して見えなくなっていた。バーの中心付近に来る値まで下げる
+			// TextComponent::Yはベースライン基準のため、kBarYのままだと文字が画面外にはみ出るのでバー中心付近まで下げる
 			constexpr float kLevelTextBaselineY = 26.0f;
 			text.Y = kLevelTextBaselineY;
 			text.Size = 28.0f;
@@ -942,4 +855,3 @@ namespace ecs
 	}
 
 }
-  

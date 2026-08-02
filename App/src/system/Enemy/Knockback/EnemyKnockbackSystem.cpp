@@ -23,7 +23,7 @@ namespace ecs
                 rigidBody.HasMoveRequest = true;
             });
 
-        // view走査完了後にまとめて取り外す（走査中のコンポーネント除去はイテレータを不正化しうるため避ける）
+        // view走査完了後にまとめて取り外す。走査中の除去はイテレータを不正化しうるため避ける
         for (entt::entity entity : expired)
         {
             registry.remove<EnemyKnockbackComponent>(entity);

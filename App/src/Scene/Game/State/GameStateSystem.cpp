@@ -53,21 +53,17 @@ namespace sys
                 break;
             }
 
-            // レベルアップ → パーク選択（必殺技/Flicker Strike演出中は演出が終わるまで遷移を保留する）
+            // レベルアップ→パーク選択。必殺技/Flicker Strike演出中は演出が終わるまで遷移を保留する
             if (controller.PendingLevelUpCount > 0 && !::ecs::IsPlayerActionLocked(registry))
             {
-                // UI生成・入力・効果適用は PerkSelectSystem が状態を見て自律的に行う
-                // （GameStateSystem はステート遷移のみを担当し、パーク固有の知識を持たない）
+                // UI生成・入力・効果適用はPerkSelectSystemが状態を見て自律的に行う。GameStateSystemはステート遷移のみを担当しパーク固有の知識を持たない
                 controller.GameState = eGameState::PerkSelect;
                 GetTime().SetTimeScale(0.0);
             }
             break;
 
         case eGameState::PerkSelect:
-            // パーク選択完了 → 未消化のレベルアップが残っていれば続けてもう1回パーク選択を
-            // 提示する（PerkSelectComponentを外したままPerkSelect状態に留まると、
-            // PerkSelectSystemが次フレームで自動的に新しい3択を生成する）。
-            // 残っていなければゲームに戻る。
+            // パーク選択完了→未消化のレベルアップが残っていれば続けてもう1回提示し、無ければゲームに戻る
             if (controller.PerkSelectDone)
             {
                 controller.PerkSelectDone = false;
@@ -94,7 +90,6 @@ namespace sys
     {
         controller.GameState = eGameState::Result;
         GetTime().SetTimeScale(0.0);
-        // UI生成・入力・シーン遷移は ResultSystem が状態を見て自律的に行う
-        // （GameStateSystem はステート遷移のみを担当し、リザルト固有の知識を持たない）
+        // UI生成・入力・シーン遷移はResultSystemが状態を見て自律的に行う。GameStateSystemはステート遷移のみを担当しリザルト固有の知識を持たない
     }
 }

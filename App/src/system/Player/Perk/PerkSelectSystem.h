@@ -6,35 +6,26 @@
 
 namespace ecs
 {
-	/// <summary>
-	/// GameState::PerkSelect 状態の一連の処理を担当する。
-	/// - PerkSelect状態に入った最初のフレームでランダムに3択を生成しUIを表示する
-	/// - MenuLeft/MenuRightで選択、Selectで確定
-	/// - 確定した効果をPlayerStatusComponent/WeaponComponentへ適用する
-	/// - UIを破棄し GameStateComponent::PerkSelectDone を立てて GameStateSystem へ戻す
-	///
-	/// GameStateSystem はステート遷移のみを担当し、パーク固有の知識を持たせない
-	/// （疎結合。UI生成・入力・効果適用は全てこのシステムに閉じる）。
-	/// </summary>
+	///<summary>
+	///GameState::PerkSelect状態の処理を担当する。3択の生成・UI表示、選択入力、効果適用、GameStateComponent::PerkSelectDoneを立ててGameStateSystemへ戻すまでを行う
+	///</summary>
 	class PerkSelectSystem : public IUserSystem
 	{
 	public:
 		void Update(entt::registry& registry, float deltaTime, float rawDeltaTime) override;
 
 	private:
-		/// <summary>
-		/// candidatesから指定種別のものを1つランダムに取り出す(取り出した要素は削除する)。
-		/// 該当が無ければ-1を返す。枠が固定されている1・2番目の選択肢に使う。
-		/// </summary>
+		///<summary>
+		///candidatesから指定種別のものを1つランダムに取り出す。取り出した要素は削除し、該当が無ければ-1を返す
+		///</summary>
 		static int TakeByType(
 			std::vector<int>& candidates,
 			const std::vector<PerkDefinition>& pool,
 			ePerkEffectType type);
 
-		/// <summary>
-		/// candidatesから武器系以外を1つ、PerkData::Weightの重み付きで取り出す
-		/// (取り出した要素は削除する)。該当が無ければ-1を返す。「その他」枠に使う。
-		/// </summary>
+		///<summary>
+		///candidatesから武器系以外を1つ、PerkData::Weightの重み付きで取り出す。該当が無ければ-1を返す
+		///</summary>
 		static int TakeWeighted(
 			std::vector<int>& candidates,
 			const std::vector<PerkDefinition>& pool);
@@ -44,7 +35,9 @@ namespace ecs
 		static void ApplyPerk(entt::registry& registry, const PerkDefinition& perk);
 		static void ExitPerkSelect(entt::registry& registry, entt::entity controllerEntity);
 
-		/// <summary>選択が確定したプールインデックスの選択回数(PlayerPerkLevelComponent)を+1する</summary>
+		///<summary>
+		///選択が確定したプールインデックスの選択回数を+1する
+		///</summary>
 		static void IncrementPerkPickCount(entt::registry& registry, int poolIndex);
 	};
 }

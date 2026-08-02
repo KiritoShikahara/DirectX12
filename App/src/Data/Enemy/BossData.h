@@ -1,17 +1,11 @@
 #pragma once
 
-#include<string>
-#include<Data/Storage/Reflection.h>
+#include <string>
+#include <Data/Storage/Reflection.h>
 
 namespace data
 {
-	/// <summary>
-	/// ボース階級ごとの強化倍率マスタ(CSV/DB)。Id=0:小ボース, 1:中ボース, 2:最強ボース。
-	/// 通常の敵(EnemyData Id=0固定)を素体とし、その時点の難易度倍率(EnemyWaveModifier)に
-	/// さらにこの倍率を掛け合わせて生成する(GameSceneFactory::CreateEnemy参照)。
-	/// 出現タイミングはdata::WaveData(MiniBossFirstSpawnTime/MiniBossInterval/
-	/// MidBossSpawnTime/FinalBossSpawnTime)側で管理する。
-	/// </summary>
+	/// <summary>ボース階級ごとの強化倍率マスタ(CSV/DB)。Id=0:小ボース, 1:中ボース, 2:最強ボース</summary>
 	struct BossData
 	{
 		int         Id = 0;              // ボース階級(eBossTierのint値と対応、主キー)
@@ -31,7 +25,7 @@ namespace data
 			REFLECT_FIELD_FLOAT(ScaleMultiplier)
 			REFLECT_FIELD_FLOAT(ExpMultiplier)
 			REFLECT_FIELD_FLOAT(GoldMultiplier)
-		REFLECT_END()
+			REFLECT_END()
 	};
 }
 

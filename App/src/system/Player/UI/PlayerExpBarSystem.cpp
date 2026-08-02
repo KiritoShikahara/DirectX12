@@ -9,7 +9,6 @@
 
 namespace
 {
-	// 目標との差がこれ未満ならスナップして追従を打ち切る(PlayerHpBarSystemと同値)
 	constexpr float kFillEpsilon = 0.0001f;
 }
 
@@ -27,7 +26,7 @@ void ecs::PlayerExpBarSystem::Update(entt::registry& registry, float deltaTime, 
 		? std::clamp(level.Experience / level.ExperienceToNextLevel, 0.0f, 1.0f)
 		: 0.0f;
 
-	// 経験値バースプライトへ反映(HPバー・必殺ゲージと同じ追従ロジック)
+	// 経験値バースプライトへ反映、HPバー・必殺ゲージと同じ追従ロジック
 	auto barView = registry.view<PlayerExpBarTag, Sprite>();
 	barView.each([&](entt::entity e, Sprite& sp)
 		{

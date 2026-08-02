@@ -44,7 +44,7 @@ namespace ecs
                 const entt::entity initialTarget = ecs::targetutil::FindNearestExcluding(registry, mFound, ownerTransform->GetPosition(), {});
                 if (!registry.valid(initialTarget)) return;
 
-                // 攻撃回数パーク(AttackCountUp)分だけ発動を繰り返す(同じ初撃対象から再度連鎖する)
+                // 攻撃回数パーク分だけ発動を繰り返す、同じ初撃対象から再度連鎖する
                 const int attackCount = ecs::combatutil::GetAttackCount(registry, weapon.Owner);
                 for (int i = 0; i < attackCount; ++i)
                 {
@@ -55,14 +55,13 @@ namespace ecs
             });
     }
 
-    /// <summary>最初の対象へ命中させ、JumpRadius内の未命中の敵へ最大MaxJumps回まで跳ね移らせる</summary>
     void ChainLightningWeaponSystem::Zap(
         entt::registry& registry,
         const ecs::WeaponComponent& weapon,
         const data::ChainLightningWeaponData& masterData,
         entt::entity initialTarget)
     {
-        // AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
+        // AtkPowerパークの強化分をCurrent/Base比で反映する
         const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
         float damage = masterData.Damage * atkMultiplier;
 
@@ -96,7 +95,6 @@ namespace ecs
         }
     }
 
-    /// <summary>命中位置にワンショットのヒットエフェクトを再生する</summary>
     void ChainLightningWeaponSystem::SpawnHitEffect(
         entt::registry& registry,
         const DirectX::XMFLOAT3& position,

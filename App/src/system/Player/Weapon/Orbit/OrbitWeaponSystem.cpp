@@ -14,8 +14,6 @@
 
 namespace
 {
-	// エフェクト素材は概ねこの半径感で作られている想定の暫定値。
-	// 実際の判定半径とのズレ(見た目は小さいのに判定は大きい/その逆)を軽減するための概算スケール。
 	constexpr float kEffectReferenceRadius = 2.0f;
 }
 
@@ -24,7 +22,6 @@ namespace ecs
 	void OrbitWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
 		// InGame中のみ動作する。必殺技演出中は既存オーブの周回・当たり判定も一時停止させる
-		// (自動発動武器のためFlicker Strike中は止めない設計。ecs::weaponutil::ShouldSkipAutoWeaponUpdate参照)
 		if (ecs::weaponutil::ShouldSkipAutoWeaponUpdate(registry)) return;
 
 		registry.view<ecs::WeaponComponent, ecs::OrbitWeaponRuntimeComponent>().each(
@@ -49,7 +46,7 @@ namespace ecs
 					ownerPos.z,
 				};
 
-				// AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
+				// AtkPowerパークの強化分をCurrent/Base比で反映する
 				const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
 				const float damage = masterData->Damage * atkMultiplier;
 				const float angularSpeed = DirectX::XMConvertToRadians(masterData->OrbitSpeed);
@@ -64,11 +61,6 @@ namespace ecs
 			});
 	}
 
-	/// <summary>
-	/// Active/Cooldownのフェーズ残り時間を進め、尽きていればフェーズを切り替える。
-	/// IsActive初期値falseとPhaseTimer初期値0(OrbitWeaponRuntimeComponent参照)の組み合わせにより、
-	/// 装備直後の初回Updateはこの関数内でCooldown満了 → SpawnOrbs()が呼ばれ即座にActive化する。
-	/// </summary>
 	void OrbitWeaponSystem::UpdatePhase(
 		entt::registry& registry,
 		ecs::OrbitWeaponRuntimeComponent& runtime,
@@ -94,7 +86,6 @@ namespace ecs
 		}
 	}
 
-	/// <summary>OrbCount個のオーブエンティティを均等配置で生成する</summary>
 	void OrbitWeaponSystem::SpawnOrbs(
 		entt::registry& registry,
 		ecs::OrbitWeaponRuntimeComponent& runtime,
@@ -117,11 +108,11 @@ namespace ecs
 			rigid.GravityFactor = 0.0f;
 
 			auto& orb = manager.AddComponent<ecs::OrbitOrbComponent>(entity);
-			// 均等配置：360度をOrbCountで割った角度をそれぞれの初期オフセットにする
+			// 均等配置、360度をOrbCountで割った角度をそれぞれの初期オフセットにする
 			orb.Angle = (DirectX::XM_2PI / static_cast<float>(orbCount)) * static_cast<float>(i);
 			orb.HitCooldownTimer = 0.0f;
 
-			// 実際の当たり判定を可視化する（ImGui「Physics Debug」→「Show Colliders」）
+			// 実際の当たり判定を可視化する
 			auto& wire = manager.AddComponent<ecs::DebugWireSphereComponent>(entity);
 			wire.Radius = masterData.HitRadius;
 			wire.Color = { 0.6f, 1.0f, 0.8f, 1.0f }; // 氷の欠片らしい淡い水色
@@ -132,7 +123,7 @@ namespace ecs
 				auto& effect = manager.AddComponent<ecs::EffectComponent>(entity);
 				effect.Asset = graphics::EffekseerManager::Get().GetEffect(orbEffectPath);
 				effect.IsLoop = true; // 周回中はずっと表示し続ける持続エフェクト
-				// 見た目のサイズを実際の判定半径に概算で合わせる（素材は概ね kEffectReferenceRadius 相当と仮定）
+				// 見た目のサイズを実際の判定半径に概算で合わせる、素材は概ねkEffectReferenceRadius相当と仮定
 				const float scale = masterData.HitRadius / kEffectReferenceRadius;
 				effect.Scale = { scale, scale, scale };
 				effect.Effect.Play(effect.Asset, DirectX::XMFLOAT3{ 0.0f, 0.0f, 0.0f });
@@ -146,13 +137,11 @@ namespace ecs
 			orbCount, masterData.OrbitRadius, masterData.HitRadius);
 	}
 
-	/// <summary>周回中のオーブエンティティを全て破棄する(Cooldown移行時)。
-	/// EffectComponentはEffectObjectのデストラクタでEffekseerハンドルを自動停止するため、
-	/// ここでエフェクト停止を個別に呼ぶ必要はない(registry.destroyだけでよい)。</summary>
 	void OrbitWeaponSystem::DespawnOrbs(
 		entt::registry& registry,
 		ecs::OrbitWeaponRuntimeComponent& runtime)
 	{
+		// EffectComponentはデストラクタでEffekseerハンドルを自動停止するため、registry.destroyだけでよい
 		for (entt::entity orb : runtime.Orbs)
 		{
 			if (registry.valid(orb)) registry.destroy(orb);
@@ -160,7 +149,6 @@ namespace ecs
 		runtime.Orbs.clear();
 	}
 
-	/// <summary>周回角度を進め、中心座標を基準にオーブの位置を更新する</summary>
 	void OrbitWeaponSystem::UpdateOrbPosition(
 		entt::registry& registry,
 		entt::entity orbEntity,
@@ -183,11 +171,10 @@ namespace ecs
 		auto& transform = registry.get<ecs::Transform>(orbEntity);
 		transform.SetPosition(position);
 
-		// Kinematic Bodyへ毎フレームの位置を反映させる（PhysicsSystem::SyncFromTransformが処理する）
+		// Kinematic Bodyへ毎フレームの位置を反映させる、PhysicsSystem::SyncFromTransformが処理する
 		registry.emplace_or_replace<ecs::TransformDirtyTag>(orbEntity);
 	}
 
-	/// <summary>SensorStayEventとヒットクールダウンを見て、接触中の敵全員にダメージ+減速を与える</summary>
 	void OrbitWeaponSystem::ProcessOrbHit(
 		entt::registry& registry,
 		entt::entity orbEntity,
@@ -202,9 +189,7 @@ namespace ecs
 			return;
 		}
 
-		// オーブは消滅しない持続武器のため、侵入した瞬間にしか発行されないSensorEnterEventでは
-		// 密着し続けた場合に再ダメージできない。密着中は毎フレーム発行されるSensorStayEventを使う
-		// （PlayerContactDamageSystemの継続ダメージ判定と同じ方針）。
+		// オーブは消滅しない持続武器のため、密着中は毎フレーム発行されるSensorStayEventを使う
 		const auto* stay = registry.try_get<ecs::SensorStayEvent>(orbEntity);
 		if (stay == nullptr) return; // このフレームは何にも触れていない
 
@@ -217,8 +202,7 @@ namespace ecs
 			{
 				hitAny = true;
 
-				// Frost効果：命中した敵を減速させる(emplace_or_replaceで多重付与ではなく更新にする。
-				// HitInterval毎の再命中で持続時間が更新され続けるため、密着中はほぼ減速し続ける)
+				// Frost効果、命中した敵を減速させる。emplace_or_replaceで多重付与ではなく更新にする
 				if (masterData.SlowMultiplier < 1.0f && masterData.SlowDuration > 0.0f)
 				{
 					registry.emplace_or_replace<ecs::EnemySlowStatusComponent>(
@@ -243,7 +227,6 @@ namespace ecs
 		}
 	}
 
-	/// <summary>命中時のワンショットエフェクトを1回再生する</summary>
 	void OrbitWeaponSystem::SpawnHitEffect(
 		entt::registry& registry,
 		const DirectX::XMFLOAT3& position,
@@ -258,7 +241,7 @@ namespace ecs
 		auto& effect = manager.AddComponent<ecs::EffectComponent>(entity);
 		effect.Asset = graphics::EffekseerManager::Get().GetEffect(effectPath);
 		effect.IsLoop = false;
-		// autoDelete=true: 再生終了フレームでEffekseerManager::Updateがこのエンティティを破棄する
+		// autoDelete=true、再生終了フレームでEffekseerManager::Updateがこのエンティティを破棄する
 		effect.Effect.Play(effect.Asset, position, true);
 		graphics::EffekseerManager::MarkSpawnHidden(effect);
 	}

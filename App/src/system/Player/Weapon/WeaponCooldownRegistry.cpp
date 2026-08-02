@@ -1,4 +1,4 @@
-#include "apppch.h"
+﻿#include "apppch.h"
 #include "WeaponCooldownRegistry.h"
 
 #include<system/Player/Weapon/Inventory/WeaponInventoryComponent.h>
@@ -37,8 +37,6 @@ namespace
 	using GetCooldownFn = std::function<bool(
 		entt::registry&, entt::entity, const ecs::WeaponComponent&, float&, float&)>;
 
-	/// <summary>RuntimeComponentの残り秒数とマスタデータのFireInterval系フィールドから
-	/// (残り, 最大)を求める定型処理。武器種別ごとの差異はテンプレート引数とラムダに閉じ込める</summary>
 	template<typename RuntimeT, typename MasterDataT, typename GetIntervalFn>
 	bool GetCooldownGeneric(
 		entt::registry& registry, entt::entity weaponEntity, const ecs::WeaponComponent& weapon,
@@ -55,10 +53,9 @@ namespace
 		return true;
 	}
 
-	/// <summary>武器種別→クールダウン取得関数のテーブル。Orbitは常時稼働でクールダウンが
-	/// 存在しないため意図的に登録しない(TryGetWeaponCooldownはfalseを返す)</summary>
 	const std::unordered_map<ecs::eWeaponType, GetCooldownFn>& GetRegistry()
 	{
+		// Orbitは常時稼働でクールダウンが存在しないため意図的に登録しない
 		static const std::unordered_map<ecs::eWeaponType, GetCooldownFn> table =
 		{
 			{ ecs::eWeaponType::SingleShot, [](entt::registry& r, entt::entity e, const ecs::WeaponComponent& w, float& rem, float& mx)

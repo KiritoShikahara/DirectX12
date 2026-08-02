@@ -5,10 +5,9 @@
 
 namespace ecs
 {
-    /// <summary>
-    /// WaveComponent の残り時間(ClearTime - ElapsedTime)を MM:SS 形式で
-    /// WaveTimerUiTag の付いた TextComponent へ反映するシステム。
-    /// </summary>
+    ///<summary>
+    ///WaveComponentの残り時間をMM:SS形式でWaveTimerUiTagの付いたTextComponentへ反映するシステム
+    ///</summary>
     class WaveTimerUiSystem : public ecs::IUserSystem
     {
     public:

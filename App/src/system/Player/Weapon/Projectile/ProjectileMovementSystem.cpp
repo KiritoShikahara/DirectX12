@@ -8,8 +8,7 @@ namespace ecs
 {
 	void ProjectileMovementSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
-		// 必殺技演出中は既存の弾の移動も一時停止させる(Homing Missile/Bone Spear等の
-		// 自動発動武器の弾も含むため、Flicker Strike中は止めない。PlayerActionLock.h参照)
+		// 必殺技演出中は既存の弾の移動も一時停止させる
 		if (ecs::IsPlayerUltimateActive(registry)) return;
 
 		mExpired.clear();
@@ -29,7 +28,7 @@ namespace ecs
 				}
 			});
 
-		// 何にも命中しなかった弾はここで消滅させる（衝突破棄は ProjectileCollisionSystem 側）
+		// 何にも命中しなかった弾はここで消滅させる、衝突破棄はProjectileCollisionSystem側
 		for (entt::entity entity : mExpired)
 		{
 			registry.destroy(entity);

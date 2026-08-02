@@ -11,19 +11,13 @@ namespace data
 
 namespace debug
 {
-    /// <summary>
-    /// SingleShot型武器マスタデータ(SingleShotWeaponData)のデバッグパネル。
-    /// SingleShotWeaponSystemは発射のたびにDATA_MGRから直接マスタデータを取得する設計のため
-    /// (EnemyStatusDebugPanelと異なりランタイムへのキャッシュが無い)、Apply操作は不要で
-    /// DataInspectorによるテーブル編集(CSV/DB・Id含む全フィールド)をそのまま提供すれば良い。
-    /// これにより、新しい武器行をCSVへ追加してもRelease版のDB(db.db)へ同期し忘れる問題を
-    /// GUI上のLoad/Save操作で防げる。
-    /// IUserSystemは継承せず、生成時にImGuiManagerへ登録・破棄時に解除する。
-    /// </summary>
+    ///<summary>
+    ///SingleShot型武器マスタデータのデバッグパネル。DataInspectorによるテーブル編集をそのまま提供する
+    ///</summary>
     class SingleShotWeaponDebugPanel
     {
     public:
-        /// <param name="debugKey">ImGuiManager 登録・解除に使うキー（シーンごとに一意にすること）</param>
+        /// <param name="debugKey">ImGuiManager登録・解除に使うキー、シーンごとに一意にすること</param>
         explicit SingleShotWeaponDebugPanel(std::string debugKey = "SingleShotWeaponDebug");
         ~SingleShotWeaponDebugPanel();
 

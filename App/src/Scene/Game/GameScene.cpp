@@ -7,20 +7,17 @@
 #include<system/RotateToMove/RotateToMoveSystem.h>
 #include<scene/Game/State/GameStateSystem.h>
 
-// カメラ
 #include<system/CameraFollow/CameraPlayerFollowSystem.h>
 #include<system/Light/DirLightFollowSystem.h>
 
-// UI
 #include<system/Player/UI/PlayerHpBarSystem.h>
 #include<system/Player/UI/PlayerUltimateGaugeSystem.h>
 #include<system/Player/UI/WeaponIconBarSystem.h>
 #include<system/Player/UI/PlayerExpBarSystem.h>
-#include<Utility/config/DebugConfig.h> // DEV_TOOL_ENABLED(Debug/Develop両方で有効)を参照するため直接include
+#include<Utility/config/DebugConfig.h>
 #include<system/GlowAnimation/SpriteGlowSystem.h>
 #include<system/UI/DamageNumber/DamageNumberSystem.h>
 
-// プレイヤー
 #include<system/Player/State/PlayerStateSystem.h>
 #include<system/Player/InputSystem/PlayerInputSystem.h>
 #include<system/Player/MovementSystem/PlayerMovementSystem.h>
@@ -28,7 +25,6 @@
 #include<system/Player/AimSysten/PlayerAimSystem.h>
 #include<system/Player/Boundary/PlayerBoundaryClampSystem.h>
 
-// 武器
 #include<system/Player/Weapon/SingleShot/SingleShotWeaponSystem.h>
 #include<system/Player/Weapon/AreaAttack/AreaAttackWeaponSystem.h>
 #include<system/Player/Weapon/AreaAttack/AreaAttackAutoStrikeSystem.h>
@@ -49,32 +45,25 @@
 #include<system/Player/Weapon/Projectile/ProjectileCollisionSystem.h>
 #include<system/Effect/TemporaryLifetimeSystem.h>
 
-// 敵
 #include<system/Enemy/Move/EnemyChaseSystem.h>
 #include<system/Enemy/Death/EnemyDeathSystem.h>
 #include<system/Enemy/Knockback/EnemyKnockbackSystem.h>
 #include<system/Enemy/Status/EnemySlowStatusSystem.h>
 
-// パーク
 #include<system/Player/Perk/PerkSelectSystem.h>
 #include<system/Options/OptionsMenuSystem.h>
 
-// リザルト
 #include<Scene/Game/Result/ResultSystem.h>
 
-// ウェーブ
 #include<Scene/Game/Wave/WaveComponent.h>
 #include<Scene/Game/Wave/EnemySpawnSystem.h>
 #include<Scene/Game/Wave/WaveTimerUiSystem.h>
 
-// ダメージ
 #include<system/Damage/PlayerContactDamage/PlayerContactDamageSystem.h>
 #include<system/Player/Status/PlayerRegenSystem.h>
 
-// エフェクト先読み
 #include<system/Effect/EffectSpawnUtility.h>
 
-// データ
 #include<Data/Enemy/EnemyData.h>
 #include<Data/Enemy/BossData.h>
 #include<Data/Effect/EffectAssetData.h>
@@ -96,8 +85,6 @@
 #include<Data/Wave/WaveData.h>
 #include<Data/Perk/PerkData.h>
 
-// デバッグ
-
 namespace scene
 {
 	GameScene::GameScene(uint32_t SpellID)
@@ -108,23 +95,17 @@ namespace scene
 	void GameScene::Initialize()
 	{
 
-		// データ
 		LoadData();
 
-		// システム
 		CreateUserSystem();
 
-		// リソース
 		LoadResource();
 
-		// 各武器/必殺技のエフェクト素材をロード画面中に先読みする
 		PreloadWeaponEffects();
 
-		// エンティティ生成
 		CreateEntitys();
 
 #if DEV_TOOL_ENABLED
-		// デバッグ
 		this->DebugInitialize();
 
 
@@ -135,9 +116,8 @@ namespace scene
 
 	void GameScene::Finalize()
 	{
-		
+
 #if DEV_TOOL_ENABLED
-			// デバッグ
 			this->DebugFinalize();
 
 
@@ -148,10 +128,7 @@ namespace scene
 	{
 		auto id = mSpellID;
 
-		// データ読み込み
-		// DataRegistry はプロセス全体で1つのシングルトンのため、
-		// GameScene が再初期化される(エディタの Stop によるシーン再構築等)場合、
-		// 二重登録で RegistryBase の assert に落ちないようにガードする。
+		// DataRegistryはプロセス全体で1つのシングルトンのため、GameSceneの再初期化時に二重登録でassertに落ちないようガードする
 		auto& dataRegistry = data::DataRegistry::Get();
 		if (!dataRegistry.IsRegistered<data::EnemyData>())
 		{
@@ -161,10 +138,7 @@ namespace scene
 		{
 			dataRegistry.Register<data::BossData>("Assets/Data/Enemy/BossData.csv");
 		}
-		// エフェクト素材ID→パスの解決テーブル。各武器データのXxxEffectIdsをResolveEffectIdsで
-		// 解決する際に参照するため、武器データより先にロードされている必要がある
-		// (LoadAll()が全登録後に一括ロードするため、実際の登録順はここでなくてもよいが、
-		// 依存関係を明示するためにここへ置く)。
+		// エフェクト素材ID→パスの解決テーブル。武器データより先にロードされている必要があるためここへ置く
 		if (!dataRegistry.IsRegistered<data::EffectAssetData>())
 		{
 			dataRegistry.Register<data::EffectAssetData>("Assets/Data/Effect/EffectAssetData.csv");
@@ -235,8 +209,7 @@ namespace scene
 		}
 		dataRegistry.LoadAll();
 
-		// プレイヤーの永続的な進行状況(ゴールド・ステータス強化レベル)。CSV/DBのマスタデータとは
-		// 別系統(ConfigManager<T>によるJSON永続化)のため、DataRegistryとは別に読み込む
+		// プレイヤーの永続進行状況はCSV/DBのマスタデータと別系統のJSON永続化のため、DataRegistryとは別に読み込む
 		data::EnsurePlayerSaveDataLoaded();
 	}
 
@@ -250,25 +223,9 @@ namespace scene
 		// Player
 		auto playerPath = "Assets/Fbx/Faul/Faul.fbx.bin";
 		manager.Load(playerPath);
-		/// アニメーション
-
-		// Enemy
-
-		// Texture
 
 	}
 
-	/// <summary>
-	/// 各武器/必殺技のマスタデータが参照するエフェクト素材を、ロード画面中にまとめて
-	/// EffekseerManagerのキャッシュへ読み込んでおく。読み込みを各武器の初回発動まで
-	/// 遅延させると、プレイ中に初めて発動した瞬間にテクスチャ読み込みが走り、その間の
-	/// 数フレームだけ他の再生中エフェクトの描画が乱れる(四角形のポリゴンが一瞬見える等)
-	/// ことがあるため、事前に読み込んでおくことでこれを避ける。
-	/// ecs::effectutil::PreloadAllEffectPathFields<T>()がリフレクション(REFLECT_FIELD)経由で
-	/// "EffectPath"で終わる文字列フィールドを自動的に見つけて読み込むため、既存フィールドへの
-	/// エフェクトパス追加はここへの追記が不要。新しい武器種別(マスタデータ型)を追加した場合のみ
-	/// 1行追記すること。
-	/// </summary>
 	void GameScene::PreloadWeaponEffects()
 	{
 		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::SingleShotWeaponData).GetAll());
@@ -285,8 +242,7 @@ namespace scene
 		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::RicochetWeaponData).GetAll());
 		ecs::effectutil::PreloadAllEffectPathFields(DATA_MGR(data::UltimateData).GetAll());
 
-		// マスタデータに属さない固定演出(敵撃破・パーク確定)。EnemyDeathSystem/PerkSelectSystemの
-		// パス文字列と一致させること
+		// マスタデータに属さない固定演出。EnemyDeathSystem/PerkSelectSystemのパス文字列と一致させること
 		ecs::effectutil::PreloadEffect("Assets/Effect/AttackHit.efk");
 		ecs::effectutil::PreloadEffect("Assets/Effect/Herald.efk");
 	}
@@ -298,12 +254,10 @@ namespace scene
 		manager.AddUserSystem<::sys::PlayerAimSystem>(::ecs::eUpdatePhase::PreUpdate);
 		manager.AddUserSystem<::ecs::PlayerStateSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::PlayerMovementSystem>(::ecs::eUpdatePhase::Update);
-		// スロウ状態(EnemySlowStatusComponent)の期限切れ解除はEnemyChaseSystem(速度参照)より前に置く
+		// スロウ状態の期限切れ解除は速度を参照するEnemyChaseSystemより前に置く
 		manager.AddUserSystem<::ecs::EnemySlowStatusSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::EnemyChaseSystem>(::ecs::eUpdatePhase::Update);
-		// 移動状態(IsMoving)に応じてIdle/Runへ切り替える。Player/Enemy両方のIsMovingが
-		// 確定した後(PlayerMovementSystem/EnemyChaseSystemの後)に置き、
-		// engine側のgraphics::FbxAnimSystem(時間進行・ボーン計算)より前に目的クリップを決める。
+		// 移動状態に応じてIdle/Runへ切り替える。PlayerMovementSystem/EnemyChaseSystemの後でFbxAnimSystemより前に置く
 		manager.AddUserSystem<::ecs::LocomotionAnimationSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::EnemySpawnSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::WaveTimerUiSystem>(::ecs::eUpdatePhase::Update);
@@ -331,22 +285,17 @@ namespace scene
 		manager.AddUserSystem<::ecs::ProjectileCollisionSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::ProjectileMovementSystem>(::ecs::eUpdatePhase::Update);
 		manager.AddUserSystem<::ecs::TemporaryLifetimeSystem>(::ecs::eUpdatePhase::Update);
-		// ノックバック処理(Cleave)はEnemyChaseSystemより前に実行し、
-		// 同一フレーム内でMoveVelocityの上書き合戦にならないようにする
+		// ノックバック処理はEnemyChaseSystemより前に実行し、同一フレームでMoveVelocityの上書き合戦を防ぐ
 		manager.AddUserSystem<::ecs::EnemyKnockbackSystem>(::ecs::eUpdatePhase::Update);
-		// ダメージ計算(Update)が終わった後にHP0の敵をまとめて破棄する
+		// ダメージ計算のUpdateが終わった後にHP0の敵をまとめて破棄する
 		manager.AddUserSystem<::ecs::EnemyDeathSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::ecs::RotateToMoveSystem>(::ecs::eUpdatePhase::PostUpdate);
-		// PlayerUltimateSystemは必殺技演出中、CameraOverrideComponentへカメラ位置のリクエストを
-		// 書き込むだけ(Transformは直接書き換えない)。そのリクエストを同一フレーム内で反映するため、
-		// リクエストを消費して実際にTransformへ書き込むCameraPlayerFollowSystemより前段に置く
+		// PlayerUltimateSystemはCameraOverrideComponentへ位置リクエストを書くだけなので、消費するCameraPlayerFollowSystemより前段に置く
 		manager.AddUserSystem<::ecs::PlayerUltimateSystem>(::ecs::eUpdatePhase::PostUpdate);
-		// このフレーム中のテレポート(Flicker Strikeのワープ・必殺技のFinishAndExplode)を
-		// まとめて境界内へクランプしてから、CameraPlayerFollowSystemに正しい位置を読ませる
+		// このフレームのテレポートを境界内へクランプしてからCameraPlayerFollowSystemに位置を読ませる
 		manager.AddUserSystem<::ecs::PlayerBoundaryClampSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::ecs::CameraPlayerFollowSystem>(::ecs::eUpdatePhase::PostUpdate);
-		// LightSystem::Update(Engine.cpp、LightViewProjの計算)より前にShadowTargetを
-		// 確定させる必要があるため、PostUpdateフェーズの中で(Renderより前であれば)登録する
+		// LightSystem::Updateより前にShadowTargetを確定させる必要があるためPostUpdateの中で登録する
 		manager.AddUserSystem<::ecs::DirLightFollowSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::ecs::DamageNumberSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::sys::GameStateSystem>(::ecs::eUpdatePhase::PostUpdate);
@@ -354,30 +303,22 @@ namespace scene
 		manager.AddUserSystem<::ecs::PerkSelectSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::ecs::ResultSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::ecs::SpriteGlowSystem>(::ecs::eUpdatePhase::PostUpdate);
-		// 設定メニュー(Escape / パッドのMenuボタンで開閉)。開いている間はTimeScaleを0にするため、
-		// 他システムが状態を更新し終えた後段に置く
+		// 設定メニューはTimeScaleを0にするため、他システムが状態を更新し終えた後段に置く
 		manager.AddUserSystem<::ecs::OptionsMenuSystem>(::ecs::eUpdatePhase::PostUpdate);
 	}
 
 	void GameScene::CreateEntitys()
 	{
-		// 状態
 		::ecs::GameSceneFactory::CreateStateController();
-		// BGM
 		::ecs::GameSceneFactory::CreateBGM();
-		// ディレクションライト
 		::ecs::GameSceneFactory::CreateDirLight();
-		// 地面
 		::ecs::GameSceneFactory::CreateGround();
 		// フィールド外へ出られないようにする見えない境界壁
 		::ecs::GameSceneFactory::CreateFieldBoundary();
-		// 空(Skybox)。フィールド外側が虚無に見えないようにする
+		// Skybox。フィールド外側が虚無に見えないようにする
 		::ecs::GameSceneFactory::CreateSkybox();
-		// プレイヤー
 		::ecs::GameSceneFactory::CreatePlayer(::ecs::CreatePlayerContext{ mSpellID });
-		// カメラ
 		::ecs::GameSceneFactory::CreateCamera();
-		// UI
 		::ecs::GameSceneFactory::CreateUI();
 
 		// 敵はEnemySpawnSystemが継続的に生成するため、ここでの固定生成は行わない

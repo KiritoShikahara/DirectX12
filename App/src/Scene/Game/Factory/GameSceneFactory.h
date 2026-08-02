@@ -9,81 +9,80 @@
 
 namespace ecs
 {
-	/// <summary>
-	/// プレイヤー生成時に使用するコンテキスト
-	/// </summary>
+	///<summary>
+	///プレイヤー生成時に使用するコンテキスト
+	///</summary>
 	struct CreatePlayerContext
 	{
 		uint32_t SelectSpellID;
 	};
 
-	/// <summary>
-	/// ボースの階級。data::BossDataのIdと対応させる(int変換して使う)。
-	/// Noneは通常の敵(ボースではない)を意味し、BossDataの参照は行わない。
-	/// </summary>
+	///<summary>
+	///ボス階級。data::BossDataのIdと対応する。Noneは通常の敵でBossData参照を行わない
+	///</summary>
 	enum class eBossTier
 	{
 		None = -1,
-		Mini = 0,   // 小ボース(周期的に複数回出現)
-		Mid = 1,    // 中ボース(1回だけ出現)
-		Final = 2,  // 最強ボース(クリア直前に1回だけ出現)
+		Mini = 0,   // 小ボス、周期的に複数回出現
+		Mid = 1,    // 中ボス、1回だけ出現
+		Final = 2,  // 最強ボス、クリア直前に1回だけ出現
 	};
 
 	class GameSceneFactory
 	{
 	public:
-		// 状態管理
 		static void CreateStateController();
 
-		// 背景音
 		static void CreateBGM();
 
-		// 地面
 		static void CreateGround();
 
-		// 見えない境界壁(プレイヤーがフィールド外へ出るのを防ぐ、描画されない静的コライダー)
+		///<summary>
+		///見えない境界壁。プレイヤーがフィールド外へ出るのを防ぐ、描画されない静的コライダー
+		///</summary>
 		static void CreateFieldBoundary();
 
-		// 空(Skybox)。フィールド外側の「何もない虚無」が見えないようにする
+		///<summary>
+		///Skybox。フィールド外側の何もない虚無が見えないようにする
+		///</summary>
 		static void CreateSkybox();
 
-		// プレイヤー
 		static void CreatePlayer(const CreatePlayerContext& Context);
 
-		// カメラ
 		static void CreateCamera();
 
-		// ディレクションライト
 		static void CreateDirLight();
 
-		// 開始時のエフェクト生成
 		static void CreateStartEffect();
 
-		// ゲームクリア時のウィジェット
-
-		// ゲームオーバー時の演出、ウィジェット
-
-		// パーク選択ウィジェットとシステム
-
-		// 体力バーのUI
+		///<summary>
+		///体力バーのUIを生成する
+		///</summary>
 		static void CreateUI();
 
-		// 武器の追加（初期武器・パーク選択・デバッグ操作の全経路がこれを使う）
-		// 戻り値: 追加した武器エンティティ（空きスロットが無い場合はentt::null）
+		///<summary>
+		///武器を追加する。初期武器・パーク選択・デバッグ操作の全経路がこれを使う
+		///</summary>
+		///<returns>追加した武器エンティティ。空きスロットが無い場合はentt::null</returns>
 		static entt::entity AddWeaponToPlayer(
 			entt::entity player,
 			eWeaponType type,
 			int weaponId,
 			eWeaponControl control);
 
-		// 武器の削除（デバッグ操作用。SelfDefense等の子エンティティも合わせて破棄する）
+		///<summary>
+		///武器を削除する。デバッグ操作用で、SelfDefense等の子エンティティも合わせて破棄する
+		///</summary>
 		static void RemoveWeaponFromPlayer(entt::entity player, entt::entity weaponEntity);
 
 	public:
-		// 敵の生成（EnemySpawnSystemから呼ばれる）
-		// position: 生成位置 / waveModifier: 現在の難易度倍率(HP・攻撃力)
-		// bossTier: eBossTier::None以外ならdata::BossDataの倍率を追加で掛けてボースとして生成する
-		// enemyId: data::EnemyDataのId(敵の種類。ボースは常にId=0の強化版として生成する)
+		///<summary>
+		///敵を生成する。EnemySpawnSystemから呼ばれる
+		///</summary>
+		///<param name="position">生成位置</param>
+		///<param name="waveModifier">現在の難易度倍率、HPと攻撃力</param>
+		///<param name="bossTier">eBossTier::None以外ならdata::BossDataの倍率を追加で掛けボスとして生成する</param>
+		///<param name="enemyId">data::EnemyDataのId。ボスは常にId=0の強化版として生成する</param>
 		static void CreateEnemy(
 			const DirectX::XMFLOAT3& position,
 			const ecs::EnemyWaveModifier& waveModifier,
@@ -91,22 +90,28 @@ namespace ecs
 			int enemyId = 0);
 
 	private:
-		// プレイヤーの体力バー生成
 		static void CreatePlayerHpBar();
 
-		// 必殺技ゲージ生成（体力バーと同じ画像を左右反転・青色で右下に配置する）
+		///<summary>
+		///必殺技ゲージを生成する。体力バーと同じ画像を左右反転・青色で右下に配置する
+		///</summary>
 		static void CreatePlayerUltimateGauge();
 
-		// 所持武器アイコンバー生成（体力バーと必殺ゲージの間、横5×縦2で配置する）
+		///<summary>
+		///所持武器アイコンバーを生成する。体力バーと必殺ゲージの間に横5×縦2で配置する
+		///</summary>
 		static void CreateWeaponIconBar();
 
-		// 制限時間表示UIの生成
 		static void CreateWaveTimerUI();
 
-		// 経験値バー・現在レベル表示UIの生成(画面上部)
+		///<summary>
+		///経験値バーと現在レベル表示UIを画面上部に生成する
+		///</summary>
 		static void CreatePlayerExpBar();
 
-		// PlayerSaveData(ゴールドで購入したステータス恒久強化レベル)をBaseへ反映する
+		///<summary>
+		///PlayerSaveDataの恒久強化レベルをBaseへ反映する
+		///</summary>
 		static void ApplyStatUpgrades(ecs::PlayerStatusComponent& status);
 	};
 }

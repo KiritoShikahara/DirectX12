@@ -31,37 +31,26 @@ namespace ecs
 				}
 			});
 
-		// プレイヤーの取得
-		// size_hint() は複数コンポーネントビューでは最小プールのサイズを返すだけで、
-		// 実際に全条件を満たすエンティティが存在する保証にはならない
-		// （CollisionStayEvent は敵同士の接触でも発行されるため、プレイヤー自身は
-		// 何にも触れていないフレームでも size_hint() が非0を返しうる。
-		// その状態で *playerView.begin() すると end() を参照してクラッシュする）。
-		// そのため PlayerTag + PlayerStatusComponent だけで安全にプレイヤーを取得し、
-		// CollisionStayEvent は try_get で有無を確認する。
+		// size_hintは複数コンポーネントビューで最小プールのサイズを返すだけで実在保証にならないため、PlayerTag+PlayerStatusComponentだけで安全にプレイヤーを取得し、CollisionStayEventはtry_getで確認する
 		auto playerView = registry.view<PlayerTag, PlayerStatusComponent>();
 		if (playerView.begin() == playerView.end()) return;
 
 		const entt::entity playerEntity = *playerView.begin();
 		auto& playerStatus = registry.get<PlayerStatusComponent>(playerEntity);
 
-		// Post-hit invincibility timer (from the shop upgrade) ticks down every frame regardless
-		// of contact state, independent of IsInvincible (owned exclusively by Ultimate/Flicker Strike)
+		// Post-hit invincibility timer ticks down every frame regardless of contact state, independent of IsInvincible
 		if (playerStatus.PostHitInvincibleTimer > 0.0f)
 		{
 			playerStatus.PostHitInvincibleTimer = std::max(0.0f, playerStatus.PostHitInvincibleTimer - deltaTime);
 		}
 
-		// 衝突が継続している間も毎フレーム検知する必要があるため CollisionStayEvent を使う
-		// （CollisionEnterEvent は衝突開始フレームにしか発行されないため、
-		// 密着したままだとクールダウンが明けても再ダメージが判定できなくなる）
+		// 衝突継続中も毎フレーム検知するためCollisionStayEventを使う。CollisionEnterEventは開始フレームにしか発行されないため密着中は再ダメージを判定できない
 		const auto* contactPtr = registry.try_get<CollisionStayEvent>(playerEntity);
 		if (contactPtr == nullptr) return; // このフレームは何にも触れていない
 
-		if (playerStatus.IsInvincible || playerStatus.PostHitInvincibleTimer > 0.0f) return; // invincible (Ultimate/Flicker Strike, or post-hit invincibility window): skip damage entirely
+		if (playerStatus.IsInvincible || playerStatus.PostHitInvincibleTimer > 0.0f) return; // invincible: Ultimate/Flicker Strike、または被弾後無敵中はダメージをスキップ
 
-		// デバッグ用の無敵(GUIまたは--godmodeで有効化)。
-		// IsInvincibleはウルト等が終了時にfalseへ戻すため、そちらは流用できない
+		// デバッグ用の無敵。GUIまたは--godmodeで有効化、IsInvincibleは流用できない
 		if (::debug::GameDebugSettings::Get().IsPlayerInvincible()) return;
 
 		const auto& contact = *contactPtr;
@@ -88,7 +77,7 @@ namespace ecs
 			playerStatus.CurrentHp = std::max(0.0f, playerStatus.CurrentHp - damage);
 			tookDamage = true;
 
-			// Damage number shows at the player's own position (isPlayerDamage=true picks the "taken" color)
+			// Damage number shows at the player's own position, isPlayerDamage=true picks the taken color
 			if (const auto* playerTransform = registry.try_get<Transform>(playerEntity))
 			{
 				ecs::combatutil::SpawnDamageNumber(playerTransform->GetPosition(), damage, true);
@@ -97,7 +86,7 @@ namespace ecs
 			atk->CooldownTimer = atk->AttackInterval;
 		}
 
-		// Start the post-hit invincibility window if this stat is upgraded (0 duration = feature unused)
+		// Start the post-hit invincibility window if this stat is upgraded, 0 duration means unused
 		if (tookDamage && playerStatus.Current.PostHitInvincibleDuration > 0.0f)
 		{
 			playerStatus.PostHitInvincibleTimer = playerStatus.Current.PostHitInvincibleDuration;

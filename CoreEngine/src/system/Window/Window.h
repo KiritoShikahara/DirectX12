@@ -35,6 +35,11 @@ namespace sys
 		/// <returns>true:App終了</returns>
 		bool IsQuitRequested() const;
 
+		///<summary>
+		///アプリケーションの終了を要求する、WM_CLOSEを送り通常の終了経路に乗せる
+		///</summary>
+		void RequestQuit();
+
 		/// <summary>
 		/// ウィンドウハンドル取得
 		/// </summary>

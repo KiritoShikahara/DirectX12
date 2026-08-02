@@ -1,23 +1,19 @@
 ﻿#include "apppch.h"
 #include "HubScene.h"
-#include<ecs/system/manager/ComponentSystemManager.h>
-
-#include<system/GlowAnimation/GlowAnimationComp.h>
-#include<system/GlowAnimation/SpriteGlowSystem.h>
-#include<system/HubMenu/HubMenuComponent.h>
-#include<system/HubMenu/HubMenuInputSystem.h>
-#include<system/UI/UiPanelUtility.h>
-#include<graphics/Text/Renderer/TextRenderer.h> // ラベルをアイコン中央へ揃えるため、幅を実測する
-
-#include"../macros.h"
+#include <ecs/system/manager/ComponentSystemManager.h>
+#include <system/GlowAnimation/GlowAnimationComp.h>
+#include <system/GlowAnimation/SpriteGlowSystem.h>
+#include <system/HubMenu/HubMenuComponent.h>
+#include <system/HubMenu/HubMenuInputSystem.h>
+#include <system/UI/UiPanelUtility.h>
+#include <graphics/Text/Renderer/TextRenderer.h> // ラベルをアイコン中央へ揃えるため幅を実測する
+#include "../macros.h"
 
 namespace scene
 {
 	void HubScene::Initialize()
 	{
-		// TimeScaleはプロセス全体で共有され、シーンを跨いでも持ち越される。
-		// GameOver/PerkSelect等でTimeScale=0.0のままResult→Titleへ遷移してくるケースがあるため、
-		// 一時停止の概念が無いHubでは必ず1.0へ戻す（TitleScene/MenuSceneと同じ理由）。
+		// TimeScaleはプロセス全体で共有されシーンを跨いでも持ち越される
 		GetTime().SetTimeScale(1.0);
 
 		CreateCompSystem();
@@ -53,8 +49,7 @@ namespace scene
 
 	void HubScene::CreateBackground()
 	{
-		// 専用の背景素材が無いため、タイトルと同じ背景を暫定的に流用する
-		// （専用素材が用意でき次第、Assets/Texture/Hub/配下へ差し替える）。
+		// 専用の背景素材が無いためタイトルと同じ背景を暫定的に流用する
 		auto& manager = ::ecs::EntityManager::Get();
 		auto entity = manager.CreateEntity();
 		auto texture = ::graphics::TextureManager::Get().GetOrLoad("Assets/Texture/Title/TX_TitleBG.png");
@@ -84,22 +79,19 @@ namespace scene
 		auto controllerEntity = manager.CreateEntity();
 		manager.AddComponent<::ecs::HubMenuComponent>(controllerEntity);
 
-		// レイアウト定数（仮想解像度1920x1080基準、画面中央に2択を横並び。個人開発プロトタイプの暫定値）
-		// カード = アイコン画像(上) + ラベル(下)。元画像(ui_weapon.png/ui_powerup.png)は1536x1024(3:2)。
+		// レイアウト定数
 		constexpr float kIconWidth = 680.0f;
-		constexpr float kIconAspect = 1024.0f / 1536.0f; // 元画像のアスペクト比を維持する
+		constexpr float kIconAspect = 1024.0f / 1536.0f;
 		constexpr float kIconHeight = kIconWidth * kIconAspect;
 		constexpr float kIconCenterY = 480.0f;
-		constexpr float kCardSpacingX = 780.0f; // カード中心どうしの横間隔(アイコン幅+隙間分)
-		constexpr float kLabelGapY = 30.0f;     // アイコン下端とラベルの間隔
+		constexpr float kCardSpacingX = 780.0f;
+		constexpr float kLabelGapY = 30.0f;
 		constexpr float kLabelTextSize = 34.0f;
 
 		const float centerX = static_cast<float>(window.GetVirtualWidth()) * 0.5f;
 		const float labelY = kIconCenterY + kIconHeight * 0.5f + kLabelGapY;
 
-		// 背景(タイトル画像流用)の上に直接乗ると読みづらいため、カード全体を覆う黒半透明の
-		// ウィンドウを敷く(StatusUpgradeSceneの読みやすさ用ウィンドウと同じ手法:
-		// 白テクスチャをColorで黒+半透明に着色したSpriteで代用する)。
+		// 背景ウィンドウ
 		{
 			constexpr float kWindowPadX = 80.0f;
 			constexpr float kWindowPadTop = 40.0f;
@@ -112,7 +104,7 @@ namespace scene
 			::ecs::uiutil::CreateTranslucentPanel(
 				centerX, (windowTop + windowBottom) * 0.5f,
 				windowWidth, windowBottom - windowTop,
-				0); // アイコン(offset3)より奥
+				0);
 		}
 
 		const std::wstring labels[::ecs::HubMenuComponent::kChoiceCount] =
@@ -120,8 +112,6 @@ namespace scene
 			L"武器・ステージ選択",
 			L"ステータス強化",
 		};
-		// 専用アイコン未作成の場合はloading.pngで代用する方針(WeaponIconRegistry等と同じ)だが、
-		// 本画面は2件固定でHubIconフォルダに専用素材が用意済みのためそのまま使う
 		const char* iconPaths[::ecs::HubMenuComponent::kChoiceCount] =
 		{
 			"Assets/Texture/UI/HubIcon/ui_weapon.png",
@@ -132,7 +122,7 @@ namespace scene
 		{
 			const float cardCenterX = centerX + (static_cast<float>(i) - 0.5f) * kCardSpacingX;
 
-			// アイコン画像(選択中はHubMenuInputSystemがIntensityを上げて光らせる)
+			// アイコン画像
 			{
 				auto entity = manager.CreateEntity();
 				auto& tr = manager.AddComponent<::ecs::Transform>(entity);
@@ -147,7 +137,7 @@ namespace scene
 				registry.emplace<::ecs::HubMenuOptionUiTag>(entity, i);
 			}
 
-			// ラベル(アイコンの下、水平中央揃え)
+			// ラベル
 			{
 				auto entity = manager.CreateEntity();
 				auto& text = manager.AddComponent<::ecs::TextComponent>(entity);
@@ -164,22 +154,17 @@ namespace scene
 			}
 		}
 
-		// 操作案内。ボタン表示名は入力デバイスに応じてHubMenuInputSystemが毎フレーム更新するため、
-		// ここでは空文字のままでよい
+		// 操作案内
 		{
-			constexpr float kGuideGapY = 60.0f;       // ラベル下端から操作案内までの間隔
-			constexpr float kGuideShiftDownY = 30.0f; // 表示位置を少し下にずらす調整分
+			constexpr float kGuideGapY = 60.0f;
+			constexpr float kGuideShiftDownY = 30.0f;
 			constexpr float kGuideTextSize = 26.0f;
 			constexpr float kGuidePanelWidth = 620.0f;
-			constexpr float kGuidePanelPadY = 16.0f;  // 文字サイズに対するパネルの上下余白
+			constexpr float kGuidePanelPadY = 16.0f;
 
-			// guideCenterYは文字とパネルの見た目上の縦中心に置きたい座標(Title画面と同じ方式)。
-			// TextComponent::Yはベースライン座標なので、そのままguideCenterYを渡すと
-			// パネル(guideCenterY中心)より上に見えてしまう(実際に発生した不具合)。
-			// MeasureVerticalCenterOffsetでベースラインYへ変換してから代入する。
 			const float guideCenterY = labelY + kLabelTextSize + kGuideGapY + kGuideShiftDownY;
 
-			constexpr float kGuidePanelAlpha = 0.85f; // 標準の0.6より濃く(要望反映)
+			constexpr float kGuidePanelAlpha = 0.85f;
 
 			::ecs::uiutil::CreateTranslucentPanel(
 				centerX, guideCenterY,

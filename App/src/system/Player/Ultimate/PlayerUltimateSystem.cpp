@@ -18,11 +18,6 @@
 
 namespace
 {
-    /// <summary>
-    /// ビーム素材は既定でローカル+Z(Effekseer Editorの青軸方向)を向いている前提で、
-    /// その先端が正規化済みdirの方向を向くようなオイラー角(ピッチ=X軸回転、ヨー=Y軸回転)を
-    /// 算出する。
-    /// </summary>
     DirectX::XMFLOAT3 ComputeBeamRotationFromDirection(const DirectX::XMFLOAT3& dir)
     {
         const float pitch = std::asin(std::clamp(-dir.y, -1.0f, 1.0f));
@@ -30,12 +25,6 @@ namespace
         return { pitch, yaw, 0.0f };
     }
 
-    /// <summary>
-    /// 必殺技演出中、他の武器のエフェクトを隠す(非表示化と同時にEffekseer側も一時停止する。
-    /// EffectComponent::IsVisible参照)。演出開始時にfalseで呼び、ビーム(hougu_pre)の
-    /// 再生終了時にtrueで呼んで元に戻す。武器Systemの発動自体はIsPlayerUltimateActive()で
-    /// 別途停止しているため、この時間帯に新規のエフェクトが増えることはない。
-    /// </summary>
     void SetOtherEffectsVisible(entt::registry& registry, bool visible)
     {
         registry.view<ecs::EffectComponent>().each(
@@ -50,11 +39,11 @@ namespace ecs
 {
     void PlayerUltimateSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
     {
-        // InGame中のみ動作する（PerkSelect/Result中は発動できないようにする）
+        // InGame中のみ動作する、PerkSelect/Result中は発動できない
         auto stateView = registry.view<::ecs::GameStateComponent>();
         if (stateView.begin() == stateView.end()) return;
         if (registry.get<::ecs::GameStateComponent>(*stateView.begin()).GameState != ::sys::eGameState::InGame) return;
-        // 設定メニュー(OptionsMenuSystem)表示中は必殺技も発動できないようにする
+        // 設定メニュー表示中は必殺技も発動できないようにする
         if (::ecs::IsOptionsMenuOpen(registry)) return;
 
         auto playerView = registry.view<ecs::PlayerTag, ecs::PlayerUltimateComponent, ecs::PlayerStatusComponent>();
@@ -88,7 +77,6 @@ namespace ecs
         }
     }
 
-    /// <summary>ゲージが満タンになった瞬間、オーラ(ループ、複数対応)エフェクトをプレイヤーへ付与する</summary>
     void PlayerUltimateSystem::StartAura(
         entt::registry& registry,
         entt::entity playerEntity,
@@ -101,7 +89,6 @@ namespace ecs
             masterData.AuraEffectPath, playerEntity, masterData.AuraScale, ultimate.AuraEffectEntities);
     }
 
-    /// <summary>必殺技を発動する：オーラ解除、無敵化、カメラを即座に固定、上昇開始</summary>
     void PlayerUltimateSystem::Activate(
         entt::registry& registry,
         entt::entity playerEntity,
@@ -120,7 +107,7 @@ namespace ecs
         ultimate.StartPosition = playerTransform->GetPosition();
         DirectX::XMStoreFloat3(&ultimate.ForwardDir, playerTransform->GetForward());
 
-        // オーラ(複数対応)を解除する（上昇演出へ切り替えるため）
+        // オーラを解除する、上昇演出へ切り替えるため
         for (entt::entity auraEntity : ultimate.AuraEffectEntities)
         {
             if (registry.valid(auraEntity)) registry.destroy(auraEntity);
@@ -130,16 +117,13 @@ namespace ecs
         // 無敵化
         status.IsInvincible = true;
 
-        // 他の武器のエフェクトを非表示化する（武器の発動自体はIsPlayerUltimateActive()で
-        // 各武器Systemが停止するため、この時点で存在するエフェクトのみが対象になる）
+        // 他の武器のエフェクトを非表示化する。武器の発動自体は各武器Systemが停止するため、この時点で存在するエフェクトのみが対象になる
         SetOtherEffectsVisible(registry, false);
 
-        // 1. カメラを即座にプレイヤー正面・低い位置(見上げる構図)へ固定する
+        // 1. カメラを即座にプレイヤー正面・低い位置へ固定する、見上げる構図
         UpdateCamera(registry, playerEntity, ultimate, masterData);
 
-        // 2. 上昇開始：RigidBodyの速度で駆動する（Dynamic Bodyは物理側が位置の権威のため、
-        // Transformを直接書き換えるのではなくMoveVelocity経由で移動させる。
-        // PlayerMovementSystemのX/Z制御と同じ方式）
+        // 2. 上昇開始、RigidBodyの速度で駆動する。Dynamic Bodyは物理側が位置の権威のためMoveVelocity経由で移動させる
         auto* rigid = registry.try_get<ecs::RigidBodyComponent>(playerEntity);
         if (rigid != nullptr)
         {
@@ -148,7 +132,6 @@ namespace ecs
         }
     }
 
-    /// <summary>発動中(IsActive)の毎フレーム処理：Ascending/PlayingBeam/PlayingMainフェーズの遷移判定</summary>
     void PlayerUltimateSystem::UpdateActive(
         entt::registry& registry,
         entt::entity playerEntity,
@@ -157,7 +140,7 @@ namespace ecs
         const data::UltimateData& masterData,
         float rawDeltaTime)
     {
-        // カメラは発動中ずっと固定位置・見下ろすLookAtのまま(毎フレーム上書きし続ける)
+        // カメラは発動中ずっと固定位置・見下ろすLookAtのまま、毎フレーム上書きし続ける
         UpdateCamera(registry, playerEntity, ultimate, masterData);
 
         const auto* playerTransform = registry.try_get<ecs::Transform>(playerEntity);
@@ -170,7 +153,7 @@ namespace ecs
 
             if (currentHeight < masterData.RiseHeight) return; // 上昇継続中
 
-            // 3. 上昇完了：静止し、ビーム(pre)エフェクトを再生してその終了を待つフェーズへ
+            // 3. 上昇完了、静止しビームエフェクトを再生してその終了を待つフェーズへ
             auto* rigid = registry.try_get<ecs::RigidBodyComponent>(playerEntity);
             if (rigid != nullptr)
             {
@@ -185,8 +168,7 @@ namespace ecs
                 ? playerTransform->GetPosition()
                 : ultimate.StartPosition;
 
-            // ビームの先端が地面(真下)を向くよう固定方向で再生する。プレイヤー座標そのままだと
-            // 自機モデルの足元と重なって見えるため、BeamDownOffset分だけ下にずらして再生する
+            // ビームの先端が地面を向くよう固定方向で再生する。プレイヤー座標のままだと自機モデルの足元と重なるためBeamDownOffset分だけ下にずらす
             const DirectX::XMFLOAT3 beamRotation = ComputeBeamRotationFromDirection({ 0.0f, -1.0f, 0.0f });
             const DirectX::XMFLOAT3 beamSpawnPosition =
             {
@@ -195,8 +177,7 @@ namespace ecs
                 beamPosition.z,
             };
 
-            // ビームは必殺技演出の進行(このフェーズの完了待ち)に必須のため、負荷間引きを無視して
-            // 必ず生成する(bypassBudget=true)。間引かれると即座に次フェーズへ飛んで演出が破綻する。
+            // ビームは演出進行に必須のため負荷間引きを無視して必ず生成する。間引かれると即座に次フェーズへ飛んで演出が破綻する
             ecs::effectutil::PlayOneShotCombined(
                 masterData.BeamEffectPath, beamSpawnPosition, masterData.BeamScale,
                 &ultimate.BeamEffectEntities, beamRotation, true);
@@ -205,14 +186,14 @@ namespace ecs
 
         if (ultimate.Phase == ecs::eUltimatePhase::PlayingBeam)
         {
-            // ビーム(pre)の再生終了(またはMaxBeamDurationでのタイムアウト)を待つ
+            // ビームの再生終了、またはMaxBeamDurationでのタイムアウトを待つ
             ultimate.PhaseElapsedTime += rawDeltaTime;
             const bool beamStillPlaying = ecs::effectutil::AnyPlaying(registry, ultimate.BeamEffectEntities);
             const bool beamTimedOut = ultimate.PhaseElapsedTime >= masterData.MaxBeamDuration;
 
             if (beamStillPlaying && !beamTimedOut) return;
 
-            // 4. ビーム終了：まだ座標は戻さず、同じ位置でメイン(main)エフェクトを再生してその終了を待つ
+            // 4. ビーム終了、座標は戻さず同じ位置でメインエフェクトを再生してその終了を待つ
             ultimate.Phase = ecs::eUltimatePhase::PlayingMain;
             ultimate.PhaseElapsedTime = 0.0f;
 
@@ -226,15 +207,14 @@ namespace ecs
                 mainPosition.z,
             };
 
-            // メインも必殺技演出の必須要素のため間引きを無視して必ず生成する(bypassBudget=true)。
-            // rotationは既定のまま。省略引数の先にあるbypassBudgetへ届かせるため明示的に既定値を渡す。
+            // メインも演出の必須要素のため間引きを無視して必ず生成する。rotationは既定のまま
             ecs::effectutil::PlayOneShotCombined(
                 masterData.ActivationEffectPath, mainSpawnPosition, masterData.ActivationScale,
                 &ultimate.MainEffectEntities, { 0.0f, 0.0f, 0.0f }, true);
             return;
         }
 
-        // PlayingMainフェーズ：メイン(main)の再生終了(またはMaxMainDurationでのタイムアウト)を待つ
+        // PlayingMainフェーズ、メインの再生終了またはMaxMainDurationでのタイムアウトを待つ
         ultimate.PhaseElapsedTime += rawDeltaTime;
         const bool mainStillPlaying = ecs::effectutil::AnyPlaying(registry, ultimate.MainEffectEntities);
         const bool mainTimedOut = ultimate.PhaseElapsedTime >= masterData.MaxMainDuration;
@@ -244,12 +224,6 @@ namespace ecs
         FinishAndExplode(registry, playerEntity, ultimate, status, masterData);
     }
 
-    /// <summary>
-    /// プレイヤー背後・高い位置から見下ろす構図になるよう、カメラエンティティへ
-    /// CameraOverrideComponentでリクエストを発行する(実際のTransform書き込みは
-    /// CameraPlayerFollowSystemが一元的に行う。カメラのTransformを直接書き換えないことで、
-    /// カメラ制御の責務をCameraPlayerFollowSystemへ集約している)。
-    /// </summary>
     void PlayerUltimateSystem::UpdateCamera(
         entt::registry& registry,
         entt::entity playerEntity,
@@ -267,9 +241,7 @@ namespace ecs
 
         auto& cameraOverride = registry.get_or_emplace<ecs::CameraOverrideComponent>(cameraEntity);
 
-        // 発動時に捕捉したプレイヤーの背後方向(-forward)へCameraDistance離れた、高い位置
-        // (CameraHeight)から見下ろす構図にする。カメラ自体の位置は発動中ずっと固定で、
-        // 追従はしない(LookAtだけが現在のプレイヤー座標へ追従する)。
+        // 発動時に捕捉したプレイヤーの背後方向へCameraDistance離れた高い位置から見下ろす構図にする。カメラ位置は発動中ずっと固定でLookAtだけが追従する
         cameraOverride.Position =
         {
             start.x - forward.x * masterData.CameraDistance,
@@ -286,7 +258,6 @@ namespace ecs
         };
     }
 
-    /// <summary>メイン(main)終了後：プレイヤー座標・無敵状態を戻し、その場で全体ダメージを与える</summary>
     void PlayerUltimateSystem::FinishAndExplode(
         entt::registry& registry,
         entt::entity playerEntity,
@@ -294,8 +265,7 @@ namespace ecs
         ecs::PlayerStatusComponent& status,
         const data::UltimateData& masterData)
     {
-        // メイン(hougu_main)の再生が終わったので、非表示化していた他の武器のエフェクトを
-        // 元に戻す（これ以降、各武器Systemの発動もIsPlayerUltimateActive()=falseになり再開する）
+        // メインの再生が終わったので、非表示化していた他の武器のエフェクトを元に戻す
         SetOtherEffectsVisible(registry, true);
 
         // カメラのリクエストを取り下げ、CameraPlayerFollowSystemの通常追従へ戻す
@@ -305,13 +275,7 @@ namespace ecs
             registry.remove<ecs::CameraOverrideComponent>(cameraEntity);
         }
 
-        // 5. プレイヤーの座標を瞬時に発動前の位置へ戻す(テレポート)。
-        // Dynamic Bodyは物理側が位置の権威のため、Transformを直接書き換えただけでは
-        // 次の物理ステップでJolt側の位置により上書きされてしまう。TransformDirtyTagを
-        // 付与するとPhysicsSystem::SyncFromTransformがこのTransformの値をJolt側へ
-        // 明示的に反映してくれるため、これを使って正確にテレポートする
-        // (以前、速度ベースの降下で戻していた際に着地位置がズレて地面へめり込む不具合があったため、
-        // このテレポート方式に変更した)。
+        // 5. プレイヤー座標を瞬時に発動前の位置へ戻す。TransformDirtyTagを付与しPhysicsSystem::SyncFromTransformでJolt側へも反映させる
         auto* playerTransform = registry.try_get<ecs::Transform>(playerEntity);
         if (playerTransform != nullptr)
         {
@@ -328,11 +292,7 @@ namespace ecs
 
         status.IsInvincible = false;
 
-        // その場(元の座標)にいる敵全員へ大ダメージ(メイン(main)エフェクトは既にPlayingMainフェーズで
-        // 再生済みのため、ここでは座標復元とダメージ適用のみ行う)。
-        // DamagedByUltimate=trueにしておくことで、この後EnemyDeathSystemが処理する撃破が
-        // 必殺技ゲージへ加算されないようにする(発動直後に即ゲージが貯まる自己参照を防ぐため。
-        // ゴールド・経験値・パワーチャージは通常どおり加算される)
+        // その場にいる敵全員へ大ダメージ。DamagedByUltimate=trueにして、この撃破が必殺技ゲージへ加算されないようにする
         registry.view<ecs::EnemyTag, ecs::EnemyStatusComponent, ecs::Transform>().each(
             [&](ecs::EnemyStatusComponent& enemyStatus, ecs::Transform& enemyTransform)
             {

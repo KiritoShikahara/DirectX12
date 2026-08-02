@@ -1,6 +1,6 @@
 ﻿#include "apppch.h"
 #include "WeaponInventoryDebugPanel.h"
-#include <Utility/config/DebugConfig.h> // DEV_TOOL_ENABLED(Debug/Develop両方で有効)を参照するため直接include
+#include <Utility/config/DebugConfig.h>
 
 #include<system/Player/Weapon/Inventory/WeaponInventoryComponent.h>
 #include<Scene/Game/Factory/GameSceneFactory.h>
@@ -16,7 +16,6 @@ namespace
         ecs::eWeaponControl Control;
     };
 
-    // デバッグパネルが認識する武器一覧。新しい武器種別を追加したらここにも追記すること。
     constexpr KnownWeapon kKnownWeapons[] =
     {
         { "FireBolt (SingleShot)",  ecs::eWeaponType::SingleShot,  0, ecs::eWeaponControl::Manual },
@@ -128,8 +127,7 @@ namespace debug
             ImGui::PopID();
         }
 
-        // ループ中の削除はinventory.Weaponsを書き換えてしまいイテレータを不正化するため、
-        // 走査完了後にまとめて行う
+        // ループ中に削除するとイテレータが壊れるため走査完了後にまとめて行う
         if (removeTarget != entt::null)
         {
             ::ecs::GameSceneFactory::RemoveWeaponFromPlayer(playerEntity, removeTarget);

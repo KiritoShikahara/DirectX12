@@ -33,7 +33,7 @@ namespace ecs
 				}
 			});
 
-		// view走査完了後にまとめて破棄する（走査中の破棄はイテレータを不正化しうるため避ける）
+		// view走査完了後にまとめて破棄する、走査中の破棄はイテレータを不正化しうるため避ける
 		for (entt::entity entity : mExpired)
 		{
 			DEBUG_LOG(sys::eLogLevel::Log, "AreaAttackHazardSystem: hazard entity={} expired and destroyed",
@@ -42,7 +42,6 @@ namespace ecs
 		}
 	}
 
-	/// <summary>指定範囲内の敵にダメージを与える（敵タグ以外は無視する）</summary>
 	void AreaAttackHazardSystem::ApplyTickDamage(
 		entt::registry& registry,
 		const DirectX::XMFLOAT3& center,

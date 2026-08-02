@@ -17,7 +17,6 @@ namespace ecs
 {
 	namespace
 	{
-		// レイアウト(仮想解像度1280x720基準。パーク選択と同じ流儀の暫定値)
 		constexpr float kTitleY = 200.0f;
 		constexpr float kFirstItemY = 290.0f;
 		constexpr float kItemSpacingY = 56.0f;
@@ -25,17 +24,14 @@ namespace ecs
 		constexpr float kTitleSize = 44.0f;
 		constexpr float kItemSize = 32.0f;
 
-		// UIレイヤーはパーク選択(10)より手前に出す
 		constexpr int kUiLayer = 30;
 
 		const DirectX::XMFLOAT4 kNormalColor = { 0.75f, 0.75f, 0.75f, 1.0f };
 		const DirectX::XMFLOAT4 kSelectedColor = { 1.0f, 0.9f, 0.2f, 1.0f };
 		const DirectX::XMFLOAT4 kTitleColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-		// 十字キー/スティック1回あたりの音量変化量
 		constexpr float kVolumeStep = 0.05f;
 
-		/// <summary>音量を「MASTER  [||||||....]  60%」のような1行の文字列にする</summary>
 		std::wstring MakeVolumeLabel(const wchar_t* name, float value)
 		{
 			constexpr int kBarLength = 10;
@@ -57,7 +53,7 @@ namespace ecs
 		{
 		case ePage::Root:     return static_cast<int>(eRootItem::Count);
 		case ePage::Settings: return static_cast<int>(eSettingsItem::Count);
-		case ePage::Controls: return 1; // 選択可能な項目は「戻る」のみ(一覧は選択不可の固定表示)
+		case ePage::Controls: return 1; // 選択可能な項目は戻るのみ、一覧は選択不可の固定表示
 		}
 		return 0;
 	}
@@ -68,9 +64,7 @@ namespace ecs
 
 		if (!mIsOpen)
 		{
-			// PerkSelect中もEscapeで開けるが、Result/PreStart中は開かせない
-			// (リザルト画面はSelect/MenuLeft/MenuRightで独自の入力を処理しており、
-			// そちらとメニューのカーソル操作が同じ入力で同時に反応してしまうのを避けるため)
+			// PerkSelect中もEscapeで開けるが、Result/PreStart中は開かせない。リザルト画面が同じ入力を独自処理しているため
 			if (input.IsActionPressed("Option") && CanOpen(registry))
 			{
 				Open(registry);
@@ -109,8 +103,6 @@ namespace ecs
 		GetTime().SetTimeScale(0.0);
 
 		// 開いている間、パーク選択・武器発射・プレイヤー移動等の他の入力処理を止める
-		// (Escapeは"Option"と"Cancel"の両方に割り当てられているため、これが無いと
-		// メニューを開いた直後の入力でパーク選択なども同時に反応してしまう)
 		SetOptionsMenuOpenFlag(registry, true);
 
 		BuildUi();
@@ -121,7 +113,6 @@ namespace ecs
 	void OptionsMenuSystem::Close(entt::registry& registry)
 	{
 		// 変更内容をここでまとめて保存する
-		// (操作のたびに保存するとファイルI/Oが頻発するため)
 		::data::SaveGameSettings();
 
 		DestroyUi(registry);
@@ -171,7 +162,7 @@ namespace ecs
 			mUiEntities.push_back(entity);
 		}
 
-		// 各項目行(中身はRefreshLabelsが埋める)
+		// 各項目行、中身はRefreshLabelsが埋める
 		const int itemCount = GetItemCount();
 		for (int i = 0; i < itemCount; ++i)
 		{
@@ -192,9 +183,7 @@ namespace ecs
 
 	void OptionsMenuSystem::BuildControlsInfoLines()
 	{
-		// 選択項目("戻る"、itemCount=1件)より下に、選択不可の操作方法一覧を並べる。
-		// mUiEntitiesの末尾に追加するだけなのでRefreshLabels(0..itemCount-1しか触らない)の
-		// 対象外になり、DestroyUiでは他のUIエンティティと同様にまとめて破棄される。
+		// 選択項目の戻るより下に、選択不可の操作方法一覧を並べる。mUiEntitiesの末尾に追加するだけなのでRefreshLabelsの対象外になる
 		const ::sys::eInputDevice device = ::sys::InputManager::Get().GetLastInputDevice();
 
 		const std::vector<std::wstring> lines =
@@ -208,7 +197,7 @@ namespace ecs
 			L"ポーズメニュー: " + std::wstring(::ecs::inputguide::GetOptionLabel(device)),
 		};
 
-		constexpr float kInfoStartY = kFirstItemY + kItemSpacingY; // 「戻る」(1件)の次の行から
+		constexpr float kInfoStartY = kFirstItemY + kItemSpacingY; // 戻るの次の行から
 		constexpr float kInfoSize = 28.0f;
 		const DirectX::XMFLOAT4 kInfoColor = { 0.85f, 0.85f, 0.85f, 1.0f };
 
@@ -220,10 +209,7 @@ namespace ecs
 
 	void OptionsMenuSystem::BuildBackgroundPanel()
 	{
-		// ゲーム画面(一時停止中の背景)の上に文字が直接乗ると読みづらいため、黒半透明の板を
-		// メニュー全体の下に敷く。ページごとに行数・文字幅が変わる(Controlsページは操作方法
-		// 一覧の分だけ縦に長い)ため、生成済みテキストの実測範囲から動的にサイズを決める
-		// (呼び出しはRefreshLabelsで文字列が確定した後であること)。
+		// ゲーム画面の上に文字が直接乗ると読みづらいため黒半透明の板を敷く。テキストの実測範囲から動的にサイズを決める
 		auto& registry = ENTITY_MANAGER.GetRegistry();
 		auto& textRenderer = ::graphics::TextRenderer::Get();
 
@@ -243,7 +229,7 @@ namespace ecs
 			maxY = std::max(maxY, text->Y + text->Size);
 		}
 
-		if (minX > maxX) return; // テキストが1件も無い場合の保険(理論上起きない)
+		if (minX > maxX) return; // テキストが1件も無い場合の保険、理論上起きない
 
 		constexpr float kPanelPadX = 60.0f;
 		constexpr float kPanelPadTop = 30.0f;
@@ -266,8 +252,7 @@ namespace ecs
 		auto& input = ::sys::InputManager::Get();
 		const int itemCount = GetItemCount();
 
-		// Option / Cancel での戻る操作。
-		// Root以外のページからは1階層戻るだけにして、いきなり閉じないようにする
+		// Option/Cancelでの戻る操作。Root以外のページからは1階層戻るだけにしていきなり閉じないようにする
 		if (input.IsActionPressed("Option") || input.IsActionPressed("Cancel"))
 		{
 			if (mPage != ePage::Root)
@@ -329,7 +314,6 @@ namespace ecs
 
 			case eRootItem::ReturnToTitle:
 				// シーン遷移前に設定を保存し、停止したTimeScaleを必ず戻す
-				// (戻し忘れると遷移先が止まったままになる)
 				::data::SaveGameSettings();
 				DestroyUi(registry);
 				GetTime().SetTimeScale(1.0);
@@ -382,7 +366,6 @@ namespace ecs
 		*target = std::clamp(*target + delta, 0.0f, 1.0f);
 
 		// 変更をConfigManagerへ通知し、音量を即座に反映する
-		// (保存はメニューを閉じたときにまとめて行う)
 		manager.NotifyChanged();
 		::data::ApplyGameSettings();
 	}
@@ -421,8 +404,7 @@ namespace ecs
 			}
 			else if (mPage == ePage::Controls)
 			{
-				// 選択可能な項目は「戻る」の1件のみ(操作方法の一覧はBuildControlsInfoLinesが
-				// 選択対象外の固定表示として別途生成している)
+				// 選択可能な項目は戻るの1件のみ、操作方法の一覧はBuildControlsInfoLinesが選択対象外の固定表示として別途生成している
 				if (i == 0) text->Text = L"戻る";
 			}
 			else if (settings != nullptr)

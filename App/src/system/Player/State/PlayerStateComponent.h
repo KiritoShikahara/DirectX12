@@ -13,15 +13,14 @@ namespace ecs
 		Move, // 移動
 	};
 
-	/// <summary>
-	/// 状態遷移判定用のマップ
-	/// key= 今の状態 value= 遷移可能な状態のリスト
-	/// </summary>
+	///<summary>
+	///状態遷移判定用のマップ。keyが今の状態、valueが遷移可能な状態のリスト
+	///</summary>
 	using PlayerTransitionState = std::unordered_map<ePlayerState, std::vector<ePlayerState>>;
 
-	/// <summary>
-	/// 状態遷移リクエスト。優先度順に遷移可能判定
-	/// </summary>
+	///<summary>
+	///状態遷移リクエスト。優先度順に遷移可能判定
+	///</summary>
 	struct PlayerStateRequest
 	{
 		ePlayerState State;
@@ -33,14 +32,14 @@ namespace ecs
 		// 現在の状態
 		ePlayerState CurrentState = ePlayerState::Idle;
 
-		/// <summary>
-		/// 状態遷移マップ
-		/// </summary>
+		///<summary>
+		///状態遷移マップ
+		///</summary>
 		PlayerTransitionState StateTransitionMap;
 
-		/// <summary>
-		/// 状態遷移リクエストのキャッシュ
-		/// </summary>
+		///<summary>
+		///状態遷移リクエストのキャッシュ
+		///</summary>
 		std::vector<PlayerStateRequest> Requests;
 
 		bool CanTransition(ePlayerState next)
@@ -63,9 +62,9 @@ namespace ecs
 			}
 		}
 
-		/// <summary>
-		/// リクエストを追加する
-		/// </summary>
+		///<summary>
+		///リクエストを追加する
+		///</summary>
 		void AddRequest(ePlayerState state, int priority)
 		{
 			Requests.push_back({ state, priority });

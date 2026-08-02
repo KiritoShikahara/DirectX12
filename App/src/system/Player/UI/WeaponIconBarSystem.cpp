@@ -14,17 +14,15 @@
 
 namespace
 {
-	// GameSceneFactory::CreateWeaponIconBar(kColumns=5 * kRows=2)と一致させること
 	constexpr int kSlotCount = 10;
 
-	/// <summary>1スロット分の今フレームの表示状態(先に全スロット分まとめて計算しておく)</summary>
 	struct SlotState
 	{
 		bool HasWeapon = false;
 		const char* IconPath = nullptr;
 		int Level = 0;
-		bool ShowCooldown = false;   // クールダウン中(オーバーレイ・テキストとも表示)か
-		float FillRatio = 0.0f;      // 残り/最大 [0,1]。オーバーレイのFillAmountにそのまま使う
+		bool ShowCooldown = false;
+		float FillRatio = 0.0f;
 		float RemainingSeconds = 0.0f;
 	};
 }
@@ -38,9 +36,7 @@ namespace ecs
 
 		const auto& inventory = registry.get<WeaponInventoryComponent>(*playerView.begin());
 
-		// スロットごとの表示状態を先にまとめて計算する。
-		// Icon/Overlay/Textが別エンティティ(別view)のため、同じ計算をそれぞれで
-		// 繰り返さないようにするための下ごしらえ。
+		// スロットごとの表示状態を先にまとめて計算する。Icon/Overlay/Textが別エンティティのため同じ計算を繰り返さないための下ごしらえ
 		std::array<SlotState, kSlotCount> states = {};
 		const int weaponCount = std::min(static_cast<int>(inventory.Weapons.size()), kSlotCount);
 
@@ -71,7 +67,7 @@ namespace ecs
 			}
 		}
 
-		// アイコン・オーバーレイ(いずれもSprite)の反映
+		// アイコン・オーバーレイ、いずれもSpriteの反映
 		registry.view<WeaponIconSlotTag, Sprite>().each(
 			[&](WeaponIconSlotTag& slot, Sprite& sprite)
 			{
@@ -93,7 +89,7 @@ namespace ecs
 				}
 			});
 
-		// テキスト(残り秒数・武器レベル)の反映
+		// テキスト、残り秒数・武器レベルの反映
 		auto& textRenderer = ::graphics::TextRenderer::Get();
 		registry.view<WeaponIconSlotTag, TextComponent>().each(
 			[&](WeaponIconSlotTag& slot, TextComponent& text)
@@ -127,7 +123,7 @@ namespace ecs
 					return;
 				}
 
-				// 水平中央揃え(PerkSelectSystemと同じ手法)。基準はスロット中心(slot.CenterX、不変)。
+				// 水平中央揃え、PerkSelectSystemと同じ手法。基準はスロット中心のslot.CenterX、不変
 				const float textWidth = textRenderer.MeasureWidth(text.Text, text.Size);
 				text.X = slot.CenterX - textWidth * 0.5f;
 			});

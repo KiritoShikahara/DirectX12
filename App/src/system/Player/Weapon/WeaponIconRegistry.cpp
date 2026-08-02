@@ -7,7 +7,7 @@ namespace ecs::weaponutil
 {
 	const char* GetWeaponIconPath(eWeaponType type)
 	{
-		// 未作成アイコンの代用(後で差し替える前提のプレースホルダ)
+		// 未作成アイコンの代用、後で差し替える前提のプレースホルダ
 		constexpr const char* kFallbackIcon = "Assets/Icon/loading.png";
 
 		switch (type)

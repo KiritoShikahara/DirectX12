@@ -6,14 +6,13 @@
 #include<Scene/Menu/MenuScene.h>
 #include<Scene/StatusUpgrade/StatusUpgradeScene.h>
 #include<system/Input/InputGuideLabels.h>
-#include<graphics/Text/Renderer/TextRenderer.h> // 操作案内テキストの水平中央揃えに使う
+#include<graphics/Text/Renderer/TextRenderer.h>
 
 namespace
 {
 	const DirectX::XMFLOAT4 kNormalColor = { 0.7f, 0.7f, 0.7f, 1.0f };
 	const DirectX::XMFLOAT4 kSelectedColor = { 1.0f, 0.9f, 0.2f, 1.0f };
 
-	// 選択中カードのアイコンを明るくして目立たせる(通常時は等倍)
 	constexpr float kNormalIconIntensity = 1.0f;
 	constexpr float kSelectedIconIntensity = 1.4f;
 }
@@ -37,7 +36,7 @@ namespace ecs
 			hub.SelectedIndex = (hub.SelectedIndex + 1) % HubMenuComponent::kChoiceCount;
 		}
 
-		// カーソル位置に応じてハイライトを更新(ラベル色 + アイコンの明るさ)
+		// カーソル位置に応じてハイライトを更新、ラベル色とアイコンの明るさ
 		registry.view<HubMenuOptionUiTag, TextComponent>().each(
 			[&](const HubMenuOptionUiTag& tag, TextComponent& text)
 			{

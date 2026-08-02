@@ -1,6 +1,6 @@
 ﻿#include "apppch.h"
 #include "WaveDebugPanel.h"
-#include <Utility/config/DebugConfig.h> // DEV_TOOL_ENABLED(Debug/Develop両方で有効)を参照するため直接include
+#include <Utility/config/DebugConfig.h>
 
 #include"WaveComponent.h"
 #include<Data/Wave/WaveData.h>
@@ -28,12 +28,10 @@ namespace debug
 #if DEV_TOOL_ENABLED
     void WaveDebugPanel::Draw()
     {
-        // 唯一のテーブルエディタ（Load/Save CSV・DB、Id含む全セル編集）
+        // 唯一のテーブルエディタ。Load/Save CSV・DB、Id含む全セル編集
         mInspector->Draw("Wave Master");
 
-        // 編集結果を実行中のWaveComponentへ再適用するための操作ウィンドウ
-        // （WaveComponentはCreateStateController実行時に一度だけ初期化されるため、
-        // プレイ中に調整した数値を試すにはこのボタンでの再適用が必要）
+        // 編集結果を実行中のWaveComponentへ再適用する操作ウィンドウ。WaveComponentは初期化時の一度きりのため再適用ボタンが必要
         if (ImGui::Begin("Wave Apply"))
         {
             if (ImGui::Button("Apply to Running Wave"))

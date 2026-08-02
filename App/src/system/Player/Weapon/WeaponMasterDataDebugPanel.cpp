@@ -1,6 +1,6 @@
 #include "apppch.h"
 #include "WeaponMasterDataDebugPanel.h"
-#include <Utility/config/DebugConfig.h> // DEV_TOOL_ENABLED(Debug/Develop両方で有効)を参照するため直接include
+#include <Utility/config/DebugConfig.h>
 
 #include<Data/Weapon/SingleShotWeaponData.h>
 #include<Data/Weapon/AreaAttackWeaponData.h>
@@ -49,8 +49,7 @@ namespace debug
 #if DEV_TOOL_ENABLED
     void WeaponMasterDataDebugPanel::Draw()
     {
-        // 各セクションはCollapsingHeaderで折りたたみ/展開できる。デフォルトは全て閉じておき、
-        // 必要な武器種別だけ開いてもらう(12種すべて展開すると結局長大になるため)。
+        // デフォルトは全セクション閉じておき、必要な武器種別だけ開いてもらう
         ImGui::SetNextWindowSize(ImVec2(720.f, 640.f), ImGuiCond_FirstUseEver);
         if (!ImGui::Begin("Weapon Master Data"))
         {

@@ -1,6 +1,6 @@
 ﻿#include "apppch.h"
 #include "StatusUpgradeScene.h"
-#include <Utility/config/DebugConfig.h> // DEV_TOOL_ENABLED(Debug/Develop両方で有効)を参照するため直接include
+#include <Utility/config/DebugConfig.h> // DEV_TOOL_ENABLED Debug/Develop両方で有効 を参照するため直接include
 #include<ecs/system/manager/ComponentSystemManager.h>
 
 #include<system/GlowAnimation/GlowAnimationComp.h>
@@ -17,11 +17,9 @@
 
 namespace
 {
-	/// <summary>
-	/// data::eStatUpgradeType(0..7)に対応する表示アイコンのパス。
-	/// 専用アイコン未作成の項目(クールダウン短縮・ゴールド獲得量)はloading.pngを代用する
-	/// (PerkSelectSystem::GetPerkIconPath/WeaponIconRegistryと同じ、後で差し替え前提の方針)。
-	/// </summary>
+	// data::eStatUpgradeType 0..7 に対応する表示アイコンのパス。
+	// 専用アイコン未作成の項目 クールダウン短縮・ゴールド獲得量 はloading.pngを代用する
+	// PerkSelectSystem::GetPerkIconPath/WeaponIconRegistryと同じ、後で差し替え前提の方針 。
 	const char* GetStatUpgradeIconPath(int index)
 	{
 		constexpr const char* kFallbackIcon = "Assets/Icon/loading.png";
@@ -52,7 +50,7 @@ namespace scene
 	void StatusUpgradeScene::Initialize()
 	{
 		// TimeScaleはプロセス全体で共有され、シーンを跨いでも持ち越される。
-		// 一時停止の概念が無いこのシーンでは必ず1.0へ戻す（HubScene/MenuSceneと同じ理由）。
+		// 一時停止の概念が無いこのシーンでは必ず1.0へ戻す HubScene/MenuSceneと同じ理由 。
 		GetTime().SetTimeScale(1.0);
 
 		LoadData();
@@ -83,7 +81,7 @@ namespace scene
 	void StatusUpgradeScene::LoadData()
 	{
 		// DataRegistryはプロセス全体で1つのシングルトンのため、二重登録を避けるガードを入れる
-		// （GameScene.cppと同じパターン）。
+		// GameScene.cppと同じパターン 。
 		auto& dataRegistry = data::DataRegistry::Get();
 		if (!dataRegistry.IsRegistered<data::StatUpgradeData>())
 		{
@@ -91,7 +89,7 @@ namespace scene
 		}
 		dataRegistry.LoadAll();
 
-		// プレイヤーの永続的な進行状況(ゴールド・強化レベル)。CSV/DBとは別系統(JSON永続化)。
+		// プレイヤーの永続的な進行状況 ゴールド・強化レベル 。CSV/DBとは別系統 JSON永続化 。
 		data::EnsurePlayerSaveDataLoaded();
 	}
 
@@ -112,7 +110,7 @@ namespace scene
 	void StatusUpgradeScene::CreateBackground()
 	{
 		// 専用の背景素材が無いため、タイトルと同じ背景を暫定的に流用する
-		// （専用素材が用意でき次第、Assets/Texture/StatusUpgrade/配下へ差し替える）。
+		// 専用素材が用意でき次第、Assets/Texture/StatusUpgrade/配下へ差し替える 。
 		auto& manager = ::ecs::EntityManager::Get();
 		auto entity = manager.CreateEntity();
 		auto texture = ::graphics::TextureManager::Get().GetOrLoad("Assets/Texture/Title/TX_TitleBG.png");
@@ -145,7 +143,7 @@ namespace scene
 		auto controllerEntity = manager.CreateEntity();
 		manager.AddComponent<::ecs::StatusUpgradeComponent>(controllerEntity);
 
-		// 所持ゴールド（画面最上部。実際の値はStatusUpgradeInputSystemが毎フレーム更新する）
+		// 所持ゴールド 画面最上部。実際の値はStatusUpgradeInputSystemが毎フレーム更新する 
 		constexpr float kGoldY = 60.0f;
 		{
 			auto entity = manager.CreateEntity();
@@ -171,20 +169,20 @@ namespace scene
 			text.Layer = 10;
 		}
 
-		// 12ステータス分のカード(名前(上)/アイコン(中)/強化状態(下)の縦積み)を
+		// 12ステータス分のカード 名前 上 /アイコン 中 /強化状態 下 の縦積み を
 		// 横4×縦3グリッドで配置する。テキスト内容・色は毎フレームStatusUpgradeInputSystemが更新するため、
-		// ここでは空文字のままでよい(アイコンのみここで確定させ、以後変化しない)。
+		// ここでは空文字のままでよい アイコンのみここで確定させ、以後変化しない 。
 		constexpr int kCardColumns = 4;
 		constexpr int kCardRows = 3;
 		static_assert(kCardColumns * kCardRows == ::ecs::StatusUpgradeComponent::kOptionCount,
 			"カード数はStatusUpgradeComponent::kOptionCountと一致させること");
 
 		constexpr float kIconSize = 100.0f;      // アイコンサイズ
-		constexpr float kCardSpacingX = 380.0f;  // カード中心どうしの横間隔(px)
-		constexpr float kCardSpacingY = 240.0f;  // カード中心どうしの縦間隔(px)
-		constexpr float kGridCenterY = 452.0f;   // グリッド全体の中心Y(見出しと操作案内の間)
-		constexpr float kNameGapY = 34.0f;       // 名前テキストとアイコン上端の間隔(px)
-		constexpr float kStateGapY = 14.0f;      // 強化状態テキストとアイコン下端の間隔(px)
+		constexpr float kCardSpacingX = 380.0f;  // カード中心どうしの横間隔 px 
+		constexpr float kCardSpacingY = 240.0f;  // カード中心どうしの縦間隔 px 
+		constexpr float kGridCenterY = 452.0f;   // グリッド全体の中心Y 見出しと操作案内の間 
+		constexpr float kNameGapY = 34.0f;       // 名前テキストとアイコン上端の間隔 px 
+		constexpr float kStateGapY = 14.0f;      // 強化状態テキストとアイコン下端の間隔 px 
 		constexpr float kNameTextSize = 26.0f;
 		constexpr float kStateTextSize = 24.0f;
 
@@ -195,7 +193,7 @@ namespace scene
 			const float x = centerX + (static_cast<float>(col) - (kCardColumns - 1) * 0.5f) * kCardSpacingX;
 			const float iconY = kGridCenterY + (static_cast<float>(row) - (kCardRows - 1) * 0.5f) * kCardSpacingY;
 
-			// 名前(アイコンの上)
+			// 名前 アイコンの上 
 			{
 				auto entity = manager.CreateEntity();
 				auto& text = manager.AddComponent<::ecs::TextComponent>(entity);
@@ -209,7 +207,7 @@ namespace scene
 					::ecs::StatusUpgradeCardUiTag{ i, ::ecs::eStatusUpgradeCardElement::NameText, x });
 			}
 
-			// アイコン本体(項目ごとに固定、以後変化しないためここで確定させる)
+			// アイコン本体 項目ごとに固定、以後変化しないためここで確定させる 
 			{
 				auto entity = manager.CreateEntity();
 				auto& tr = manager.AddComponent<::ecs::Transform>(entity);
@@ -225,7 +223,7 @@ namespace scene
 					::ecs::StatusUpgradeCardUiTag{ i, ::ecs::eStatusUpgradeCardElement::Icon, x });
 			}
 
-			// 強化状態(Lv./コスト等。アイコンの下)
+			// 強化状態 Lv./コスト等。アイコンの下 
 			{
 				auto entity = manager.CreateEntity();
 				auto& text = manager.AddComponent<::ecs::TextComponent>(entity);
@@ -240,8 +238,8 @@ namespace scene
 			}
 		}
 
-		// 操作案内(2行)。ボタン表示名は入力デバイス(キーボード/マウス or パッド)によって
-		// 変わる(「Selectって何ボタン？」を防ぐため)ので、内容はStatusUpgradeInputSystemが
+		// 操作案内 2行 。ボタン表示名は入力デバイス キーボード/マウス or パッド によって
+		// 変わる 「Selectって何ボタン？」を防ぐため ので、内容はStatusUpgradeInputSystemが
 		// 毎フレーム更新する。ここでは空文字のままでよい
 		constexpr float guideY = kGridCenterY + (kCardRows - 1) * 0.5f * kCardSpacingY
 			+ kIconSize * 0.5f + kStateGapY + kStateTextSize + 40.0f;
@@ -257,7 +255,7 @@ namespace scene
 			registry.emplace<::ecs::StatusUpgradeGuideUiTag>(entity, ::ecs::StatusUpgradeGuideUiTag{ 0 });
 		}
 
-		// 操作案内の2行目(一括強化・リセットは行が長くなるため分ける)
+		// 操作案内の2行目 一括強化・リセットは行が長くなるため分ける 
 		{
 			auto entity = manager.CreateEntity();
 			auto& text = manager.AddComponent<::ecs::TextComponent>(entity);
@@ -272,17 +270,17 @@ namespace scene
 
 		// 「強化しますか？」の確認ダイアログ。背景に負けて読みづらいとの指摘を受け、
 		// 画面中心に黒背景を敷いた上に、その背景の中心へテキストを重ねる構成にする。
-		// 半透明だと背景が透けて文字が読みづらくなるため完全不透明(Alpha=1.0)にし、
+		// 半透明だと背景が透けて文字が読みづらくなるため完全不透明 Alpha=1.0 にし、
 		// テキストが箱からはみ出さないよう十分な余白を持たせたサイズにする。
-		// (IsConfirming中のみ表示。位置・表示有無はStatusUpgradeInputSystem::RefreshTextsが毎フレーム更新する)
+		//  IsConfirming中のみ表示。位置・表示有無はStatusUpgradeInputSystem::RefreshTextsが毎フレーム更新する 
 		constexpr float kConfirmWindowWidth = 1100.0f;
 		constexpr float kConfirmWindowHeight = 340.0f;
 		{
 			auto entity = ::ecs::uiutil::CreateTranslucentPanel(
 				centerX, centerY,
 				kConfirmWindowWidth, kConfirmWindowHeight,
-				10,    // 読みやすさ用ウィンドウ(offset0)・アイコン(offset3)より手前
-				1.0f); // 完全不透明の黒(半透明だと背景が透けて文字が読みづらくなるため)
+				10,    // 読みやすさ用ウィンドウ offset0 ・アイコン offset3 より手前
+				1.0f); // 完全不透明の黒 半透明だと背景が透けて文字が読みづらくなるため 
 			registry.get<::ecs::Sprite>(entity).IsVisible = false;
 
 			registry.emplace<::ecs::StatusUpgradeConfirmWindowUiTag>(entity);
@@ -299,7 +297,7 @@ namespace scene
 			registry.emplace<::ecs::StatusUpgradeConfirmUiTag>(entity);
 		}
 
-		// フィードバックメッセージ（「ゴールドが足りません」等。MessageTimerが尽きたら非表示）
+		// フィードバックメッセージ 「ゴールドが足りません」等。MessageTimerが尽きたら非表示 
 		constexpr float kMessageOffsetY = 130.0f;
 		constexpr float kMessageTextSize = 28.0f;
 		{
@@ -314,14 +312,14 @@ namespace scene
 			registry.emplace<::ecs::StatusUpgradeMessageUiTag>(entity);
 		}
 
-		// 背景(タイトル画像流用、不透明)の上に文字が乗ると読みづらいため、
-		// ゴールド〜メッセージ全体を覆う黒半透明ウィンドウを敷く(UiPanelUtility参照)。
-		// 描画順は「Layerが大きいほど前面」(SpriteRenderer参照)なので、背景(Background)より
-		// 手前・アイコン(offset3)より奥になるようoffset0にする。
+		// 背景 タイトル画像流用、不透明 の上に文字が乗ると読みづらいため、
+		// ゴールド〜メッセージ全体を覆う黒半透明ウィンドウを敷く UiPanelUtility参照 。
+		// 描画順は「Layerが大きいほど前面」 SpriteRenderer参照 なので、背景 Background より
+		// 手前・アイコン offset3 より奥になるようoffset0にする。
 		{
 			constexpr float kWindowPadTop = 30.0f;
 			constexpr float kWindowPadBottom = 30.0f;
-			// 名前テキストが長い項目(「クールダウン短縮」「ゴールド獲得量」等)が
+			// 名前テキストが長い項目 「クールダウン短縮」「ゴールド獲得量」等 が
 			// ウィンドウ内に収まるための左右余白
 			constexpr float kWindowPadX = 250.0f;
 
@@ -332,7 +330,7 @@ namespace scene
 			::ecs::uiutil::CreateTranslucentPanel(
 				centerX, (windowTop + windowBottom) * 0.5f,
 				windowWidth, windowBottom - windowTop,
-				0); // アイコン(offset3)より奥
+				0); // アイコン offset3 より奥
 		}
 	}
 

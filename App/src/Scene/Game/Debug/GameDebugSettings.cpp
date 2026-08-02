@@ -35,8 +35,7 @@ namespace debug
             mPlayerInvincible = true;
         }
 
-        // 無人計測ではレベルアップのたびに停止すると進まないため、
-        // --godmode指定時は自動選択も併せて有効にする(個別指定も可能)
+        // --godmode指定時は無人計測が止まらないよう自動選択も有効にする
         if (args.find("--autoperk") != std::string::npos || mPlayerInvincible)
         {
             mAutoSelectPerk = true;
@@ -50,7 +49,7 @@ namespace debug
             mAutoExitSeconds = static_cast<float>(std::atof(args.c_str() + exitPos + exitKey.size()));
         }
 
-        // --seed=N (乱数を固定して負荷を再現可能にする)
+        // --seed=N、乱数を固定して負荷を再現可能にする
         const std::string seedKey = "--seed=";
         const size_t seedPos = args.find(seedKey);
         if (seedPos != std::string::npos)
@@ -93,8 +92,7 @@ namespace debug
             ImGui::Separator();
             ImGui::TextUnformatted("Audio");
 
-            // ゲーム内メニューと同じdata::GameSettingsDataを直接編集する。
-            // 変更は即時反映し、保存はSaveボタン(ファイルI/Oを毎フレーム走らせないため)
+            // ゲーム内メニューと同じGameSettingsDataを直接編集する。保存はSaveボタンで明示的に行う
             auto& configReg = ::data::ConfigRegistry::Get();
             if (configReg.IsRegistered<::data::GameSettingsData>())
             {

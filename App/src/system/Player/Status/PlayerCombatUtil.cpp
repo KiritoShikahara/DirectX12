@@ -11,15 +11,13 @@
 
 namespace
 {
-    // ポップアップの表示時間(秒)・見た目のサイズ・高さオフセットの暫定値
     constexpr float kDamageNumberLifetime = 1.0f;
     constexpr float kDamageNumberSize = 28.0f;
-    constexpr float kDamageNumberHeightOffset = 30.0f; // 対象の胸あたりの高さ目安(他の武器と同じ基準)
+    constexpr float kDamageNumberHeightOffset = 30.0f;
 
-    const DirectX::XMFLOAT4 kEnemyDamageColor = { 1.0f, 0.9f, 0.3f, 1.0f }; // 敵への与ダメージ: 黄
-    const DirectX::XMFLOAT4 kPlayerDamageColor = { 1.0f, 0.3f, 0.3f, 1.0f }; // プレイヤーの被ダメージ: 赤
+    const DirectX::XMFLOAT4 kEnemyDamageColor = { 1.0f, 0.9f, 0.3f, 1.0f };
+    const DirectX::XMFLOAT4 kPlayerDamageColor = { 1.0f, 0.3f, 0.3f, 1.0f };
 
-    // 攻撃回数パークが極端に積み上がった場合の負荷・視認性悪化を防ぐ上限
     constexpr int kMaxAttackCount = 6;
 }
 
@@ -47,8 +45,7 @@ namespace ecs::combatutil
     {
         if (count <= 1) return baseDirection;
 
-        // 中心(0度)を基準に対称に広がるオフセット角度を求める
-        // (例: count=3,spread=8度なら -8,0,+8度)
+        // 中心0度を基準に対称に広がるオフセット角度を求める
         const float offsetDeg = spreadAngleDegrees * (static_cast<float>(index) - static_cast<float>(count - 1) * 0.5f);
         const float rad = DirectX::XMConvertToRadians(offsetDeg);
         const float cosA = std::cos(rad);
@@ -92,8 +89,7 @@ namespace ecs::combatutil
         auto* status = registry.try_get<ecs::EnemyStatusComponent>(targetEntity);
         if (status == nullptr) return false;
 
-        // ノックバック等の物理的な反応はさせず、HPのみ減少させる
-        // （HPが0以下になった後の破棄は EnemyDeathSystem が担当する）
+        // ノックバック等の物理的な反応はさせずHPのみ減少させる。0以下になった後の破棄はEnemyDeathSystemが担当する
         status->CurrentHp = std::max(0.0f, status->CurrentHp - damage);
 
         if (const auto* transform = registry.try_get<ecs::Transform>(targetEntity))

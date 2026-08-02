@@ -18,14 +18,8 @@
 
 namespace
 {
-    // エフェクト素材は概ねこの半径感で作られている想定の暫定値(他の武器と同じ基準)。
     constexpr float kEffectReferenceRadius = 2.0f;
-
-    // 判定半径可視化用ワイヤーの表示時間(秒)。EffectComponentのautoDeleteに乗らない
-    // デバッグ専用エンティティのため、TemporaryLifetimeComponentで明示的に破棄する。
     constexpr float kDebugWireLifetime = 0.3f;
-
-    // エフェクト・可視化ワイヤーを再生する前方オフセット(m)。射程の半分程度、扇の中心付近に置く
     constexpr float kEffectForwardRatio = 0.5f;
 }
 
@@ -33,8 +27,7 @@ namespace ecs
 {
     void CleaveWeaponSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
     {
-        // InGame中のみ発動する。必殺技演出中は他の攻撃を発動させない(自動発動武器のため
-        // Flicker Strike中は止めない設計。ecs::weaponutil::ShouldSkipAutoWeaponUpdate参照)
+        // InGame中のみ発動する。必殺技演出中は他の攻撃を発動させない
         if (ecs::weaponutil::ShouldSkipAutoWeaponUpdate(registry)) return;
 
         registry.view<ecs::WeaponComponent, ecs::CleaveRuntimeComponent>().each(
@@ -52,7 +45,7 @@ namespace ecs
                 const auto* masterData = DATA_MGR(data::CleaveWeaponData).GetById(ecs::weaponutil::ComputeWeaponDataId(weapon));
                 if (masterData == nullptr) return;
 
-                // 攻撃回数パーク(AttackCountUp)分だけ発動を繰り返す
+                // 攻撃回数パーク分だけ発動を繰り返す
                 const int attackCount = ecs::combatutil::GetAttackCount(registry, weapon.Owner);
                 for (int i = 0; i < attackCount; ++i)
                 {
@@ -63,7 +56,6 @@ namespace ecs
             });
     }
 
-    /// <summary>発動: 狙い方向の扇状範囲内にいる敵全員へダメージ・ノックバックを与える</summary>
     void CleaveWeaponSystem::Swing(
         entt::registry& registry,
         const ecs::WeaponComponent& weapon,
@@ -76,7 +68,7 @@ namespace ecs
         const DirectX::XMFLOAT3& ownerPos = ownerTransform->GetPosition();
         const DirectX::XMFLOAT3& aimDir = ownerAim->Direction;
 
-        // AtkPowerパークの強化分をCurrent/Base比で反映する(ecs::combatutil参照)
+        // AtkPowerパークの強化分をCurrent/Base比で反映する
         const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);
         const float damage = masterData.Damage * atkMultiplier;
         const float radius = masterData.Radius;
@@ -97,20 +89,19 @@ namespace ecs
             const float dx = enemyPos.x - ownerPos.x;
             const float dz = enemyPos.z - ownerPos.z;
             const float lenSq = dx * dx + dz * dz;
-            if (lenSq <= 0.0001f) continue; // 自機とほぼ同座標(正規化不能)は対象外
+            if (lenSq <= 0.0001f) continue; // 自機とほぼ同座標、正規化不能は対象外
 
             const float invLen = 1.0f / std::sqrt(lenSq);
             const DirectX::XMFLOAT3 toEnemyDir = { dx * invLen, 0.0f, dz * invLen };
 
-            // 狙い方向との角度がConeAngleDegrees(半角)を超える敵は扇の外
+            // 狙い方向との角度がConeAngleDegrees半角を超える敵は扇の外
             const float dot = std::clamp(aimDir.x * toEnemyDir.x + aimDir.z * toEnemyDir.z, -1.0f, 1.0f);
             const float angle = std::acos(dot);
             if (angle > coneHalfAngleRad) continue;
 
             if (!ecs::combatutil::ApplyDamageToEnemy(registry, entity, damage)) continue;
 
-            // EnemyChaseSystemはEnemyKnockbackComponent保持中の敵への追従移動をスキップするため、
-            // ここで速度・持続時間を設定するだけで安全に吹き飛ばせる
+            // EnemyChaseSystemはEnemyKnockbackComponent保持中の敵への追従をスキップするため、安全に吹き飛ばせる
             auto& knockback = registry.get_or_emplace<ecs::EnemyKnockbackComponent>(entity);
             knockback.Velocity = { toEnemyDir.x * masterData.KnockbackForce, 0.0f, toEnemyDir.z * masterData.KnockbackForce };
             knockback.RemainingTime = masterData.KnockbackDuration;
@@ -123,9 +114,7 @@ namespace ecs
             ownerPos.z + aimDir.z * radius * kEffectForwardRatio,
         };
 
-        // 実際の判定射程(hitRadius)を可視化する（ImGui「Physics Debug」→「Show Colliders」）。
-        // 球形での近似表示のため、実際の扇状範囲(ConeAngleDegrees)より広く見える点に注意。
-        // トグルOFF中は描画されず無駄なため、ONの時だけ生成する。
+        // 判定射程を球形近似で可視化するため、実際の扇状範囲より広く見える点に注意。トグルONの時だけ生成する
         if (graphics::PhysicsDebugRenderer::Get().IsEnabled())
         {
             auto& manager = ::ecs::EntityManager::Get();
@@ -138,8 +127,7 @@ namespace ecs
             manager.AddComponent<ecs::TemporaryLifetimeComponent>(wireEntity).RemainingTime = kDebugWireLifetime;
         }
 
-        // 見た目のサイズは判定射程(hitRadius)ではなくradius(見た目基準)に合わせる。
-        // EffectIdsは';'区切りの素材ID列で複数指定可能(ecs::effectutil::ResolveEffectIds/PlayOneShotCombined参照)。
+        // 見た目のサイズは判定射程hitRadiusではなくradius基準に合わせる
         const float scale = radius / kEffectReferenceRadius;
         const std::string effectPath = ecs::effectutil::ResolveEffectIds(masterData.EffectIds);
         ecs::effectutil::PlayOneShotCombined(effectPath, effectPos, scale);

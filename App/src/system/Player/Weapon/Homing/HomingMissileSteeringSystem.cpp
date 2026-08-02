@@ -12,8 +12,7 @@ namespace ecs
 {
     void HomingMissileSteeringSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
     {
-        // 必殺技演出中は既存の追尾弾の旋回も一時停止させる(自動発動武器の弾のため
-        // Flicker Strike中は止めない。PlayerActionLock.h参照)
+        // 必殺技演出中は既存の追尾弾の旋回も一時停止させる
         if (ecs::IsPlayerUltimateActive(registry)) return;
 
         registry.view<ecs::ProjectileComponent, ecs::Transform>().each(
@@ -40,7 +39,6 @@ namespace ecs
             });
     }
 
-    /// <summary>DirectionをtargetPos方向へTurnSpeed*deltaTimeの範囲内で回転させる（XZ平面のみ、Yは常に0）</summary>
     void HomingMissileSteeringSystem::SteerTowards(
         DirectX::XMFLOAT3& direction,
         const DirectX::XMFLOAT3& fromPos,

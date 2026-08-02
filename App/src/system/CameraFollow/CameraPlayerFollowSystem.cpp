@@ -1,6 +1,6 @@
 ﻿#include "apppch.h"
 #include "CameraPlayerFollowSystem.h"
-#include <Utility/config/DebugConfig.h> // DEV_TOOL_ENABLED(Debug/Develop荳｡譁ｹ縺ｧ譛牙柑)繧貞盾辣ｧ縺吶ｋ縺溘ａ逶ｴ謗･include
+#include <Utility/config/DebugConfig.h>
 
 #include"../Tag/EntityTag.h"
 #include"CameraFollowOffsetComponent.h"
@@ -28,7 +28,7 @@ namespace ecs
 
     void CameraPlayerFollowSystem::Update(entt::registry& registry, float deltaTime, float rawDeltaTime)
 	{
-        // PlayerTag ・ｽ・ｽ・ｽ・ｽ・ｽﾂエ・ｽ・ｽ・ｽe・ｽB・ｽe・ｽB・ｽ・ｽ・ｽ・ｽ・ｽ・ｽ
+        // PlayerTagを持つ最初のエンティティを探す
         entt::entity playerEntity = entt::null;
         registry.view<ecs::Transform, ecs::PlayerTag>()
             .each([&](entt::entity entity, ecs::Transform&)
@@ -51,10 +51,7 @@ namespace ecs
                 {
                     if (entity == playerEntity) return;
 
-                    // If another system (e.g. PlayerUltimateSystem) requested an exclusive
-                    // camera position/lookAt via CameraOverrideComponent, apply that instead
-                    // of the normal follow-offset calculation. This system remains the sole
-                    // writer of the camera Transform; other systems only write the request.
+                    // 他のSystemがCameraOverrideComponentで排他的なカメラ位置を要求していればそちらを優先する。Transformの書き込みはこのシステムのみが行う
                     if (const auto* cameraOverride = registry.try_get<ecs::CameraOverrideComponent>(entity))
                     {
                         cameraTransform.SetPosition(cameraOverride->Position);

@@ -172,6 +172,12 @@ namespace sys
         return mIsQuitRequested;
     }
 
+    void Window::RequestQuit()
+    {
+        // WM_CLOSEを送ることで、WndProcのDestroyWindow→WM_DESTROY→PostQuitMessageという通常の終了経路に乗せる
+        ::PostMessage(mHandle, WM_CLOSE, 0, 0);
+    }
+
     /// <summary>
     /// ウィンドウハンドル取得
     /// </summary>
