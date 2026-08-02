@@ -1,18 +1,23 @@
 #pragma once
-#include"../Reflection.h"
-#include<SQLiteCpp/SQLiteCpp.h>
-#include<string>
-#include<vector>
-#include<optional>
-#include<memory>
-#include<stdexcept>
-#include<algorithm>
+#include "../Reflection.h"
+#include <SQLiteCpp/SQLiteCpp.h>
+#include <string>
+#include <vector>
+#include <optional>
+#include <memory>
+#include <stdexcept>
+#include <algorithm>
 
 namespace data
 {
-	// SQL型判定用
-	enum class eFieldType { Int, Float, Bool, String };
+    /// <summary>
+    /// SQL型判定用
+    /// </summary>
+    enum class eFieldType { Int, Float, Bool, String };
 
+    /// <summary>
+    /// SQLite読み込み用ビジター
+    /// </summary>
     class SqliteReadVisitor final : public IFieldVisitor
     {
     public:
@@ -26,6 +31,9 @@ namespace data
         int                mCol = 0;
     };
 
+    /// <summary>
+    /// SQLite書き込み用ビジター
+    /// </summary>
     class SqliteWriteVisitor final : public IFieldVisitor
     {
     public:
@@ -39,10 +47,13 @@ namespace data
         int                mIdx = 1;
     };
 
-    // SQL 型文字列を収集するビジター
+    /// <summary>
+    /// SQL 型文字列を収集するビジター
+    /// </summary>
     class SqlTypeVisitor final : public IFieldVisitor
     {
     public:
+        /// <summary>SQL型のリスト</summary>
         std::vector<std::string> Types;
         void OnInt(const std::string&, int&, eFieldFlag) override { Types.push_back("INTEGER"); }
         void OnFloat(const std::string&, float&, eFieldFlag) override { Types.push_back("REAL"); }
@@ -51,19 +62,22 @@ namespace data
     };
 
     /// <summary>
-    /// 列定義(名前・SQL型・既定値リテラル)を収集するビジター。
-    /// 既定値はデフォルト構築したインスタンスの値をそのまま使うため、
-    /// 後から追加した列にも構造体と同じ初期値が入る。
+    /// 列定義を収集するビジター
     /// </summary>
     class SqlColumnDefVisitor final : public IFieldVisitor
     {
     public:
+        /// <summary>カラム構造体</summary>
         struct Column
         {
+            /// <summary>カラム名</summary>
             std::string Name;
+            /// <summary>SQL型</summary>
             std::string Type;
+            /// <summary>既定値リテラル</summary>
             std::string DefaultLiteral;
         };
+        /// <summary>カラム定義のリスト</summary>
         std::vector<Column> Columns;
 
         void OnInt(const std::string& n, int& v, eFieldFlag) override
@@ -98,10 +112,13 @@ namespace data
         }
     };
 
-    // 主キー名を取り出すビジター
+    /// <summary>
+    /// 主キー名を取り出すビジター
+    /// </summary>
     class PkNameVisitor final : public IFieldVisitor
     {
     public:
+        /// <summary>主キー名</summary>
         std::string PkName;
         void OnInt(const std::string& name, int&, eFieldFlag f) override { if (HasFlag(f, eFieldFlag::PrimaryKey)) PkName = name; }
         void OnFloat(const std::string&, float&, eFieldFlag)   override {}
@@ -110,8 +127,7 @@ namespace data
     };
 
     /// <summary>
-    /// Sqliteの管理をする
-    /// １インスタンスをShaderedで共有する方向で。
+    /// Sqliteの管理をするクラス
     /// </summary>
     class SqliteManager
     {
@@ -121,14 +137,13 @@ namespace data
         {
         }
 
-        // テーブルが無ければ作成
+        /// <summary>テーブルが無ければ作成する</summary>
         template<typename T>
         void EnsureTable()
         {
             const auto& fields = TypeDescriptor<T>::Fields();
             const char* table = TypeDescriptor<T>::TableName();
 
-            // SQL 型を収集するためダミーインスタンスで VisitFields
             T dummy{};
             SqlTypeVisitor typeVis;
             VisitFields(dummy, typeVis);
@@ -145,20 +160,7 @@ namespace data
             mDb.exec(sql);
         }
 
-        /// <summary>
-        /// 既存テーブルに不足している列を追加する(前方互換のマイグレーション)。
-        ///
-        /// EnsureTable()のCREATE TABLE IF NOT EXISTSは既存テーブルの列構成を更新しないため、
-        /// 構造体へフィールドを1つ追加しただけで、以降LoadAll<T>()のSELECTが
-        /// 「no such column」でSQLite::Exceptionを投げ、Releaseビルドが起動直後に
-        /// クラッシュする(CSVを直接読むDebugビルドでは再現しない)という事故が起きる。
-        /// これを構造的に防ぐため、読み込み前に構造体の定義とDBの実列を突き合わせ、
-        /// 不足分をALTER TABLEで補う。
-        ///
-        /// 追加した列には構造体のデフォルト値が入る(既存行にも適用される)。
-        /// 列の削除・リネームは扱わない(SELECTは既知の列しか要求しないため、
-        /// DB側に余分な列が残っていても実害がない)。
-        /// </summary>
+        /// <summary>既存テーブルに不足している列を追加する</summary>
         template<typename T>
         void MigrateTable()
         {
@@ -173,7 +175,6 @@ namespace data
                 }
             }
 
-            // テーブル自体が存在しない場合はEnsureTable()が正しい構成で作るため何もしない
             if (existingColumns.empty()) return;
 
             T dummy{};
@@ -191,9 +192,7 @@ namespace data
             }
         }
 
-        // テーブルを削除する。CREATE TABLE IF NOT EXISTS(EnsureTable)は既存テーブルの列構成を
-        // 更新しないため、フィールド追加/削除等のスキーマ変更時はこれで一度削除してから
-        // SaveAll<T>()等を呼び、新しい列構成で作り直す
+        /// <summary>テーブルを削除する</summary>
         template<typename T>
         void DropTable()
         {
@@ -201,6 +200,7 @@ namespace data
             mDb.exec(std::string("DROP TABLE IF EXISTS ") + table + ";");
         }
 
+        /// <summary>全データを読み込む</summary>
         template<typename T>
         std::vector<T> LoadAll()
         {
@@ -217,6 +217,7 @@ namespace data
             return result;
         }
 
+        /// <summary>IDを指定してデータを取得する</summary>
         template<typename T>
         std::optional<T> FetchById(int id)
         {
@@ -241,6 +242,7 @@ namespace data
             return item;
         }
 
+        /// <summary>全データを保存する</summary>
         template<typename T>
         void SaveAll(const std::vector<T>& items)
         {
@@ -268,11 +270,14 @@ namespace data
             tx.commit();
         }
 
+        /// <summary>データベースインスタンスを取得する</summary>
         SQLite::Database& GetDb() { return mDb; }
 
     private:
+        /// <summary>データベース</summary>
         SQLite::Database mDb;
 
+        /// <summary>SELECT文を構築する</summary>
         template<typename FieldList>
         static std::string BuildSelectAll(const FieldList& fields, const char* table)
         {
@@ -282,5 +287,4 @@ namespace data
             return sql;
         }
     };
-
 }

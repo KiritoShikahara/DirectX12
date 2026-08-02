@@ -1,9 +1,9 @@
 #pragma once
 
-#include"../Loader/JsonSerializer.h"
-#include"../Reflection.h"
-#include<string>
-#include<functional>
+#include "../Loader/JsonSerializer.h"
+#include "../Reflection.h"
+#include <string>
+#include <functional>
 
 namespace data
 {
@@ -16,9 +16,11 @@ namespace data
     {
     public:
         explicit ConfigManager(std::string filePath)
-            : mFilePath(std::move(filePath)) {
+            : mFilePath(std::move(filePath))
+        {
         }
 
+        /// <summary>設定をファイルからロードする</summary>
         bool Load()
         {
             const bool loaded = JsonSerializer::LoadFromFile(mFilePath, mData);
@@ -30,6 +32,7 @@ namespace data
             return loaded;
         }
 
+        /// <summary>設定をファイルにセーブする</summary>
         void Save()
         {
             JsonSerializer::SaveToFile(mFilePath, mData);
@@ -37,6 +40,7 @@ namespace data
             mDirty = false;
         }
 
+        /// <summary>設定をデフォルト値にリセットする</summary>
         void Reset()
         {
             mData = T{};
@@ -44,16 +48,25 @@ namespace data
             if (mOnChanged) mOnChanged(mData);
         }
 
-        // アクセサ
+        /// <summary>設定データを取得する（非同期編集用）</summary>
         T& Get() { return mData; }
-        const T& Get()          const { return mData; }
-        bool     IsDirty()      const { return mDirty; }
-        const std::string& GetFilePath()    const { return mFilePath; }
+
+        /// <summary>設定データを取得する（読み取り専用）</summary>
+        const T& Get() const { return mData; }
+
+        /// <summary>未保存の変更があるかどうか</summary>
+        bool IsDirty() const { return mDirty; }
+
+        /// <summary>ファイルパスを取得する</summary>
+        const std::string& GetFilePath() const { return mFilePath; }
+
+        /// <summary>直近のメッセージを取得する</summary>
         const std::string& GetLastMessage() const { return mLastMessage; }
 
+        /// <summary>変更通知コールバックを設定する</summary>
         void SetOnChanged(std::function<void(const T&)> cb) { mOnChanged = std::move(cb); }
 
-        // 外部エディタ（ConfigEditor）が値を変更したことを通知する
+        /// <summary>外部エディタ（ConfigEditor）が値を変更したことを通知する</summary>
         void NotifyChanged()
         {
             mDirty = true;
