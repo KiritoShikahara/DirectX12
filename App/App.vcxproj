@@ -93,6 +93,11 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -177,7 +182,12 @@
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y /D "$(SolutionDir)CoreEngine\bin\dxc\*.dll" "$(TargetDir)"</Command>
+      <Command>xcopy /Y /D "$(SolutionDir)CoreEngine\bin\dxc\*.dll" "$(TargetDir)"
+xcopy /Y /I /D "$(ProjectDir).game_root" "$(TargetDir)Game\"
+xcopy /E /I /Y /D "$(ProjectDir)Assets" "$(TargetDir)Game\Assets\"
+xcopy /Y /I /D "$(SolutionDir)CoreEngine\.engine_root" "$(TargetDir)Engine\"
+xcopy /E /I /Y /D "$(SolutionDir)CoreEngine\Assets" "$(TargetDir)Engine\Assets\"
+xcopy /E /I /Y /D "$(SolutionDir)CoreEngine\BootstrapConfig" "$(TargetDir)Engine\BootstrapConfig\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup><ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Develop|x64'">
     <ClCompile>

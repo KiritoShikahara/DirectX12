@@ -155,17 +155,34 @@ namespace graphics
             const ecs::Transform* Transform = nullptr;
             const ecs::FbxComponent* Fbx = nullptr;
             ecs::FbxAnimComponent* Anim = nullptr;
+
+            /// <summary>カメラ距離の2乗(ソート用にUpdateAndDraw内で一度だけ計算)</summary>
+            float DistanceSq = 0.0f;
         };
 
         /// <summary>
         /// 最大インスタンス数
+        /// ウェーブ設定(MaxAliveEnemy=0=無制限)により敵の同時数は数百体規模になり得るため、
+        /// 静止物+キャラクター描画分の余裕を持たせる。
         /// </summary>
-        static constexpr uint32_t MAX_FBX_INSTANCES = 512u;
+        static constexpr uint32_t MAX_FBX_INSTANCES = 4096u;
 
         /// <summary>
-        /// 最大ボーン数
+        /// 同時にスキニング計算を許容するキャラクター数の上限
         /// </summary>
-        static constexpr uint32_t MAX_TOTAL_BONES = 32768u;
+        static constexpr uint32_t MAX_SKINNED_CHARACTERS = 1024u;
+
+        /// <summary>
+        /// 1体あたりに許容する最大ボーン数(現行モデルは99本。将来の高詳細モデルにも耐えるマージン)
+        /// </summary>
+        static constexpr uint32_t MAX_BONES_PER_CHARACTER = 128u;
+
+        /// <summary>
+        /// 最大ボーン数(全エンティティ合計。バッファが尽きても近距離の個体から優先的に確保されるよう
+        /// UpdateAndDraw でカメラ距離順にソートしてから Submit するため、超過時は遠距離の個体から
+        /// 順にスキニングが無効化される)
+        /// </summary>
+        static constexpr uint32_t MAX_TOTAL_BONES = MAX_SKINNED_CHARACTERS * MAX_BONES_PER_CHARACTER;
 
         /// <summary>
         /// 最大ライト数
