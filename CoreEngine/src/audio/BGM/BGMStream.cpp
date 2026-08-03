@@ -31,14 +31,14 @@ namespace audio
             return false;
         }
 
-        // ƒoƒŠƒf[ƒVƒ‡ƒ“
+        // ï¿½oï¿½ï¿½ï¿½fï¿½[ï¿½Vï¿½ï¿½ï¿½ï¿½
         if (mHeader.Channels == 0 || mHeader.FrameCount == 0 || mHeader.SampleRate == 0)
         {
             mFileStream.close();
             return false;
         }
 
-        // ƒŠƒ“ƒOƒoƒbƒtƒ@‚ğŠm•Ûiƒtƒ@ƒCƒ‹‚Ìƒ`ƒƒƒ“ƒlƒ‹”‚ÅŠm’èj
+        // ï¿½ï¿½ï¿½ï¿½ï¿½Oï¿½oï¿½bï¿½tï¿½@ï¿½ï¿½ï¿½mï¿½Ûiï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½Ìƒ`ï¿½ï¿½ï¿½ï¿½ï¿½lï¿½ï¿½ï¿½ï¿½ï¿½ÅŠmï¿½ï¿½j
         mRingCapFrames = kRingBufferFrames;
         mRingBuffer.assign(mRingCapFrames * mHeader.Channels, 0);
 
@@ -54,10 +54,10 @@ namespace audio
 
         mPlaying.store(true, std::memory_order_relaxed);
 
-        // ‚·‚Å‚ÉƒXƒŒƒbƒh‚ª“®‚¢‚Ä‚¢‚ê‚ÎÄ‹N“®‚µ‚È‚¢iPause ¨ Play ‚Ì•œ‹Aj
+        // ï¿½ï¿½ï¿½Å‚ÉƒXï¿½ï¿½ï¿½bï¿½hï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ÎÄ‹Nï¿½ï¿½ï¿½ï¿½ï¿½È‚ï¿½ï¿½iPause ï¿½ï¿½ Play ï¿½Ì•ï¿½ï¿½Aï¿½j
         if (mLoaderThread.joinable()) return;
 
-        // ƒ[ƒ_[ƒXƒŒƒbƒh‚ğ‹N“®
+        // ï¿½ï¿½ï¿½[ï¿½_ï¿½[ï¿½Xï¿½ï¿½ï¿½bï¿½hï¿½ï¿½ï¿½Nï¿½ï¿½
         mLoaderThread = std::jthread([this](std::stop_token st)
             {
                 LoaderThread(std::move(st));
@@ -66,20 +66,20 @@ namespace audio
 
     void BGMStream::Stop()
     {
-        // Ä¶ƒtƒ‰ƒO‚ğ—‚Æ‚·
+        // ï¿½Äï¿½ï¿½tï¿½ï¿½ï¿½Oï¿½ğ—‚Æ‚ï¿½
         mPlaying.store(false, std::memory_order_relaxed);
 
-        // jthread ‚É’â~‚ğ—v‹ ¨ LoaderThread ‚Ì wait ‚ğ‹N‚±‚·
+        // jthread ï¿½É’ï¿½~ï¿½ï¿½vï¿½ï¿½ ï¿½ï¿½ LoaderThread ï¿½ï¿½ wait ï¿½ï¿½ï¿½Nï¿½ï¿½ï¿½ï¿½
         mLoaderThread.request_stop();
         mLoaderCV.notify_all();
 
-        // jthread ‚ÌƒfƒXƒgƒ‰ƒNƒ^‚Å©“® join
+        // jthread ï¿½Ìƒfï¿½Xï¿½gï¿½ï¿½ï¿½Nï¿½^ï¿½Åï¿½ï¿½ï¿½ join
         if (mLoaderThread.joinable())
         {
             mLoaderThread.join();
         }
 
-        // ƒtƒ@ƒCƒ‹ˆÊ’u‚ğæ“ª‚ÌPCMƒf[ƒ^‚ÖƒŠƒZƒbƒg
+        // ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½Ê’uï¿½ï¿½æ“ªï¿½ï¿½PCMï¿½fï¿½[ï¿½^ï¿½Öƒï¿½ï¿½Zï¿½bï¿½g
         {
             std::lock_guard lock(mFileMtx);
             if (mFileStream.is_open())
@@ -89,12 +89,12 @@ namespace audio
             }
         }
 
-        // ƒŠƒ“ƒOƒoƒbƒtƒ@‚ğƒŠƒZƒbƒg
+        // ï¿½ï¿½ï¿½ï¿½ï¿½Oï¿½oï¿½bï¿½tï¿½@ï¿½ï¿½ï¿½ï¿½ï¿½Zï¿½bï¿½g
         mWritePos.store(0, std::memory_order_relaxed);
         mReadPos.store(0, std::memory_order_relaxed);
     }
 
-    void BGMStream::ApplyAndMix(int16_t* output, size_t framesRequested, uint16_t outputChannels, float masterVolume, float bgmVolume)
+    void BGMStream::ApplyAndMix(float* output, size_t framesRequested, uint16_t outputChannels, float masterVolume, float bgmVolume)
     {
         if (!mPlaying.load(std::memory_order_relaxed)) return;
 
@@ -111,9 +111,9 @@ namespace audio
 
             if (readable == 0)
             {
-                // ƒoƒbƒtƒ@ƒAƒ“ƒ_[ƒ‰ƒ“: c‚è‚ğ–³‰¹‚Å–„‚ß‚Äƒ[ƒ_[‚ğ‹N‚±‚·
-                // output ‚ÍŒÄ‚Ño‚µŒ³‚Å 0 ƒNƒŠƒAÏ‚İ‚È‚Ì‚Å’Ç‰Áˆ—•s—v
-                mLoaderCV.notify_one(); // ƒ[ƒ_[‚ğ‘‚ß‚É‹N‚±‚·ƒqƒ“ƒg
+                // ï¿½oï¿½bï¿½tï¿½@ï¿½Aï¿½ï¿½ï¿½_ï¿½[ï¿½ï¿½ï¿½ï¿½: ï¿½cï¿½ï¿½ğ–³‰ï¿½ï¿½Å–ï¿½ï¿½ß‚Äƒï¿½ï¿½[ï¿½_ï¿½[ï¿½ï¿½ï¿½Nï¿½ï¿½ï¿½ï¿½
+                // output ï¿½ÍŒÄ‚Ñoï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 0 ï¿½Nï¿½ï¿½ï¿½Aï¿½Ï‚İ‚È‚Ì‚Å’Ç‰ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½sï¿½v
+                mLoaderCV.notify_one(); // ï¿½ï¿½ï¿½[ï¿½_ï¿½[ï¿½ğ‘‚ß‚É‹Nï¿½ï¿½ï¿½ï¿½ï¿½qï¿½ï¿½ï¿½g
                 break;
             }
 
@@ -131,28 +131,25 @@ namespace audio
 
                     if (srcChannels == 1)
                     {
-                        // ƒ‚ƒmƒ‰ƒ‹ƒ\[ƒX ¨ ‘So—Íƒ`ƒƒƒ“ƒlƒ‹‚Ö•¡»
+                        // ï¿½ï¿½ï¿½mï¿½ï¿½ï¿½ï¿½ï¿½\ï¿½[ï¿½X ï¿½ï¿½ ï¿½Sï¿½oï¿½Íƒ`ï¿½ï¿½ï¿½ï¿½ï¿½lï¿½ï¿½ï¿½Ö•ï¿½ï¿½ï¿½
                         sample = static_cast<int32_t>(mRingBuffer[srcBase] * finalVolume);
                     }
                     else if (srcChannels >= 2 && outputChannels == 1)
                     {
-                        // ƒXƒeƒŒƒI ¨ ƒ‚ƒmƒ‰ƒ‹ ƒ_ƒEƒ“ƒ~ƒbƒNƒXiL+R ‚Ì•½‹Ïj
+                        // ï¿½Xï¿½eï¿½ï¿½ï¿½I ï¿½ï¿½ ï¿½ï¿½ï¿½mï¿½ï¿½ï¿½ï¿½ ï¿½_ï¿½Eï¿½ï¿½ï¿½~ï¿½bï¿½Nï¿½Xï¿½iL+R ï¿½Ì•ï¿½ï¿½Ïj
                         const int32_t l = mRingBuffer[srcBase + 0];
                         const int32_t r2 = mRingBuffer[srcBase + 1];
                         sample = static_cast<int32_t>((l + r2) * 0.5f * finalVolume);
                     }
                     else
                     {
-                        // ’Êí: ƒ\[ƒX‚Ìƒ`ƒƒƒ“ƒlƒ‹”‚ªo—Í‚æ‚è­‚È‚¢ê‡‚ÍÅIch‚Å•âŠ®
+                        // ï¿½Êï¿½: ï¿½\ï¿½[ï¿½Xï¿½Ìƒ`ï¿½ï¿½ï¿½ï¿½ï¿½lï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½oï¿½Í‚ï¿½è­ï¿½È‚ï¿½ï¿½ê‡ï¿½ÍÅIchï¿½Å•âŠ®
                         const uint16_t srcCh = std::min(ch, static_cast<uint16_t>(srcChannels - 1));
                         sample = static_cast<int32_t>(mRingBuffer[srcBase + srcCh] * finalVolume);
                     }
 
-                    const int32_t mixed = static_cast<int32_t>(output[outBase + ch]) + sample;
-                    output[outBase + ch] = static_cast<int16_t>(
-                        std::clamp(mixed,
-                            static_cast<int32_t>(INT16_MIN),
-                            static_cast<int32_t>(INT16_MAX)));
+                    // ã‚¯ãƒªãƒƒãƒ—ã›ãšåŠ ç®—ã™ã‚‹ã ã‘(æœ€çµ‚æ®µã§AudioManagerãŒãƒªãƒŸãƒƒã‚¿ãƒ¼ã‚’ã‹ã‘ã¦int16åŒ–ã™ã‚‹)
+                    output[outBase + ch] += static_cast<float>(sample);
                 }
 
                 ++r;
@@ -161,16 +158,16 @@ namespace audio
             framesMixed += framesToMix;
         }
 
-        // ƒR[ƒ‹ƒoƒbƒNƒXƒŒƒbƒh‚ªÁ”ï‚µ‚½ˆÊ’u‚ğƒ[ƒ_[‚Ö’Ê’mireleasej
+        // ï¿½Rï¿½[ï¿½ï¿½ï¿½oï¿½bï¿½Nï¿½Xï¿½ï¿½ï¿½bï¿½hï¿½ï¿½ï¿½ï¿½ï¿½ï‚µï¿½ï¿½ï¿½Ê’uï¿½ï¿½ï¿½ï¿½ï¿½[ï¿½_ï¿½[ï¿½Ö’Ê’mï¿½ireleaseï¿½j
         mReadPos.store(r, std::memory_order_release);
 
-        // ƒoƒbƒtƒ@‚É‹ó‚«‚ª‚Å‚«‚½‚Ì‚Åƒ[ƒ_[‚ğ‹N‚±‚·
+        // ï¿½oï¿½bï¿½tï¿½@ï¿½É‹ó‚«‚ï¿½ï¿½Å‚ï¿½ï¿½ï¿½ï¿½Ì‚Åƒï¿½ï¿½[ï¿½_ï¿½[ï¿½ï¿½ï¿½Nï¿½ï¿½ï¿½ï¿½
         mLoaderCV.notify_one();
     }
 
     void BGMStream::LoaderThread(std::stop_token stopToken)
     {
-        // ƒtƒ@ƒCƒ‹“Ç‚İ‚İ—p‚Ìˆêƒoƒbƒtƒ@
+        // ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½Ç‚İï¿½ï¿½İ—pï¿½Ìˆêï¿½oï¿½bï¿½tï¿½@
         std::vector<int16_t> readBuf;
 
         while (!stopToken.stop_requested())
@@ -179,14 +176,14 @@ namespace audio
 
             if (writable == 0)
             {
-                // ƒoƒbƒtƒ@‚ª–”t ¨ ­‚µ‹ó‚­‚Ü‚Å‘Ò‹@
+                // ï¿½oï¿½bï¿½tï¿½@ï¿½ï¿½ï¿½ï¿½ï¿½t ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ó‚­‚Ü‚Å‘Ò‹@
                 std::unique_lock lk(mLoaderCVMtx);
                 mLoaderCV.wait_for(lk, std::chrono::milliseconds(2),
                     [&] { return stopToken.stop_requested() || WritableFrames() > 0; });
                 continue;
             }
 
-            // ˆê“x‚É‘‚­ƒtƒŒ[ƒ€”iƒoƒbƒtƒ@‚Ì”¼•ª‚ğ–ÚˆÀ‚Éj
+            // ï¿½ï¿½xï¿½Éï¿½ï¿½ï¿½ï¿½tï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½iï¿½oï¿½bï¿½tï¿½@ï¿½Ì”ï¿½ï¿½ï¿½ï¿½ï¿½Úˆï¿½ï¿½Éj
             const size_t framesToLoad = std::min(writable, mRingCapFrames / 2);
             const size_t elemsToRead = framesToLoad * mHeader.Channels;
 
@@ -195,7 +192,7 @@ namespace audio
                 readBuf.resize(elemsToRead);
             }
 
-            // ƒtƒ@ƒCƒ‹‚©‚ç“Ç‚İ‚Ş
+            // ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç‚İï¿½ï¿½ï¿½
             size_t framesRead = 0;
             {
                 std::lock_guard lock(mFileMtx);
@@ -206,20 +203,20 @@ namespace audio
                 const std::streamsize bytesRead = mFileStream.gcount();
                 framesRead = static_cast<size_t>(bytesRead) / (mHeader.Channels * sizeof(int16_t));
 
-                // ƒtƒ@ƒCƒ‹––”ö“’B
+                // ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½B
                 if (framesRead < framesToLoad)
                 {
                     if (mLoop.load(std::memory_order_relaxed))
                     {
-                        // ƒ‹[ƒv: PCM æ“ª‚ÖƒV[ƒN
+                        // ï¿½ï¿½ï¿½[ï¿½v: PCM ï¿½æ“ªï¿½ÖƒVï¿½[ï¿½N
                         mFileStream.clear();
                         mFileStream.seekg(kPcmOffset, std::ios::beg);
-                        // “Ç‚İc‚µ‚Í¡‰ñ•ª‚¾‚¯‘‚¢‚ÄŸƒ‹[ƒv‚Åc‚è‚ğ“Ç‚Ş
+                        // ï¿½Ç‚İcï¿½ï¿½ï¿½Íï¿½ï¿½ñ•ª‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Äï¿½ï¿½ï¿½ï¿½[ï¿½vï¿½Åcï¿½ï¿½ï¿½Ç‚ï¿½
                     }
                     else
                     {
-                        // ”ñƒ‹[ƒv: “Ç‚ß‚½•ª‚¾‚¯‘‚¢‚ÄI—¹
-                        // framesRead == 0 ‚È‚ç‰½‚à‚µ‚È‚¢
+                        // ï¿½ñƒ‹[ï¿½v: ï¿½Ç‚ß‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÄIï¿½ï¿½
+                        // framesRead == 0 ï¿½È‚ç‰½ï¿½ï¿½ï¿½ï¿½ï¿½È‚ï¿½
                     }
                 }
             }
@@ -228,14 +225,14 @@ namespace audio
             {
                 if (!mLoop.load(std::memory_order_relaxed))
                 {
-                    // ––”ö“’B‚©‚Â”ñƒ‹[ƒv ¨ Ä¶I—¹
+                    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Bï¿½ï¿½ï¿½Â”ñƒ‹[ï¿½v ï¿½ï¿½ ï¿½Äï¿½ï¿½Iï¿½ï¿½
                     mPlaying.store(false, std::memory_order_relaxed);
                     break;
                 }
                 continue;
             }
 
-            // ƒŠƒ“ƒOƒoƒbƒtƒ@‚Ö‘‚«‚Ş
+            // ï¿½ï¿½ï¿½ï¿½ï¿½Oï¿½oï¿½bï¿½tï¿½@ï¿½Öï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             size_t w = mWritePos.load(std::memory_order_relaxed);
 
             for (size_t f = 0; f < framesRead; ++f)
@@ -251,25 +248,25 @@ namespace audio
                 ++w;
             }
 
-            // ƒR[ƒ‹ƒoƒbƒNƒXƒŒƒbƒh‚Ö‘‚¢‚½‚±‚Æ‚ğ’Ê’m
+            // ï¿½Rï¿½[ï¿½ï¿½ï¿½oï¿½bï¿½Nï¿½Xï¿½ï¿½ï¿½bï¿½hï¿½Öï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ‚ï¿½Ê’m
             mWritePos.store(w, std::memory_order_release);
         }
     }
 
     size_t BGMStream::WritableFrames() const noexcept
     {
-        // ƒ[ƒ_[ƒXƒŒƒbƒh‚Ì‚İ‚ªŒÄ‚Ô
-        // write ‚Æ read ‚ÌƒLƒƒƒbƒv· = ‹ó‚«—e—Ê
-        // -1 ‚µ‚Ä–”t‚Æ‹ó‚ğ‹æ•Ê‚·‚éiƒtƒ‹ƒoƒbƒtƒ@‚Í—e—Ê-1ƒtƒŒ[ƒ€‚Ü‚Åj
+        // ï¿½ï¿½ï¿½[ï¿½_ï¿½[ï¿½Xï¿½ï¿½ï¿½bï¿½hï¿½Ì‚İ‚ï¿½ï¿½Ä‚ï¿½
+        // write ï¿½ï¿½ read ï¿½ÌƒLï¿½ï¿½ï¿½bï¿½vï¿½ï¿½ = ï¿½ó‚«—eï¿½ï¿½
+        // -1 ï¿½ï¿½ï¿½Ä–ï¿½ï¿½tï¿½Æ‹ï¿½ï¿½ï¿½ï¿½Ê‚ï¿½ï¿½ï¿½iï¿½tï¿½ï¿½ï¿½oï¿½bï¿½tï¿½@ï¿½Í—eï¿½ï¿½-1ï¿½tï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½Ü‚Åj
         const size_t w = mWritePos.load(std::memory_order_relaxed);
-        const size_t r = mReadPos.load(std::memory_order_acquire); // ƒR[ƒ‹ƒoƒbƒN‘¤‚Ì‘‚«‚İ‚ğŒ©‚é
+        const size_t r = mReadPos.load(std::memory_order_acquire); // ï¿½Rï¿½[ï¿½ï¿½ï¿½oï¿½bï¿½Nï¿½ï¿½ï¿½Ìï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İ‚ï¿½ï¿½ï¿½ï¿½ï¿½
         const size_t used = (w - r + mRingCapFrames) % mRingCapFrames;
         return (mRingCapFrames - 1) - used;
     }
     size_t BGMStream::ReadableFrames() const noexcept
     {
-        // ƒR[ƒ‹ƒoƒbƒNƒXƒŒƒbƒh‚Ì‚İ‚ªŒÄ‚Ô
-        const size_t w = mWritePos.load(std::memory_order_acquire); // ƒ[ƒ_[‘¤‚Ì‘‚«‚İ‚ğŒ©‚é
+        // ï¿½Rï¿½[ï¿½ï¿½ï¿½oï¿½bï¿½Nï¿½Xï¿½ï¿½ï¿½bï¿½hï¿½Ì‚İ‚ï¿½ï¿½Ä‚ï¿½
+        const size_t w = mWritePos.load(std::memory_order_acquire); // ï¿½ï¿½ï¿½[ï¿½_ï¿½[ï¿½ï¿½ï¿½Ìï¿½ï¿½ï¿½ï¿½ï¿½ï¿½İ‚ï¿½ï¿½ï¿½ï¿½ï¿½
         const size_t r = mReadPos.load(std::memory_order_relaxed);
         return (w - r + mRingCapFrames) % mRingCapFrames;
     }

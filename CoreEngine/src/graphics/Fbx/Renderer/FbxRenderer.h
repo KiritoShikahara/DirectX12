@@ -124,13 +124,19 @@ namespace graphics
 
     private:
         /// <summary>
-        /// 1エンティティ分のデータをフレームバッファに積む
+        /// 1エンティティ分のワールド行列とボーン参照範囲を登録する(まだドローコールは作らない)
         /// </summary>
-        void Submit(
+        void RegisterInstance(
             const FbxResource& resource,
             const DirectX::XMFLOAT4X4& world,
             const std::vector<DirectX::XMFLOAT4X4>* boneMatrices,
             const DirectX::XMFLOAT4& customColor);
+
+        /// <summary>
+        /// mPendingInstances を Resource 単位でグルーピングし、
+        /// インスタンスバッファへ書き込みつつバッチ化されたドローコールを構築する
+        /// </summary>
+        void BuildDrawBatches();
 
         /// <summary>
         /// シャドウマップリソースを生成する
@@ -138,13 +144,28 @@ namespace graphics
         bool CreateShadowMapResources(DX12Device& device, GDescriptorHeapManager& heapManager);
 
         /// <summary>
-        /// 描画呼び出し情報
+        /// エンティティ登録済み・ドローコール未生成のインスタンス情報
+        /// (BaseColorFactor 等セクション固有の情報は BuildDrawBatches でセクションから補う)
         /// </summary>
-        struct DrawCall
+        struct PendingInstance
+        {
+            const FbxResource*  Resource = nullptr;
+            DirectX::XMFLOAT4X4 World = {};
+            DirectX::XMFLOAT4   CustomColor = { 1.f, 1.f, 1.f, 1.f };
+            uint32_t            BoneOffset = 0;
+            uint32_t            BoneCount = 0;
+        };
+
+        /// <summary>
+        /// バッチ化された描画呼び出し情報。同一 Resource × 同一セクションのインスタンスを
+        /// InstanceOffset..InstanceOffset+InstanceCount-1 としてまとめて1回の DrawIndexedInstanced で描画する
+        /// </summary>
+        struct DrawBatch
         {
             const FbxResource* Resource = nullptr;
             uint32_t           SectionIndex = 0;
-            uint32_t           InstanceIndex = 0;
+            uint32_t           InstanceOffset = 0;
+            uint32_t           InstanceCount = 0;
         };
 
         /// <summary>
@@ -179,7 +200,7 @@ namespace graphics
 
         /// <summary>
         /// 最大ボーン数(全エンティティ合計。バッファが尽きても近距離の個体から優先的に確保されるよう
-        /// UpdateAndDraw でカメラ距離順にソートしてから Submit するため、超過時は遠距離の個体から
+        /// UpdateAndDraw でカメラ距離順にソートしてから RegisterInstance するため、超過時は遠距離の個体から
         /// 順にスキニングが無効化される)
         /// </summary>
         static constexpr uint32_t MAX_TOTAL_BONES = MAX_SKINNED_CHARACTERS * MAX_BONES_PER_CHARACTER;
@@ -188,6 +209,12 @@ namespace graphics
         /// 最大ライト数
         /// </summary>
         static constexpr uint32_t MAX_LIGHTS = 64u;
+
+        /// <summary>
+        /// 最大ドローバッチ数(Resource種類×セクション数の組み合わせ上限。
+        /// インスタンス化により実際の同時使用モデル種類数はごく少数のため、余裕を持たせても小さい値で足りる)
+        /// </summary>
+        static constexpr uint32_t MAX_DRAW_BATCHES = 256u;
 
         /// <summary>
         /// 既定の打ち切り距離
@@ -236,8 +263,11 @@ namespace graphics
         /// <summary>ボーンデータリスト</summary>
         std::vector<DirectX::XMFLOAT4X4> mBoneData;
 
-        /// <summary>描画呼び出しリスト</summary>
-        std::vector<DrawCall>             mDrawCalls;
+        /// <summary>エンティティ登録済み・グルーピング前のインスタンス一時バッファ</summary>
+        std::vector<PendingInstance>      mPendingInstances;
+
+        /// <summary>バッチ化された描画呼び出しリスト</summary>
+        std::vector<DrawBatch>            mDrawBatches;
 
         /// <summary>ライトデータリスト</summary>
         std::vector<LightData>            mLightData;

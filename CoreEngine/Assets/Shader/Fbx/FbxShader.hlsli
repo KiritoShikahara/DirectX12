@@ -5,14 +5,16 @@
 static const float PI = 3.14159265359f;
 
 // ============================================================
-//  インスタンスインデックス (Root32BitConstant / b0)
-//  DrawCall毎に SetGraphicsRoot32BitConstant で直接書き込む
-//  → SV_InstanceID + StartInstanceLocation の挙動依存を排除
-//  → 複数モデルを描画しても確実に正しいインスタンスデータを参照できる
+//  インスタンスバッチ先頭オフセット (Root32BitConstant / b0)
+//  バッチ(同一リソース×同一セクション)毎に SetGraphicsRoot32BitConstant で書き込む。
+//  実際のインスタンスインデックスは g_InstanceBase + SV_InstanceID。
+//  StartInstanceLocation は常に0で描画し、その暗黙加算の挙動には依存しない。
+//  SV_InstanceID 自体はDrawCall内で0起点であることがD3D12仕様で保証されるため
+//  複数バッチを描画しても確実に正しいインスタンスデータを参照できる。
 // ============================================================
-cbuffer FbxInstanceIndexCB : register(b0)
+cbuffer FbxInstanceBaseCB : register(b0)
 {
-    uint g_InstanceIndex;
+    uint g_InstanceBase;
 };
 
 // ============================================================
@@ -109,6 +111,7 @@ struct VSInput
     float3 Tangent : TANGENT;
     int4 BoneIndex : BONE_INDEX;
     float4 Weight : WEIGHT;
+    uint InstanceID : SV_InstanceID;
 };
 
 struct VSOutput
@@ -120,6 +123,8 @@ struct VSOutput
     float3 WorldTangent : TEXCOORD3;
     float3 WorldBitan : TEXCOORD4;
     float4 ShadowPos : TEXCOORD5; // ライト空間クリップ座標
+    // PSはSV_InstanceIDを直接受け取れないため、VSで解決したインデックスを補間なしで渡す
+    nointerpolation uint InstanceIndex : TEXCOORD6;
 };
 
 // ============================================================

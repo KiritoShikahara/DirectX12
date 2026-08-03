@@ -61,13 +61,18 @@ namespace graphics
         ///<summary>直近フレームで生存していたエフェクトインスタンス(Handle)数</summary>
         int32_t GetLastInstanceCount() const { return mLastInstanceCount; }
 
-        ///<summary>パーティクル更新を並列化するワーカースレッド数。0で無効化できる</summary>
-        static constexpr uint32_t EFFECT_WORKER_THREAD_COUNT = 8;
+        ///<summary>
+        /// パーティクル更新を並列化するワーカースレッド数の上限。
+        /// 実際の起動数は Initialize() 内でハードウェアの論理コア数に応じて動的に決定する
+        /// (Render用3スレッド・Jolt物理のジョブスレッドと同時に稼働するため、
+        ///  コア数の少ないPCでのCPUオーバーサブスクリプションを避ける)
+        ///</summary>
+        static constexpr uint32_t MAX_EFFECT_WORKER_THREADS = 8;
 
         ///<summary>生成直後にエフェクトを隠しておく時間(tick数、60fps基準)</summary>
         static constexpr float GetSpawnHiddenTicks()
         {
-            return (EFFECT_WORKER_THREAD_COUNT > 0) ? 2.0f : 1.0f;
+            return (MAX_EFFECT_WORKER_THREADS > 0) ? 2.0f : 1.0f;
         }
 
         ///<summary>effect.Effect.Play()の直後に必ず呼ぶこと。生成直後の見た目崩れを隠す</summary>

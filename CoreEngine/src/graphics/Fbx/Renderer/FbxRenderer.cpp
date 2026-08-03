@@ -86,7 +86,8 @@ namespace graphics
 
         mInstanceData.reserve(MAX_FBX_INSTANCES);
         mBoneData.reserve(MAX_TOTAL_BONES);
-        mDrawCalls.reserve(MAX_FBX_INSTANCES * 4);
+        mPendingInstances.reserve(MAX_FBX_INSTANCES);
+        mDrawBatches.reserve(MAX_DRAW_BATCHES);
 
         // 距離LODの切り替えUI
 #if DEV_TOOL_ENABLED
@@ -244,7 +245,8 @@ namespace graphics
     {
         mInstanceData.clear();
         mBoneData.clear();
-        mDrawCalls.clear();
+        mPendingInstances.clear();
+        mDrawBatches.clear();
     }
 
     void FbxRenderer::UpdateAndDraw(entt::registry& registry)
@@ -286,7 +288,8 @@ namespace graphics
 
         // ボーン/インスタンスバッファが敵の総数に対して不足した場合でも、
         // カメラに近く画面上で目立つ個体から優先的にGPUバッファへ確保されるようにする。
-        // (超過分は Submit() 側でスキニング無効化/描画スキップされるが、その対象は必ず遠距離側になる)
+        // (超過分は RegisterInstance/BuildDrawBatches 側でスキニング無効化/描画スキップされるが、
+        //  その対象は必ず遠距離側になる)
         std::sort(mRenderItems.begin(), mRenderItems.end(),
             [](const RenderItem& a, const RenderItem& b) { return a.DistanceSq < b.DistanceSq; });
 
@@ -325,8 +328,11 @@ namespace graphics
                 ? &item.Anim->BoneMatrices
                 : nullptr;
 
-            Submit(*item.Fbx->Resource, worldF, bonePtr, item.Fbx->CustomColor);
+            RegisterInstance(*item.Fbx->Resource, worldF, bonePtr, item.Fbx->CustomColor);
         }
+
+        // Resource単位でグルーピングし、バッチ化されたドローコールを構築
+        BuildDrawBatches();
 
         // GPUバッファへ転送
         if (!mInstanceData.empty())
@@ -344,57 +350,110 @@ namespace graphics
         }
     }
 
-    void FbxRenderer::Submit(
+    void FbxRenderer::RegisterInstance(
         const FbxResource& resource,
         const XMFLOAT4X4& world,
         const std::vector<XMFLOAT4X4>* boneMatrices,
         const XMFLOAT4& customColor)
     {
-        const uint32_t boneOffset = static_cast<uint32_t>(mBoneData.size());
-        uint32_t       boneCount = 0u;
+        uint32_t boneOffset = 0u;
+        uint32_t boneCount = 0u;
 
         if (boneMatrices && !boneMatrices->empty() && resource.HasSkinning())
         {
+            boneOffset = static_cast<uint32_t>(mBoneData.size());
             boneCount = static_cast<uint32_t>(boneMatrices->size());
             if (boneOffset + boneCount <= MAX_TOTAL_BONES)
                 mBoneData.insert(mBoneData.end(), boneMatrices->begin(), boneMatrices->end());
             else
             {
                 DEBUG_LOG(sys::eLogLevel::Warning, "FbxRenderer: BoneBuffer overflow. Skinning skipped.");
+                boneOffset = 0u;
                 boneCount = 0u;
             }
         }
 
-        const auto& sections = resource.GetSections();
-        for (uint32_t si = 0; si < static_cast<uint32_t>(sections.size()); ++si)
+        if (mPendingInstances.size() >= MAX_FBX_INSTANCES)
         {
-            if (mInstanceData.size() >= MAX_FBX_INSTANCES)
+            DEBUG_LOG(sys::eLogLevel::Warning, "FbxRenderer: PendingInstance overflow. Entity skipped.");
+            return;
+        }
+
+        mPendingInstances.push_back({ &resource, world, customColor, boneOffset, boneCount });
+    }
+
+    void FbxRenderer::BuildDrawBatches()
+    {
+        if (mPendingInstances.empty()) return;
+
+        // 同一 Resource が連続するようグルーピング(安定ソートなので各グループ内は
+        // カメラ距離順=近い個体優先の元の並びを維持したまま保たれる)
+        std::stable_sort(mPendingInstances.begin(), mPendingInstances.end(),
+            [](const PendingInstance& a, const PendingInstance& b)
             {
-                DEBUG_LOG(sys::eLogLevel::Warning, "FbxRenderer: InstanceBuffer overflow. Draw skipped.");
-                break;
+                return std::less<const FbxResource*>{}(a.Resource, b.Resource);
+            });
+
+        const size_t total = mPendingInstances.size();
+        size_t groupBegin = 0;
+        bool   bufferFull = false;
+
+        while (groupBegin < total && !bufferFull)
+        {
+            const FbxResource* resource = mPendingInstances[groupBegin].Resource;
+            size_t groupEnd = groupBegin + 1;
+            while (groupEnd < total && mPendingInstances[groupEnd].Resource == resource)
+                ++groupEnd;
+
+            const auto& sections = resource->GetSections();
+            for (uint32_t si = 0; si < static_cast<uint32_t>(sections.size()) && !bufferFull; ++si)
+            {
+                const FbxSection& sec = sections[si];
+                const uint32_t    instanceOffset = static_cast<uint32_t>(mInstanceData.size());
+
+                for (size_t i = groupBegin; i < groupEnd; ++i)
+                {
+                    if (mInstanceData.size() >= MAX_FBX_INSTANCES)
+                    {
+                        DEBUG_LOG(sys::eLogLevel::Warning, "FbxRenderer: InstanceBuffer overflow. Draw skipped.");
+                        bufferFull = true;
+                        break;
+                    }
+
+                    const PendingInstance& pending = mPendingInstances[i];
+
+                    FbxInstanceData inst = {};
+                    inst.World = pending.World;
+                    inst.BaseColorFactor = sec.BaseColorFactor;
+                    inst.MetallicFactor = sec.MetallicFactor;
+                    inst.RoughnessFactor = sec.RoughnessFactor;
+                    inst.EmissiveFactor = sec.EmissiveFactor;
+                    inst.BoneOffset = pending.BoneOffset;
+                    inst.BoneCount = pending.BoneCount;
+                    inst.HasAlbedo = sec.AlbedoTexture ? 1u : 0u;
+                    inst.HasNormal = sec.NormalTexture ? 1u : 0u;
+                    inst.HasMetallic = sec.MetallicTexture ? 1u : 0u;
+                    inst.HasRoughness = sec.RoughnessTexture ? 1u : 0u;
+                    inst.HasAO = sec.AOTexture ? 1u : 0u;
+                    inst.HasEmissive = sec.EmissiveTexture ? 1u : 0u;
+                    inst.CustomColor = pending.CustomColor;
+
+                    mInstanceData.push_back(inst);
+                }
+
+                const uint32_t instanceCount = static_cast<uint32_t>(mInstanceData.size()) - instanceOffset;
+                if (instanceCount == 0) continue;
+
+                if (mDrawBatches.size() >= MAX_DRAW_BATCHES)
+                {
+                    DEBUG_LOG(sys::eLogLevel::Warning, "FbxRenderer: DrawBatch overflow. Batch skipped.");
+                    continue;
+                }
+
+                mDrawBatches.push_back({ resource, si, instanceOffset, instanceCount });
             }
 
-            const FbxSection& sec = sections[si];
-
-            FbxInstanceData inst = {};
-            inst.World = world;
-            inst.BaseColorFactor = sec.BaseColorFactor;
-            inst.MetallicFactor = sec.MetallicFactor;
-            inst.RoughnessFactor = sec.RoughnessFactor;
-            inst.EmissiveFactor = sec.EmissiveFactor;
-            inst.BoneOffset = boneOffset;
-            inst.BoneCount = boneCount;
-            inst.HasAlbedo = sec.AlbedoTexture ? 1u : 0u;
-            inst.HasNormal = sec.NormalTexture ? 1u : 0u;
-            inst.HasMetallic = sec.MetallicTexture ? 1u : 0u;
-            inst.HasRoughness = sec.RoughnessTexture ? 1u : 0u;
-            inst.HasAO = sec.AOTexture ? 1u : 0u;
-            inst.HasEmissive = sec.EmissiveTexture ? 1u : 0u;
-            inst.CustomColor = customColor;
-
-            const uint32_t instanceIndex = static_cast<uint32_t>(mInstanceData.size());
-            mInstanceData.push_back(inst);
-            mDrawCalls.push_back({ &resource, si, instanceIndex });
+            groupBegin = groupEnd;
         }
     }
 
@@ -404,7 +463,7 @@ namespace graphics
         if (mLightData.empty()) return;
         const LightData& shadowLight = mLightData[0];
         if (shadowLight.Type != 0 /*DIRECTIONAL*/ || !shadowLight.CastShadow) return;
-        if (mDrawCalls.empty()) return;
+        if (mDrawBatches.empty()) return;
 
         // Shadow Map を DSV として使えるようにバリア 
         auto barrierToDSV = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -451,22 +510,22 @@ namespace graphics
         cmdList->SetGraphicsRoot32BitConstant(
             FbxPipeline::SLOT_SHADOW_LIGHT_INDEX, 0u, 0);
 
-        // DrawCall ループ 
+        // DrawBatch ループ (同一Resource×同一セクションのインスタンスをまとめて1回で描画)
         const FbxResource* prevResource = nullptr;
 
-        for (const DrawCall& dc : mDrawCalls)
+        for (const DrawBatch& batch : mDrawBatches)
         {
             cmdList->SetGraphicsRoot32BitConstant(
-                FbxPipeline::SLOT_INSTANCE_INDEX, dc.InstanceIndex, 0);
+                FbxPipeline::SLOT_INSTANCE_BASE, batch.InstanceOffset, 0);
 
-            if (dc.Resource != prevResource)
+            if (batch.Resource != prevResource)
             {
-                dc.Resource->SetBuffers(cmdList);
-                prevResource = dc.Resource;
+                batch.Resource->SetBuffers(cmdList);
+                prevResource = batch.Resource;
             }
 
-            const FbxSection& sec = dc.Resource->GetSections()[dc.SectionIndex];
-            cmdList->DrawIndexedInstanced(sec.IndexCount, 1, sec.IndexOffset, 0, 0);
+            const FbxSection& sec = batch.Resource->GetSections()[batch.SectionIndex];
+            cmdList->DrawIndexedInstanced(sec.IndexCount, batch.InstanceCount, sec.IndexOffset, 0, 0);
         }
 
         // Shadow Map を SRVに戻す
@@ -479,7 +538,7 @@ namespace graphics
 
     void FbxRenderer::End(ID3D12GraphicsCommandList* cmdList)
     {
-        if (mDrawCalls.empty()) return;
+        if (mDrawBatches.empty()) return;
 
         ID3D12DescriptorHeap* heaps[] = { mHeapManager->GetNativeHeap() };
         cmdList->SetDescriptorHeaps(1, heaps);
@@ -506,7 +565,7 @@ namespace graphics
             FbxPipeline::SLOT_SHADOW_MAP,
             hasShadow ? mShadowMapSRV.GetGpuHandle() : mShadowMapNullSRV.GetGpuHandle());
 
-        // DrawCall ループ 
+        // DrawBatch ループ (同一Resource×同一セクションのインスタンスをまとめて1回で描画)
         Texture* prevTex[6] = {};
         const FbxResource* prevResource = nullptr;
 
@@ -518,17 +577,17 @@ namespace graphics
                 if (t) cmdList->SetGraphicsRootDescriptorTable(slot, t->GetGpuHandle());
             };
 
-        for (const DrawCall& dc : mDrawCalls)
+        for (const DrawBatch& batch : mDrawBatches)
         {
-            const FbxSection& sec = dc.Resource->GetSections()[dc.SectionIndex];
+            const FbxSection& sec = batch.Resource->GetSections()[batch.SectionIndex];
 
             cmdList->SetGraphicsRoot32BitConstant(
-                FbxPipeline::SLOT_INSTANCE_INDEX, dc.InstanceIndex, 0);
+                FbxPipeline::SLOT_INSTANCE_BASE, batch.InstanceOffset, 0);
 
-            if (dc.Resource != prevResource)
+            if (batch.Resource != prevResource)
             {
-                dc.Resource->SetBuffers(cmdList);
-                prevResource = dc.Resource;
+                batch.Resource->SetBuffers(cmdList);
+                prevResource = batch.Resource;
             }
 
             BindTex(FbxPipeline::SLOT_ALBEDO_TEX, 0, sec.AlbedoTexture, mDefaultWhiteTexture);
@@ -538,7 +597,7 @@ namespace graphics
             BindTex(FbxPipeline::SLOT_AO_TEX, 4, sec.AOTexture, mDefaultWhiteTexture);
             BindTex(FbxPipeline::SLOT_EMISSIVE_TEX, 5, sec.EmissiveTexture, mDefaultBlackTexture);
 
-            cmdList->DrawIndexedInstanced(sec.IndexCount, 1, sec.IndexOffset, 0, 0);
+            cmdList->DrawIndexedInstanced(sec.IndexCount, batch.InstanceCount, sec.IndexOffset, 0, 0);
         }
     }
 

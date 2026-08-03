@@ -22,7 +22,8 @@ struct VS_SHADOW_OUT
 
 VS_SHADOW_OUT main(VSInput input)
 {
-    FbxInstanceData inst = InstanceBuffer[g_InstanceIndex];
+    uint instanceIndex = g_InstanceBase + input.InstanceID;
+    FbxInstanceData inst = InstanceBuffer[instanceIndex];
     LightData light = LightBuffer[g_ShadowLightIndex];
 
     float3 pos = input.Position;

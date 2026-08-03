@@ -132,24 +132,31 @@ namespace audio
 	{
 		auto* mgr = reinterpret_cast<AudioManager*>(pDevice->pUserData);
 		const uint16_t channels = static_cast<uint16_t>(pDevice->playback.channels);
-		mgr->MixSounds(reinterpret_cast<int16_t*>(pOutput), frameCount, channels);
+		mgr->MixSounds(reinterpret_cast<int16_t*>(pOutput), frameCount, channels, pDevice->sampleRate);
 	}
-	void AudioManager::MixSounds(int16_t* output, size_t framesRequested, uint16_t channels)
+	void AudioManager::MixSounds(int16_t* output, size_t framesRequested, uint16_t channels, uint32_t sampleRate)
 	{
 		std::lock_guard lock(mMtx);
-		std::fill(output, output + framesRequested * channels, int16_t{ 0 });
+
+		// float合成バスを必要サイズだけ確保(拡張が要る場合のみ再確保、通常フレームは再利用)
+		const size_t sampleCount = framesRequested * channels;
+		if (mMixBuffer.size() < sampleCount)
+		{
+			mMixBuffer.resize(sampleCount);
+		}
+		std::fill(mMixBuffer.begin(), mMixBuffer.begin() + sampleCount, 0.0f);
 
 		const float master = mMasterVolume.load();
 		const float bgmVol = mBgmVolume.load();
 		const float seVol = mSeVolume.load();
 
-		// BGM のミキシング
+		// BGM のミキシング(floatバスへ加算するだけ、クリップしない)
 		if (mActiveBgm && mActiveBgm->IsPlaying())
 		{
-			mActiveBgm->ApplyAndMix(output, framesRequested, channels, master, bgmVol);
+			mActiveBgm->ApplyAndMix(mMixBuffer.data(), framesRequested, channels, master, bgmVol);
 		}
 
-		// SEのミキシングとライフサイクル管理
+		// SEのミキシングとライフサイクル管理(floatバスへ加算するだけ、クリップしない)
 		for (auto it = mSoundEffects.begin(); it != mSoundEffects.end(); )
 		{
 			if (!it->IsPlaying())
@@ -157,9 +164,44 @@ namespace audio
 				it = mSoundEffects.erase(it);
 				continue;
 			}
-			it->ApplyAndMix(output, framesRequested, channels, master, seVol);
+			it->ApplyAndMix(mMixBuffer.data(), framesRequested, channels, master, seVol);
 			++it;
 		}
 
+		// 合成済みのfloatバスへ1回だけリミッターをかけてint16へ書き出す
+		ApplyLimiterAndWrite(output, framesRequested, channels, sampleRate);
+	}
+
+	void AudioManager::ApplyLimiterAndWrite(int16_t* output, size_t frameCount, uint16_t channels, uint32_t sampleRate)
+	{
+		// サンプルごとの追従係数(one-pole envelope)。時定数を秒からサンプル単位へ変換
+		const float attackCoeff = std::exp(-1.0f / (kLimiterAttackSeconds * static_cast<float>(sampleRate)));
+		const float releaseCoeff = std::exp(-1.0f / (kLimiterReleaseSeconds * static_cast<float>(sampleRate)));
+
+		float gain = mLimiterGain;
+
+		for (size_t frame = 0; frame < frameCount; ++frame)
+		{
+			// フレーム内の最大絶対値(全チャンネル共通ゲインでLR間の定位ズレを防ぐ)
+			float peak = 0.0f;
+			for (uint16_t ch = 0; ch < channels; ++ch)
+			{
+				peak = std::max(peak, std::abs(mMixBuffer[frame * channels + ch]));
+			}
+
+			// しきい値を超えた分だけゲインを下げる。超えていなければ目標は1.0(=無加工)
+			const float targetGain = (peak > kLimiterThreshold) ? (kLimiterThreshold / peak) : 1.0f;
+			const float coeff = (targetGain < gain) ? attackCoeff : releaseCoeff;
+			gain = targetGain + (gain - targetGain) * coeff;
+
+			for (uint16_t ch = 0; ch < channels; ++ch)
+			{
+				const float sample = mMixBuffer[frame * channels + ch] * gain;
+				output[frame * channels + ch] = static_cast<int16_t>(
+					std::clamp(sample, static_cast<float>(INT16_MIN), static_cast<float>(INT16_MAX)));
+			}
+		}
+
+		mLimiterGain = gain;
 	}
 }
