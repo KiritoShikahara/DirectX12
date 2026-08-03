@@ -64,6 +64,46 @@ Releaseでも`(0)`として定義されているため常に真になり、意�
 3. ファイル削除時はvcxproj/filters両方からエントリを削除すること
    （残っているとビルド時にファイルが見つからずエラーになる）。
 
+## アセットパス解決の2方式が混在している(exe単体配布で罠になる)
+
+- **CoreEngine内部資産**(シェーダー/フォント/既定テクスチャ/BootstrapConfig)は
+  `sys::AssetPathManager`(`CoreEngine/src/system/AssetPath/AssetPathManager.h`)
+  経由。`ASSET_PATH("/Engine/...")`マクロで仮想パスを解決する。
+  `.game_root`(`App/.game_root`)・`.engine_root`(`CoreEngine/.engine_root`)という
+  マーカーファイルを、exeの場所(`GetModuleFileNameW`)またはCWDから最大20階層
+  親を遡りつつ、各階層の直下フォルダも探索して見つける方式。**exeの場所にも
+  依存できるため、配布後も動く設計。**
+- **App側のゲームコンテンツ**(FBX/テクスチャ/CSV/DB/セーブデータ/効果音/エフェクト)
+  は`ASSET_PATH`を経由せず、`"Assets/Data/Enemy/EnemyData.csv"`のような**生の
+  相対パス文字列**をそのまま`TextureManager`/`FbxResourceManager`/`DataRegistry`/
+  `ConfigRegistry`/`AudioManager`/`EffekseerManager`に渡している(App配下のみで
+  100箇所近く該当、全て`"Assets/"`始まりで例外なし)。これは`std::filesystem::absolute()`
+  で**プロセスのCWD基準**に解決されるため、**exeをどこから起動したかでCWDが変わると
+  読み込みが壊れる**(VSからF5実行だとCWD既定値が`$(ProjectDir)`=`App\`になり
+  たまたま動くが、`x64\Release\App.exe`を直接ダブルクリックするとCWDがexe自身の
+  フォルダになり、直下に`Assets`が無いため全滅する)。
+
+**対策(実装済み)**:
+1. `Engine::Initialize()`(`CoreEngine/src/system/Engine/Engine.cpp`)で
+   `AssetPathManager::Initialize()`直後に`AssetPathManager::Get().Resolve("/Game")`
+   でGameルートを取得し、`std::filesystem::current_path()`でCWDをそこへ固定。
+   起動方法に関わらず生の相対パス側の解決先を一致させる。
+2. `App.vcxproj`のRelease構成PostBuildEventで、`$(TargetDir)`配下に
+   `Game\`(`App/.game_root` + `App/Assets/*`)と`Engine\`
+   (`CoreEngine/.engine_root` + `CoreEngine/Assets/*` + `CoreEngine/BootstrapConfig/*`)
+   をxcopyで複製する。`AssetPathManager`のマーカー探索は「自分の直下サブフォルダに
+   マーカーがあるか」も見るため、exe直下に`Game\`/`Engine\`が揃っていれば
+   **exeのフォルダを丸ごとコピーするだけで単体起動できる**(ソースツリー側の
+   `App\`/`CoreEngine\`を探しに行かない)。Debug/Developはこの複製をしない
+   (VS実行前提でCWDが`App\`になるため元から動く。無用な変更を避けるため据え置き)。
+
+## 起動シーンの切り替え(START_SCENE_NAME)
+
+`App/src/macros.h`の`START_SCENE_NAME`は`DEV_TOOL_ENABLED`で分岐する
+(`#if DEV_TOOL_ENABLED`則り、`<Utility/config/DebugConfig.h>`を直接include必須)。
+- Debug/Develop: `GAME_SCENE_NAME`(検証効率優先で従来通りGameから開始)
+- Release: `TITLE_SCENE_NAME`(製品版は必ずTitleから開始)
+
 ## コンソール出力の文字化けに注意
 
 Windowsコンソールの既定コードページ(932)では、UTF-8(BOM付き)ソースの
