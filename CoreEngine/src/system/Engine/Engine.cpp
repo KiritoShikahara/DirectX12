@@ -100,6 +100,18 @@ namespace sys
         SINGLETON_REF(sys::AssetPathManager, AssetManager);
         sys::AssetPathManager::Get().Initialize();
 
+        // App側の資産読込は "Assets/..." のような生の相対パス(CWD基準)に依存している。
+        // VSデバッグ実行時はCWDが既定でApp直下になるため問題無いが、
+        // ビルド後のexeを直接起動するとCWDがexe自身のフォルダ(x64/Release等)になり、
+        // 直下にAssetsが無いため読込に失敗する。AssetPathManagerが探索済みのGameルート
+        // (App直下)へCWDを固定し、起動方法に関わらず解決先を一致させる。
+        const auto gameRoot = sys::AssetPathManager::Get().Resolve("/Game");
+        if (!gameRoot.empty())
+        {
+            std::error_code ec;
+            std::filesystem::current_path(gameRoot, ec);
+        }
+
         mTimeManager = &::sys::TimeManager::Get();
 
         mTimeManager->Initialize();

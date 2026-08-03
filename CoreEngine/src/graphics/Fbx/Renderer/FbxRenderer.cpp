@@ -275,8 +275,20 @@ namespace graphics
             {
                 if (!fbxComp.IsVisible || !fbxComp.Resource || !fbxComp.Resource->IsLoaded()) return;
                 ecs::FbxAnimComponent* anim = registry.try_get<ecs::FbxAnimComponent>(entity);
-                mRenderItems.push_back({ &tr, &fbxComp, anim });
+
+                const XMFLOAT3& pos = tr.GetPosition();
+                const float dx = pos.x - scene.CameraPosition.x;
+                const float dy = pos.y - scene.CameraPosition.y;
+                const float dz = pos.z - scene.CameraPosition.z;
+
+                mRenderItems.push_back({ &tr, &fbxComp, anim, dx * dx + dy * dy + dz * dz });
             });
+
+        // ボーン/インスタンスバッファが敵の総数に対して不足した場合でも、
+        // カメラに近く画面上で目立つ個体から優先的にGPUバッファへ確保されるようにする。
+        // (超過分は Submit() 側でスキニング無効化/描画スキップされるが、その対象は必ず遠距離側になる)
+        std::sort(mRenderItems.begin(), mRenderItems.end(),
+            [](const RenderItem& a, const RenderItem& b) { return a.DistanceSq < b.DistanceSq; });
 
         for (auto& item : mRenderItems)
         {
@@ -287,15 +299,7 @@ namespace graphics
                 bool needsCalc = true;
 
                 if (mAnimationDistanceLodEnabled && !item.Anim->BoneMatrices.empty())
-                {
-                    const XMFLOAT3& pos = item.Transform->GetPosition();
-                    const float dx = pos.x - scene.CameraPosition.x;
-                    const float dy = pos.y - scene.CameraPosition.y;
-                    const float dz = pos.z - scene.CameraPosition.z;
-                    const float distSq = dx * dx + dy * dy + dz * dz;
-
-                    needsCalc = (distSq <= mAnimationUpdateDistance * mAnimationUpdateDistance);
-                }
+                    needsCalc = (item.DistanceSq <= mAnimationUpdateDistance * mAnimationUpdateDistance);
 
                 if (needsCalc)
                     item.Anim->CalcBoneMatrices(*item.Fbx->Resource);
