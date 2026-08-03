@@ -65,7 +65,7 @@ namespace audio
 		}
 	}
 
-	void AudioManager::PlaySE(const std::string& filePath, bool loop, float volume, bool persistent)
+	void AudioManager::PlaySE(const std::string& filePath, bool loop, float volume, bool persistent, int32_t maxInstances)
 	{
 		AudioResource* resource = mResources->GetResource(filePath);
 		if (resource == nullptr)
@@ -74,13 +74,45 @@ namespace audio
 			return;
 		}
 
+		std::lock_guard lock(mMtx);
+
+		// 同一サウンドの同時再生数を制限する。上限に達している場合は新規再生を要求ごと無視する。
+		// これにより同時ヒット・同時撃破時に同位相の波形が重なってクリッピング(ブー音)するのを防ぐ
+		if (maxInstances != kUnlimitedInstances)
+		{
+			int32_t activeCount = 0;
+			for (const auto& se : mSoundEffects)
+			{
+				if (se.Resource() == resource && se.IsPlaying())
+				{
+					++activeCount;
+				}
+			}
+
+			if (activeCount >= maxInstances)
+			{
+				return;
+			}
+		}
+
+		// 全体の同時発音数上限に達している場合、最も古い非persistentのSEを止めて枠を空ける
+		if (mSoundEffects.size() >= kMaxTotalVoices)
+		{
+			auto it = std::find_if(mSoundEffects.begin(), mSoundEffects.end(),
+				[](const SoundEffect& s) { return !s.IsPersistent(); });
+			if (it == mSoundEffects.end())
+			{
+				DEBUG_LOG(sys::eLogLevel::Warning, "SE voice limit reached, dropping: ", filePath);
+				return;
+			}
+			mSoundEffects.erase(it);
+		}
+
 		SoundEffect se(resource);
 		se.SetLoop(loop);
 		se.SetVolume(volume);
 		se.SetPersistent(persistent);
 		se.Play();
-
-		std::lock_guard lock(mMtx);
 		mSoundEffects.push_back(std::move(se));
 	}
 

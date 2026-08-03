@@ -246,7 +246,7 @@ namespace ecs
         auto* targetStatus = registry.try_get<ecs::EnemyStatusComponent>(target);
         if (playerTransform == nullptr || targetTransform == nullptr || targetStatus == nullptr) return;
 
-        PLAY_SE("Assets/Sound/SE/SE_Fire.aud", false, kFireSeVolume, false);
+        PLAY_SE("Assets/Sound/SE/SE_Fire.aud", false, kFireSeVolume, false, 1);
 
         const DirectX::XMFLOAT3& playerPos = playerTransform->GetPosition();
         const DirectX::XMFLOAT3& targetPos = targetTransform->GetPosition();

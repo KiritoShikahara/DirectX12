@@ -126,7 +126,7 @@ namespace ecs
 		float visualRadius,
 		const data::MeteorWeaponData& masterData)
 	{
-		PLAY_SE("Assets/Sound/SE/SE_Area.aud", false, kAreaSeVolume, false);
+		PLAY_SE("Assets/Sound/SE/SE_Area.aud", false, kAreaSeVolume, false, 1);
 
 		mOverlapped.clear();
 		::sys::PhysicsSystem::OverlapSphere(registry, position, hitRadius, mOverlapped);

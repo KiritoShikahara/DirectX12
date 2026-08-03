@@ -24,7 +24,7 @@ namespace ecs::areaattack
 		float damage,
 		const data::AreaAttackWeaponData& masterData)
 	{
-		PLAY_SE("Assets/Sound/SE/SE_Area.aud", false, kStrikeSeVolume, false);
+		PLAY_SE("Assets/Sound/SE/SE_Area.aud", false, kStrikeSeVolume, false, 1);
 
 		// 判定半径は見た目のradiusとは別にHitRadiusMultiplierで拡大する
 		const float hitRadius = radius * masterData.HitRadiusMultiplier;

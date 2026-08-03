@@ -71,7 +71,7 @@ namespace ecs
 			{
 				ecs::effectutil::PlayOneShotCombined(kDeathEffectPath, transform->GetPosition(), 1.0f);
 			}
-			PLAY_SE("Assets/Sound/SE/SE_Dead.aud", false, kDeadSeVolume, false);
+			PLAY_SE("Assets/Sound/SE/SE_Dead.aud", false, kDeadSeVolume, false, 1);
 			registry.destroy(entity);
 		}
 	}

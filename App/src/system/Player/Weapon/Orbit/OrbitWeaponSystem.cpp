@@ -92,7 +92,7 @@ namespace ecs
 		ecs::OrbitWeaponRuntimeComponent& runtime,
 		const data::OrbitWeaponData& masterData)
 	{
-		PLAY_SE("Assets/Sound/SE/SE_Area.aud", false, kAreaSeVolume, false);
+		PLAY_SE("Assets/Sound/SE/SE_Area.aud", false, kAreaSeVolume, false, 1);
 
 		auto& manager = ::ecs::EntityManager::Get();
 		const int orbCount = std::max(1, masterData.OrbCount);

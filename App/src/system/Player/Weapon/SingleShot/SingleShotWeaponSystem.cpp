@@ -69,7 +69,7 @@ namespace ecs
 		const auto* ownerAim = registry.try_get<ecs::PlayerAimComponent>(weapon.Owner);
 		if (ownerTransform == nullptr || ownerAim == nullptr) return;
 
-		PLAY_SE("Assets/Sound/SE/SE_Fire.aud", false, kFireSeVolume, false);
+		PLAY_SE("Assets/Sound/SE/SE_Fire.aud", false, kFireSeVolume, false, 1);
 
 		const DirectX::XMFLOAT3& ownerPos = ownerTransform->GetPosition();
 		const DirectX::XMFLOAT3 direction = ecs::combatutil::ComputeSpreadDirection(

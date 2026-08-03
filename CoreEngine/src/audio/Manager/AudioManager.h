@@ -39,11 +39,16 @@ namespace audio
 		///</summary>
 		bool IsBgmPlaying();
 
+		// 同一サウンドの同時再生数を制限しない場合に指定する
+		static constexpr int32_t kUnlimitedInstances = -1;
+
 		// SE制御
+		// maxInstances: 同一ファイルの同時再生数上限。上限到達時は新規再生要求を無視する
 		void PlaySE(const std::string& filePath,
-			bool  loop = false,
-			float volume = 1.0f,
-			bool  persistent = false);
+			bool    loop = false,
+			float   volume = 1.0f,
+			bool    persistent = false,
+			int32_t maxInstances = kUnlimitedInstances);
 
 		void ClearSceneSounds();
 
@@ -62,6 +67,9 @@ namespace audio
 
 	private:
 		void MixSounds(int16_t* output, size_t framesRequested, uint16_t channels);
+
+		// SE同時発音数の全体上限。異なる種類のSEが重なるケースの安全弁
+		static constexpr size_t kMaxTotalVoices = 32;
 
 		AudioResourceManager* mResources = nullptr;
 		std::vector<SoundEffect> mSoundEffects;

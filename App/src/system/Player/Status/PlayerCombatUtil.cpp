@@ -98,7 +98,7 @@ namespace ecs::combatutil
             SpawnDamageNumber(transform->GetPosition(), damage, false);
         }
 
-        PLAY_SE("Assets/Sound/SE/SE_Hit.aud", false, kHitSeVolume, false);
+        PLAY_SE("Assets/Sound/SE/SE_Hit.aud", false, kHitSeVolume, false, 1);
 
         return true;
     }

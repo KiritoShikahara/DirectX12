@@ -66,7 +66,7 @@ namespace ecs
         const data::ChainLightningWeaponData& masterData,
         entt::entity initialTarget)
     {
-        PLAY_SE("Assets/Sound/SE/SE_Fire.aud", false, kFireSeVolume, false);
+        PLAY_SE("Assets/Sound/SE/SE_Fire.aud", false, kFireSeVolume, false, 1);
 
         // AtkPowerパークの強化分をCurrent/Base比で反映する
         const float atkMultiplier = ecs::combatutil::GetAtkPowerMultiplier(registry, weapon.Owner);

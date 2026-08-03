@@ -74,7 +74,7 @@ namespace ecs
         const auto* targetTransform = registry.try_get<ecs::Transform>(target);
         if (ownerTransform == nullptr || targetTransform == nullptr) return;
 
-        PLAY_SE("Assets/Sound/SE/SE_Fire.aud", false, kFireSeVolume, false);
+        PLAY_SE("Assets/Sound/SE/SE_Fire.aud", false, kFireSeVolume, false, 1);
 
         const DirectX::XMFLOAT3& ownerPos = ownerTransform->GetPosition();
 

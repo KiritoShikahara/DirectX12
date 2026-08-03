@@ -32,6 +32,9 @@ namespace audio
 		[[nodiscard]] float Volume()       const noexcept { return mVolume.load(); }
 		[[nodiscard]] bool  IsLoop()       const noexcept { return mLoop.load(); }
 
+		// 同一サウンドかどうかの識別に使う（AudioResourceManagerがパスごとにキャッシュしたポインタ）
+		[[nodiscard]] const AudioResource* Resource() const noexcept { return mResource; }
+
 		void SetVolume(float volume)        noexcept { mVolume.store(volume); }
 		void SetLoop(bool loop)             noexcept { mLoop.store(loop); }
 		void SetPersistent(bool persistent) noexcept { mIsPersistent = persistent; }
@@ -50,5 +53,3 @@ namespace audio
 		bool mIsPersistent = false; // シーン遷移でクリアするか
 	};
 }
-
-
