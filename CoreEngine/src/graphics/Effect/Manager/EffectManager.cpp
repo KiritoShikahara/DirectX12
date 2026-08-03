@@ -55,13 +55,21 @@ namespace graphics
             return false;
         }
 
-        if constexpr (EFFECT_WORKER_THREAD_COUNT > 0)
+        // 他の常駐スレッド(Render用3スレッド、Jolt物理のジョブスレッド=論理コア数-1)と
+        // 同時に稼働するため、論理コア数の半分程度に抑えてオーバーサブスクリプションを避ける。
+        // コア数が少ないPCほど背景スレッドの取り合いでフレーム時間が不安定になりやすいため。
+        const unsigned hw = std::thread::hardware_concurrency();
+        const uint32_t effectWorkerThreadCount = (hw > 2)
+            ? std::min<uint32_t>(MAX_EFFECT_WORKER_THREADS, hw / 2u)
+            : 0u;
+
+        if (effectWorkerThreadCount > 0)
         {
             // SyncUpdate=trueのため、ワーカー使用時も呼び出し側の同期タイミングは変わらない
-            mManager->LaunchWorkerThreads(EFFECT_WORKER_THREAD_COUNT);
+            mManager->LaunchWorkerThreads(effectWorkerThreadCount);
             DEBUG_LOG(sys::eLogLevel::Log,
-                "EffekseerManager: Launched {} worker threads for particle update.",
-                EFFECT_WORKER_THREAD_COUNT);
+                "EffekseerManager: Launched {} worker threads for particle update (hardware_concurrency={}).",
+                effectWorkerThreadCount, hw);
         }
 
         mManager->SetSpriteRenderer(mRenderer->CreateSpriteRenderer());

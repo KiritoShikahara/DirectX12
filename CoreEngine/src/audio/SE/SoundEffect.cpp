@@ -10,7 +10,7 @@ namespace audio
 	{
 	}
 
-    // ˆÚ“®ƒRƒ“ƒXƒgƒ‰ƒNƒ^‚ÌƒJƒXƒ^ƒ€À‘•
+    // ï¿½Ú“ï¿½ï¿½Rï¿½ï¿½ï¿½Xï¿½gï¿½ï¿½ï¿½Nï¿½^ï¿½ÌƒJï¿½Xï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     SoundEffect::SoundEffect(SoundEffect&& other) noexcept
     {
         mResource = other.mResource;
@@ -21,13 +21,13 @@ namespace audio
         mLoop.store(other.mLoop.load());
         mPlaying.store(other.mPlaying.load());
 
-        // ˆÚ“®Œ³‚Ìƒ|ƒCƒ“ƒ^‚È‚Ç‚ÍƒNƒŠƒA‚µ‚Ä‚¨‚­
+        // ï¿½Ú“ï¿½ï¿½ï¿½ï¿½Ìƒ|ï¿½Cï¿½ï¿½ï¿½^ï¿½È‚Ç‚ÍƒNï¿½ï¿½ï¿½Aï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½
         other.mResource = nullptr;
         other.mCurrentFrame = 0;
         other.mPlaying.store(false);
     }
 
-    // ˆÚ“®‘ã“ü‰‰Zq‚ÌƒJƒXƒ^ƒ€À‘•
+    // ï¿½Ú“ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Zï¿½qï¿½ÌƒJï¿½Xï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     SoundEffect& SoundEffect::operator=(SoundEffect&& other) noexcept
     {
         if (this != &other)
@@ -47,7 +47,7 @@ namespace audio
         return *this;
     }
 
-	void SoundEffect::ApplyAndMix(int16_t* output, size_t framesRequested, uint16_t outputChannels, float masterVolume, float seVolume)
+	void SoundEffect::ApplyAndMix(float* output, size_t framesRequested, uint16_t outputChannels, float masterVolume, float seVolume)
 	{
 		if (!mPlaying.load() || mResource == nullptr || mResource->Channels == 0) return;
 
@@ -55,7 +55,7 @@ namespace audio
 		const uint16_t srcChannels = mResource->Channels;
 		const size_t   framesToCopy = std::min(framesRequested, totalFrames - mCurrentFrame);
 
-        // ƒ{ƒŠƒ…[ƒ€ƒoƒX‚ğ“K—p
+        // ï¿½{ï¿½ï¿½ï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½oï¿½Xï¿½ï¿½Kï¿½p
         const float finalVolume = mVolume.load() * seVolume * masterVolume;
 
         for (size_t frame = 0; frame < framesToCopy; ++frame)
@@ -64,7 +64,7 @@ namespace audio
             {
                 int32_t sample = 0;
 
-                // ƒ_ƒEƒ“ƒ~ƒbƒNƒXˆ—: 2ch(ƒXƒeƒŒƒI)ƒ\[ƒX‚ğ 1ch(ƒ‚ƒmƒ‰ƒ‹)ƒfƒoƒCƒX‚Éo—Í‚·‚éê‡
+                // ï¿½_ï¿½Eï¿½ï¿½ï¿½~ï¿½bï¿½Nï¿½Xï¿½ï¿½ï¿½ï¿½: 2ch(ï¿½Xï¿½eï¿½ï¿½ï¿½I)ï¿½\ï¿½[ï¿½Xï¿½ï¿½ 1ch(ï¿½ï¿½ï¿½mï¿½ï¿½ï¿½ï¿½)ï¿½fï¿½oï¿½Cï¿½Xï¿½Éoï¿½Í‚ï¿½ï¿½ï¿½ê‡
                 if (srcChannels == 2 && outputChannels == 1)
                 {
                     const int32_t s0 = mResource->PcmData[(mCurrentFrame + frame) * 2 + 0];
@@ -73,15 +73,13 @@ namespace audio
                 }
                 else
                 {
-                    // ’Êí‚Ìƒ`ƒƒƒ“ƒlƒ‹ƒ}ƒbƒsƒ“ƒO
+                    // ï¿½Êï¿½Ìƒ`ï¿½ï¿½ï¿½ï¿½ï¿½lï¿½ï¿½ï¿½}ï¿½bï¿½sï¿½ï¿½ï¿½O
                     const uint16_t srcCh = std::min(ch, static_cast<uint16_t>(srcChannels - 1));
                     sample = static_cast<int32_t>(mResource->PcmData[(mCurrentFrame + frame) * srcChannels + srcCh] * finalVolume);
                 }
 
-                // ƒNƒ‰ƒ“ƒv
-                const int32_t mixed = static_cast<int32_t>(output[frame * outputChannels + ch]) + sample;
-                output[frame * outputChannels + ch] = static_cast<int16_t>(
-                    std::clamp(mixed, static_cast<int32_t>(INT16_MIN), static_cast<int32_t>(INT16_MAX)));
+                // ã‚¯ãƒªãƒƒãƒ—ã›ãšåŠ ç®—ã™ã‚‹ã ã‘(æœ€çµ‚æ®µã§AudioManagerãŒãƒªãƒŸãƒƒã‚¿ãƒ¼ã‚’ã‹ã‘ã¦int16åŒ–ã™ã‚‹)
+                output[frame * outputChannels + ch] += static_cast<float>(sample);
             }
         }
 

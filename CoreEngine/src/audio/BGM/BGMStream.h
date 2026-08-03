@@ -56,13 +56,14 @@ namespace audio
 
         /// <summary>
         /// リングバッファから PCM を読み出して output へ加算ミックスする。
+        /// クリップはしない(複数音源合成後にAudioManager側で一括してリミッターをかけるため)。
         /// </summary>
-        /// <param name="output">出力バッファ（インターリーブ形式）</param>
+        /// <param name="output">出力バッファ(インターリーブ形式、float精度の合成バス)</param>
         /// <param name="framesRequested">要求フレーム数</param>
         /// <param name="outputChannels">出力チャンネル数</param>
         /// <param name="masterVolume">マスター音量</param>
         /// <param name="bgmVolume">BGMカテゴリ音量</param>
-        void ApplyAndMix(int16_t* output,
+        void ApplyAndMix(float*   output,
             size_t   framesRequested,
             uint16_t outputChannels,
             float    masterVolume,

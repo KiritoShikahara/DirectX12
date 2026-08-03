@@ -2,8 +2,9 @@
 
 VSOutput main(VSInput input)
 {
-    // Root32BitConstant から取得したインデックスで正確に参照
-    FbxInstanceData inst = InstanceBuffer[g_InstanceIndex];
+    // バッチ先頭オフセット + SV_InstanceID で、このインスタンスのデータを正確に参照
+    uint instanceIndex = g_InstanceBase + input.InstanceID;
+    FbxInstanceData inst = InstanceBuffer[instanceIndex];
     FbxSceneData scene = SceneBuffer[0];
 
     float3 pos = input.Position;
@@ -64,5 +65,6 @@ VSOutput main(VSInput input)
     output.WorldTangent = T;
     output.WorldBitan = B;
     output.ShadowPos = shadowPos;
+    output.InstanceIndex = instanceIndex;
     return output;
 }

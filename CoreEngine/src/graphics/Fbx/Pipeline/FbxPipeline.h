@@ -23,7 +23,7 @@ namespace graphics
         ID3D12PipelineState* GetPipelineState() const { return mPipelineState.Get(); }
 
         // ルートパラメータスロット番号
-        static constexpr UINT SLOT_INSTANCE_INDEX = 0; // b0 Root32BitConstant
+        static constexpr UINT SLOT_INSTANCE_BASE = 0; // b0 Root32BitConstant (バッチ先頭インスタンスオフセット。実インデックスは +SV_InstanceID)
         static constexpr UINT SLOT_INSTANCE_BUFFER = 1; // t0 ALL
         static constexpr UINT SLOT_BONE_BUFFER = 2; // t1 VERTEX
         static constexpr UINT SLOT_ALBEDO_TEX = 3; // t2 PIXEL

@@ -66,10 +66,26 @@ namespace audio
 
 
 	private:
-		void MixSounds(int16_t* output, size_t framesRequested, uint16_t channels);
+		void MixSounds(int16_t* output, size_t framesRequested, uint16_t channels, uint32_t sampleRate);
+
+		/// <summary>
+		/// float合成バス(mMixBuffer)へリミッターをかけながらint16へ書き出す。
+		/// 単独音源のピークはしきい値を超えないためゲイン1.0のまま(=単独再生時と同じ音量)、
+		/// 複数音源が重なってしきい値を超えたときだけアタック/リリースで滑らかにゲインを下げ、
+		/// 1音ずつクリップする場合の硬い歪みを防ぐ
+		/// </summary>
+		void ApplyLimiterAndWrite(int16_t* output, size_t frameCount, uint16_t channels, uint32_t sampleRate);
 
 		// SE同時発音数の全体上限。異なる種類のSEが重なるケースの安全弁
 		static constexpr size_t kMaxTotalVoices = 32;
+
+		// リミッターのしきい値(int16フルスケール直下。単独音源が通常これを超えないマージン)
+		static constexpr float kLimiterThreshold = 32000.0f;
+
+		// リミッターのアタック/リリース時定数(秒)。アタックは重なった瞬間の歪みを潰すため速く、
+		// リリースはゲイン復帰時の耳障りな"ポンピング"を避けるためゆっくり
+		static constexpr float kLimiterAttackSeconds = 0.005f;
+		static constexpr float kLimiterReleaseSeconds = 0.15f;
 
 		AudioResourceManager* mResources = nullptr;
 		std::vector<SoundEffect> mSoundEffects;
@@ -79,6 +95,12 @@ namespace audio
 		std::atomic<float> mMasterVolume{ 1.0f };
 		std::atomic<float> mBgmVolume{ 1.0f };
 		std::atomic<float> mSeVolume{ 1.0f };
+
+		// 全音源をクリップせず合成するためのfloatバス(コールバックスレッド専有、毎フレーム再生成しない)
+		std::vector<float> mMixBuffer;
+
+		// リミッターの現在ゲイン。コールバックをまたいで保持し、滑らかに追従させる
+		float mLimiterGain = 1.0f;
 	};
 }
 

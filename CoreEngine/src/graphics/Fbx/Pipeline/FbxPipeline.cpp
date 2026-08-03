@@ -34,7 +34,7 @@ namespace graphics
 
         // params[13]
         CD3DX12_ROOT_PARAMETER1 params[13];
-        params[SLOT_INSTANCE_INDEX].InitAsConstants(1, 0, 0, D3D12_SHADER_VISIBILITY_ALL);  // b0
+        params[SLOT_INSTANCE_BASE].InitAsConstants(1, 0, 0, D3D12_SHADER_VISIBILITY_ALL);  // b0
         params[SLOT_INSTANCE_BUFFER].InitAsDescriptorTable(1, &rangeInstance, D3D12_SHADER_VISIBILITY_ALL);
         params[SLOT_BONE_BUFFER].InitAsDescriptorTable(1, &rangeBone, D3D12_SHADER_VISIBILITY_VERTEX);
         params[SLOT_ALBEDO_TEX].InitAsDescriptorTable(1, &rangeAlbedo, D3D12_SHADER_VISIBILITY_PIXEL);

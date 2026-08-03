@@ -10,29 +10,29 @@ namespace audio
 	class SoundEffect
 	{
 	public:
-		// ƒRƒs[‚Í‹Ö~
+		// ï¿½Rï¿½sï¿½[ï¿½Í‹Ö~
 		SoundEffect(const SoundEffect&) = delete;
 		SoundEffect& operator=(const SoundEffect&) = delete;
 
-		// ˆÚ“®‚ğƒJƒXƒ^ƒ€’è‹`‚·‚éi= default ‚ğŠO‚·j
+		// ï¿½Ú“ï¿½ï¿½ï¿½ï¿½Jï¿½Xï¿½^ï¿½ï¿½ï¿½ï¿½`ï¿½ï¿½ï¿½ï¿½i= default ï¿½ï¿½ï¿½Oï¿½ï¿½ï¿½j
 		SoundEffect(SoundEffect&& other) noexcept;
 		SoundEffect& operator=(SoundEffect&& other) noexcept;
 
 		explicit SoundEffect(AudioResource* resource);
 		~SoundEffect() = default;
 
-		// Ä¶E’â~Eˆê’â~
+		// ï¿½Äï¿½ï¿½Eï¿½ï¿½~ï¿½Eï¿½êï¿½ï¿½~
 		void Play()  noexcept { mPlaying.store(true); }
 		void Stop()  noexcept { mPlaying.store(false); mCurrentFrame = 0; }
 		void Pause() noexcept { mPlaying.store(false); }
 
-		// ƒAƒNƒZƒT
+		// ï¿½Aï¿½Nï¿½Zï¿½T
 		[[nodiscard]] bool  IsPlaying()    const noexcept { return mPlaying.load(); }
 		[[nodiscard]] bool  IsPersistent() const noexcept { return mIsPersistent; }
 		[[nodiscard]] float Volume()       const noexcept { return mVolume.load(); }
 		[[nodiscard]] bool  IsLoop()       const noexcept { return mLoop.load(); }
 
-		// “¯ˆêƒTƒEƒ“ƒh‚©‚Ç‚¤‚©‚Ì¯•Ê‚Ég‚¤iAudioResourceManager‚ªƒpƒX‚²‚Æ‚ÉƒLƒƒƒbƒVƒ…‚µ‚½ƒ|ƒCƒ“ƒ^j
+		// ï¿½ï¿½ï¿½ï¿½Tï¿½Eï¿½ï¿½ï¿½hï¿½ï¿½ï¿½Ç‚ï¿½ï¿½ï¿½ï¿½Ìï¿½ï¿½Ê‚Égï¿½ï¿½ï¿½iAudioResourceManagerï¿½ï¿½ï¿½pï¿½Xï¿½ï¿½ï¿½Æ‚ÉƒLï¿½ï¿½ï¿½bï¿½Vï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½|ï¿½Cï¿½ï¿½ï¿½^ï¿½j
 		[[nodiscard]] const AudioResource* Resource() const noexcept { return mResource; }
 
 		void SetVolume(float volume)        noexcept { mVolume.store(volume); }
@@ -40,9 +40,9 @@ namespace audio
 		void SetPersistent(bool persistent) noexcept { mIsPersistent = persistent; }
 
 		/// <summary>
-		/// ƒ~ƒLƒVƒ“ƒO
+		/// ãƒŸã‚­ã‚·ãƒ³ã‚°ã€‚ã‚¯ãƒªãƒƒãƒ—ã¯ã—ãªã„(è¤‡æ•°éŸ³æºåˆæˆå¾Œã«AudioManagerå´ã§ä¸€æ‹¬ã—ã¦ãƒªãƒŸãƒƒã‚¿ãƒ¼ã‚’ã‹ã‘ã‚‹ãŸã‚)
 		/// </summary>
-		void ApplyAndMix(int16_t* output, size_t framesRequested, uint16_t outputChannels, float masterVolume, float seVolume);
+		void ApplyAndMix(float* output, size_t framesRequested, uint16_t outputChannels, float masterVolume, float seVolume);
 	private:
 		AudioResource* mResource = nullptr;
 		uint64_t mCurrentFrame = 0;
@@ -50,6 +50,6 @@ namespace audio
 		std::atomic<float> mVolume{ 1.0f };
 		std::atomic<bool>  mLoop{ false };
 		std::atomic<bool>  mPlaying{ false };
-		bool mIsPersistent = false; // ƒV[ƒ“‘JˆÚ‚ÅƒNƒŠƒA‚·‚é‚©
+		bool mIsPersistent = false; // ï¿½Vï¿½[ï¿½ï¿½ï¿½Jï¿½Ú‚ÅƒNï¿½ï¿½ï¿½Aï¿½ï¿½ï¿½é‚©
 	};
 }

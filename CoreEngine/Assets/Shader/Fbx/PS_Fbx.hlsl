@@ -2,8 +2,8 @@
 
 float4 main(VSOutput input) : SV_TARGET
 {
-    // Root32BitConstant から取得したインデックスで正確に参照 (VSと同じ値)
-    FbxInstanceData inst = InstanceBuffer[g_InstanceIndex];
+    // VSで解決済みのインスタンスインデックス(バッチ先頭オフセット+SV_InstanceID)をそのまま使う
+    FbxInstanceData inst = InstanceBuffer[input.InstanceIndex];
     FbxSceneData scene = SceneBuffer[0];
 
     // ============================================================
