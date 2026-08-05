@@ -29,8 +29,10 @@ namespace sys
 #if DEV_TOOL_ENABLED
 		AddSink(std::make_unique<ConsoleLogSink>(true));
 #endif
-		// ファイル出力
+		// ファイル出力。Releaseでは配布フォルダにログファイルを残したくないため無効にする
+#if DEV_TOOL_ENABLED
 		AddSink(std::make_unique<FileLogSink>("ecse_log.txt"));
+#endif
 
 		DEBUG_LOG(eLogLevel::Log, "Logger initialized.");
 
