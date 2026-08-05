@@ -98,9 +98,34 @@ namespace ecs
 		void BuildControlsInfoLines();
 
 		///<summary>
-		///ゲーム画面に文字が直接乗ると読みづらいため、生成済みテキストの実測範囲から黒半透明の板を動的にサイズして敷く。RefreshLabelsで文字列確定後に呼ぶこと
+		///背景パネルを敷く。Controlsページは内容に合わせたサイズ(BuildFittedControlsPanel)、
+		///それ以外のページは画面全体を覆うサイズにする
 		///</summary>
 		void BuildBackgroundPanel();
+
+		///<summary>
+		///Controlsページ専用、生成済みテキストの実測範囲から一回り大きい余白を持つ黒不透明パネルを敷く。
+		///対象のテキストが1件も無ければ何もせずfalseを返す
+		///</summary>
+		bool BuildFittedControlsPanel();
+
+		///<summary>
+		///文字は常にスプライトより後段で描画される仕様のため、パネル(スプライト)だけでは他の文字を隠せない。
+		///Open()時点で表示中だった、このメニュー以外のTextComponentをmSuppressedTextへ記録して非表示にする
+		///</summary>
+		void SuppressOtherText(entt::registry& registry);
+
+		///<summary>
+		///mSuppressedTextに登録済みの文字を毎フレーム再度非表示にする。
+		///WeaponIconBarSystem等、毎フレームIsVisibleを設定し直すシステムに上書きされてしまうため、
+		///OptionsMenuSystemが他システムより後段に登録されていることを前提に、開いている間は毎フレーム呼ぶこと
+		///</summary>
+		void HideSuppressedText(entt::registry& registry);
+
+		///<summary>
+		///SuppressOtherTextで非表示にした文字を元の表示状態(IsVisible=true)へ戻す
+		///</summary>
+		void RestoreSuppressedText(entt::registry& registry);
 
 		///<summary>
 		///現在の設定値から各項目の表示文字列を作り直す
@@ -125,5 +150,10 @@ namespace ecs
 		///メニューを開く直前のTimeScale。閉じたときに元へ戻す
 		///</summary>
 		float mPrevTimeScale = 1.0f;
+
+		///<summary>
+		///SuppressOtherTextで非表示にした、このメニュー以外のテキストエンティティ。Close()で元に戻す
+		///</summary>
+		std::vector<entt::entity> mSuppressedText;
 	};
 }

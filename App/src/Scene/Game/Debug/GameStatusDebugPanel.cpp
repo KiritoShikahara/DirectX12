@@ -60,14 +60,7 @@ namespace debug
 					ImGui::Text("Elapsed: %.1f s", wave.ElapsedTime);
 					ImGui::Text("Next spawn in: %.1f s", wave.SpawnTimer);
 					ImGui::Text("Next mini boss in: %.1f s", wave.NextMiniBossSpawnTime - wave.ElapsedTime);
-					if (wave.MidBossSpawned)
-					{
-						ImGui::Text("Mid boss: spawned");
-					}
-					else
-					{
-						ImGui::Text("Mid boss in: %.1f s", wave.MidBossSpawnTime - wave.ElapsedTime);
-					}
+					ImGui::Text("Next mid boss in: %.1f s", wave.NextMidBossSpawnTime - wave.ElapsedTime);
 					if (wave.FinalBossSpawned)
 					{
 						ImGui::Text("Final boss: spawned");

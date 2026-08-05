@@ -24,10 +24,11 @@ namespace ecs
 	///</summary>
 	enum class eWeaponIconElement
 	{
-		Icon,       // 武器アイコン本体
-		Overlay,    // クールダウン進捗の黒半透明オーバーレイ、Radialで時計回りに消える
-		Text,       // 残りクールダウン秒数、アイコン中央
-		LevelText,  // 武器レベル、アイコン右下
+		Icon,        // 武器アイコン本体
+		Overlay,     // クールダウン進捗の黒半透明オーバーレイ、Radialで時計回りに消える
+		Text,        // 残りクールダウン秒数、アイコン中央
+		LevelText,   // 武器レベル、アイコン右下
+		ControlIcon, // 操作方法アイコン(発動キー/ボタン)、アイコン左上。操作方法を持たない武器や対応アイコンが無いデバイスでは非表示
 	};
 
 	///<summary>

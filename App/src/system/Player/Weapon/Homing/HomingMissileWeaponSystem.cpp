@@ -55,6 +55,8 @@ namespace ecs
     {
         constexpr float kMultiShotSpreadDegrees = 8.0f;
         constexpr float kFireSeVolume = 0.4f;
+        // 着弾エフェクトの見た目だけを底上げする倍率、判定半径・ダメージには影響しない(他の飛翔体武器と揃える)
+        constexpr float kHitEffectVisualBoost = 5.0f;
     }
 
     void HomingMissileWeaponSystem::Fire(
@@ -118,7 +120,10 @@ namespace ecs
         projectile.Speed = masterData.ProjectileSpeed;
         projectile.Damage = damage;
         projectile.ExplosionRadius = hitRadius;
+        // VisualRadiusは増殖弾の子弾コライダーサイズにも使われる仕様のため据え置き、着弾エフェクトの見た目だけを
+        // HitEffectVisualRadiusで底上げする(HomingMissileは増殖しないが、他武器と実装を揃えておく)
         projectile.VisualRadius = radius;
+        projectile.HitEffectVisualRadius = radius * kHitEffectVisualBoost;
         projectile.ExplosionEffectPath = ecs::effectutil::ResolveEffectIds(masterData.ExplosionEffectIds);
         projectile.LifeTime = masterData.ProjectileLifeTime;
         projectile.Owner = weapon.Owner;

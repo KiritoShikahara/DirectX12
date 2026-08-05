@@ -19,12 +19,15 @@ namespace data
         float StatGrowthStepInterval = 120.0f;
         float StatGrowthPerStep = 0.4f;
 
-        float MiniBossFirstSpawnTime = 180.0f;
-        float MiniBossInterval = 180.0f;
-        float MidBossSpawnTime = 480.0f;
-        float FinalBossSpawnTime = 800.0f;
+        float MiniBossFirstSpawnTime = 30.0f;
+        float MiniBossInterval = 30.0f;
+        float BossPowerGrowthPerSpawn = 1.58f;
+        float MidBossFirstSpawnTime = 60.0f;
+        float MidBossInterval = 60.0f;
+        float MidBossPowerMultiplier = 5.0f;
+        float FinalBossSpawnTime = 180.0f;
 
-        float ClearTime = 900.0f;
+        float ClearTime = 300.0f;
         int MaxAliveEnemy = 0;
 
         REFLECT_BEGIN(WaveData, "wave_data")
@@ -39,7 +42,10 @@ namespace data
             REFLECT_FIELD_FLOAT(StatGrowthPerStep)
             REFLECT_FIELD_FLOAT(MiniBossFirstSpawnTime)
             REFLECT_FIELD_FLOAT(MiniBossInterval)
-            REFLECT_FIELD_FLOAT(MidBossSpawnTime)
+            REFLECT_FIELD_FLOAT(BossPowerGrowthPerSpawn)
+            REFLECT_FIELD_FLOAT(MidBossFirstSpawnTime)
+            REFLECT_FIELD_FLOAT(MidBossInterval)
+            REFLECT_FIELD_FLOAT(MidBossPowerMultiplier)
             REFLECT_FIELD_FLOAT(FinalBossSpawnTime)
             REFLECT_FIELD_FLOAT(ClearTime)
             REFLECT_FIELD_INT(MaxAliveEnemy)

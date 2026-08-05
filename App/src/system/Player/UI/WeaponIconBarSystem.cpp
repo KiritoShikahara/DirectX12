@@ -8,6 +8,7 @@
 #include<system/Player/Weapon/WeaponIconRegistry.h>
 #include<graphics/Text/Renderer/TextRenderer.h>
 #include<Tag/EntityTag.h>
+#include<system/Input/InputManager.h>
 
 #include<array>
 #include<algorithm>
@@ -24,6 +25,9 @@ namespace
 		bool ShowCooldown = false;
 		float FillRatio = 0.0f;
 		float RemainingSeconds = 0.0f;
+
+		// 発動操作アイコン。専用アイコン未提供のデバイス(現状Pad)では常にnullptrにしてスロット側で非表示にする
+		const char* ControlIconPath = nullptr;
 	};
 }
 
@@ -35,6 +39,10 @@ namespace ecs
 		if (playerView.begin() == playerView.end()) return;
 
 		const auto& inventory = registry.get<WeaponInventoryComponent>(*playerView.begin());
+
+		// 発動操作アイコンはマウス用の画像しか用意されていないため、Pad使用時は常に非表示にする
+		const bool showControlIcon =
+			::sys::InputManager::Get().GetLastInputDevice() == ::sys::eInputDevice::KeyboardMouse;
 
 		// スロットごとの表示状態を先にまとめて計算する。Icon/Overlay/Textが別エンティティのため同じ計算を繰り返さないための下ごしらえ
 		std::array<SlotState, kSlotCount> states = {};
@@ -52,6 +60,7 @@ namespace ecs
 			state.HasWeapon = true;
 			state.IconPath = weaponutil::GetWeaponIconPath(weapon->Type);
 			state.Level = weapon->Level;
+			state.ControlIconPath = showControlIcon ? weaponutil::GetWeaponControlIconPath(weapon->Type) : nullptr;
 
 			float remaining = 0.0f, maxCooldown = 0.0f;
 			if (weaponutil::TryGetWeaponCooldown(registry, weaponEntity, *weapon, remaining, maxCooldown)
@@ -86,6 +95,14 @@ namespace ecs
 				{
 					sprite.IsVisible = state.HasWeapon && state.ShowCooldown;
 					sprite.FillAmount = state.FillRatio;
+				}
+				else if (slot.Element == eWeaponIconElement::ControlIcon)
+				{
+					sprite.IsVisible = state.HasWeapon && state.ControlIconPath != nullptr;
+					if (sprite.IsVisible)
+					{
+						sprite.Texture = ::graphics::TextureManager::Get().GetOrLoad(state.ControlIconPath);
+					}
 				}
 			});
 

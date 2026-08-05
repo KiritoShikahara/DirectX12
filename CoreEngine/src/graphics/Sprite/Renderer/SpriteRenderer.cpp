@@ -172,7 +172,7 @@ namespace graphics
 				mRenderItems.push_back({ &tr, &sp });
 			});
 
-		// Layer 昇順でソート（値が小さいほど手前＝後から描く）
+		// Layer 昇順でソート（値が大きいほど手前＝後から描く）
 		std::sort(mRenderItems.begin(), mRenderItems.end(),
 			[](const RenderItem& a, const RenderItem& b)
 			{

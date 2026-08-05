@@ -18,6 +18,9 @@
 
 namespace
 {
+    // 必殺技の演出無敵(IsInvincible)が切れた直後、無防備な隙ができないための猶予時間
+    constexpr float kPostUltimateInvincibleDuration = 2.0f;
+
     DirectX::XMFLOAT3 ComputeBeamRotationFromDirection(const DirectX::XMFLOAT3& dir)
     {
         const float pitch = std::asin(std::clamp(-dir.y, -1.0f, 1.0f));
@@ -291,6 +294,8 @@ namespace ecs
         }
 
         status.IsInvincible = false;
+        // 演出無敵が切れた直後に無防備な隙ができないよう、追加の猶予無敵を付与する
+        status.PostUltimateInvincibleTimer = kPostUltimateInvincibleDuration;
 
         // その場にいる敵全員へ大ダメージ。DamagedByUltimate=trueにして、この撃破が必殺技ゲージへ加算されないようにする
         registry.view<ecs::EnemyTag, ecs::EnemyStatusComponent, ecs::Transform>().each(

@@ -71,6 +71,7 @@ namespace ecs
 		static void SpawnHitEffect(
 			entt::registry& registry,
 			const DirectX::XMFLOAT3& position,
-			const std::string& effectPath);
+			const std::string& effectPath,
+			float scale);
 	};
 }

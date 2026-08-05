@@ -60,11 +60,11 @@ namespace graphics
         void Begin();
         void UpdateAndDraw(entt::registry& registry);
         void Submit(const std::wstring& text, float x, float y, float size,
-            DirectX::XMFLOAT4 color = { 1.f, 1.f, 1.f, 1.f });
+            DirectX::XMFLOAT4 color = { 1.f, 1.f, 1.f, 1.f }, float letterSpacing = 0.f);
         void Flush(ID3D12GraphicsCommandList* cmdList);
 
         // 実際には描画せず、このsizeで描いたときの幅(px)だけ先に知りたいときに使う
-        float MeasureWidth(const std::wstring& text, float size) const;
+        float MeasureWidth(const std::wstring& text, float size, float letterSpacing = 0.f) const;
 
         // MeasureWidthの縦バージョン。1行分の縦送り量(px)を返す。
         float MeasureLineHeight(float size) const;

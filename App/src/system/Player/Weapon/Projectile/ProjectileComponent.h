@@ -34,9 +34,17 @@ namespace ecs
         float ExplosionRadius = 1.5f;
 
         ///<summary>
-        ///着弾エフェクトの見た目のサイズ計算にのみ使う半径。ExplosionRadiusとは別に持ち判定半径拡大の影響を受けない
+        ///着弾エフェクトの見た目のサイズ計算にのみ使う半径。ExplosionRadiusとは別に持ち判定半径拡大の影響を受けない。
+        ///増殖弾の子弾コライダーサイズにも使われるため(ProjectileCollisionSystem::SpawnSplitProjectiles参照)、
+        ///着弾エフェクトだけを個別に拡大したい場合はこちらではなくHitEffectVisualRadiusを使うこと
         ///</summary>
         float VisualRadius = 1.5f;
+
+        ///<summary>
+        ///0以上の場合、着弾エフェクトのスケール計算をVisualRadiusの代わりにこちらの値で行う。
+        ///負値(既定)なら従来通りVisualRadiusを使う。増殖弾の子弾サイズ(VisualRadius由来)には影響しない
+        ///</summary>
+        float HitEffectVisualRadius = -1.0f;
 
         ///<summary>
         ///着弾時に再生する爆発エフェクトのアセットパス、空なら再生しない

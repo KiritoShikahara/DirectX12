@@ -45,6 +45,9 @@
     <ClCompile Include="src\system\StatusUpgrade\StatusUpgradeInputSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\Data\Settings\GameSettingsDebugPanel.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
     <ClCompile Include="src\Data\Save\PlayerSaveDebugPanel.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -97,6 +100,12 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\system\Player\Perk\PerkSelectSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\Enemy\HealthBar\EnemyHealthBarSystem.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="src\system\UI\StartEffect\StartEffectSystem.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="src\Scene\Game\Result\ResultSystem.cpp">
@@ -330,6 +339,9 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\Data\Save\PlayerSaveData.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Data\Settings\GameSettingsDebugPanel.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\Data\Save\PlayerSaveDebugPanel.h">
@@ -717,6 +729,18 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\Scene\Game\Result\ResultComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Enemy\HealthBar\EnemyHealthBarSystem.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\Enemy\HealthBar\EnemyHealthBarTag.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\UI\StartEffect\StartEffectComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\system\UI\StartEffect\StartEffectSystem.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="src\Scene\Game\Result\ResultSystem.h">

@@ -84,6 +84,12 @@ namespace ecs
         float          PostHitInvincibleTimer = 0.0f;
 
         ///<summary>
+        ///必殺技終了直後の無敵残り時間、秒。演出中のIsInvincibleが切れた直後に無防備な隙ができないための猶予。
+        ///PlayerUltimateSystemが必殺技終了時に設定し、PlayerContactDamageSystemが毎フレーム減算する
+        ///</summary>
+        float          PostUltimateInvincibleTimer = 0.0f;
+
+        ///<summary>
         ///BaseとModifierをCurrentへ反映する。パーク適用後に呼ぶこと
         ///</summary>
         void Recompute()

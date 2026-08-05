@@ -29,4 +29,17 @@ namespace ecs::weaponutil
 			return kFallbackIcon;
 		}
 	}
+
+	const char* GetWeaponControlIconPath(eWeaponType type)
+	{
+		// eWeaponControl::Manualな武器種別は、各WeaponSystem(SingleShot/AreaAttack/FlickerStrike)側で
+		// 発動に使う入力アクションが型ごとに固定されているため、ここでも型で対応アイコンを固定する
+		switch (type)
+		{
+		case eWeaponType::SingleShot:     return "Assets/Icon/mouse_left.png";   // Attack(左クリック)で発動
+		case eWeaponType::AreaAttack:     return "Assets/Icon/mouse_right.png";  // Attack2(右クリック)で発動
+		case eWeaponType::FlickerStrike:  return "Assets/Icon/mouse_middle.png"; // FlickerStrike(マウスホイール押し込み)で発動
+		default:                          return nullptr; // Auto(自動発動)の武器は操作方法アイコン無し
+		}
+	}
 }

@@ -230,6 +230,8 @@ xcopy /E /I /Y /D "$(SolutionDir)CoreEngine\BootstrapConfig" "$(TargetDir)Engine
     <ClCompile Include="src\system\Enemy\Death\EnemyDeathSystem.cpp" />
     <ClCompile Include="src\system\Player\Perk\PerkSelectSystem.cpp" />
     <ClCompile Include="src\Scene\Game\Result\ResultSystem.cpp" />
+    <ClCompile Include="src\system\Enemy\HealthBar\EnemyHealthBarSystem.cpp" />
+    <ClCompile Include="src\system\UI\StartEffect\StartEffectSystem.cpp" />
     <ClCompile Include="src\system\Player\Weapon\AreaAttack\AreaAttackWeaponSystem.cpp" />
     <ClCompile Include="src\system\Player\Weapon\AreaAttack\AreaAttackAutoStrikeSystem.cpp" />
     <ClCompile Include="src\system\Player\Weapon\AreaAttack\AreaAttackHazardSpawner.cpp" />
@@ -255,6 +257,7 @@ xcopy /E /I /Y /D "$(SolutionDir)CoreEngine\BootstrapConfig" "$(TargetDir)Engine
     <ClCompile Include="src\system\HubMenu\HubMenuInputSystem.cpp" />
     <ClCompile Include="src\system\StatusUpgrade\StatusUpgradeInputSystem.cpp" />
     <ClCompile Include="src\Data\Save\PlayerSaveDebugPanel.cpp" />
+    <ClCompile Include="src\Data\Settings\GameSettingsDebugPanel.cpp" />
     <ClCompile Include="src\system\GlowAnimation\SpriteGlowSystem.cpp" />
     <ClCompile Include="src\main.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -345,6 +348,10 @@ xcopy /E /I /Y /D "$(SolutionDir)CoreEngine\BootstrapConfig" "$(TargetDir)Engine
     <ClInclude Include="src\system\Player\Perk\PerkSelectSystem.h" />
     <ClInclude Include="src\Scene\Game\Result\ResultComponent.h" />
     <ClInclude Include="src\Scene\Game\Result\ResultSystem.h" />
+    <ClInclude Include="src\system\Enemy\HealthBar\EnemyHealthBarSystem.h" />
+    <ClInclude Include="src\system\Enemy\HealthBar\EnemyHealthBarTag.h" />
+    <ClInclude Include="src\system\UI\StartEffect\StartEffectComponent.h" />
+    <ClInclude Include="src\system\UI\StartEffect\StartEffectSystem.h" />
     <ClInclude Include="src\Data\Weapon\AreaAttackWeaponData.h" />
     <ClInclude Include="src\system\Player\Weapon\AreaAttack\AreaAttackWeaponRuntimeComponent.h" />
     <ClInclude Include="src\system\Player\Weapon\AreaAttack\AreaAttackWeaponSystem.h" />
@@ -402,6 +409,7 @@ xcopy /E /I /Y /D "$(SolutionDir)CoreEngine\BootstrapConfig" "$(TargetDir)Engine
     <ClInclude Include="src\system\StatusUpgrade\StatusUpgradeLabels.h" />
     <ClInclude Include="src\Data\Save\PlayerSaveData.h" />
     <ClInclude Include="src\Data\Save\PlayerSaveDebugPanel.h" />
+    <ClInclude Include="src\Data\Settings\GameSettingsDebugPanel.h" />
     <ClInclude Include="src\Data\StatUpgrade\StatUpgradeData.h" />
     <ClInclude Include="src\Data\Perk\PerkData.h" />
     <ClInclude Include="src\system\GlowAnimation\SpriteGlowSystem.h" />

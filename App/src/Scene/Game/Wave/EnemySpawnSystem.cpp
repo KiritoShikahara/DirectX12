@@ -99,28 +99,58 @@ namespace ecs
 			wave.SpawnTimer = wave.SpawnInterval;
 		}
 
-		// ボス出現は通常の敵よりさらに奥から出す。種類は常にId=0の強化版で階級の倍率はdata::BossData。小ボスは周期的、中ボス・最強ボスは1回だけ
+		// ボス出現は通常の敵よりさらに奥から出す。種類は常にId=0の強化版で階級の倍率はdata::BossData。
+		// 小ボス・中ボスは周期的、大ボスは1回だけ。いずれも通常敵の経過時間成長(waveModifier)とは
+		// 別軸の強さで管理し、時間経過バランスの調整がボスの強さに意図せず影響しないようにする
 		if (wave.ElapsedTime >= wave.NextMiniBossSpawnTime)
 		{
 			const XMFLOAT3 spawnPos = ComputeSpawnPosition(
 				registry, playerPos, wave.SpawnMarginMax + 5.0f, wave.SpawnMarginMax + 15.0f);
-			::ecs::GameSceneFactory::CreateEnemy(spawnPos, waveModifier, ecs::eBossTier::Mini, 0);
+
+			// 小ボスは出現するたびに直前の小ボスからBossPowerGrowthPerSpawn倍ずつ強くなる。
+			// 出現回数だけに依存する指数成長にすることで「Nボス目は必ず(N-1)ボス目の何倍」という
+			// 強さの比率を、経過時間ベースのバランス調整と切り離して管理できる
+			const float miniPower = std::pow(
+				wave.BossPowerGrowthPerSpawn, static_cast<float>(wave.MiniBossSpawnCount));
+			ecs::EnemyWaveModifier miniModifier;
+			miniModifier.MulMaxHp = miniPower;
+			miniModifier.MulAtkPower = miniPower;
+			miniModifier.MulMoveSpeed = 1.0f; // 通常敵と同様、移動速度はプレイヤーより速くなり続けないよう固定
+
+			::ecs::GameSceneFactory::CreateEnemy(spawnPos, miniModifier, ecs::eBossTier::Mini, 0);
+			wave.MiniBossSpawnCount += 1;
 			wave.NextMiniBossSpawnTime += std::max(wave.MiniBossInterval, 1.0f); // 0除算/連続スポーン防止
 		}
 
-		if (!wave.MidBossSpawned && wave.ElapsedTime >= wave.MidBossSpawnTime)
+		if (wave.ElapsedTime >= wave.NextMidBossSpawnTime)
 		{
 			const XMFLOAT3 spawnPos = ComputeSpawnPosition(
 				registry, playerPos, wave.SpawnMarginMax + 5.0f, wave.SpawnMarginMax + 15.0f);
-			::ecs::GameSceneFactory::CreateEnemy(spawnPos, waveModifier, ecs::eBossTier::Mid, 0);
-			wave.MidBossSpawned = true;
+
+			// 中ボスの強さは「直近に出現した小ボス」のMidBossPowerMultiplier倍に追従させる。
+			// 小ボスは出現ごとに強くなり続けるため、こうしないと終盤の中ボスが小ボスに埋もれてしまう
+			const int latestMiniIndex = std::max(0, wave.MiniBossSpawnCount - 1);
+			const float latestMiniPower = std::pow(
+				wave.BossPowerGrowthPerSpawn, static_cast<float>(latestMiniIndex));
+			const float midPower = wave.MidBossPowerMultiplier * latestMiniPower;
+
+			ecs::EnemyWaveModifier midModifier;
+			midModifier.MulMaxHp = midPower;
+			midModifier.MulAtkPower = midPower;
+			midModifier.MulMoveSpeed = 1.0f;
+
+			::ecs::GameSceneFactory::CreateEnemy(spawnPos, midModifier, ecs::eBossTier::Mid, 0);
+			wave.NextMidBossSpawnTime += std::max(wave.MidBossInterval, 1.0f); // 0除算/連続スポーン防止
 		}
 
 		if (!wave.FinalBossSpawned && wave.ElapsedTime >= wave.FinalBossSpawnTime)
 		{
 			const XMFLOAT3 spawnPos = ComputeSpawnPosition(
 				registry, playerPos, wave.SpawnMarginMax + 5.0f, wave.SpawnMarginMax + 15.0f);
-			::ecs::GameSceneFactory::CreateEnemy(spawnPos, waveModifier, ecs::eBossTier::Final, 0);
+
+			// 大ボスは経過時間・小ボス成長と無関係の絶対値。強さはdata::BossDataの倍率だけで決まる
+			const ecs::EnemyWaveModifier finalModifier;
+			::ecs::GameSceneFactory::CreateEnemy(spawnPos, finalModifier, ecs::eBossTier::Final, 0);
 			wave.FinalBossSpawned = true;
 		}
 	}

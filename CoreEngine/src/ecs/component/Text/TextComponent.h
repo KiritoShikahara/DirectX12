@@ -21,6 +21,9 @@ namespace ecs
         /// <summary>文字高さ (px)</summary>
         float             Size = 32.f;
 
+        /// <summary>字間の追加スペース (px)。文字ごとの通常の送り幅に加算する。0で無効</summary>
+        float             LetterSpacing = 0.f;
+
         /// <summary>文字色 RGBA (0–1)</summary>
         DirectX::XMFLOAT4 Color = { 1.f, 1.f, 1.f, 1.f };
 

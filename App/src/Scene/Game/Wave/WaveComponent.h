@@ -63,22 +63,39 @@ namespace ecs
         ///次回小ボスが出現する基準時刻。出現のたびにMiniBossIntervalずつ加算する
         ///</summary>
         float NextMiniBossSpawnTime = 180.0f;
+        ///<summary>
+        ///これまでに出現させた小ボスの数。BossPowerGrowthPerSpawnによる指数的な強化の指数として使う
+        ///</summary>
+        int MiniBossSpawnCount = 0;
+        ///<summary>
+        ///小ボスが出現するたびに、直前の小ボスに対してHP/攻撃力を何倍にするか(2.5なら毎回2.5倍)
+        ///</summary>
+        float BossPowerGrowthPerSpawn = 1.58f;
 
         ///<summary>
-        ///中ボスが出現するまでの経過時間、秒。1回だけ
+        ///中ボスが最初に出現するまでの経過時間、秒
         ///</summary>
-        float MidBossSpawnTime = 480.0f;
+        float MidBossFirstSpawnTime = 60.0f;
         ///<summary>
-        ///中ボスを既にスポーンしたか
+        ///以後、中ボスが繰り返し出現する間隔、秒
         ///</summary>
-        bool MidBossSpawned = false;
+        float MidBossInterval = 60.0f;
+        ///<summary>
+        ///次回中ボスが出現する基準時刻。出現のたびにMidBossIntervalずつ加算する
+        ///</summary>
+        float NextMidBossSpawnTime = 60.0f;
+        ///<summary>
+        ///中ボスの強さを、直近に出現した小ボスの何倍にするか。小ボスは出現ごとに強くなり続けるため、
+        ///中ボスもこれに追従させることで終盤も小ボスに対して一定の脅威度を保つ
+        ///</summary>
+        float MidBossPowerMultiplier = 5.0f;
 
         ///<summary>
-        ///最強ボスが出現するまでの経過時間、秒。1回だけ
+        ///大ボスが出現するまでの経過時間、秒。1回だけ
         ///</summary>
         float FinalBossSpawnTime = 800.0f;
         ///<summary>
-        ///最強ボスを既にスポーンしたか
+        ///大ボスを既にスポーンしたか
         ///</summary>
         bool FinalBossSpawned = false;
 

@@ -46,7 +46,6 @@ namespace sys
 			if (mFadeAlpha <= 0.0f)
 			{
 				mFadeAlpha = 0.0f;
-				mTransitionJustFinished = true;
 				mTransitionState = eTransitionState::Idle;
 			}
 			break;
@@ -65,11 +64,6 @@ namespace sys
 	/// </summary>
 	void SceneManager::PostUpdate()
 	{
-		if (mTransitionJustFinished)
-		{
-			mTransitionJustFinished = false;
-		}
-
 		// トランジションなし：即切り替え
 		if (!mUseTransition && mPendingSceneFactory)
 		{
@@ -152,7 +146,11 @@ namespace sys
 
 	bool SceneManager::IsTransitionFinished()
 	{
-		return mTransitionJustFinished;
+		// Idleは「フェード遷移を一度も経ていない(直接起動された)」場合と
+		// 「FadeInが完了した」場合の両方を表す。一瞬だけ立つフラグ方式だと、
+		// フェード遷移を経由しないシーン起動(Debug/DevelopがGameSceneから直接始まる等)で
+		// 判定タイミングを永久に取り逃す問題があったため、状態そのもので判定する
+		return mTransitionState == eTransitionState::Idle;
 	}
 
 	/// <summary>

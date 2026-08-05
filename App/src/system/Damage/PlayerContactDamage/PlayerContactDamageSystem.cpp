@@ -44,11 +44,20 @@ namespace ecs
 			playerStatus.PostHitInvincibleTimer = std::max(0.0f, playerStatus.PostHitInvincibleTimer - deltaTime);
 		}
 
+		// 必殺技終了直後の無敵タイマーも同様に毎フレーム減算する
+		if (playerStatus.PostUltimateInvincibleTimer > 0.0f)
+		{
+			playerStatus.PostUltimateInvincibleTimer = std::max(0.0f, playerStatus.PostUltimateInvincibleTimer - deltaTime);
+		}
+
 		// 衝突継続中も毎フレーム検知するためCollisionStayEventを使う。CollisionEnterEventは開始フレームにしか発行されないため密着中は再ダメージを判定できない
 		const auto* contactPtr = registry.try_get<CollisionStayEvent>(playerEntity);
 		if (contactPtr == nullptr) return; // このフレームは何にも触れていない
 
-		if (playerStatus.IsInvincible || playerStatus.PostHitInvincibleTimer > 0.0f) return; // invincible: Ultimate/Flicker Strike、または被弾後無敵中はダメージをスキップ
+		// invincible: Ultimate/Flicker Strike演出中、被弾後無敵中、または必殺技終了直後の猶予中はダメージをスキップ
+		if (playerStatus.IsInvincible
+			|| playerStatus.PostHitInvincibleTimer > 0.0f
+			|| playerStatus.PostUltimateInvincibleTimer > 0.0f) return;
 
 		// デバッグ用の無敵。GUIまたは--godmodeで有効化、IsInvincibleは流用できない
 		if (::debug::GameDebugSettings::Get().IsPlayerInvincible()) return;
