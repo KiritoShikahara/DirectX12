@@ -80,9 +80,11 @@ namespace graphics
 
         // デフォルトテクスチャ
         auto& texMgr = TextureManager::Get();
-        mDefaultWhiteTexture = texMgr.GetOrLoad(ASSET_PATH("/Engine/Assets/Texture/White.dds").string());
-        mDefaultNormalTexture = texMgr.GetOrLoad(ASSET_PATH("/Engine/Assets/Texture/Normal.dds").string());
-        mDefaultBlackTexture = texMgr.GetOrLoad(ASSET_PATH("/Engine/Assets/Texture/Black.dds").string());
+        // GetOrLoadはstd::filesystem::pathを直接受け取れるため、途中でnarrow文字列へ変換しない。
+        // .string()を挟むと実行環境のネイティブコードページ経由になり、非ASCIIパスで文字化けする
+        mDefaultWhiteTexture = texMgr.GetOrLoad(ASSET_PATH("/Engine/Assets/Texture/White.dds"));
+        mDefaultNormalTexture = texMgr.GetOrLoad(ASSET_PATH("/Engine/Assets/Texture/Normal.dds"));
+        mDefaultBlackTexture = texMgr.GetOrLoad(ASSET_PATH("/Engine/Assets/Texture/Black.dds"));
 
         mInstanceData.reserve(MAX_FBX_INSTANCES);
         mBoneData.reserve(MAX_TOTAL_BONES);

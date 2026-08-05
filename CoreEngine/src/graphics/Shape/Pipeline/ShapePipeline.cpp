@@ -115,8 +115,8 @@ namespace graphics
 	/// </summary>
 	bool ShapePipeline::CreatePipeline(ID3D12Device* device, ShaderManager& shaderManager)
 	{
-		auto VS = shaderManager.GetShader(ASSET_PATH("/Engine/Assets/Shader/Shape/VS_Shape.hlsl").string(), "main", "vs_6_0");
-		auto PS = shaderManager.GetShader(ASSET_PATH("/Engine/Assets/Shader/Shape/PS_Shape.hlsl").string(), "main", "ps_6_0");
+		auto VS = shaderManager.GetShader(ASSET_PATH_UTF8("/Engine/Assets/Shader/Shape/VS_Shape.hlsl"), "main", "vs_6_0");
+		auto PS = shaderManager.GetShader(ASSET_PATH_UTF8("/Engine/Assets/Shader/Shape/PS_Shape.hlsl"), "main", "ps_6_0");
 
 		if (!VS || !PS)
 		{

@@ -63,8 +63,8 @@ namespace graphics
         }
 
         // シェーダー
-        auto vs = shaderManager.GetShader(ASSET_PATH("/Engine/Assets/Shader/Text/VS_Text.hlsl").string(), "main", "vs_6_0");
-        auto ps = shaderManager.GetShader(ASSET_PATH("/Engine/Assets/Shader/Text/PS_Text.hlsl").string(), "main", "ps_6_0");
+        auto vs = shaderManager.GetShader(ASSET_PATH_UTF8("/Engine/Assets/Shader/Text/VS_Text.hlsl"), "main", "vs_6_0");
+        auto ps = shaderManager.GetShader(ASSET_PATH_UTF8("/Engine/Assets/Shader/Text/PS_Text.hlsl"), "main", "ps_6_0");
 
         if (!vs || !ps)
         {

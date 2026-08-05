@@ -103,9 +103,9 @@ namespace graphics
     bool FbxPipeline::CreatePipeline(ID3D12Device* device, ShaderManager& shaderManager)
     {
         auto VS = shaderManager.GetShader(
-            ASSET_PATH("/Engine/Assets/Shader/FBX/VS_Fbx.hlsl").string(), "main", "vs_6_0");
+            ASSET_PATH_UTF8("/Engine/Assets/Shader/FBX/VS_Fbx.hlsl"), "main", "vs_6_0");
         auto PS = shaderManager.GetShader(
-            ASSET_PATH("/Engine/Assets/Shader/FBX/PS_Fbx.hlsl").string(), "main", "ps_6_0");
+            ASSET_PATH_UTF8("/Engine/Assets/Shader/FBX/PS_Fbx.hlsl"), "main", "ps_6_0");
 
         if (!VS || !PS)
         {
