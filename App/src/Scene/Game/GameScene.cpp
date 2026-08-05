@@ -17,6 +17,7 @@
 #include<Utility/config/DebugConfig.h>
 #include<system/GlowAnimation/SpriteGlowSystem.h>
 #include<system/UI/DamageNumber/DamageNumberSystem.h>
+#include<system/UI/StartEffect/StartEffectSystem.h>
 
 #include<system/Player/State/PlayerStateSystem.h>
 #include<system/Player/InputSystem/PlayerInputSystem.h>
@@ -47,6 +48,7 @@
 
 #include<system/Enemy/Move/EnemyChaseSystem.h>
 #include<system/Enemy/Death/EnemyDeathSystem.h>
+#include<system/Enemy/HealthBar/EnemyHealthBarSystem.h>
 #include<system/Enemy/Knockback/EnemyKnockbackSystem.h>
 #include<system/Enemy/Status/EnemySlowStatusSystem.h>
 
@@ -291,6 +293,8 @@ namespace scene
 		manager.AddUserSystem<::ecs::EnemyKnockbackSystem>(::ecs::eUpdatePhase::Update);
 		// ダメージ計算のUpdateが終わった後にHP0の敵をまとめて破棄する
 		manager.AddUserSystem<::ecs::EnemyDeathSystem>(::ecs::eUpdatePhase::PostUpdate);
+		// EnemyDeathSystemの後段に置くことで、今フレーム死亡した敵の体力バーも同フレームで破棄できる
+		manager.AddUserSystem<::ecs::EnemyHealthBarSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::ecs::RotateToMoveSystem>(::ecs::eUpdatePhase::PostUpdate);
 		// PlayerUltimateSystemはCameraOverrideComponentへ位置リクエストを書くだけなので、消費するCameraPlayerFollowSystemより前段に置く
 		manager.AddUserSystem<::ecs::PlayerUltimateSystem>(::ecs::eUpdatePhase::PostUpdate);
@@ -300,6 +304,7 @@ namespace scene
 		// LightSystem::Updateより前にShadowTargetを確定させる必要があるためPostUpdateの中で登録する
 		manager.AddUserSystem<::ecs::DirLightFollowSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::ecs::DamageNumberSystem>(::ecs::eUpdatePhase::PostUpdate);
+		manager.AddUserSystem<::ecs::StartEffectSystem>(::ecs::eUpdatePhase::PostUpdate);
 		manager.AddUserSystem<::sys::GameStateSystem>(::ecs::eUpdatePhase::PostUpdate);
 		// GameStateSystemの後段に置くことで、PerkSelect/Resultへ遷移した同一フレームでUIを生成できる
 		manager.AddUserSystem<::ecs::PerkSelectSystem>(::ecs::eUpdatePhase::PostUpdate);
@@ -336,6 +341,7 @@ namespace scene
 		mWeaponInventoryDebugPanel = std::make_unique<debug::WeaponInventoryDebugPanel>();
 		mUltimateDebugPanel = std::make_unique<debug::UltimateDebugPanel>();
 		mPlayerSaveDebugPanel = std::make_unique<debug::PlayerSaveDebugPanel>("GameScene_PlayerSaveDebug");
+		mGameSettingsDebugPanel = std::make_unique<debug::GameSettingsDebugPanel>("GameScene_GameSettingsDebug");
 		mStatUpgradeDebugPanel = std::make_unique<debug::StatUpgradeDebugPanel>();
 		mEffectAssetDebugPanel = std::make_unique<debug::EffectAssetDebugPanel>();
 		mBossDebugPanel = std::make_unique<debug::BossDebugPanel>();
@@ -351,6 +357,7 @@ namespace scene
 		mWeaponInventoryDebugPanel.reset();
 		mUltimateDebugPanel.reset();
 		mPlayerSaveDebugPanel.reset();
+		mGameSettingsDebugPanel.reset();
 		mStatUpgradeDebugPanel.reset();
 		mEffectAssetDebugPanel.reset();
 		mBossDebugPanel.reset();

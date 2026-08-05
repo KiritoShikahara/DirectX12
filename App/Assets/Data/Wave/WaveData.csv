@@ -1,2 +1,2 @@
-Id,SpawnInterval,SpawnCountPerTick,SpawnMarginMin,SpawnMarginMax,SpawnCountGrowthStepInterval,SpawnCountGrowthPerStep,StatGrowthStepInterval,StatGrowthPerStep,MiniBossFirstSpawnTime,MiniBossInterval,MidBossSpawnTime,FinalBossSpawnTime,ClearTime,MaxAliveEnemy
-0,1.5,20,4,12,60,1.0,120,0.4,180,180,480,800,900,0
+Id,SpawnInterval,SpawnCountPerTick,SpawnMarginMin,SpawnMarginMax,SpawnCountGrowthStepInterval,SpawnCountGrowthPerStep,StatGrowthStepInterval,StatGrowthPerStep,MiniBossFirstSpawnTime,MiniBossInterval,BossPowerGrowthPerSpawn,MidBossFirstSpawnTime,MidBossInterval,MidBossPowerMultiplier,FinalBossSpawnTime,ClearTime,MaxAliveEnemy
+0,1.5,20,4,12,60,1.3,60,0.5,30,30,1.58,60,60,5.0,180,300,0

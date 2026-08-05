@@ -85,11 +85,11 @@ namespace ecs::inputguide
 	}
 
 	///<summary>
-	///フリッカーストライク、FlickerStrike。KBはR、PadはYボタン
+	///フリッカーストライク、FlickerStrike。KBはマウスホイール押し込み、PadはYボタン
 	///</summary>
 	inline const wchar_t* GetFlickerStrikeLabel(::sys::eInputDevice device)
 	{
-		return device == ::sys::eInputDevice::Pad ? L"Yボタン" : L"R";
+		return device == ::sys::eInputDevice::Pad ? L"Yボタン" : L"ホイールクリック";
 	}
 
 	///<summary>

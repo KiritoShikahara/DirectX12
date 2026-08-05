@@ -103,7 +103,7 @@ namespace ecs
         // 判定半径は見た目のradiusとは別にHitRadiusMultiplierで拡大する
         const float hitRadius = radius * masterData.HitRadiusMultiplier;
         // 着弾エフェクトの見た目だけを底上げする倍率、判定半径・ダメージには影響しない
-        constexpr float kVisualScaleBoost = 2.5f;
+        constexpr float kVisualScaleBoost = 5.0f;
 
         auto& manager = ::ecs::EntityManager::Get();
         auto entity = manager.CreateEntity();
@@ -122,7 +122,10 @@ namespace ecs
         projectile.Speed = masterData.ProjectileSpeed;
         projectile.Damage = damage;
         projectile.ExplosionRadius = hitRadius;
-        projectile.VisualRadius = radius * kVisualScaleBoost;
+        // VisualRadiusは増殖弾の子弾コライダーサイズにも使われる仕様のため据え置き、着弾エフェクトの見た目だけを
+        // HitEffectVisualRadiusで底上げする(BoneSpearは貫通のみで増殖しないが、他武器と実装を揃えておく)
+        projectile.VisualRadius = radius;
+        projectile.HitEffectVisualRadius = radius * kVisualScaleBoost;
         projectile.ExplosionEffectPath = ecs::effectutil::ResolveEffectIds(masterData.ExplosionEffectIds);
         projectile.LifeTime = masterData.ProjectileLifeTime;
         projectile.Owner = weapon.Owner;

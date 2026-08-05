@@ -30,13 +30,16 @@
 #include<system/Enemy/Move/EnemyChaseComponent.h>
 #include<system/Enemy/Attack/EnemyAttackComponent.h>
 #include<system/Enemy/Status/EnemyStatusComponent.h>
+#include<system/Enemy/HealthBar/EnemyHealthBarTag.h>
 #include<Data/Enemy/EnemyData.h>
 #include<Data/Enemy/BossData.h>
 
 #include<system/Player/UI/PlayerUiTag.h>
 #include<system/GlowAnimation/GlowAnimationComp.h>
+#include<system/UI/StartEffect/StartEffectComponent.h>
 #include<system/Window/Window.h>
 #include<graphics/Fbx/Resource/FbxResource.h>
+#include<graphics/Text/Renderer/TextRenderer.h>
 
 #include<Scene/Game/State/GameState.h>
 #include<Scene/Game/Wave/WaveComponent.h>
@@ -50,8 +53,9 @@ namespace ecs
 		auto& manager = ENTITY_MANAGER;
 		auto entity = manager.CreateEntity();
 
+		// GameStateComponentの既定値(PreStart)のまま生成する。ここでInGameへ直接設定すると
+		// GameStateSystemのPreStart分岐(トランジション終了待ち)が実行されなくなる
 		auto& state = manager.AddComponent<::ecs::GameStateComponent>(entity);
-		state.GameState = ::sys::eGameState::InGame;
 
 		// コアループ管理。数値はWaveDataから初期化する
 		auto& wave = manager.AddComponent<::ecs::WaveComponent>(entity);
@@ -69,7 +73,11 @@ namespace ecs
 			wave.MiniBossFirstSpawnTime = waveData->MiniBossFirstSpawnTime;
 			wave.MiniBossInterval = waveData->MiniBossInterval;
 			wave.NextMiniBossSpawnTime = waveData->MiniBossFirstSpawnTime; // 初回出現時刻で初期化
-			wave.MidBossSpawnTime = waveData->MidBossSpawnTime;
+			wave.BossPowerGrowthPerSpawn = waveData->BossPowerGrowthPerSpawn;
+			wave.MidBossFirstSpawnTime = waveData->MidBossFirstSpawnTime;
+			wave.MidBossInterval = waveData->MidBossInterval;
+			wave.NextMidBossSpawnTime = waveData->MidBossFirstSpawnTime; // 初回出現時刻で初期化
+			wave.MidBossPowerMultiplier = waveData->MidBossPowerMultiplier;
 			wave.FinalBossSpawnTime = waveData->FinalBossSpawnTime;
 			wave.ClearTime = waveData->ClearTime;
 		}
@@ -416,7 +424,33 @@ namespace ecs
 
 	void GameSceneFactory::CreateStartEffect()
 	{
+		// InGame開始の合図として画面中央に「Start」をフェードイン→維持→フェードアウトで表示する。
+		// 進行と破棄はStartEffectSystemが担当する
+		auto& manager = ENTITY_MANAGER;
+		auto& window = ::sys::Window::Get();
+		auto& textRenderer = ::graphics::TextRenderer::Get();
 
+		constexpr float kTextSize = 220.0f;
+		constexpr float kLetterSpacing = 20.0f;
+		constexpr int kTextLayer = 100; // 通常のHUD(最大でも20程度)より確実に手前に出す
+		const std::wstring startText = L"START";
+
+		const float screenWidth = static_cast<float>(window.GetVirtualWidth());
+		const float screenHeight = static_cast<float>(window.GetVirtualHeight());
+		const float textWidth = textRenderer.MeasureWidth(startText, kTextSize, kLetterSpacing);
+
+		auto entity = manager.CreateEntity();
+
+		auto& text = manager.AddComponent<::ecs::TextComponent>(entity);
+		text.Text = startText;
+		text.X = (screenWidth - textWidth) * 0.5f;
+		text.Y = (screenHeight - kTextSize) * 0.5f;
+		text.Size = kTextSize;
+		text.LetterSpacing = kLetterSpacing;
+		text.Color = { 1.0f, 1.0f, 1.0f, 0.0f }; // StartEffectSystemが毎フレームアルファを更新するため初期値は0
+		text.Layer = kTextLayer;
+
+		manager.AddComponent<::ecs::StartEffectComponent>(entity);
 	}
 
 	void GameSceneFactory::CreateUI()
@@ -540,6 +574,51 @@ namespace ecs
 		auto& attack = manager.AddComponent<::ecs::EnemyAttackComponent>(enemy);
 
 		registry.emplace<::ecs::EnemyTag>(enemy);
+
+		// 頭上体力バー。背景(黒)+前景(赤・残量)の2枚。EnemyHealthBarSystemが毎フレーム
+		// このenemyのワールド座標をスクリーン座標へ投影して追従させ、死亡時は自動で道連れに破棄する
+		{
+			constexpr float kBarWidth = 70.0f;
+			constexpr float kBarHeight = 8.0f;
+			const float barWidth = kBarWidth * bossScaleMultiplier;
+			const float barHeight = kBarHeight * bossScaleMultiplier;
+			// コライダー全高+余白の分だけ頭上に浮かせる
+			const float heightOffset = colliderHalfExtent.y * 2.0f + 10.0f;
+
+			auto barTex = ::graphics::TextureManager::Get().GetOrLoad("Assets/Effect/Texture/White.png");
+
+			// 背景
+			{
+				auto barEntity = manager.CreateEntity();
+				manager.AddComponent<ecs::Transform>(barEntity);
+
+				auto& sprite = manager.AddComponent<::ecs::Sprite>(barEntity, barTex);
+				sprite.Pivot = { 0.5f, 0.5f };
+				sprite.Size = { barWidth, barHeight };
+				sprite.Color = ::graphics::Color(0.0f, 0.0f, 0.0f, 0.7f);
+				sprite.SetLayer(::ecs::SpriteLayer::UI, 0);
+				sprite.IsVisible = false; // 初回投影が終わるまでは非表示
+
+				registry.emplace<::ecs::EnemyHealthBarTag>(barEntity,
+					::ecs::EnemyHealthBarTag{ enemy, false, heightOffset });
+			}
+
+			// 前景(残量)
+			{
+				auto barEntity = manager.CreateEntity();
+				manager.AddComponent<ecs::Transform>(barEntity);
+
+				auto& sprite = manager.AddComponent<::ecs::Sprite>(barEntity, barTex);
+				sprite.Pivot = { 0.5f, 0.5f };
+				sprite.Size = { barWidth - 2.0f, barHeight - 2.0f }; // 背景より一回り小さくして縁取りにする
+				sprite.Color = ::graphics::Color(0.85f, 0.1f, 0.1f, 1.0f);
+				sprite.SetLayer(::ecs::SpriteLayer::UI, 1);
+				sprite.IsVisible = false;
+
+				registry.emplace<::ecs::EnemyHealthBarTag>(barEntity,
+					::ecs::EnemyHealthBarTag{ enemy, true, heightOffset });
+			}
+		}
 	}
 
 	void GameSceneFactory::CreatePlayerHpBar()
@@ -674,6 +753,10 @@ namespace ecs
 		// 武器レベルのテキストをアイコン右下に重ねるためのオフセット
 		constexpr float kLevelTextOffset = kIconSize * 0.32f;
 
+		// 発動操作アイコンをアイコン左上に重ねるためのオフセット・サイズ。レベル表示と対角に配置して重ならないようにする
+		constexpr float kControlIconOffset = kIconSize * 0.32f;
+		constexpr float kControlIconSize = kIconSize * 0.42f;
+
 		const float centerX = static_cast<float>(::sys::Window::Get().GetVirtualWidth()) * 0.5f;
 
 		// クールダウン進捗の黒半透明オーバーレイ用の単色板。パーク選択のウィンドウ背景と同じ白テクスチャ
@@ -758,6 +841,27 @@ namespace ecs
 
 				registry.emplace<::ecs::WeaponIconSlotTag>(entity,
 					::ecs::WeaponIconSlotTag{ slot, ::ecs::eWeaponIconElement::LevelText, levelX });
+			}
+
+			// 発動操作アイコン。アイコン左上に重ね、レベル表示(右下)と対角にして常時表示のLevelTextと衝突しないようにする。
+			// 表示可否・テクスチャはWeaponIconBarSystemが武器種別と入力デバイスに応じて差し替える
+			{
+				const float controlX = x - kControlIconOffset;
+				const float controlY = y - kControlIconOffset;
+
+				auto entity = manager.CreateEntity();
+				auto& tr = manager.AddComponent<ecs::Transform>(entity);
+				tr.Set2DPosition(controlX, controlY);
+
+				auto tex = ::graphics::TextureManager::Get().GetOrLoad(kPlaceholderIconPath);
+				auto& sprite = manager.AddComponent<::ecs::Sprite>(entity, tex);
+				sprite.Pivot = { 0.5f, 0.5f };
+				sprite.Size = { kControlIconSize, kControlIconSize };
+				sprite.SetLayer(::ecs::SpriteLayer::UI, 5); // アイコン本体(offset3)・オーバーレイ(offset4)より前面
+				sprite.IsVisible = false;
+
+				registry.emplace<::ecs::WeaponIconSlotTag>(entity,
+					::ecs::WeaponIconSlotTag{ slot, ::ecs::eWeaponIconElement::ControlIcon, controlX });
 			}
 		}
 	}

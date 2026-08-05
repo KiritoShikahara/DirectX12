@@ -18,6 +18,8 @@ namespace
     constexpr float kEffectReferenceRadius = 2.0f;
     constexpr float kDebugWireLifetime = 0.3f;
     constexpr float kAreaSeVolume = 0.4f;
+    // 着弾エフェクトの見た目だけを底上げする倍率、判定半径・ダメージには影響しない
+    constexpr float kVisualScaleBoost = 2.0f;
 }
 
 namespace ecs
@@ -94,7 +96,7 @@ namespace ecs
         }
 
         // 見た目のサイズは判定半径hitRadiusではなくradius基準に合わせる
-        const float scale = radius / kEffectReferenceRadius;
+        const float scale = (radius / kEffectReferenceRadius) * kVisualScaleBoost;
         const std::string effectPath = ecs::effectutil::ResolveEffectIds(masterData.EffectIds);
         ecs::effectutil::PlayOneShotCombined(effectPath, center, scale);
     }

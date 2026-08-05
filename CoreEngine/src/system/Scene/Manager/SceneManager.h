@@ -116,9 +116,12 @@ namespace sys
 			float r = 0.0f, float g = 0.0f, float b = 0.0f);
 
 		/// <summary>
-		/// トランジションの終了判定
+		/// トランジションが進行中でないかどうかを返す。
+		/// フェード遷移を経ずに直接開始されたシーン(Debug/DevelopがGameSceneから起動する場合など、
+		/// ChangeSceneWithTransitionを一度も経由しないケース)では最初から true になる。
+		/// フェード遷移を経た場合は、そのFadeInが完了した瞬間から true になる。
 		/// </summary>
-		/// <returns>true:終了</returns>
+		/// <returns>true:トランジション進行中でない(初回から、またはFadeIn完了後)</returns>
 		[[nodiscard]] bool IsTransitionFinished();
 
 		/// <summary>現在のシーン名を取得する(デバッグ用、Editorのシーン切り替えパネル等で使う)</summary>
@@ -179,7 +182,6 @@ namespace sys
 		float mFadeColorB = 0.0f;
 
 		bool mUseTransition = false; // 今回の切り替えにトランジションを使うか
-		bool mTransitionJustFinished = false; // トランジション完了した瞬間かどうか
 	};
 
 	template<TScene T, typename ...Args>

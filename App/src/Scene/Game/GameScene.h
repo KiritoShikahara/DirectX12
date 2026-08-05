@@ -9,6 +9,7 @@
 #include<Scene/Game/Debug/WeaponInventoryDebugPanel.h>
 #include<system/Player/Ultimate/UltimateDebugPanel.h>
 #include<Data/Save/PlayerSaveDebugPanel.h>
+#include<Data/Settings/GameSettingsDebugPanel.h>
 #include<system/StatusUpgrade/StatUpgradeDebugPanel.h>
 #include<system/Effect/EffectAssetDebugPanel.h>
 #include<system/Enemy/Status/BossDebugPanel.h>
@@ -55,6 +56,7 @@ namespace scene
 		std::unique_ptr<debug::WeaponInventoryDebugPanel> mWeaponInventoryDebugPanel;
 		std::unique_ptr<debug::UltimateDebugPanel> mUltimateDebugPanel;
 		std::unique_ptr<debug::PlayerSaveDebugPanel> mPlayerSaveDebugPanel;
+		std::unique_ptr<debug::GameSettingsDebugPanel> mGameSettingsDebugPanel;
 		std::unique_ptr<debug::StatUpgradeDebugPanel> mStatUpgradeDebugPanel;
 		std::unique_ptr<debug::EffectAssetDebugPanel> mEffectAssetDebugPanel;
 		std::unique_ptr<debug::BossDebugPanel> mBossDebugPanel;

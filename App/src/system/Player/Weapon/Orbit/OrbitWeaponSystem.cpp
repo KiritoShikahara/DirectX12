@@ -226,14 +226,19 @@ namespace ecs
 		if (!hitEffectPath.empty())
 		{
 			const auto& orbTransform = registry.get<ecs::Transform>(orbEntity);
-			SpawnHitEffect(registry, orbTransform.GetPosition(), hitEffectPath);
+			// オーブ本体の見た目と同じ基準(HitRadius/kEffectReferenceRadius)でスケールを合わせる。
+			// 以前はスケール未指定で既定値1.0のまま再生されており、他の武器のヒットエフェクトより
+			// 明らかに小さく見えていた
+			const float scale = masterData.HitRadius / kEffectReferenceRadius;
+			SpawnHitEffect(registry, orbTransform.GetPosition(), hitEffectPath, scale);
 		}
 	}
 
 	void OrbitWeaponSystem::SpawnHitEffect(
 		entt::registry& registry,
 		const DirectX::XMFLOAT3& position,
-		const std::string& effectPath)
+		const std::string& effectPath,
+		float scale)
 	{
 		auto& manager = ::ecs::EntityManager::Get();
 		auto entity = manager.CreateEntity();
@@ -244,6 +249,7 @@ namespace ecs
 		auto& effect = manager.AddComponent<ecs::EffectComponent>(entity);
 		effect.Asset = graphics::EffekseerManager::Get().GetEffect(effectPath);
 		effect.IsLoop = false;
+		effect.Scale = { scale, scale, scale };
 		// autoDelete=true、再生終了フレームでEffekseerManager::Updateがこのエンティティを破棄する
 		effect.Effect.Play(effect.Asset, position, true);
 		graphics::EffekseerManager::MarkSpawnHidden(effect);

@@ -4,6 +4,7 @@
 #include"DamageNumberComponent.h"
 #include<system/Camera/CameraSystem.h>
 #include<system/Window/Window.h>
+#include<system/Player/Weapon/WeaponUpdateUtil.h>
 
 namespace ecs
 {
@@ -20,11 +21,21 @@ namespace ecs
         const float screenHeight = static_cast<float>(window.GetVirtualHeight());
         const DirectX::XMMATRIX viewProj = camera->GetViewProjectionMatrix();
 
+        // PerkSelect/Result中はHUDの残骸として不自然なため非表示にする。InGameへ戻ったら再表示し続きから消えていく
+        const bool isInGame = ecs::weaponutil::IsInGame(registry);
+
         mExpired.clear();
 
         registry.view<ecs::DamageNumberComponent, ecs::TextComponent>().each(
             [&](entt::entity entity, ecs::DamageNumberComponent& number, ecs::TextComponent& text)
             {
+                if (!isInGame)
+                {
+                    text.IsVisible = false;
+                    return;
+                }
+                text.IsVisible = true;
+
                 // ダメージ数値を上方向へ移動
                 number.WorldPosition.y += number.RiseSpeed * deltaTime;
 

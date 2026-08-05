@@ -19,6 +19,9 @@ namespace
     constexpr DirectX::XMFLOAT4 kSphereColor = { 0.6f, 0.25f, 1.0f, 1.0f };
     constexpr float kSphereMeshBaseRadius = 0.5f;
     constexpr float kFireSeVolume = 0.4f;
+    // Radiusは全レベルで3.0固定(球体プリミティブ・当たり判定の大きさ)のため、命中エフェクトだけこの倍率で
+    // 見た目を底上げする。当たり判定(hitRadius)やプリミティブの実サイズ(meshScale)には影響しない
+    constexpr float kHitEffectVisualBoost = 5.0f;
 }
 
 namespace ecs
@@ -126,7 +129,10 @@ namespace ecs
         projectile.Speed = masterData.ProjectileSpeed;
         projectile.Damage = damage;
         projectile.ExplosionRadius = hitRadius;
+        // VisualRadiusは増殖時の子弾コライダーサイズにも使われるため変更しない(SpawnSplitProjectiles参照)。
+        // 命中エフェクトの見た目だけをkHitEffectVisualBoostで底上げしたいのでHitEffectVisualRadiusを使う
         projectile.VisualRadius = radius;
+        projectile.HitEffectVisualRadius = radius * kHitEffectVisualBoost;
         // 飛翔中は球体プリミティブのみを表示し、エフェクトは命中時にのみ再生する
         projectile.ExplosionEffectPath = ecs::effectutil::ResolveEffectIds(masterData.HitEffectIds);
         projectile.LifeTime = masterData.ProjectileLifeTime;

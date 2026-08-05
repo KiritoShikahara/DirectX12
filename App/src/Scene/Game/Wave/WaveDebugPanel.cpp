@@ -62,7 +62,10 @@ namespace debug
                 wave.StatGrowthPerStep = row->StatGrowthPerStep;
                 wave.MiniBossFirstSpawnTime = row->MiniBossFirstSpawnTime;
                 wave.MiniBossInterval = row->MiniBossInterval;
-                wave.MidBossSpawnTime = row->MidBossSpawnTime;
+                wave.BossPowerGrowthPerSpawn = row->BossPowerGrowthPerSpawn;
+                wave.MidBossFirstSpawnTime = row->MidBossFirstSpawnTime;
+                wave.MidBossInterval = row->MidBossInterval;
+                wave.MidBossPowerMultiplier = row->MidBossPowerMultiplier;
                 wave.FinalBossSpawnTime = row->FinalBossSpawnTime;
                 wave.ClearTime = row->ClearTime;
             });

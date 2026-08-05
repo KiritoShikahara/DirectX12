@@ -114,7 +114,8 @@ namespace graphics
             Submit(item.Label->Text,
                 item.Label->X, item.Label->Y,
                 item.Label->Size,
-                item.Label->Color);
+                item.Label->Color,
+                item.Label->LetterSpacing);
         }
     }
 
@@ -122,7 +123,8 @@ namespace graphics
         const std::wstring& text,
         float x, float y,
         float size,
-        DirectX::XMFLOAT4 color)
+        DirectX::XMFLOAT4 color,
+        float letterSpacing)
     {
         if (!mIsInitialized || !mAtlas->IsLoaded()) return;
 
@@ -146,7 +148,7 @@ namespace graphics
             const GlyphInfo* g = mAtlas->GetGlyph(cp);
             if (!g)
             {
-                if (auto* sp = mAtlas->GetGlyph(0x20)) penX += sp->advance * scale;
+                if (auto* sp = mAtlas->GetGlyph(0x20)) penX += sp->advance * scale + letterSpacing;
                 continue;
             }
 
@@ -168,7 +170,7 @@ namespace graphics
                 mVertexCursor += VERTS_PER_CHAR;
             }
 
-            penX += g->advance * scale;
+            penX += g->advance * scale + letterSpacing;
 
         }
 
@@ -204,7 +206,7 @@ namespace graphics
         return size * -mAtlas->GetDescender();
     }
 
-    float TextRenderer::MeasureWidth(const std::wstring& text, float size) const
+    float TextRenderer::MeasureWidth(const std::wstring& text, float size, float letterSpacing) const
     {
         if (!mIsInitialized || !mAtlas->IsLoaded()) return 0.0f;
 
@@ -226,11 +228,11 @@ namespace graphics
             const GlyphInfo* g = mAtlas->GetGlyph(cp);
             if (!g)
             {
-                if (auto* sp = mAtlas->GetGlyph(0x20)) penX += sp->advance * scale;
+                if (auto* sp = mAtlas->GetGlyph(0x20)) penX += sp->advance * scale + letterSpacing;
                 continue;
             }
 
-            penX += g->advance * scale;
+            penX += g->advance * scale + letterSpacing;
         }
 
         return std::max(maxWidth, penX);

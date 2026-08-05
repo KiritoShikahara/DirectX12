@@ -61,10 +61,16 @@ namespace ecs
 
 				if (!registry.valid(hitEnemyEntity)) return;
 
+				// 着弾エフェクトのスケールはHitEffectVisualRadiusが指定されていればそちらを優先する。
+				// 増殖弾の子弾コライダーサイズ(SplitRequest.VisualRadius)には影響させないため、
+				// projectile.VisualRadius自体は書き換えずここでだけ差し替える
+				const float hitEffectVisualRadius = (projectile.HitEffectVisualRadius >= 0.0f)
+					? projectile.HitEffectVisualRadius : projectile.VisualRadius;
+
 				mHitResults.push_back({
 					transform.GetPosition(),
 					projectile.ExplosionRadius,
-					projectile.VisualRadius,
+					hitEffectVisualRadius,
 					projectile.Damage,
 					projectile.ExplosionEffectPath,
 					projectile.ExplosionAtGroundLevel });

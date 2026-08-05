@@ -5,6 +5,7 @@
 #include <system/Scene/Manager/SceneManager.h>
 #include <system/Input/InputGuideLabels.h>
 #include <system/UI/UiPanelUtility.h>
+#include <system/Window/Window.h>
 #include <graphics/Text/Renderer/TextRenderer.h>
 #include <Scene/Title/TitleScene.h>
 #include <Scene/Game/State/GameState.h>
@@ -24,7 +25,13 @@ namespace ecs
 		constexpr float kTitleSize = 44.0f;
 		constexpr float kItemSize = 32.0f;
 
-		constexpr int kUiLayer = 30;
+		// ポーズ中でも敵の体力バー・ダメージ数値・武器アイコン等のHUDは描画され続けるため、
+		// それらのTextComponent.Layer(最大でも30程度)より確実に高い値にして必ず最前面に出す
+		constexpr int kUiLayer = 1000;
+
+		// 背景パネルのSpriteLayer::UIからのオフセット。武器アイコンバー(最大offset5)や
+		// 敵の体力バー(offset0/1)より確実に手前に出す
+		constexpr int kPanelLayerOffset = 10;
 
 		const DirectX::XMFLOAT4 kNormalColor = { 0.75f, 0.75f, 0.75f, 1.0f };
 		const DirectX::XMFLOAT4 kSelectedColor = { 1.0f, 0.9f, 0.2f, 1.0f };
@@ -73,6 +80,13 @@ namespace ecs
 		}
 
 		HandleInput(registry);
+
+		if (mIsOpen)
+		{
+			// WeaponIconBarSystem等、毎フレームIsVisibleを設定し直すシステムに上書きされてしまうため、
+			// 開いている間は毎フレーム再度非表示にする(OptionsMenuSystemは他システムより後段に登録されている前提)
+			HideSuppressedText(registry);
+		}
 	}
 
 	bool OptionsMenuSystem::CanOpen(entt::registry& registry) const
@@ -108,6 +122,10 @@ namespace ecs
 		BuildUi();
 		RefreshLabels();
 		BuildBackgroundPanel();
+
+		// 文字は常にスプライトより後段で描画されるため、パネル(スプライト)だけでは他の文字を隠せない。
+		// このメニュー以外の文字を記録して非表示にする
+		SuppressOtherText(registry);
 	}
 
 	void OptionsMenuSystem::Close(entt::registry& registry)
@@ -116,10 +134,51 @@ namespace ecs
 		::data::SaveGameSettings();
 
 		DestroyUi(registry);
+		RestoreSuppressedText(registry);
 
 		GetTime().SetTimeScale(mPrevTimeScale);
 		SetOptionsMenuOpenFlag(registry, false);
 		mIsOpen = false;
+	}
+
+	void OptionsMenuSystem::SuppressOtherText(entt::registry& registry)
+	{
+		mSuppressedText.clear();
+
+		registry.view<TextComponent>().each(
+			[&](entt::entity entity, TextComponent& text)
+			{
+				if (!text.IsVisible) return; // 元々非表示のものはそのまま(復元時に誤って表示させないため記録しない)
+				if (std::find(mUiEntities.begin(), mUiEntities.end(), entity) != mUiEntities.end()) return;
+
+				mSuppressedText.push_back(entity);
+				text.IsVisible = false;
+			});
+	}
+
+	void OptionsMenuSystem::HideSuppressedText(entt::registry& registry)
+	{
+		for (entt::entity entity : mSuppressedText)
+		{
+			if (!registry.valid(entity)) continue;
+			if (auto* text = registry.try_get<TextComponent>(entity))
+			{
+				text->IsVisible = false;
+			}
+		}
+	}
+
+	void OptionsMenuSystem::RestoreSuppressedText(entt::registry& registry)
+	{
+		for (entt::entity entity : mSuppressedText)
+		{
+			if (!registry.valid(entity)) continue;
+			if (auto* text = registry.try_get<TextComponent>(entity))
+			{
+				text->IsVisible = true;
+			}
+		}
+		mSuppressedText.clear();
 	}
 
 	void OptionsMenuSystem::ChangePage(entt::registry& registry, ePage page)
@@ -209,7 +268,27 @@ namespace ecs
 
 	void OptionsMenuSystem::BuildBackgroundPanel()
 	{
-		// ゲーム画面の上に文字が直接乗ると読みづらいため黒半透明の板を敷く。テキストの実測範囲から動的にサイズを決める
+		// 背後の別画面(PerkSelect等)の文字はSuppressOtherTextで非表示にしているため、
+		// パネル自体で覆う必要が無くなった。Controlsページは内容に合わせたサイズ+余白のみ、
+		// それ以外のページは従来通り画面全体を覆う
+		if (mPage == ePage::Controls && BuildFittedControlsPanel())
+		{
+			return;
+		}
+
+		auto& window = ::sys::Window::Get();
+		const float screenWidth = static_cast<float>(window.GetVirtualWidth());
+		const float screenHeight = static_cast<float>(window.GetVirtualHeight());
+
+		auto panelEntity = ::ecs::uiutil::CreateTranslucentPanel(
+			screenWidth * 0.5f, screenHeight * 0.5f,
+			screenWidth, screenHeight,
+			kPanelLayerOffset, 0.6f);
+		mUiEntities.push_back(panelEntity);
+	}
+
+	bool OptionsMenuSystem::BuildFittedControlsPanel()
+	{
 		auto& registry = ENTITY_MANAGER.GetRegistry();
 		auto& textRenderer = ::graphics::TextRenderer::Get();
 
@@ -229,11 +308,12 @@ namespace ecs
 			maxY = std::max(maxY, text->Y + text->Size);
 		}
 
-		if (minX > maxX) return; // テキストが1件も無い場合の保険、理論上起きない
+		if (minX > maxX) return false; // テキストが1件も無い場合の保険、理論上起きない
 
-		constexpr float kPanelPadX = 60.0f;
-		constexpr float kPanelPadTop = 30.0f;
-		constexpr float kPanelPadBottom = 30.0f;
+		// 以前の内容フィットサイズよりも一回り大きい余白にする
+		constexpr float kPanelPadX = 90.0f;
+		constexpr float kPanelPadTop = 50.0f;
+		constexpr float kPanelPadBottom = 50.0f;
 
 		const float left = minX - kPanelPadX;
 		const float right = maxX + kPanelPadX;
@@ -243,8 +323,9 @@ namespace ecs
 		auto panelEntity = ::ecs::uiutil::CreateTranslucentPanel(
 			(left + right) * 0.5f, (top + bottom) * 0.5f,
 			right - left, bottom - top,
-			0);
+			kPanelLayerOffset, 1.0f);
 		mUiEntities.push_back(panelEntity);
+		return true;
 	}
 
 	void OptionsMenuSystem::HandleInput(entt::registry& registry)
