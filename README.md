@@ -5,8 +5,8 @@
 ### ビルドに関して
 
 - 構成 
-開発中： Develop
-リリース版： Release
+ - 開発中： Develop
+ - リリース版： Release
 
 
 基本的には、Visual Studio（MSVC）でコンパイルしてます。
