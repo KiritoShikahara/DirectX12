@@ -59,10 +59,10 @@ namespace graphics
 		// シェーダー
 		auto& shaderManager = graphics::ShaderManager::Get();
 		auto VS = shaderManager.GetShader(
-			ASSET_PATH("/Engine/Assets/Shader/PhysicsDebug/VS_PhysicsDebug.hlsl").string(),
+			ASSET_PATH_UTF8("/Engine/Assets/Shader/PhysicsDebug/VS_PhysicsDebug.hlsl"),
 			"main", "vs_6_0");
 		auto PS = shaderManager.GetShader(
-			ASSET_PATH("/Engine/Assets/Shader/PhysicsDebug/PS_PhysicsDebug.hlsl").string(),
+			ASSET_PATH_UTF8("/Engine/Assets/Shader/PhysicsDebug/PS_PhysicsDebug.hlsl"),
 			"main", "ps_6_0");
 
 		if (!VS || !PS)

@@ -103,11 +103,11 @@ namespace graphics
 		auto& shaderMgr = ShaderManager::Get();
 
 		auto vs = shaderMgr.GetShader(
-			ASSET_PATH("/Engine/Assets/Shader/Transition/VS_Transition.hlsl").string(),
+			ASSET_PATH_UTF8("/Engine/Assets/Shader/Transition/VS_Transition.hlsl"),
 			"main", "vs_6_0");
 
 		auto ps = shaderMgr.GetShader(
-			ASSET_PATH("/Engine/Assets/Shader/Transition/PS_Transition.hlsl").string(),
+			ASSET_PATH_UTF8("/Engine/Assets/Shader/Transition/PS_Transition.hlsl"),
 			"main", "ps_6_0");
 
 		if (!vs || !ps)

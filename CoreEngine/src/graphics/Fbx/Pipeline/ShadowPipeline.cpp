@@ -20,7 +20,7 @@ namespace graphics
         }
 
         auto VS = shaderManager.GetShader(
-            ASSET_PATH("/Engine/Assets/Shader/FBX/VS_Shadow.hlsl").string(), "main", "vs_6_0");
+            ASSET_PATH_UTF8("/Engine/Assets/Shader/FBX/VS_Shadow.hlsl"), "main", "vs_6_0");
 
         if (!VS)
         {

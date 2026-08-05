@@ -91,9 +91,9 @@ namespace graphics
     {
         auto& shaderManager = ShaderManager::Get();
         auto VS = shaderManager.GetShader(
-            ASSET_PATH("/Engine/Assets/Shader/Skybox/SkyboxVS.hlsl").string(), "main", "vs_6_0");
+            ASSET_PATH_UTF8("/Engine/Assets/Shader/Skybox/SkyboxVS.hlsl"), "main", "vs_6_0");
         auto PS = shaderManager.GetShader(
-            ASSET_PATH("/Engine/Assets/Shader/Skybox/SkyboxPS.hlsl").string(), "main", "ps_6_0");
+            ASSET_PATH_UTF8("/Engine/Assets/Shader/Skybox/SkyboxPS.hlsl"), "main", "ps_6_0");
 
         if (!VS || !PS)
         {

@@ -38,7 +38,7 @@ namespace ecs
 		const entt::entity playerEntity = *playerView.begin();
 		auto& playerStatus = registry.get<PlayerStatusComponent>(playerEntity);
 
-		// Post-hit invincibility timer ticks down every frame regardless of contact state, independent of IsInvincible
+		// 被弾後無敵タイマーは接触状態に関わらず毎フレーム減算する。IsInvincibleとは別枠で管理する
 		if (playerStatus.PostHitInvincibleTimer > 0.0f)
 		{
 			playerStatus.PostHitInvincibleTimer = std::max(0.0f, playerStatus.PostHitInvincibleTimer - deltaTime);
@@ -69,7 +69,7 @@ namespace ecs
 		const float mitigation = kDefenseHalfPoint / (kDefenseHalfPoint + defense);
 
 		// 接触している敵ごとにダメージを与える
-		bool tookDamage = false; // used below to arm the post-hit invincibility window
+		bool tookDamage = false; // 後段で被弾後無敵ウィンドウを開始するかどうかの判定に使う
 		for (entt::entity other : contact.OtherEntities)
 		{
 			if (!registry.valid(other)) continue;
@@ -86,7 +86,7 @@ namespace ecs
 			playerStatus.CurrentHp = std::max(0.0f, playerStatus.CurrentHp - damage);
 			tookDamage = true;
 
-			// Damage number shows at the player's own position, isPlayerDamage=true picks the taken color
+			// ダメージ数値はプレイヤー自身の座標に表示する。isPlayerDamage=trueで被ダメージ用の色になる
 			if (const auto* playerTransform = registry.try_get<Transform>(playerEntity))
 			{
 				ecs::combatutil::SpawnDamageNumber(playerTransform->GetPosition(), damage, true);
@@ -95,7 +95,7 @@ namespace ecs
 			atk->CooldownTimer = atk->AttackInterval;
 		}
 
-		// Start the post-hit invincibility window if this stat is upgraded, 0 duration means unused
+		// このステータスが強化されていれば被弾後無敵ウィンドウを開始する。0秒なら未使用
 		if (tookDamage && playerStatus.Current.PostHitInvincibleDuration > 0.0f)
 		{
 			playerStatus.PostHitInvincibleTimer = playerStatus.Current.PostHitInvincibleDuration;

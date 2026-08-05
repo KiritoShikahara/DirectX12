@@ -15,23 +15,23 @@ namespace sys
 #endif
     }
 
-    // ©gA‚Ü‚½‚Í‚»‚Ì’¼‰º‚ÌƒfƒBƒŒƒNƒgƒŠ‚Éƒ}[ƒJ[‚ª‚ ‚é‚©’T‚µ‚È‚ª‚ç‘k‚éB
+    // ï¿½ï¿½ï¿½gï¿½Aï¿½Ü‚ï¿½ï¿½Í‚ï¿½ï¿½Ì’ï¿½ï¿½ï¿½ï¿½Ìƒfï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½ï¿½Éƒ}ï¿½[ï¿½Jï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½é‚©ï¿½Tï¿½ï¿½ï¿½È‚ï¿½ï¿½ï¿½kï¿½ï¿½B
     static std::filesystem::path FindRootByMarker(
         const std::filesystem::path& startDir,
         const std::string& marker)
     {
         auto dir = std::filesystem::weakly_canonical(startDir);
 
-        // ŠK‘w‚ª[‚¢ê‡‚ğl—¶‚µ‚Ä20‰ñ‘k‚é
+        // ï¿½Kï¿½wï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½ê‡ï¿½ï¿½ï¿½lï¿½ï¿½ï¿½ï¿½ï¿½ï¿½20ï¿½ï¿½kï¿½ï¿½
         for (int i = 0; i < 20; ++i)
         {
-            // ‚±‚ÌƒfƒBƒŒƒNƒgƒŠ’¼‰º‚Éƒ}[ƒJ[‚ª‚ ‚é‚©
+            // ï¿½ï¿½ï¿½Ìƒfï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Éƒ}ï¿½[ï¿½Jï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½é‚©
             if (std::filesystem::exists(dir / marker)) {
                 return dir;
             }
 
-            // ‚±‚ÌƒfƒBƒŒƒNƒgƒŠ‚Ì’¼‰º‚ÌƒTƒuƒfƒBƒŒƒNƒgƒŠ‚Éƒ}[ƒJ[‚ª‚ ‚é‚©
-            // ‚±‚ê‚É‚æ‚èAApp‚Æ•À—ñ‚É‚ ‚éEngineƒtƒHƒ‹ƒ_‚Ì’†‚Ìƒ}[ƒJ[‚ğŒ©‚Â‚¯‚ç‚ê‚é
+            // ï¿½ï¿½ï¿½Ìƒfï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½ï¿½Ì’ï¿½ï¿½ï¿½ï¿½ÌƒTï¿½uï¿½fï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½ï¿½Éƒ}ï¿½[ï¿½Jï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½é‚©
+            // ï¿½ï¿½ï¿½ï¿½É‚ï¿½ï¿½AAppï¿½Æ•ï¿½ï¿½ï¿½É‚ï¿½ï¿½ï¿½Engineï¿½tï¿½Hï¿½ï¿½ï¿½_ï¿½Ì’ï¿½ï¿½Ìƒ}ï¿½[ï¿½Jï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½Â‚ï¿½ï¿½ï¿½ï¿½ï¿½
             try {
                 if (std::filesystem::is_directory(dir)) {
                     for (const auto& entry : std::filesystem::directory_iterator(dir)) {
@@ -60,7 +60,7 @@ namespace sys
             mRoots["Game"] = gameContentDir;
         }
         else {
-            // cwd(ì‹ÆƒfƒBƒŒƒNƒgƒŠ)‚©‚ç’T‚·‚Ì‚ªˆê”ÔŠmÀ
+            // cwd(ï¿½ï¿½Æƒfï¿½Bï¿½ï¿½ï¿½Nï¿½gï¿½ï¿½)ï¿½ï¿½ï¿½ï¿½Tï¿½ï¿½ï¿½Ì‚ï¿½ï¿½ï¿½ÔŠmï¿½ï¿½
             mRoots["Game"] = FindRootByMarker(cwd, ".game_root");
             if (mRoots["Game"].empty()) mRoots["Game"] = FindRootByMarker(exeDir, ".game_root");
         }
@@ -70,7 +70,7 @@ namespace sys
             mRoots["Engine"] = engineRootDir;
         }
         else {
-            // Engine‚ÍApp‚Æ•À—ñ‚É‚ ‚é‚½‚ßA‹¤’Ê‚Ìe‚Ü‚Å‘k‚Á‚Ä‚©‚çŒ©‚Â‚¯‚é
+            // Engineï¿½ï¿½Appï¿½Æ•ï¿½ï¿½ï¿½É‚ï¿½ï¿½é‚½ï¿½ßAï¿½ï¿½ï¿½Ê‚Ìeï¿½Ü‚Å‘kï¿½ï¿½ï¿½Ä‚ï¿½ï¿½çŒ©ï¿½Â‚ï¿½ï¿½ï¿½
             mRoots["Engine"] = FindRootByMarker(exeDir, ".engine_root");
             if (mRoots["Engine"].empty()) mRoots["Engine"] = FindRootByMarker(cwd, ".engine_root");
         }
@@ -94,6 +94,25 @@ namespace sys
     std::wstring AssetPathManager::ResolveW(std::string_view virtualPath) const
     {
         return Resolve(virtualPath).wstring();
+    }
+
+    std::string AssetPathManager::ResolveUtf8(std::string_view virtualPath) const
+    {
+        const std::wstring wide = ResolveW(virtualPath);
+        if (wide.empty()) return {};
+
+        const int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), -1, nullptr, 0, nullptr, nullptr);
+        if (sizeNeeded <= 0) return {};
+
+        std::string utf8(sizeNeeded, '\0');
+        WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), -1, utf8.data(), sizeNeeded, nullptr, nullptr);
+
+        // WideCharToMultiByteã¯çµ‚ç«¯ã®\0ã‚’å«ã‚€ã‚µã‚¤ã‚ºã‚’è¿”ã™ãŸã‚ã€æœ«å°¾ã‚’è½ã¨ã™
+        if (!utf8.empty() && utf8.back() == '\0')
+        {
+            utf8.pop_back();
+        }
+        return utf8;
     }
 
     void AssetPathManager::DumpRoots() const
